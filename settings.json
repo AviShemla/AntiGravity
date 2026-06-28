@@ -1,0 +1,11 @@
+{
+    "WORKSPACE_DIR": "C:\\Users\\AviShemla\\AntiGravity",
+    "DATA_DIR_NAME": "financial_data",
+    "ONEDRIVE_SYNC": false,
+    "BAYESIAN_ENGINE": "PyMC_NUTS",
+    "USE_NUTPIE": false,
+    "EMAILS": {
+        "ADMIN_EMAIL": "your-email@example.com",
+        "SMTP_SERVER": "smtp.gmail.com"
+    }
+}

@@ -1,0 +1,2914 @@
+"Attempting to boot master pipeline with primary Python Engine..." 
+[2026-06-09 01:00:02] === INITIATING ANTI-GRAVITY MASTER PIPELINE ===
+[2026-06-09 01:00:02] --- STARTING: daily_pipeline.py ---
+=== STARTING DAILY PIPELINE ===
+[WARNINGS] Cleared pipeline warning logs.
+[WARNINGS] Cleared pipeline warning logs.
+[QUARANTINE] Cleared all quarantined tickers for the new run.
+Step 1: Running SPY.py from AntiGravity folder...
+
+Step 1 Complete: SPY.py finished successfully. Extracting stats...
+
+Step 1.5: Running Meta-Predictor Tracker (Sunday Alpha Recalibration)...
+  => Skipped (Not Sunday). Using existing Meta_Alpha_Priors.json.
+
+Step 2: Running export_bayesian_scorecard_formatted.py...
+
+Step 2.5: Running QA Models Bounds Validation...
+
+[QA CHECK] Running bounds checking on Stock Bayesian Scorecard at C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx...
+[QA SUMMARY] Stock Bayesian Scorecard bounds validation passed.
+
+[QA CHECK] Running bounds checking on Compiled ETF Bayesian Scorecard at C:\Users\AviShemla\AntiGravity\financial_data\All_ETFs_Scorecard.xlsx...
+[QA SUMMARY] Compiled ETF Bayesian Scorecard bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLK) at C:\Users\AviShemla\AntiGravity\financial_data\XLK_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLK) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLV) at C:\Users\AviShemla\AntiGravity\financial_data\XLV_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLV) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLY) at C:\Users\AviShemla\AntiGravity\financial_data\XLY_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLY) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLF) at C:\Users\AviShemla\AntiGravity\financial_data\XLF_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLF) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLC) at C:\Users\AviShemla\AntiGravity\financial_data\XLC_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLC) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLI) at C:\Users\AviShemla\AntiGravity\financial_data\XLI_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLI) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLE) at C:\Users\AviShemla\AntiGravity\financial_data\XLE_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLE) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLP) at C:\Users\AviShemla\AntiGravity\financial_data\XLP_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLP) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLU) at C:\Users\AviShemla\AntiGravity\financial_data\XLU_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLU) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLRE) at C:\Users\AviShemla\AntiGravity\financial_data\XLRE_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLRE) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLB) at C:\Users\AviShemla\AntiGravity\financial_data\XLB_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLB) bounds validation passed.
+
+
+Step 3: Running Virtual Broker...
+
+Step 4: Generating 30-Day Trial Excel Report...
+
+Step 5: Running Automated QA Assistant (Blacklist Audit)...
+  => QA Assistant audit completed.
+
+=== DAILY PIPELINE COMPLETED SUCCESSFULLY ===
+Summary email successfully sent via Outlook to avi.shemla@gmail.com!
+[2026-06-09 01:41:59] --- COMPLETED SUCCESSFULLY: daily_pipeline.py ---
+[2026-06-09 01:41:59] Sleeping for 10 minutes to clear RAM and cool CPU...
+[2026-06-09 01:51:59] --- STARTING: etf_daily_pipeline.py ---
+=== DYNAMIC ETF SCREENER: SCANNING MARKET OPPORTUNITIES ===
+Scanning Universe of 35 ETFs for extreme momentum and volatility...
+
+--- TOP 10 DYNAMIC ETF TARGETS FOR THIS WEEK ---
+#1 MULL  | Score: 3.9814 | 30d Return: +181.0% | Vol: 220.0%
+#2 SMCX  | Score: 2.4453 | 30d Return: +114.7% | Vol: 213.3%
+#3 NEBX  | Score: 2.2386 | 30d Return: +92.0% | Vol: 243.4%
+#4 SNXX  | Score: 2.1211 | 30d Return: +107.5% | Vol: 197.3%
+#5 MSTZ  | Score: 0.6786 | 30d Return: +47.3% | Vol: 143.4%
+#6 XLK   | Score: 0.0474 | 30d Return: +14.7% | Vol: 32.2%
+#7 IGV   | Score: 0.0466 | 30d Return: +12.0% | Vol: 39.0%
+#8 MTUM  | Score: 0.0394 | 30d Return: +12.2% | Vol: 32.2%
+#9 UDOW  | Score: 0.0338 | 30d Return: +9.1% | Vol: 37.3%
+#10 XLV   | Score: 0.0106 | 30d Return: +6.4% | Vol: 16.6%
+
+SUCCESS: Dynamically injected 10 high-octane ETFs into the pipeline engine!
+Saved to: C:\Users\AviShemla\AntiGravity\financial_data\Dynamic_Target_ETFs.json
+
+=== STARTING MULTI-ETF DAILY PIPELINE ===
+[WARNINGS] Cleared pipeline warning logs.
+
+Step 0: Running Dynamic ETF Screener...
+
+--- Processing MULL ---
+Step 1: Building Hybrid Matrix for MULL...
+Step 1.5: Running Fast Screener for MULL (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for MULL...
+
+--- Processing SMCX ---
+Step 1: Building Hybrid Matrix for SMCX...
+Step 1.5: Running Fast Screener for SMCX (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for SMCX...
+
+--- Processing NEBX ---
+Step 1: Building Hybrid Matrix for NEBX...
+Step 1.5: Running Fast Screener for NEBX (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for NEBX...
+
+--- Processing SNXX ---
+Step 1: Building Hybrid Matrix for SNXX...
+Step 1.5: Running Fast Screener for SNXX (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for SNXX...
+
+--- Processing MSTZ ---
+Step 1: Building Hybrid Matrix for MSTZ...
+Step 1.5: Running Fast Screener for MSTZ (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for MSTZ...
+
+--- Processing XLK ---
+Step 1: Building Hybrid Matrix for XLK...
+Step 1.5: Running Fast Screener for XLK (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for XLK...
+
+--- Processing IGV ---
+Step 1: Building Hybrid Matrix for IGV...
+Step 1.5: Running Fast Screener for IGV (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for IGV...
+
+--- Processing MTUM ---
+Step 1: Building Hybrid Matrix for MTUM...
+Step 1.5: Running Fast Screener for MTUM (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for MTUM...
+
+--- Processing UDOW ---
+Step 1: Building Hybrid Matrix for UDOW...
+Step 1.5: Running Fast Screener for UDOW (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for UDOW...
+
+--- Processing XLV ---
+Step 1: Building Hybrid Matrix for XLV...
+Step 1.5: Running Fast Screener for XLV (11,000 combinations)...
+Step 2: Running export_etf_scorecard.py for XLV...
+
+Step 2.1: Compiling Single Excel Scorecard...
+
+Step 2.2: Running QA Models Bounds Validation...
+
+[QA CHECK] Running bounds checking on Stock Bayesian Scorecard at C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx...
+[QA SUMMARY] Stock Bayesian Scorecard bounds validation passed.
+
+[QA CHECK] Running bounds checking on Compiled ETF Bayesian Scorecard at C:\Users\AviShemla\AntiGravity\financial_data\All_ETFs_Scorecard.xlsx...
+[QA SUMMARY] Compiled ETF Bayesian Scorecard bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLK) at C:\Users\AviShemla\AntiGravity\financial_data\XLK_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLK) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLV) at C:\Users\AviShemla\AntiGravity\financial_data\XLV_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLV) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLY) at C:\Users\AviShemla\AntiGravity\financial_data\XLY_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLY) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLF) at C:\Users\AviShemla\AntiGravity\financial_data\XLF_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLF) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLC) at C:\Users\AviShemla\AntiGravity\financial_data\XLC_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLC) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLI) at C:\Users\AviShemla\AntiGravity\financial_data\XLI_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLI) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLE) at C:\Users\AviShemla\AntiGravity\financial_data\XLE_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLE) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLP) at C:\Users\AviShemla\AntiGravity\financial_data\XLP_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLP) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLU) at C:\Users\AviShemla\AntiGravity\financial_data\XLU_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLU) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLRE) at C:\Users\AviShemla\AntiGravity\financial_data\XLRE_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLRE) bounds validation passed.
+
+[QA CHECK] Running bounds checking on Individual ETF Scorecard (XLB) at C:\Users\AviShemla\AntiGravity\financial_data\XLB_Bayesian_Scorecard.xlsx...
+[QA SUMMARY] Individual ETF Scorecard (XLB) bounds validation passed.
+
+
+Step 3: Running Unified ETF Virtual Broker...
+
+Step 4: Generating ETF 30-Day Trial Excel Report...
+
+=== MULTI-ETF DAILY PIPELINE COMPLETED SUCCESSFULLY ===
+Summary email successfully sent via Outlook to avi.shemla@gmail.com!
+[2026-06-09 01:58:30] --- COMPLETED SUCCESSFULLY: etf_daily_pipeline.py ---
+[2026-06-09 01:58:30] --- Initiating Git Auto-Backup ---
+warning: in the working copy of 'QA_Historical_Log.md', LF will be replaced by CRLF the next time Git touches it
+[master 9a58857] Auto-Backup: Pipeline execution on 2026-06-09
+ 6 files changed, 35 insertions(+), 362636 deletions(-)
+ delete mode 100644 financial_data/SP500_Clean_Advanced_Analysis.csv.bak
+[2026-06-09 01:58:31] Git Auto-Backup completed successfully.
+[2026-06-09 01:58:31] --- Extracting Mega-Macro Predictors ---
+[2026-06-09 01:58:31] --- STARTING: extract_mega_macro.py ---
+=== EXTRACTING MEGA-MACRO PHASE 1 PREDICTORS ===
+Downloading massive historical datasets from Yahoo Finance with safe delays...
+  -> Extracting ^TNX...
+  -> Extracting ^IRX...
+  -> Extracting HYG...
+  -> Extracting IEF...
+  -> Extracting SPHB...
+  -> Extracting SPLV...
+  -> Extracting CL=F...
+  -> Extracting HG=F...
+  -> Extracting UUP...
+Engineering Institutional Spread and Flow Tensors...
+SUCCESS: Engineered 14 Mega-Macro Tensors.
+Saved 1250 historical trading days to C:\Users\AviShemla\AntiGravity\financial_data\Mega_Macro_Features.csv
+[2026-06-09 01:58:55] --- COMPLETED SUCCESSFULLY: extract_mega_macro.py ---
+[2026-06-09 01:58:55] --- Initiating Ghost Pipeline A/B Test ---
+[2026-06-09 01:58:55] --- STARTING: export_bayesian_scorecard_TNX.py ---
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+$TGNA: possibly delisted; no price data found  (period=1y) (Yahoo error = "No data found, symbol may be delisted")
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 275 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 274 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:51: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  comb = pd.concat([target_t, shifted_preds], axis=1).loc[start_date:next_biz_day].dropna(how='all', axis=1)
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3023: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[:, None]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\lib\_function_base_impl.py:3024: RuntimeWarning: invalid value encountered in divide
+  c /= stddev[None, :]
+C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py:127: Pandas4Warning: Sorting by default when concatenating all DatetimeIndex is deprecated.  In the future, pandas will respect the default of `sort=False`. Specify `sort=True` or `sort=False` to silence this message. If you see this warnings when not directly calling concat, report a bug to pandas.
+  data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
+C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pymc\distributions\timeseries.py:290: UserWarning: Initial distribution not specified, defaulting to `Normal.dist(0, 100)`.You can specify an init_dist manually to suppress this warning.
+  warnings.warn(
+NUTS[nutpie]: [step_size, volatility, nu]
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+Rewrite failure due to: local_subtensor_merge
+node: Subtensor{i}(Subtensor{start:stop}.0, 0)
+TRACEBACK:
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 1920, in process_node
+    replacements = node_rewriter.transform(
+        fgraph, node, enforce_tracks=enforce_tracks
+    )
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\graph\rewriting\basic.py", line 993, in transform
+    return self.fn(fgraph, node)
+           ~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 434, in local_subtensor_merge
+    merge_two_slices(
+    ~~~~~~~~~~~~~~~~^
+        fgraph, slice1, xshape[pos_1], slices2[pos_2], ushape[pos_2]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pytensor\tensor\rewriting\subtensor.py", line 898, in merge_two_slices
+    n_val = sl1.stop - 1 - sl2 * sl1.step
+            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~
+OverflowError: Python integer 273 out of bounds for int8
+
+NUTS[nutpie]: [alpha_dir, beta_dir, alpha_mag, beta_mag, sigma_mag]
+Sampling: [y_obs_mag]
+Loading data for V2 Stochastic Volatility Test...
+Reading data...
+  351,990 rows | 480 tickers | 2021-06-28 to 2026-06-08
+  Schema: stdev=Daily_STDEV, vix=VIX_Close, fear=Market_Fear_Level
+  Analyst_Consensus detected — adding as predictor
+Merging Mega-Macro Phase 1 Tensors into global matrix...
+
+Processing ROKU (Adaptive Depth: 5)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing TGT (Adaptive Depth: 5)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing TSLA (Adaptive Depth: 4)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing NET (Adaptive Depth: 3)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing CDNS (Adaptive Depth: 5)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing HON (Adaptive Depth: 4)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing MTD (Adaptive Depth: 3)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing IBM (Adaptive Depth: 5)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing AAL (Adaptive Depth: 3)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing CRL (Adaptive Depth: 5)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+--- PAUSING 10 SECONDS TO COOL DOWN CPU & FLUSH RAM (Processed 10 tickers) ---
+
+Processing MU (Adaptive Depth: 3)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing RF (Adaptive Depth: 4)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing APH (Adaptive Depth: 4)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing PGR (Adaptive Depth: 4)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Processing PRU (Adaptive Depth: 5)...
+  => Running Rust-Compiled SV Engine...
+  => SV Engine SUCCESS.
+
+Writing formatted Test Excel Scorecard...
+
+Saved Formatted Scorecard to: C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx
+[2026-06-09 02:03:34] --- COMPLETED SUCCESSFULLY: export_bayesian_scorecard_TNX.py ---
+[2026-06-09 02:03:34] --- STARTING: executive_brief.py ---
+Generating Executive Assistant Brief...
+Executive Brief email successfully sent!
+[2026-06-09 02:03:35] --- COMPLETED SUCCESSFULLY: executive_brief.py ---
+[2026-06-09 02:03:35] --- Initiating 30-Day Walk-Forward Marathon ---
+[2026-06-09 02:03:35] --- STARTING: run_backtests.py ---
+"CRITICAL: Primary Python Engine failed or crashed! Attempting automatic failover to secondary bin\python.exe..." 
+[2026-06-09 07:48:15] === INITIATING ANTI-GRAVITY MASTER PIPELINE ===
+[2026-06-09 07:48:15] --- STARTING: daily_pipeline.py ---
+[2026-06-09 08:00:13] !!! ERROR: daily_pipeline.py failed with exit code 3221225786 !!!
+^C

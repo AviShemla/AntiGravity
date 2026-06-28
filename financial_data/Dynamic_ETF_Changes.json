@@ -1,0 +1,20 @@
+{
+    "Kept": [
+        "ITB",
+        "MSTZ",
+        "MTUM",
+        "MULL",
+        "NEBX",
+        "RDVY",
+        "SNXX",
+        "UDOW"
+    ],
+    "Added": [
+        "IYH",
+        "XLV"
+    ],
+    "Dropped": [
+        "XLI",
+        "XLK"
+    ]
+}

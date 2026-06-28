@@ -1,0 +1,16 @@
+"Attempting to boot master pipeline with primary Python Engine..." 
+=== AntiGravity Master Pipeline Catch-Up Protocol ===
+Traceback (most recent call last):
+  File "C:\Users\AviShemla\AntiGravity\laptop_catchup_controller.py", line 279, in <module>
+    catchup_everything_and_email()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\AviShemla\AntiGravity\laptop_catchup_controller.py", line 254, in catchup_everything_and_email
+    catchup_master_pipeline()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\AviShemla\AntiGravity\laptop_catchup_controller.py", line 67, in catchup_master_pipeline
+    missed_dates = get_missed_dates('master_pipeline')
+  File "C:\Users\AviShemla\AntiGravity\laptop_catchup_controller.py", line 25, in get_missed_dates
+    c = conn.cursor()
+        ^^^^^^^^^^^
+AttributeError: 'ClientSync' object has no attribute 'cursor'
+^C

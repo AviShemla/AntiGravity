@@ -1,0 +1,12 @@
+__pycache__/
+*.csv
+*.xlsx
+*.png
+*.jpg
+*.log
+.vscode/
+scratch/
+.streamlit/
+.pytest_cache/
+*.db
+.tmp.driveupload/

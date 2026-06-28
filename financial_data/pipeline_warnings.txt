@@ -1,0 +1,1 @@
+🚨 HISTORICAL_BASKET quarantined due to data fetch failure: Failed to download data via Yahoo API and Tiingo API (Rate Limits Exceeded).. Forced to HOLD.

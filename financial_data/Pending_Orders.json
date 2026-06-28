@@ -1,0 +1,72 @@
+{
+    "ETF_Conservative": {
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\ETF_Capital_Ledger_Conservative.csv",
+        "Persona": "ETF_Conservative",
+        "Date": "2026-06-12",
+        "Target_Cash": 10000.0,
+        "Target_Total_Equity": 10000.0,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {}
+    },
+    "ETF_Neutral": {
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\ETF_Capital_Ledger_Neutral.csv",
+        "Persona": "ETF_Neutral",
+        "Date": "2026-06-12",
+        "Target_Cash": 9983.62,
+        "Target_Total_Equity": 9983.62,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {}
+    },
+    "ETF_Dynamic": {
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\ETF_Capital_Ledger_Dynamic.csv",
+        "Persona": "ETF_Dynamic",
+        "Date": "2026-06-12",
+        "Target_Cash": 9983.62,
+        "Target_Total_Equity": 9983.62,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {}
+    },
+    "Conservative": {
+        "Persona": "Conservative",
+        "Date": "2026-06-11",
+        "Target_Cash": 9905.46,
+        "Target_Total_Equity": 9905.46,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {},
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\Capital_Ledger_Conservative.csv"
+    },
+    "Neutral": {
+        "Persona": "Neutral",
+        "Date": "2026-06-11",
+        "Target_Cash": 9582.86,
+        "Target_Total_Equity": 9582.86,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {},
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\Capital_Ledger_Neutral.csv"
+    },
+    "BallsForBrains": {
+        "Persona": "BallsForBrains",
+        "Date": "2026-06-11",
+        "Target_Cash": 9551.4,
+        "Target_Total_Equity": 9551.4,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {},
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\Capital_Ledger_BallsForBrains.csv"
+    },
+    "Dynamic": {
+        "Persona": "Dynamic",
+        "Date": "2026-06-11",
+        "Target_Cash": 9503.06,
+        "Target_Total_Equity": 9503.06,
+        "Target_Holdings": {},
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {},
+        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\Capital_Ledger_Dynamic.csv"
+    }
+}
