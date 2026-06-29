@@ -624,8 +624,9 @@ async function loadProdShadow() {
         const trProd = { x: data.dates, y: data.prod, name: 'Prod (BallsForBrains)', mode: 'lines', line: { color: '#32CD32', width: 4 } };
         const trTrans = { x: data.dates, y: data.trans, name: 'Shadow Transformer', mode: 'lines', line: { color: '#FF4136', width: 3, dash: 'dot' } };
         const trV1 = { x: data.dates, y: data.v1, name: 'Sandbox V1 Classic', mode: 'lines', line: { color: '#87CEEB', width: 3, dash: 'dash' } };
+        const trLstm = { x: data.dates, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
         
-        Plotly.newPlot('chart-prod-shadow', [trProd, trTrans, trV1], Object.assign({}, STD_LAYOUT, {
+        Plotly.newPlot('chart-prod-shadow', [trProd, trTrans, trV1, trLstm], Object.assign({}, STD_LAYOUT, {
             xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
             title: { text: "Performance Race: Prod vs Shadows", font: { color: 'white' } }

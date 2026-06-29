@@ -272,54 +272,70 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
             }
         });
 
-        // Wait for mermaid to render, then attach hover events
-        setTimeout(() => {
-            const tooltip = document.getElementById('custom-tooltip');
-            
-            // Mermaid uses SVG elements with id strings that match the node name inside a parent g.node
-            document.querySelectorAll('.node').forEach(node => {
-                node.addEventListener('mouseenter', (e) => {
-                    // Extract the raw node ID (Mermaid prefixes it with flowchart-...)
-                    const rawId = node.id;
-                    const nodeId = rawId.split('-').pop(); // rough extraction
-                    let data = nodeData[nodeId];
-                    
-                    // Fallback to searching the id string
-                    if(!data) {
-                        for(let key in nodeData) {
-                            if(rawId.includes(key)) data = nodeData[key];
+        // Use Event Delegation to dynamically capture hovers.
+        // This ensures the tooltip works even if Mermaid takes longer than 1.5s to render.
+        const tooltip = document.getElementById('custom-tooltip');
+
+        document.addEventListener('mouseover', (e) => {
+            const node = e.target.closest('.node');
+            if (node) {
+                const rawId = node.id || "";
+                let data = null;
+
+                // 1. Try splitting the raw id first
+                const parts = rawId.split('-');
+                for (let i = parts.length - 1; i >= 0; i--) {
+                    if (nodeData[parts[i]]) {
+                        data = nodeData[parts[i]];
+                        break;
+                    }
+                }
+
+                // 2. Fallback to includes check
+                if (!data) {
+                    for (let key in nodeData) {
+                        if (rawId.includes(key)) {
+                            data = nodeData[key];
+                            break;
                         }
                     }
+                }
 
-                    if (data) {
-                        let html = `
-                            <div class="tooltip-title">${data.name}</div>
-                            <div class="tooltip-row"><span class="tooltip-label">Purpose:</span> <span class="tooltip-value">${data.purpose}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Input:</span> <span class="tooltip-value">${data.input}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Output:</span> <span class="tooltip-value">${data.output}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Schedule:</span> <span class="tooltip-value">${data.schedule}</span></div>
-                        `;
-                        if (data.dependencies) {
-                            html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #d29922;">Dependencies:</span> <span class="tooltip-value">${data.dependencies}</span></div>`;
-                        }
-                        if (data.failsafe) {
-                            html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #2ea043;">Failsafe:</span> <span class="tooltip-value">${data.failsafe}</span></div>`;
-                        }
-                        tooltip.innerHTML = html;
-                        tooltip.style.opacity = '1';
+                if (data) {
+                    let html = `
+                        <div class="tooltip-title">${data.name}</div>
+                        <div class="tooltip-row"><span class="tooltip-label">Purpose:</span> <span class="tooltip-value">${data.purpose}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Input:</span> <span class="tooltip-value">${data.input}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Output:</span> <span class="tooltip-value">${data.output}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Schedule:</span> <span class="tooltip-value">${data.schedule}</span></div>
+                    `;
+                    if (data.dependencies) {
+                        html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #d29922;">Dependencies:</span> <span class="tooltip-value">${data.dependencies}</span></div>`;
                     }
-                });
+                    if (data.failsafe) {
+                        html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #2ea043;">Failsafe:</span> <span class="tooltip-value">${data.failsafe}</span></div>`;
+                    }
+                    tooltip.innerHTML = html;
+                    tooltip.style.opacity = '1';
+                }
+            } else {
+                tooltip.style.opacity = '0';
+            }
+        });
 
-                node.addEventListener('mousemove', (e) => {
-                    tooltip.style.left = (e.clientX + 20) + 'px';
-                    tooltip.style.top = (e.clientY + 20) + 'px';
-                });
+        document.addEventListener('mousemove', (e) => {
+            if (tooltip.style.opacity === '1') {
+                tooltip.style.left = (e.clientX + 20) + 'px';
+                tooltip.style.top = (e.clientY + 20) + 'px';
+            }
+        });
 
-                node.addEventListener('mouseleave', () => {
-                    tooltip.style.opacity = '0';
-                });
-            });
-        }, 1500); // Give mermaid time to render the SVG
+        // Hide tooltip if mouse leaves the page
+        document.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget) {
+                tooltip.style.opacity = '0';
+            }
+        });
     </script>
 </body>
 </html>

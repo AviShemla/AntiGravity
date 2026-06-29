@@ -25,13 +25,18 @@ def get_prod_equity(date_str):
 def load_state():
     if os.path.exists(STATE_JSON):
         with open(STATE_JSON, 'r') as f:
-            return json.load(f)
+            st = json.load(f)
+            if "LSTM_Shadow" not in st: st["LSTM_Shadow"] = 10000.0
+            if "holdings_lstm" not in st: st["holdings_lstm"] = None
+            return st
     return {
         "Transformer": 10000.0,
         "V1_Classic": 10000.0,
+        "LSTM_Shadow": 10000.0,
         "last_date": "2026-06-19",
         "holdings_transformer": None,
-        "holdings_v1": None
+        "holdings_v1": None,
+        "holdings_lstm": None
     }
 
 def save_state(state):
@@ -63,9 +68,11 @@ def run_tracker(target_date):
         
     ret_trans = get_return(state["holdings_transformer"], target_date)
     ret_v1 = get_return(state["holdings_v1"], target_date)
+    ret_lstm = get_return(state["holdings_lstm"], target_date)
     
     state["Transformer"] *= (1 + ret_trans)
     state["V1_Classic"] *= (1 + ret_v1)
+    state["LSTM_Shadow"] *= (1 + ret_lstm)
     
     prod_equity = get_prod_equity(target_date)
     
@@ -73,7 +80,8 @@ def run_tracker(target_date):
         "Date": target_date,
         "Prod": prod_equity,
         "Shadow_Transformer": round(state["Transformer"], 2),
-        "Sandbox_V1": round(state["V1_Classic"], 2)
+        "Sandbox_V1": round(state["V1_Classic"], 2),
+        "Shadow_LSTM": round(state["LSTM_Shadow"], 2)
     }
     
     df = pd.DataFrame([row])
@@ -88,7 +96,14 @@ def run_tracker(target_date):
     if os.path.exists(trans_csv):
         tdf = pd.read_csv(trans_csv)
         if not tdf.empty:
-            state["holdings_transformer"] = tdf.iloc[0]["Ticker"]
+            # FIX: Filter by engine type instead of just taking the first row
+            trans_rows = tdf[tdf['Engine'] == 'StockBrain']
+            if not trans_rows.empty:
+                state["holdings_transformer"] = trans_rows.iloc[0]["Ticker"]
+            
+            lstm_rows = tdf[tdf['Engine'] == 'LSTM_Shadow_V2']
+            if not lstm_rows.empty:
+                state["holdings_lstm"] = lstm_rows.iloc[0]["Ticker"]
             
     if os.path.exists(v1_csv):
         v1df = pd.read_csv(v1_csv)
@@ -97,7 +112,7 @@ def run_tracker(target_date):
             
     state["last_date"] = target_date
     save_state(state)
-    print(f"Saved stats: Prod=${prod_equity}, Trans=${state['Transformer']:.2f}, V1=${state['V1_Classic']:.2f}")
+    print(f"Saved stats: Prod=${prod_equity}, Trans=${state['Transformer']:.2f}, V1=${state['V1_Classic']:.2f}, LSTM=${state['LSTM_Shadow']:.2f}")
 
 if __name__ == "__main__":
     import sys

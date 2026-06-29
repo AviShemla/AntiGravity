@@ -583,6 +583,7 @@ def get_prod_shadow():
         'prod': df['Prod'].tolist(),
         'trans': df['Shadow_Transformer'].tolist(),
         'v1': df['Sandbox_V1'].tolist(),
+        'lstm': df.get('Shadow_LSTM', pd.Series([10000.0]*len(df))).tolist(),
         'table': df.iloc[::-1].to_dict('records')
     }
 

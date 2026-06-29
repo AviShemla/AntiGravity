@@ -21,11 +21,8 @@ def get_missed_dates(pipeline_name):
         print("pandas_market_calendars missing. Falling back to today.")
         return [pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')]
         
-    conn = database_manager.get_connection()
-    c = conn.cursor()
-    c.execute("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = ?", (pipeline_name,))
-    row = c.fetchone()
-    conn.close()
+    last_completed = database_manager.get_last_continuity_date(pipeline_name)
+    row = (last_completed,) if last_completed else None
     
     nyse = mcal.get_calendar('NYSE')
     now = pd.Timestamp.now(tz='America/New_York')
@@ -45,15 +42,7 @@ def get_missed_dates(pipeline_name):
     return [d.strftime('%Y-%m-%d') for d in missed_sessions.index]
 
 def mark_completed(pipeline_name, date_str):
-    conn = database_manager.get_connection()
-    c = conn.cursor()
-    c.execute('''
-        INSERT INTO process_continuity (pipeline_name, last_completed_date)
-        VALUES (?, ?)
-        ON CONFLICT(pipeline_name) DO UPDATE SET last_completed_date=excluded.last_completed_date
-    ''', (pipeline_name, date_str))
-    conn.commit()
-    conn.close()
+    database_manager.update_continuity(pipeline_name, date_str)
 
 def send_error_email(subject, msg):
     try:

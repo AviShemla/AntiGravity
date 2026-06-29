@@ -166,6 +166,37 @@ def run_daily_inference():
                     })
         else:
             print(">>> Skipping ETF Inference: Unified dataset missing (Day 1 Scenario).")
+            
+    # ==========================================
+    # 3. ONLINE LSTM SHADOW INFERENCE
+    # ==========================================
+    print("\n>>> Waking up Online LSTM Shadow Engine (Phase 3)...")
+    try:
+        import dl_lstm_shadow
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        print(f"    -> Running fast online LSTM training for {len(TARGET_UNIVERSE)} stocks...")
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_t = {executor.submit(dl_lstm_shadow.process_stock, t): t for t in TARGET_UNIVERSE}
+            for future in as_completed(future_to_t):
+                t = future_to_t[future]
+                try:
+                    ticker, prob, last_close, err = future.result()
+                    if err is None:
+                        predictions.append({
+                            'Date': pd.Timestamp.now().strftime('%Y-%m-%d'),
+                            'Ticker': ticker,
+                            'Last_Close': last_close,
+                            'Transformer_P(UP)': round(prob, 4),
+                            'AI_Signal': 'BUY' if prob > 0.55 else 'HOLD',
+                            'Engine': 'LSTM_Shadow_V2'
+                        })
+                    else:
+                        print(f"    [WARNING] LSTM failed on {t}: {err}")
+                except Exception as ex:
+                    print(f"    [WARNING] LSTM crashed on {t}: {ex}")
+    except Exception as e:
+        print(f"    [ERROR] Failed to run LSTM Shadow Engine: {e}")
                 
     # Save the Shadow Scorecard
     if predictions:
