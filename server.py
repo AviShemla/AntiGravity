@@ -388,34 +388,24 @@ def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = 
         df_ai = df_ai.rename(columns={'index': ''})
         ai_ledger = df_ai.fillna("").to_dict('records')
         
-        # Get Broker Trial Ledger and Logs
-        trial_path = os.path.join(BASE_DIR, 'Broker_30Day_Trial.xlsx' if mode == 'Single' else 'ETF_Broker_30Day_Trial.xlsx')
+        # Get Broker Trial Ledger and Logs from SQL DB
         broker_ledger = []
         recent_log = []
         
-        persona_str = persona
-        if persona == 'BallsForBrains':
-            persona_str = 'Balls For Brain'
+        p_name = persona if mode == "Single" else f"ETF_{persona.replace('BallsForBrains', 'Balls For Brain')}"
         
-        if os.path.exists(trial_path):
-            try:
-                df_trial = pd.read_excel(trial_path, sheet_name='Daily Tracking')
-                prefixed_cols = [c for c in df_trial.columns if f'{persona_str}_' in c]
-                if prefixed_cols:
-                    avail_cols = ['Date'] + prefixed_cols
-                    b_df = df_trial[avail_cols].copy()
-                    b_df = b_df.rename(columns={c: c.replace(f'{persona_str}_', '') for c in prefixed_cols})
-                    broker_ledger = format_df_for_display(b_df.iloc[::-1]).fillna("").to_dict('records')
-                else:
-                    p_cols = ['Date', 'Total_Equity', 'Cash', 'Daily_PnL_JSON', 'Holdings_JSON']
-                    avail_cols = [c for c in p_cols if c in df_trial.columns]
-                    broker_ledger = format_df_for_display(df_trial[avail_cols].iloc[::-1]).fillna("").to_dict('records')
+        try:
+            df_trial = database_manager.get_ledger(p_name)
+            if not df_trial.empty:
+                p_cols = ['Date', 'Total_Equity', 'Cash', 'Daily_PnL_JSON', 'Holdings_JSON', 'Intraday_Status']
+                avail_cols = [c for c in p_cols if c in df_trial.columns]
+                broker_ledger = format_df_for_display(df_trial[avail_cols].iloc[::-1]).fillna("").to_dict('records')
                 
-                recent_trades = get_recent_trades(df_trial, persona_str)
+                recent_trades = get_recent_trades(df_trial, p_name)
                 if recent_trades:
                     recent_log = recent_trades
-            except:
-                pass
+        except:
+            pass
 
         # Race PnL for single ticker
         race_pnl = {"Conservative": {"dates": [], "values": []}, "Neutral": {"dates": [], "values": []}, "BallsForBrains": {"dates": [], "values": []}}
