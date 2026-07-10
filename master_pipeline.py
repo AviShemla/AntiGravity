@@ -127,7 +127,21 @@ def main():
         EXECUTIVE_SCRIPT = os.path.join(BASE_DIR, 'executive_brief.py')
         run_script(EXECUTIVE_SCRIPT, "executive_brief.py")
             
-        # 7.5 FINANCIAL QA AUDIT
+        # 7.5 DEEP SYSTEM QA AUDIT SUITE
+        log_msg("--- Running Deep Data Continuity QA ---")
+        DATA_QA_SCRIPT = os.path.join(BASE_DIR, 'qa_data_continuity_per_ticker.py')
+        data_qa_res = subprocess.run([sys.executable, DATA_QA_SCRIPT], cwd=BASE_DIR)
+        if data_qa_res.returncode != 0:
+            log_msg("!!! FATAL: Data Continuity Errors Detected! Orphaned Holdings or Missing Tail-Ends. Aborting Pipeline !!!")
+            sys.exit(1)
+            
+        log_msg("--- Running Deep ML Models QA ---")
+        MODEL_QA_SCRIPT = os.path.join(BASE_DIR, 'qa_models.py')
+        model_qa_res = subprocess.run([sys.executable, MODEL_QA_SCRIPT], cwd=BASE_DIR)
+        if model_qa_res.returncode != 0:
+            log_msg("!!! FATAL: Bayesian Model Boundary or Scorecard Errors Detected! Aborting Pipeline !!!")
+            sys.exit(1)
+
         log_msg("--- Running Strict Financial QA Audit ---")
         FINANCIAL_QA_SCRIPT = os.path.join(BASE_DIR, 'qa_financial_audit.py')
         fin_qa_res = subprocess.run([sys.executable, FINANCIAL_QA_SCRIPT], cwd=BASE_DIR)
@@ -156,6 +170,11 @@ def main():
         print("=== PIPELINE COMPLETE ===")
         MONITOR_SCRIPT = os.path.join(BASE_DIR, 'system_health_monitor.py')
         subprocess.run([sys.executable, MONITOR_SCRIPT], cwd=BASE_DIR)
+        
+        # --- NEW: MASTER QA AUDITOR ---
+        log_msg("--- Running Master System QA Auditor ---")
+        QA_AUDITOR_SCRIPT = os.path.join(BASE_DIR, 'system_qa_auditor.py')
+        subprocess.run([sys.executable, QA_AUDITOR_SCRIPT], cwd=BASE_DIR)
         
     except Exception as fatal_e:
         err_msg = f"!!! UNEXPECTED MASTER PIPELINE CRASH: {fatal_e} !!!"

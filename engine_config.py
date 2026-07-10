@@ -11,8 +11,8 @@ def configure_bayesian_engine():
     
     # Return the standardized config dictionary for pm.sample()
     sampler_config = {
-        "draws": 1000,
-        "tune": 1000,
+        "draws": 500,
+        "tune": 500,
         "chains": 1,
         "target_accept": 0.85,
         "random_seed": 42,
@@ -27,8 +27,8 @@ def configure_sv_engine():
     Returns the distinct sampling configuration for the Stochastic Volatility sub-engine.
     """
     sv_config = {
-        "draws": 1000,
-        "tune": 1000,
+        "draws": 500,
+        "tune": 500,
         "chains": 1,
         "cores": 1,
         "progressbar": False,

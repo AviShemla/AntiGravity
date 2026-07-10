@@ -15,7 +15,7 @@ STATE_JSON = os.path.join(DATA_DIR, "prod_shadow_state.json")
 def get_prod_equity(date_str):
     try:
         import database_manager
-        df = database_manager.execute_query(f"SELECT total_equity FROM capital_ledgers WHERE persona='BallsForBrains' AND date='{date_str}'")
+        df = database_manager.execute_query(f"SELECT total_equity FROM capital_ledgers WHERE persona='BallsForBrains' AND date LIKE '{date_str}%'")
         if not df.empty:
             return float(df['total_equity'].iloc[-1])
     except:

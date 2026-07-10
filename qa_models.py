@@ -103,10 +103,10 @@ def check_scorecard_bounds(file_path, prefix="Scorecard"):
                 ws.cell(row=last_excel_row, column=kelly_idx, value=0.0)
                 
     if anomalies_found:
-        wb.save(excel_path)
+        wb.save(file_path)
         print(f"[QA SUMMARY] Bounds violation resolved. Scorecard edited and saved.")
     else:
-        print(f"[QA SUMMARY] {file_desc} bounds validation passed.")
+        print(f"[QA SUMMARY] {prefix} bounds validation passed.")
 
 def run_qa_checks():
     # 1. Check stock scorecard

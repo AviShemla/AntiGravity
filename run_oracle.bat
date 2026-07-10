@@ -2,10 +2,17 @@
 cd /d "C:\Users\AviShemla\AntiGravity"
 
 echo ===================================================
+echo Ensuring old Oracle background processes are stopped...
+echo ===================================================
+powershell -Command "Stop-Process -Name 'python', 'pythonw' -Force -ErrorAction SilentlyContinue"
+
+echo ===================================================
 echo Starting The Oracle Web Application (FastAPI)...
-echo Listening on http://127.0.0.1:8000
+echo Listening on port 80 (http://localhost)
 echo ===================================================
 
-start "" /b "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe" -m uvicorn server:app --host 0.0.0.0 --port 8000
-timeout /t 3 /nobreak >nul
-start "" http://127.0.0.1:8000
+:: Use pythonw.exe to run without a console window, which prevents stdout pipe blocking/hanging!
+start "" "C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe" -m uvicorn server:app --host 0.0.0.0 --port 80
+
+ping 127.0.0.1 -n 3 > nul
+start "" http://127.0.0.1/

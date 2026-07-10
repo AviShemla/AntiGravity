@@ -11,10 +11,10 @@ EXCEL_PATH = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 
 PERSONAS = {
     "Conservative": {
-        "threshold": 0.65,
+        "threshold": 0.60,
         "kelly_multiplier": 0.25,
         "max_alloc": 0.10,
-        "flat_fallback": 0.0,
+        "flat_fallback": 0.05,
         "ignore_kelly": False
     },
     "Neutral": {
@@ -36,7 +36,10 @@ PERSONAS = {
 def calculate_kelly_fraction(prob, expected_return, expected_volatility):
     if expected_return <= 0 or expected_volatility <= 0:
         return 0.0
-    R = expected_return / expected_volatility
+    R = 1.0
+    calculated_R = expected_return / expected_volatility
+    if calculated_R > 0.1:
+        R = calculated_R
     W = prob
     kelly_pct = W - ((1 - W) / R)
     return max(0.0, kelly_pct)

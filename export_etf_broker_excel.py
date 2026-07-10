@@ -4,7 +4,7 @@ import os
 
 BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
 OUTPUT_EXCEL = os.path.join(BASE_DIR, 'ETF_Broker_30Day_Trial.xlsx')
-PERSONAS = ["Conservative", "Neutral", "Balls For Brain"]
+PERSONAS = ["Conservative", "Neutral", "BallsForBrains"]
 
 def process_ledger(persona_name):
     import sys
@@ -112,7 +112,7 @@ def generate_excel():
             
         # Parse raw ledger for Ticker Summary
         import database_manager
-        file_p = "BallsForBrains" if p == "Balls For Brain" else p
+        file_p = p
         raw_df = database_manager.get_ledger(f"ETF_{file_p}")
         if not raw_df.empty:
             has_settled_trades = False
@@ -309,7 +309,7 @@ def generate_excel():
     last_row3 = len(ticker_df) + 1
     worksheet3.conditional_format(f'A2:A{last_row3}', {'type': 'cell', 'criteria': '==', 'value': '"Conservative"', 'format': fmt_conservative})
     worksheet3.conditional_format(f'A2:A{last_row3}', {'type': 'cell', 'criteria': '==', 'value': '"Neutral"', 'format': fmt_neutral})
-    worksheet3.conditional_format(f'A2:A{last_row3}', {'type': 'cell', 'criteria': '==', 'value': '"Balls For Brain"', 'format': fmt_balls})
+    worksheet3.conditional_format(f'A2:A{last_row3}', {'type': 'cell', 'criteria': '==', 'value': '"BallsForBrains"', 'format': fmt_balls})
 
     writer.close()
     print(f"Successfully generated: {OUTPUT_EXCEL}")

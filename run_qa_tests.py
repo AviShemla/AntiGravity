@@ -119,11 +119,7 @@ try:
     try:
         # intraday_tracker usually runs logic in its __main__ or has a function
         # let's execute the script file since we modified sys.argv
-        with open('intraday_tracker.py', 'r') as f:
-            code = f.read()
-            
-        exec_namespace = {'__name__': '__main__'}
-        exec(code, exec_namespace)
+        intraday_tracker.run_intraday_tracker(target_date='2026-06-12')
         
         # Check if it succeeded without aborting into cash
         # If it aborted into cash, the ledger would show Cash = Total_Equity and empty holdings

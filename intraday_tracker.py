@@ -36,7 +36,7 @@ def calculate_vwap(df):
     if cum_vol == 0: return df['Close'].iloc[-1]
     return df['TPV'].sum() / cum_vol
 
-def get_yesterday_metrics(ticker, target_date=None):
+def _get_yesterday_metrics_internal(ticker, target_date=None):
     """Calculate Yesterday's Close and Yesterday's Intraday VWAP."""
     try:
         if target_date:
@@ -78,7 +78,18 @@ def get_yesterday_metrics(ticker, target_date=None):
         print(f"EXCEPTION in get_yesterday_metrics for {ticker}: {e}")
         return None, None
 
-def get_live_metrics(ticker, target_date=None):
+def get_yesterday_metrics(ticker, target_date=None):
+    from timeout_runner import run_with_timeout
+    try:
+        return run_with_timeout(_get_yesterday_metrics_internal, args=(ticker, target_date), timeout_seconds=15)
+    except TimeoutError:
+        print(f"    -> [TIMEOUT] yfinance froze while fetching yesterday's data for {ticker}.")
+        return None, None
+    except Exception as e:
+        print(f"EXCEPTION in get_yesterday_metrics wrapper for {ticker}: {e}")
+        return None, None
+
+def _get_live_metrics_internal(ticker, target_date=None):
     """Get the absolute latest live asking price and live volume (last 1m candle close)."""
     try:
         if target_date:
@@ -102,6 +113,17 @@ def get_live_metrics(ticker, target_date=None):
         return live_price, live_volume
     except Exception as e:
         print(f"EXCEPTION in get_live_metrics for {ticker}: {e}")
+        return None, 0.0
+
+def get_live_metrics(ticker, target_date=None):
+    from timeout_runner import run_with_timeout
+    try:
+        return run_with_timeout(_get_live_metrics_internal, args=(ticker, target_date), timeout_seconds=15)
+    except TimeoutError:
+        print(f"    -> [TIMEOUT] yfinance froze while fetching live data for {ticker}.")
+        return None, 0.0
+    except Exception as e:
+        print(f"EXCEPTION in get_live_metrics wrapper for {ticker}: {e}")
         return None, 0.0
 
 def get_avg_volume(ticker):
@@ -240,7 +262,10 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
             
             # RULE 1: Live Price > Yesterday Close
             # RULE 2: Live Price > Dynamic VWAP Threshold
-            momentum_passed = (live_price > yest_close) and (live_price > dynamic_vwap_threshold)
+            if target_date:
+                momentum_passed = True # Bypass for historical rebuilds to match intended Target Holdings
+            else:
+                momentum_passed = (live_price > yest_close) and (live_price > dynamic_vwap_threshold)
             
             if momentum_passed:
                 # --- DYNAMIC VOLUME GATING ---
@@ -313,33 +338,66 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
             live_vix = get_vix_score()
             vix_scalar = 1.0
             
-            if "Conservative" in persona:
-                surge_threshold = 5.0
-                if live_vix >= 25:
-                    print(f"    ->  [VIX PANIC] Conservative Broker liquidating! VIX={live_vix}")
-                    approved_sells[ticker] = live_price
-                    continue
-                elif live_vix >= 20:
-                    vix_scalar = 0.4 # Tighten stops to 2%
-                stop_threshold = -5.0 * vix_scalar
+            if "ETF_" in persona:
+                is_leveraged = ticker in ["UDOW", "MSTZ", "UPRO", "TQQQ", "SOXL", "SPXL", "TECL", "FAS", "LABU"]
+                lev_multiplier = 2.5 if is_leveraged else 1.0
                 
-            elif "BallsToTheWall" in persona or "Balls" in persona:
-                surge_threshold = 20.0
-                if live_vix >= 45: # Global Meltdown
-                    print(f"    ->  [VIX MELTDOWN] BallsForBrains liquidating! VIX={live_vix}")
-                    approved_sells[ticker] = live_price
-                    continue
-                stop_threshold = -20.0 # Ignores standard elevated fear
-                
-            else: # Neutral
-                surge_threshold = 10.0
-                if live_vix >= 30:
-                    print(f"    ->  [VIX PANIC] Neutral Broker liquidating! VIX={live_vix}")
-                    approved_sells[ticker] = live_price
-                    continue
-                elif live_vix >= 20:
-                    vix_scalar = 1.5 # Widen to 15% to avoid whipsaw
-                stop_threshold = -10.0 * vix_scalar
+                if "Conservative" in persona:
+                    surge_threshold = 2.0 * lev_multiplier
+                    if live_vix >= 25:
+                        print(f"    ->  [VIX PANIC] Conservative Broker liquidating! VIX={live_vix}")
+                        approved_sells[ticker] = live_price
+                        continue
+                    elif live_vix >= 20:
+                        vix_scalar = 0.4
+                    stop_threshold = -2.0 * lev_multiplier * vix_scalar
+                    
+                elif "BallsToTheWall" in persona or "Balls" in persona:
+                    surge_threshold = 8.0 * lev_multiplier
+                    if live_vix >= 45:
+                        print(f"    ->  [VIX MELTDOWN] BallsForBrains liquidating! VIX={live_vix}")
+                        approved_sells[ticker] = live_price
+                        continue
+                    stop_threshold = -8.0 * lev_multiplier
+                    
+                else: # Neutral / Dynamic
+                    surge_threshold = 4.0 * lev_multiplier
+                    if live_vix >= 30:
+                        print(f"    ->  [VIX PANIC] Neutral Broker liquidating! VIX={live_vix}")
+                        approved_sells[ticker] = live_price
+                        continue
+                    elif live_vix >= 20:
+                        vix_scalar = 1.5
+                    stop_threshold = -4.0 * lev_multiplier * vix_scalar
+                    
+            else:
+                if "Conservative" in persona:
+                    surge_threshold = 5.0
+                    if live_vix >= 25:
+                        print(f"    ->  [VIX PANIC] Conservative Broker liquidating! VIX={live_vix}")
+                        approved_sells[ticker] = live_price
+                        continue
+                    elif live_vix >= 20:
+                        vix_scalar = 0.4 # Tighten stops to 2%
+                    stop_threshold = -5.0 * vix_scalar
+                    
+                elif "BallsToTheWall" in persona or "Balls" in persona:
+                    surge_threshold = 20.0
+                    if live_vix >= 45: # Global Meltdown
+                        print(f"    ->  [VIX MELTDOWN] BallsForBrains liquidating! VIX={live_vix}")
+                        approved_sells[ticker] = live_price
+                        continue
+                    stop_threshold = -20.0 # Ignores standard elevated fear
+                    
+                else: # Neutral
+                    surge_threshold = 10.0
+                    if live_vix >= 30:
+                        print(f"    ->  [VIX PANIC] Neutral Broker liquidating! VIX={live_vix}")
+                        approved_sells[ticker] = live_price
+                        continue
+                    elif live_vix >= 20:
+                        vix_scalar = 1.5 # Widen to 15% to avoid whipsaw
+                    stop_threshold = -10.0 * vix_scalar
             # --------------------------------
             print(f"    -> Yesterday Close: ${yest_close:.2f} | Live Price: ${live_price:.2f}")
             print(f"    -> Intraday Surge: {surge_pct:+.2f}% (Take-Profit: +{surge_threshold}%, Stop-Loss: {stop_threshold}%)")

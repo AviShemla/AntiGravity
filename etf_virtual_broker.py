@@ -14,7 +14,7 @@ except:
 PERSONAS = {
     "Conservative": {"threshold": 0.57, "kelly_multiplier": 0.25, "max_alloc": 0.10},
     "Neutral": {"threshold": 0.54, "kelly_multiplier": 0.50, "max_alloc": 0.10},
-    "Balls For Brain": {"threshold": 0.51, "kelly_multiplier": 1.0, "max_alloc": 0.10}
+    "BallsForBrains": {"threshold": 0.51, "kelly_multiplier": 1.0, "max_alloc": 0.10}
 }
 
 def calculate_kelly_fraction(prob, expected_return, expected_volatility):
@@ -127,6 +127,7 @@ def run_etf_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
+        if persona_name != 'BallsForBrains': continue
         print(f"--- Persona: {persona_name.upper()} ---")
         
         ledger = database_manager.get_ledger(f"ETF_{persona_name}")

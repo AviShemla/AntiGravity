@@ -111,7 +111,7 @@ async function loadHoldings(mode, selectId, prefix) {
     
     // Fetch and populate Select View Dropdown Options
     try {
-        const ddRes = await fetch(`${API_BASE}/dropdown?persona=${persona}&mode=${mode}`);
+        const ddRes = await fetch(`${API_BASE}/dropdown?persona=${persona}&mode=${mode}`, { cache: 'no-store' });
         if (ddRes.ok) {
             const options = await ddRes.json();
             const sel = document.getElementById(`view-${prefix}`);
@@ -132,7 +132,7 @@ async function loadHoldings(mode, selectId, prefix) {
     }
     
     try {
-        const response = await fetch(`${API_BASE}/holdings?persona=${persona}&mode=${mode}`);
+        const response = await fetch(`${API_BASE}/holdings?persona=${persona}&mode=${mode}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Data not found');
         
         const data = await response.json();
@@ -259,7 +259,7 @@ async function loadHoldings(mode, selectId, prefix) {
 
         // Fetch and Render 30-Day Multi-Broker Race
         try {
-            const raceRes = await fetch(`${API_BASE}/race?mode=${mode}`);
+            const raceRes = await fetch(`${API_BASE}/race?mode=${mode}`, { cache: 'no-store' });
             if (raceRes.ok) {
                 const raceData = await raceRes.json();
                 const raceTraces = [];
@@ -377,7 +377,7 @@ async function handleViewChange(prefix) {
     document.getElementById(`bayesian-${prefix}`).style.display = 'block';
     
     try {
-        const res = await fetch(`${API_BASE}/bayesian?ticker=${ticker}&persona=${persona}&mode=${mode}`);
+        const res = await fetch(`${API_BASE}/bayesian?ticker=${ticker}&persona=${persona}&mode=${mode}`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Failed to load bayesian data");
         const data = await res.json();
         
@@ -482,7 +482,7 @@ let olympicTimer = null;
 
 async function loadOlympic() {
     try {
-        const res = await fetch(`${API_BASE}/olympic`);
+        const res = await fetch(`${API_BASE}/olympic`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Olympic data not available");
         const data = await res.json();
         
@@ -550,7 +550,7 @@ async function loadOlympic() {
 
 async function loadAutopsy() {
     try {
-        const res = await fetch(`${API_BASE}/autopsy`);
+        const res = await fetch(`${API_BASE}/autopsy`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Autopsy data not available");
         const data = await res.json();
         
@@ -615,7 +615,7 @@ async function loadAutopsy() {
 
 async function loadProdShadow() {
     try {
-        const res = await fetch(`${API_BASE}/prod_shadow`);
+        const res = await fetch(`${API_BASE}/prod_shadow`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Prod vs Shadow data not available");
         const data = await res.json();
         

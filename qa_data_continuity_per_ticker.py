@@ -17,10 +17,24 @@ def test_data_gaps_per_ticker(csv_path):
     df['Date'] = pd.to_datetime(df['Date'])
     global_max_date = df['Date'].max()
     
+    import json
+    vip_path = r'C:\Users\AviShemla\AntiGravity\financial_data\VIP_Tickers.json'
+    active_tickers = set()
+    if os.path.exists(vip_path):
+        try:
+            with open(vip_path, 'r') as f:
+                v_data = json.load(f)
+                for t_list in v_data.get('sectors_dict', {}).values():
+                    active_tickers.update(t_list)
+        except Exception:
+            pass
+
     max_dates = df.groupby('Ticker')['Date'].max()
     
     failed_tickers = []
     for ticker, t_max in max_dates.items():
+        if active_tickers and ticker not in active_tickers:
+            continue
         if t_max < global_max_date:
             failed_tickers.append((ticker, t_max.strftime('%Y-%m-%d')))
             

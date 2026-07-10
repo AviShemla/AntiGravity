@@ -254,6 +254,18 @@ def download_ticker_with_failover(ticker, period=None, start=None):
     # Normalization: Yahoo Finance and Tiingo APIs require dashes instead of dots for class shares (e.g., BRK.B -> BRK-B)
     ticker_api = ticker.replace('.', '-')
 
+    if start:
+        # Check if the requested start date is in the future relative to NY time
+        import datetime
+        import pytz
+        ny_tz = pytz.timezone('America/New_York')
+        ny_now = datetime.datetime.now(ny_tz).date()
+        start_date_obj = pd.to_datetime(start).date()
+        
+        if start_date_obj > ny_now:
+            safe_print(f"  [INCREMENTAL SKIP] Requested start date {start} is in the future relative to NY time ({ny_now}). Skipping.")
+            return pd.DataFrame()
+            
     safe_print(f"  [YFINANCE] Fetching {ticker} (API String: {ticker_api})...")
     try:
         if start:
@@ -303,6 +315,10 @@ def download_ticker_with_failover(ticker, period=None, start=None):
         if df.index.tz is not None: df.index = df.index.tz_localize(None)
         safe_print(f"  [SUCCESS] Resolved data for {ticker} using Tiingo Institutional Failover!")
         return df
+
+    if start:
+        safe_print(f"  [INCREMENTAL SKIP] No new data found since {start} for {ticker}. Market likely closed or timezone mismatch. Skipping without quarantine.")
+        return pd.DataFrame()
 
     # If all failed: Quarantine the original ticker name
     reason = "Failed to download data via Yahoo API and Tiingo API (Rate Limits Exceeded)."

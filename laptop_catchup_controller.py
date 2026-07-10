@@ -246,7 +246,7 @@ def catchup_everything_and_email():
     print("\n==============================================")
     print("=== FINAL QA GATE (100% GREEN REQUIREMENT) ===")
     print("==============================================\n")
-    fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR)
+    fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "system_qa_auditor.py")], cwd=BASE_DIR)
     if fin_qa.returncode != 0:
         print("FATAL: Final QA Audit Failed! The system is NOT 100% green.")
         print("Emails will NOT be dispatched to prevent broken reporting.")

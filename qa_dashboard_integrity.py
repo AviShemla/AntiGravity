@@ -86,6 +86,22 @@ def test_dashboard_continuity():
                 print(f"SUCCESS - All {len(stock_tickers)} live Stock Holdings mathematically verified to exist in Email Scorecard.")
     except Exception as e:
         print(f"Warning: Could not run Stock Sync Check: {e}")
+        
+    # 5. Check Prod vs Shadow Sync
+    try:
+        shadow_path = os.path.join(DATA_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
+        stock_ledger = database_manager.get_ledger('BallsForBrains')
+        if not stock_ledger.empty and os.path.exists(shadow_path):
+            latest_db_date = str(stock_ledger.iloc[-1]['Date']).split()[0]
+            shadow_df = pd.read_csv(shadow_path)
+            latest_shadow_date = str(shadow_df.iloc[-1]['Date']).split()[0]
+            
+            if latest_db_date != latest_shadow_date:
+                print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
+                sys.exit(1)
+            print(f"SUCCESS - Prod vs Shadow chart dates perfectly synced to Master Ledger ({latest_shadow_date}).")
+    except Exception as e:
+        print(f"Warning: Could not run Shadow Sync Check: {e}")
 
     print("=== QA AUDIT PASSED: No dashboard wipeouts or sync mismatches detected. ===")
 

@@ -111,7 +111,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         
         with pm.Model() as sv_model:
             step_size = pm.Exponential('step_size', 10)
-            volatility = pm.GaussianRandomWalk('volatility', sigma=step_size, shape=len(returns_full))
+            volatility = pm.GaussianRandomWalk('volatility', sigma=step_size, shape=(int(len(returns_full)),))
             nu = pm.Exponential('nu', 0.1)
             returns_obs = pm.StudentT('returns_obs', nu=nu, lam=pm.math.exp(-2 * volatility), observed=returns_full)
             trace_sv = pm.sample(**sv_config)
@@ -140,13 +140,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         X_data = pm.Data("X", X_train_s)
         
         alpha_dir = pm.Normal("alpha_dir", mu=fundamental_score, sigma=1)
-        beta_dir = pm.Normal("beta_dir", mu=0, sigma=0.5, shape=X_train_s.shape[1])
+        beta_dir = pm.Normal("beta_dir", mu=0, sigma=0.5, shape=(X_train_s.shape[1],))
         mu_dir = alpha_dir + pm.math.dot(X_data, beta_dir)
         p = pm.Deterministic("p", pm.math.sigmoid(mu_dir))
         pm.Bernoulli("y_obs_dir", p=p, observed=y_train)
         
         alpha_mag = pm.Normal("alpha_mag", mu=0, sigma=2)
-        beta_mag = pm.Normal("beta_mag", mu=0, sigma=1, shape=X_train_s.shape[1])
+        beta_mag = pm.Normal("beta_mag", mu=0, sigma=1, shape=(X_train_s.shape[1],))
         mu_mag = alpha_mag + pm.math.dot(X_data, beta_mag)
         sigma_mag = pm.HalfNormal("sigma_mag", sigma=3)
         pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag, observed=y_mag_train)
@@ -157,13 +157,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         X_data_t = pm.Data("X", X_test_s)
         
         alpha_dir = pm.Normal("alpha_dir", mu=fundamental_score, sigma=1)
-        beta_dir = pm.Normal("beta_dir", mu=0, sigma=0.5, shape=X_train_s.shape[1])
+        beta_dir = pm.Normal("beta_dir", mu=0, sigma=0.5, shape=(X_train_s.shape[1],))
         mu_dir = alpha_dir + pm.math.dot(X_data_t, beta_dir)
         p = pm.Deterministic("p", pm.math.sigmoid(mu_dir))
         pm.Bernoulli("y_obs_dir", p=p)
         
         alpha_mag = pm.Normal("alpha_mag", mu=0, sigma=2)
-        beta_mag = pm.Normal("beta_mag", mu=0, sigma=1, shape=X_train_s.shape[1])
+        beta_mag = pm.Normal("beta_mag", mu=0, sigma=1, shape=(X_train_s.shape[1],))
         mu_mag = alpha_mag + pm.math.dot(X_data_t, beta_mag)
         sigma_mag = pm.HalfNormal("sigma_mag", sigma=3)
         pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag)

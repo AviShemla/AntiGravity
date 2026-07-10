@@ -265,10 +265,14 @@ def run_simulation(test_name, tickers_list, start_cash=10000.0):
                         vol = buys[t]['exp_vol'] if buys[t]['exp_vol'] > 0 else 0.01
                         
                         # Kelly
-                        if ret <= 0.0001:
+                        if ret <= 0.0001 or vol <= 0.0001:
                             kelly = 0.0
                         else:
-                            kelly = prob - ((1 - prob) / (ret / vol))
+                            R = 1.0
+                            calculated_R = ret / vol
+                            if calculated_R > 0.1:
+                                R = calculated_R
+                            kelly = prob - ((1 - prob) / R)
                         kelly = max(0.0, min(1.0, kelly))
                         alloc_pct = min(kelly, 0.20) # Max 20%
                         
@@ -328,7 +332,7 @@ for sec, ticks in vip_data.items():
     # Take top 10 to match the backtest size of the other two
     champ_tickers.extend(ticks[:10])
 
-# run_simulation("CHAMPION", list(set(champ_tickers)), start_cash_dict["CHAMPION"]) # Finished previously
+run_simulation("CHAMPION", list(set(champ_tickers)), start_cash_dict["CHAMPION"])
 run_simulation("EL_CAP", el_cap_tickers, start_cash_dict["EL_CAP"])
 run_simulation("EL_VOLTI", el_volti_tickers, start_cash_dict["EL_VOLTI"])
 

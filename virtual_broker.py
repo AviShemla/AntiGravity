@@ -86,6 +86,7 @@ def run_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
+        if persona_name != 'BallsForBrains': continue
         print(f"--- Persona: {persona_name.upper()} ---")
         print(f"Rules: Buy if P > {config['threshold']:.2f} | {config['kelly_multiplier']}x Kelly | Max {config['max_alloc']*100}% per stock")
         
@@ -146,11 +147,14 @@ def run_virtual_broker():
         settled_equity = current_cash
         daily_pnl = {}
         
+        skip_sheets = set()
         for sheet in xls.sheet_names:
             df = pd.read_excel(xls, sheet_name=sheet, skiprows=2)
             sheet_date_col = 'date' if 'date' in df.columns else 'Date'
             df = df[pd.to_datetime(df[sheet_date_col]) <= pd.to_datetime(target_date_for_ledger)]
-            if len(df) < 2: continue
+            if len(df) < 2:
+                skip_sheets.add(sheet)
+                continue
             
             settlement_row = df.iloc[-2]
             pending_row = df.iloc[-1]
@@ -214,7 +218,7 @@ def run_virtual_broker():
                     
         # --- ZOMBIE FAILSAFE LOGIC ---
         for held_ticker, item in holdings.items():
-            if held_ticker not in xls.sheet_names:
+            if held_ticker not in xls.sheet_names or held_ticker in skip_sheets:
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                 purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
                 
