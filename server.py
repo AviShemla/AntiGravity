@@ -229,7 +229,7 @@ def get_asset_breakdown(df):
 
 @app.get("/api/holdings")
 def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
-    p_name = persona if mode == "Single" else f"ETF_{persona.replace('BallsForBrains', 'Balls For Brain')}"
+    p_name = persona if mode == "Single" else f"ETF_{persona}"
     df = database_manager.get_ledger(p_name)
     if df.empty:
         raise HTTPException(status_code=404, detail="Ledger not found")
@@ -284,7 +284,7 @@ def get_race_data(mode: str = "Single"):
     import yfinance as yf
     
     for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
-        p_name = p if mode == "Single" else f"ETF_{p.replace('BallsForBrains', 'Balls For Brain')}"
+        p_name = p if mode == "Single" else f"ETF_{p}"
         df_p = database_manager.get_ledger(p_name)
         if not df_p.empty:
             eq_col = 'Total_Equity' if 'Total_Equity' in df_p.columns else f'{p}_Total_Equity'
@@ -339,7 +339,7 @@ def get_dropdown_options(persona: str = "BallsForBrains", mode: str = "Single"):
         except:
             pass
             
-    p_name = persona if mode == "Single" else f"ETF_{persona.replace('BallsForBrains', 'Balls For Brain')}"
+    p_name = persona if mode == "Single" else f"ETF_{persona}"
     try:
         df = database_manager.get_ledger(p_name)
         if not df.empty:
@@ -392,7 +392,7 @@ def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = 
         broker_ledger = []
         recent_log = []
         
-        p_name = persona if mode == "Single" else f"ETF_{persona.replace('BallsForBrains', 'Balls For Brain')}"
+        p_name = persona if mode == "Single" else f"ETF_{persona}"
         
         try:
             df_trial = database_manager.get_ledger(p_name)
@@ -410,7 +410,7 @@ def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = 
         # Race PnL for single ticker
         race_pnl = {"Conservative": {"dates": [], "values": []}, "Neutral": {"dates": [], "values": []}, "BallsForBrains": {"dates": [], "values": []}}
         for p in ["Conservative", "Neutral", "BallsForBrains"]:
-            p_name = p if mode == "Single" else f"ETF_{p.replace('BallsForBrains', 'Balls For Brain')}"
+            p_name = p if mode == "Single" else f"ETF_{p}"
             df_p = database_manager.get_ledger(p_name)
             if not df_p.empty:
                 if 'Date' in df_p.columns and 'Daily_PnL_JSON' in df_p.columns:
@@ -553,7 +553,7 @@ def get_autopsy_data():
 
     try:
         stock_data = process_ledger("BallsForBrains")
-        etf_data = process_ledger("ETF_Balls For Brain")
+        etf_data = process_ledger("ETF_BallsForBrains")
         
         return {
             "stock": stock_data,

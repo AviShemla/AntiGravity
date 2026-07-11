@@ -38,6 +38,18 @@ SCHEDULED_TASKS = {
         "cmd": ["git", "add", ".", "&&", "git", "commit", "-m", "Automated Backup", "&&", "git", "push"],
         "last_run": None,
         "shell": True
+    },
+    "weekend_trainer_stock": {
+        "time": "14:00",
+        "day_of_week": 5,  # 5 = Saturday
+        "cmd": [PYTHON_EXE, os.path.join(BASE_DIR, "weekend_dl_trainer.py")],
+        "last_run": None
+    },
+    "weekend_trainer_etf": {
+        "time": "16:00",
+        "day_of_week": 5,  # 5 = Saturday
+        "cmd": [PYTHON_EXE, os.path.join(BASE_DIR, "etf_weekend_dl_trainer.py")],
+        "last_run": None
     }
 }
 
@@ -50,6 +62,22 @@ def log(msg):
             f.write(log_line + "\n")
     except Exception:
         pass
+
+def check_single_instance():
+    current_pid = os.getpid()
+    for p in psutil.process_iter(['pid', 'name', 'cmdline']):
+        if p.info['pid'] == current_pid:
+            continue
+        try:
+            cmdline = p.info.get('cmdline')
+            if not cmdline:
+                continue
+            cmd_str = " ".join(cmdline).lower()
+            if "master_watchdog.py" in cmd_str and "python" in cmd_str:
+                log(f"CRITICAL: Another instance of master_watchdog (PID {p.info['pid']}) is already running. Exiting to prevent collisions.")
+                sys.exit(0)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
 
 def check_and_revive_daemons():
     running_matches = set()
@@ -68,11 +96,13 @@ def check_and_revive_daemons():
     for name, config in DAEMONS.items():
         if name not in running_matches:
             log(f"ALERT: {name} is NOT running. Reviving it silently in the background...")
-            # CREATE_NEW_CONSOLE = 0x00000010 ensures it runs in a visible CMD window
+            # CREATE_NO_WINDOW = 0x08000000 ensures it runs truly silently in the background
             subprocess.Popen(
                 config['cmd'], 
                 cwd=config['cwd'], 
-                creationflags=subprocess.CREATE_NEW_CONSOLE
+                creationflags=0x08000000,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
             )
 
 def check_schedule():
@@ -81,6 +111,10 @@ def check_schedule():
     current_date = now.date()
 
     for task_name, config in SCHEDULED_TASKS.items():
+        # Check day of week if specified (0 = Monday, 6 = Sunday)
+        if 'day_of_week' in config and now.weekday() != config['day_of_week']:
+            continue
+            
         # If the current time matches the target time (down to the minute)
         if current_time_str == config['time']:
             # Make sure we haven't already run it today
@@ -96,13 +130,25 @@ def check_schedule():
                     log(f"ERROR: Failed to run scheduled task {task_name}: {e}")
 
 if __name__ == "__main__":
+    check_single_instance()
     log("Master Watchdog Initialized. Supervising the AntiGravity ecosystem...")
+    loop_count = 0
     while True:
         try:
             check_and_revive_daemons()
             check_schedule()
+            
+            # Run UI QA Agent every 15 minutes (15 loops of 60s)
+            if loop_count % 15 == 0:
+                subprocess.Popen([PYTHON_EXE, os.path.join(BASE_DIR, "qa_api_health.py")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+            # Run Task Auditor Agent every 60 minutes (60 loops of 60s)
+            if loop_count % 60 == 0:
+                subprocess.Popen([PYTHON_EXE, os.path.join(BASE_DIR, "qa_task_auditor.py")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
         except Exception as e:
             log(f"CRITICAL WATCHDOG ERROR: {e}")
         
+        loop_count += 1
         # Sleep for 60 seconds
         time.sleep(60)

@@ -22,24 +22,49 @@ def get_missed_dates(pipeline_name):
         return [pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')]
         
     last_completed = database_manager.get_last_continuity_date(pipeline_name)
-    row = (last_completed,) if last_completed else None
     
     nyse = mcal.get_calendar('NYSE')
     now = pd.Timestamp.now(tz='America/New_York')
     
-    if not row:
-        schedule = nyse.schedule(start_date=(now - pd.Timedelta(days=7)).strftime('%Y-%m-%d'), end_date=now.strftime('%Y-%m-%d'))
-        past = schedule[schedule['market_close'] < now]
-        if past.empty:
-            return []
-        return [past.iloc[-1].name.strftime('%Y-%m-%d')]
-        
-    last_completed = row[0]
-    schedule = nyse.schedule(start_date=last_completed, end_date=(now + pd.Timedelta(days=1)).strftime('%Y-%m-%d'))
+    # 1. Calculate past sessions based on market close
+    schedule = nyse.schedule(start_date=(now - pd.Timedelta(days=7)).strftime('%Y-%m-%d'), end_date=(now + pd.Timedelta(days=1)).strftime('%Y-%m-%d'))
     past_sessions = schedule[schedule['market_close'] < now]
-    missed_sessions = past_sessions[past_sessions.index > pd.to_datetime(last_completed)]
     
-    return [d.strftime('%Y-%m-%d') for d in missed_sessions.index]
+    if past_sessions.empty:
+        return []
+        
+    last_closed_session = past_sessions.iloc[-1].name.strftime('%Y-%m-%d')
+    
+    # 2. Calculate historical missed sessions
+    if not last_completed:
+        missed_dates = [last_closed_session]
+    else:
+        missed_sessions = past_sessions[past_sessions.index > pd.to_datetime(last_completed)]
+        missed_dates = [d.strftime('%Y-%m-%d') for d in missed_sessions.index]
+        
+    # 3. Check if today's predictions are staged
+    future_schedule = nyse.schedule(start_date=last_closed_session, end_date=(now + pd.Timedelta(days=7)).strftime('%Y-%m-%d'))
+    if len(future_schedule) > 1:
+        target_prediction_date = future_schedule.iloc[1].name.strftime('%Y-%m-%d')
+    else:
+        target_prediction_date = (pd.to_datetime(last_closed_session) + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+        
+    db_staged_date = None
+    try:
+        conn = database_manager.get_connection()
+        c = conn.cursor()
+        c.execute("SELECT date FROM pending_orders LIMIT 1")
+        row = c.fetchone()
+        if row: db_staged_date = row[0]
+        conn.close()
+    except Exception as e:
+        print(f"Error checking pending orders: {e}")
+        
+    if db_staged_date != target_prediction_date and last_closed_session not in missed_dates:
+        print(f"[ARCHITECTURAL FIX] Pending orders for {target_prediction_date} are NOT staged yet. Adding {last_closed_session} to execution list.")
+        missed_dates.append(last_closed_session)
+        
+    return missed_dates
 
 def mark_completed(pipeline_name, date_str):
     database_manager.update_continuity(pipeline_name, date_str)

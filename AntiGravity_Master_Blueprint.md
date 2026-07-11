@@ -210,8 +210,9 @@ For deep crash recovery, here is the exact purpose, input, output, and schedule 
 - **DEEP_TRAINER (`weekend_dl_trainer.py`)** | Purpose: Massive multi-dimensional Self-Attention Neural Network training framework. | Input: 60-day historical tensors | Output: `.pt` PyTorch weights | Schedule: Weekend
 - **DEEP_INFERENCE (`daily_dl_inference.py`)** | Purpose: Rapid millisecond Shadow Engine generating non-linear alpha predictions. | Input: `.pt` weights + daily tensors | Output: Shadow Scorecard | Schedule: Daily
 - **STOCK_BROKER (`virtual_broker.py`)** | Purpose: Calculates mathematical capital allocations based on scorecards. | Input: Predictive Scorecards | Output: Pending SQLite Orders | Schedule: Daily
-- **INTRADAY_SNIPER (`intraday_tracker.py`)** | Purpose: Polls live market prices. Executes intended target staging only when momentum is optimal. | Input: Pending SQLite Orders | Output: Executed SQLite Ledger | Schedule: Intraday
+- **INTRADAY_SNIPER (`intraday_tracker.py`)** | Purpose: Constantly polls live market ask/bid prices during market hours. Executes intended target staging only when momentum is optimal. | Input: Pending SQLite Orders | Output: Executed SQLite Ledger | Schedule: Intraday
 - **BACKEND (`server.py`)** | Purpose: FastAPI REST Server bridging Python SQLite data to frontend web application. | Input: SQLite Ledgers & Scorecards | Output: JSON Endpoints | Schedule: Always Online
+- **QA_UI_AGENT (`qa_api_health.py`)** | Purpose: Automated watchdog script that acts as an invisible user clicking through the dashboard every 15 minutes. It strictly queries local API JSON payloads to verify structural math integrity. If a backend tab crashes, it logs an alert to `master_watchdog.log` without aggressively mutating state. | Input: REST API Endpoints | Output: Health Validations | Schedule: Every 15 mins
 
 ---
 

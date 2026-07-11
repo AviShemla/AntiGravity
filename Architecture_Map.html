@@ -218,6 +218,8 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
         ETF_SCORE --> BACKEND
         QA_BLACKLIST --> BACKEND
         BACKEND -.->|JSON API| WEB_UI
+        QA_UI_AGENT[qa_api_health.py<br>UI Health Poller]:::script
+        BACKEND -.->|Endpoint Polling| QA_UI_AGENT
 
         SSOT_DB --> EXEC_BRIEF
         ETF_SCORE --> EXEC_BRIEF
@@ -243,6 +245,7 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
             "ENGINE_CONFIG": {name: "engine_config.py (Project Apollo)", purpose: "Deep OS-level injector that forcefully sets Windows environment variables to compel PyTensor to utilize the ultra-fast C++ optimizer (`cxx=`).", input: "Windows OS", output: "Accelerated Compile State", schedule: "Boot Time"},
             "STOCK_PYMC": {name: "export_bayesian_scorecard_TNX.py", purpose: "Project Apollo causality engine. Dynamically correlates the top 3 global macro features (e.g. TNX 10-Year Yield) and feeds them into the Rust NUTS sampler to predict return direction.", input: "Top 15 Tickers + Macro Features", output: "P(UP) & Expected Return/Vol", schedule: "Daily via Master Pipeline"},
             "QA_MODELS": {name: "qa_models.py", purpose: "Audits Bayesian model outputs for anomalies. Forces a HOLD override if P(UP)>100% or returns are unrealistic.", input: "Scorecards", output: "Cleaned/Overwritten Scorecards", schedule: "Daily via Master Pipeline"},
+            "QA_UI_AGENT": {name: "qa_api_health.py", purpose: "Continuously polls the local JSON API endpoints (Holdings, Olympics, etc) every 15 minutes to mathematically verify UI data structures are intact and the server is online. Logs alerts to master watchdog.", input: "JSON Endpoints", output: "Alert Logs", schedule: "Every 15 Minutes"},
             "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Calculates mathematical capital allocations and stages them for tomorrow's market open.", input: "Predictive Scorecards", output: "Pending_Orders.json", schedule: "Daily via Master Pipeline"},
             "PENDING_ORDERS": {name: "Pending_Orders.json", purpose: "Staging ground bridging the nightly analytics with the live Intraday Sniper execution engine.", input: "Virtual Broker JSON", output: "Target Executions", schedule: "Daily"},
             "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Constantly polls live market ask/bid prices during market hours. Executes intended target staging only when momentum is optimal.", input: "Pending_Orders.json", output: "Capital_Ledgers.csv", schedule: "Intraday Market Hours"},

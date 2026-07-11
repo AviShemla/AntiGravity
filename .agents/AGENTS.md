@@ -1,4 +1,4 @@
-﻿# QA Pipeline Rules
+# QA Pipeline Rules
 
 All agents working on the AntiGravity pipeline MUST run `qa_data_continuity_per_ticker.py` as part of the standard QA routine. This ensures that no individual stock is silently orphaned due to global max date checks or SQLite grandfathering failures.
 
@@ -17,3 +17,6 @@ When analyzing Top5_Bayesian_Scorecard_Formatted.xlsx or any ETF scorecard, ALWA
 
 ## QA Grandfathering Logic
 The qa_data_continuity_per_ticker.py script must always cross-reference VIP_Tickers.json to correctly grandfather legacy stock holdings. Do not alter this logic to flag them as orphaned.
+
+## Watchdog Survival Policy
+NEVER kill the `master_watchdog.py` process during background housekeeping or when purging ghost tasks via `manage_task`. You MUST explicitly skip any task or process running the master watchdog. The master watchdog is the core OS-level supervisor of the dashboard and must never be terminated by an AI agent under any circumstances.
