@@ -86,7 +86,6 @@ def run_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
-        if persona_name != 'BallsForBrains': continue
         print(f"--- Persona: {persona_name.upper()} ---")
         print(f"Rules: Buy if P > {config['threshold']:.2f} | {config['kelly_multiplier']}x Kelly | Max {config['max_alloc']*100}% per stock")
         

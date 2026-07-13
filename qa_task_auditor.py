@@ -40,9 +40,9 @@ if __name__ == "__main__":
     print("--- Starting Task Auditor Agent ---")
     errors = 0
     
-    # 1. Daily Pipeline (Stock Scorecard) - Max 48 hours to account for weekends/holidays
+    # 1. Daily Pipeline (Stock Scorecard) - Max 72 hours to account for weekends/holidays
     file1 = os.path.join(BASE_DIR, "financial_data", "Top5_Bayesian_Scorecard_Formatted.xlsx")
-    if not check_file_freshness(file1, 48, "Daily Pipeline (Stock Scorecard)"):
+    if not check_file_freshness(file1, 72, "Daily Pipeline (Stock Scorecard)"):
         errors += 1
         
     # 2. Weekend Trainer (Stock) - Max 8 days (192 hours)
@@ -58,6 +58,22 @@ if __name__ == "__main__":
     # 4. Weekend Fundamentals Scan - Max 8 days (192 hours)
     file4 = os.path.join(BASE_DIR, "financial_data", "SP500_Fundamentals_Score.csv")
     if not check_file_freshness(file4, 192, "Weekend Fundamentals Scan"):
+        errors += 1
+        
+    # 5. MONDAY SYSTEMIC INTEGRITY: Ensure all 8 Personas generated a pending order (even if empty)
+    try:
+        sys.path.insert(0, BASE_DIR)
+        import database_manager
+        df_pending = database_manager.execute_query('SELECT persona FROM pending_orders')
+        expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
+                             'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']
+        found_personas = df_pending['persona'].tolist() if not df_pending.empty else []
+        missing = [p for p in expected_personas if p not in found_personas]
+        if missing:
+            log_alert(f"Failed! Missing Pending Orders for Personas: {missing}. A virtual broker script silently failed or skipped them!")
+            errors += 1
+    except Exception as e:
+        log_alert(f"Failed to query database for Persona Integrity: {e}")
         errors += 1
         
     if errors == 0:

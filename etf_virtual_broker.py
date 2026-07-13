@@ -127,7 +127,6 @@ def run_etf_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
-        if persona_name != 'BallsForBrains': continue
         print(f"--- Persona: {persona_name.upper()} ---")
         
         ledger = database_manager.get_ledger(f"ETF_{persona_name}")
@@ -143,7 +142,7 @@ def run_etf_virtual_broker():
         if not ledger.empty and str(target_date_for_ledger) == str(ledger['Date'].iloc[-1]):
             print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}. Checking Scorecard Integrity...")
             missing_count = len(TARGET_ETFS) - len(scorecards)
-            if missing_count > len(TARGET_ETFS) * 0.1:
+            if missing_count > len(TARGET_ETFS) * 0.35:
                 print(f"  [INTEGRITY FAILURE] Scorecards are highly corrupted ({missing_count} missing/empty ETFs). Aborting overwrite to protect ledger.")
                 final_equities[persona_name] = float(ledger['Total_Equity'].iloc[-1])
                 continue

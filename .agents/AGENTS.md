@@ -22,3 +22,6 @@ The qa_data_continuity_per_ticker.py script must always cross-reference VIP_Tick
 NEVER kill the `master_watchdog.py` process during background housekeeping or when purging ghost tasks via `manage_task`. You MUST explicitly skip any task or process running the master watchdog. The master watchdog is the core OS-level supervisor of the dashboard and must never be terminated by an AI agent under any circumstances.
 ## Reporting Timestamp Rule
 Whenever you generate a status report or system response for the user, you MUST include the current real-world timestamp so the user knows exactly when the report was generated.
+
+## Systemic Persona Integrity Check
+Any time you modify a Virtual Broker script or the Master Pipeline, you MUST verify that ALL 8 personas (Single Stocks and ETFs) generate valid pending orders or active HOLD states in the database. Silent skips via hardcoded continue statements are strictly forbidden. The qa_task_auditor.py must run after every nightly process to mathematically prove 100% persona participation.
