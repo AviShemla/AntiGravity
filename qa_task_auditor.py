@@ -14,6 +14,13 @@ def log_alert(msg):
             f.write(log_line + "\n")
     except Exception:
         pass
+        
+    try:
+        import subprocess
+        script_path = os.path.join(r"C:\Users\AviShemla\AntiGravity", "send_email_notification.py")
+        subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - Task Auditor", msg], creationflags=0x08000000)
+    except Exception as e:
+        print(f"Failed to trigger email alert: {e}")
 
 def check_file_freshness(filepath, max_age_hours, task_name):
     if not os.path.exists(filepath):
@@ -46,6 +53,11 @@ if __name__ == "__main__":
     # 3. Weekend Trainer (ETF) - Max 8 days (192 hours)
     file3 = os.path.join(BASE_DIR, "models", "transformer_etf_weights.pt")
     if not check_file_freshness(file3, 192, "Weekend Trainer (ETF)"):
+        errors += 1
+        
+    # 4. Weekend Fundamentals Scan - Max 8 days (192 hours)
+    file4 = os.path.join(BASE_DIR, "financial_data", "SP500_Fundamentals_Score.csv")
+    if not check_file_freshness(file4, 192, "Weekend Fundamentals Scan"):
         errors += 1
         
     if errors == 0:

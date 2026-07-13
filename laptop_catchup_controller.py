@@ -107,6 +107,11 @@ def catchup_master_pipeline():
         print(f"=== MASTER PIPELINE FOR DATE: {target_date} ===")
         print(f"==============================================\n")
         
+        # 0.5 Weekly Fundamentals Extraction
+        if pd.to_datetime(target_date).weekday() == 5: # Saturday
+            print("\n--> Running Weekend Fundamentals Extraction (Saturday)...")
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "extract_fundamentals.py")], cwd=BASE_DIR)
+
         # 1. Meta Predictor Tracker (Alpha Recalibration)
         if pd.to_datetime(target_date).weekday() == 6: # Sunday
             print("\n--> Running Meta-Predictor Tracker (Sunday Alpha Recalibration)...")

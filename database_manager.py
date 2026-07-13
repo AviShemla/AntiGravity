@@ -159,22 +159,29 @@ def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_
         client.close()
 
 def get_ledger(persona):
-    client = get_connection()._client
-    try:
-        query = f"""
-            SELECT date as Date, cash as Cash, total_equity as Total_Equity, 
-                   holdings_json as Holdings_JSON, daily_pnl_json as Daily_PnL_JSON, 
-                   intraday_status as Intraday_Status, engine_version as Engine_Version 
-            FROM capital_ledgers 
-            WHERE persona = '{persona}' ORDER BY date ASC
-        """
-        res = client.execute(query)
-        if not res.rows:
-            return pd.DataFrame(columns=res.columns)
-        df = pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
-        return df
-    finally:
-        client.close()
+    import time
+    for attempt in range(5):
+        try:
+            client = get_connection()._client
+            try:
+                query = f"""
+                    SELECT date as Date, cash as Cash, total_equity as Total_Equity, 
+                           holdings_json as Holdings_JSON, daily_pnl_json as Daily_PnL_JSON, 
+                           intraday_status as Intraday_Status, engine_version as Engine_Version 
+                    FROM capital_ledgers 
+                    WHERE persona = '{persona}' ORDER BY date ASC
+                """
+                res = client.execute(query)
+                if not res.rows:
+                    return pd.DataFrame(columns=res.columns)
+                df = pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
+                return df
+            finally:
+                client.close()
+        except Exception as e:
+            if attempt == 4:
+                raise e
+            time.sleep(1 + attempt)
 
 def save_pending_order(persona, date, target_cash, target_equity, target_holdings, daily_pnl, executed_trades):
     target_cash = _enforce_double_entry_accounting(target_cash, target_equity, target_holdings)
