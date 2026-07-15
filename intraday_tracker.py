@@ -187,11 +187,11 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
     If a BUY target meets the Momentum criteria, it executes it and commits to the ledger.
     If is_eod_fallback=True, it permanently aborts unmet trades, logs HOLD, and commits to ledger.
     """
-    conn = database_manager.get_connection()
-    c = conn.cursor()
-    c.execute("SELECT persona FROM pending_orders")
-    rows = c.fetchall()
-    conn.close()
+    try:
+        df = database_manager.execute_query("SELECT persona FROM pending_orders")
+        rows = df.values.tolist()
+    except Exception:
+        rows = []
     
     if not rows:
         print("No pending orders.")
@@ -562,12 +562,9 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                 
     # Cleanup completed personas from pending orders
     if completed_personas:
-        conn = database_manager.get_connection()
-        c = conn.cursor()
+        client = database_manager.get_connection()
         for cp in completed_personas:
-            c.execute("DELETE FROM pending_orders WHERE persona = ?", (cp,))
-        conn.commit()
-        conn.close()
+            client.execute("DELETE FROM pending_orders WHERE persona = ?", [cp])
 
     return yfinance_failure
 
