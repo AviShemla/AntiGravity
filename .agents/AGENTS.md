@@ -36,3 +36,19 @@ If a system QA cycle fails (either via automated background watchdog alerts or a
 Whenever the user asks for a 'trade day status' or an intraday update, ALWAYS output a markdown table combining all personas (Conservative, Neutral, Dynamic, BallsForBrains) across both Stocks and ETFs.
 The table MUST have the exact following columns:
 | Persona (Asset Class) | AI Recommendation (Pending Orders) | Intraday Sniper Execution Status | Intraday Trend (Live PnL) |
+
+## First Contact Git State Enforcement
+If there are alarming uncommitted Git states (e.g., critical patches sitting uncommitted for multiple days) or blocked Git pushes due to pending QA audits, this MUST ALSO be presented to the user as the ABSOLUTE FIRST THING upon starting a new daily session or first contact. Do not wait for the user to notice the GitHub repo is stale; proactively report the local Git staging status, the reason for the delay, and any running QA blockers immediately.
+
+## Full Solution QA Definition
+When executing a 'full cycle QA', the agent MUST verify ALL of the following vectors before declaring the system '100% Green':
+1. **Data Continuity**: No gaps, no orphaned tickers, mathematical accuracy.
+2. **Scripts & Process Lifecycle**: Scripts must exit cleanly without hanging terminals or leaking threads/memory.
+3. **Dashboard Sync**: All UI tabs must fetch, render, and display up-to-date data without API crashes or connection pool locks.
+4. **Emails & Attachments**: Generated reports must mathematically match the database and dashboard.
+5. **Holistic Consistency**: PnL, historical ledgers, and live data must sync perfectly across all tables and outputs.
+6. **System Health**: Active background processes (watchdog, Uvicorn, sniper) must be running, with no rogue/zombie processes holding critical ports (e.g., Port 80).
+7. **Self-Healing Loop**: If any open issues are detected, the agent must proactively self-heal the issue and re-run the ENTIRE QA cycle from scratch.
+
+## Continuous Learning Protocol
+After resolving any novel daily issue or bug, the agent MUST independently update this AGENTS.md rulebook. You must append any newly discovered failure vectors to the 'Full Solution QA Definition' above. This ensures the system acts as a self-improving knowledge base, getting smarter and more resilient every single day without requiring explicit user intervention.
