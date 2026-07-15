@@ -52,3 +52,6 @@ When executing a 'full cycle QA', the agent MUST verify ALL of the following vec
 
 ## Continuous Learning Protocol
 After resolving any novel daily issue or bug, the agent MUST independently update this AGENTS.md rulebook. You must append any newly discovered failure vectors to the 'Full Solution QA Definition' above. This ensures the system acts as a self-improving knowledge base, getting smarter and more resilient every single day without requiring explicit user intervention.
+
+## The Cold Facts Directive (No Assumption Policy)
+Stop assuming things. Most issues in this pipeline are due to assumption and not cold facts. We are dealing with math, stats, and pure science. There is absolutely NO PLACE for assumption or guessing. Every single action, migration, or debug step MUST be mathematically proven and verified via exhaustive grep searches and code audits before execution.
