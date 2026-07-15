@@ -9,52 +9,38 @@ load_dotenv()
 TURSO_URL = os.environ.get("TURSO_DATABASE_URL")
 TURSO_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
-class SQLiteMockCursor:
-    def __init__(self, client):
-        self._client = client
-        self.last_res = None
-        self.description = None
-    def execute(self, query, params=None):
-        if params is None: self.last_res = self._client.execute(query)
-        else: self.last_res = self._client.execute(query, list(params) if isinstance(params, tuple) else params)
-        if self.last_res and hasattr(self.last_res, 'columns') and self.last_res.columns:
-            self.description = [(col,) for col in self.last_res.columns]
-        else: self.description = None
-        return self
-    def fetchall(self): return [tuple(r) for r in self.last_res.rows] if self.last_res else []
-    def fetchone(self): return tuple(self.last_res.rows[0]) if self.last_res and self.last_res.rows else None
-    def close(self): pass
-
-class HybridConnection:
-    def __init__(self, client): self._client = client
-    def execute(self, query, args=None):
-        if args is None: return self._client.execute(query)
-        return self._client.execute(query, list(args) if isinstance(args, tuple) else args)
-    def close(self): self._client.close()
-    def cursor(self): return SQLiteMockCursor(self._client)
-    def commit(self): pass
+_global_client = None
 
 def get_connection():
-    """Returns a connected libsql_client sync client wrapped in a sqlite3 compatibility layer."""
-    if not TURSO_URL or not TURSO_TOKEN:
-        raise ValueError("Missing TURSO credentials in .env file!")
-    client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
-    return HybridConnection(client)
+    """Returns a connected libsql_client sync client from a global pool."""
+    global _global_client
+    if _global_client is None:
+        if not TURSO_URL or not TURSO_TOKEN:
+            raise ValueError("Missing TURSO credentials in .env file!")
+        _global_client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
+    return _global_client
+
+import atexit
+@atexit.register
+def close_global_client():
+    global _global_client
+    if _global_client is not None:
+        try:
+            _global_client.close()
+        except:
+            pass
 
 def execute_query(query, args=None):
     """Generic helper to execute SELECT queries and return a DataFrame."""
-    client = get_connection()._client
-    try:
-        res = client.execute(query, args or [])
-        if not res.rows:
-            return pd.DataFrame(columns=res.columns)
-        return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
-    finally:
-        client.close()
+    client = get_connection()
+    res = client.execute(query, args or [])
+    if not res.rows:
+        return pd.DataFrame(columns=res.columns)
+    return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
 
 def init_db():
     """Initializes the database schema if it doesn't exist."""
-    client = get_connection()._client
+    client = get_connection()
     try:
         # 1. Capital Ledgers Table
         client.execute('''
@@ -114,7 +100,7 @@ def init_db():
             )
         ''')
     finally:
-        client.close()
+        pass
 
 def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
     """
@@ -141,7 +127,7 @@ def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
 
 def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_json, intraday_status="", engine_version="V1.0 - Pure PyMC Bayesian"):
     cash = _enforce_double_entry_accounting(cash, total_equity, holdings_json)
-    client = get_connection()._client
+    client = get_connection()
     try:
         client.execute('''
             INSERT INTO capital_ledgers (persona, date, cash, total_equity, holdings_json, daily_pnl_json, intraday_status, engine_version)
@@ -156,36 +142,29 @@ def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_
         ''', [persona, date, float(cash), float(total_equity), json.dumps(holdings_json) if isinstance(holdings_json, dict) else holdings_json, 
               json.dumps(daily_pnl_json) if isinstance(daily_pnl_json, dict) else daily_pnl_json, intraday_status, engine_version])
     finally:
-        client.close()
+        pass
 
 def get_ledger(persona):
-    import time
-    for attempt in range(5):
-        try:
-            client = get_connection()._client
-            try:
-                query = f"""
-                    SELECT date as Date, cash as Cash, total_equity as Total_Equity, 
-                           holdings_json as Holdings_JSON, daily_pnl_json as Daily_PnL_JSON, 
-                           intraday_status as Intraday_Status, engine_version as Engine_Version 
-                    FROM capital_ledgers 
-                    WHERE persona = '{persona}' ORDER BY date ASC
-                """
-                res = client.execute(query)
-                if not res.rows:
-                    return pd.DataFrame(columns=res.columns)
-                df = pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
-                return df
-            finally:
-                client.close()
-        except Exception as e:
-            if attempt == 4:
-                raise e
-            time.sleep(1 + attempt)
+    client = get_connection()
+    try:
+        query = f"""
+            SELECT date as Date, cash as Cash, total_equity as Total_Equity, 
+                   holdings_json as Holdings_JSON, daily_pnl_json as Daily_PnL_JSON, 
+                   intraday_status as Intraday_Status, engine_version as Engine_Version 
+            FROM capital_ledgers 
+            WHERE persona = '{persona}' ORDER BY date ASC
+        """
+        res = client.execute(query)
+        if not res.rows:
+            return pd.DataFrame(columns=res.columns)
+        df = pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
+        return df
+    finally:
+        pass
 
 def save_pending_order(persona, date, target_cash, target_equity, target_holdings, daily_pnl, executed_trades):
     target_cash = _enforce_double_entry_accounting(target_cash, target_equity, target_holdings)
-    client = get_connection()._client
+    client = get_connection()
     try:
         client.execute('''
             INSERT INTO pending_orders (persona, date, target_cash, target_total_equity, target_holdings_json, daily_pnl_json, executed_intraday_trades_json)
@@ -202,20 +181,20 @@ def save_pending_order(persona, date, target_cash, target_equity, target_holding
               json.dumps(daily_pnl) if isinstance(daily_pnl, dict) else daily_pnl,
               json.dumps(executed_trades) if isinstance(executed_trades, dict) else executed_trades])
     finally:
-        client.close()
+        pass
 
 def get_pending_order(persona):
-    client = get_connection()._client
+    client = get_connection()
     try:
         res = client.execute("SELECT * FROM pending_orders WHERE persona = ?", [persona])
         if res.rows:
             return dict(zip(res.columns, res.rows[0]))
         return None
     finally:
-        client.close()
+        pass
 
 def update_continuity(pipeline_name, date_str):
-    client = get_connection()._client
+    client = get_connection()
     try:
         client.execute('''
             INSERT INTO process_continuity (pipeline_name, last_completed_date)
@@ -224,17 +203,17 @@ def update_continuity(pipeline_name, date_str):
                 last_completed_date=excluded.last_completed_date
         ''', [pipeline_name, date_str])
     finally:
-        client.close()
+        pass
 
 def get_last_continuity_date(pipeline_name):
-    client = get_connection()._client
+    client = get_connection()
     try:
         res = client.execute("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = ?", [pipeline_name])
         if res.rows:
             return res.rows[0][0]
         return None
     finally:
-        client.close()
+        pass
 
 if __name__ == "__main__":
     init_db()

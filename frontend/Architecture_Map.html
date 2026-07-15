@@ -158,6 +158,7 @@
         BACKEND["FastAPI<br>Uvicorn Server"]:::pipeline
         WEB_UI["Premium 3D<br>Web UI"]:::ui
         GIT_VAULT["Git Vault<br>Auto-Backup"]:::ui
+        AGENT_WATCHDOG["Agentic<br>Auto-Healing Watchdog"]:::agent
 
         %% Routing
         YF --> FAILOVER
@@ -217,7 +218,9 @@
             "ETF_PYMC": {name: "process_etf.py", purpose: "Hierarchical sector modeling anchored by underlying fundamental stock health.", input: "Sector Prices & Stock Priors", output: "Sector P(UP) Predictions", schedule: "Daily via Master Pipeline"},
             "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Sector-level capital allocation engine.", input: "Sector Predictions", output: "Virtual ETF Trades", schedule: "Daily via Master Pipeline"},
             "ETF_SCORE": {name: "All_ETFs_Scorecard.xlsx", purpose: "Compiled master record of all 11 ETF sector predictions.", input: "Individual ETF Excel outputs", output: "Merged Excel Report", schedule: "Daily"},
-            "BACKEND": {name: "server.py", purpose: "FastAPI REST Server that bridges Python CSV/Excel data to the frontend web application.", input: "Ledgers & Scorecards", output: "JSON Endpoints", schedule: "Always Online (Port 80)"},
+            "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Polls live market prices to execute staged pre-market orders. Manages dynamic VIX-based stop-losses intraday.", input: "Pending SQLite Orders", output: "Settled SQLite Ledger", schedule: "Intraday (Watchdog Managed)"},
+            "BACKEND": {name: "server.py", purpose: "FastAPI Zero-Touch Server. Hot-Reloads instantly on backend patches. Bridges SQLite to frontend with a 60-second live auto-polling loop and cache-busting logic.", input: "Ledgers & Pending Orders", output: "JSON Endpoints", schedule: "Always Online (Port 80)"},
+            "AGENT_WATCHDOG": {name: "AI Cron Scheduler", purpose: "Agentic Auto-Healing loop. Wakes the AI Agent daily to run system_qa_auditor.py. Autonomously patches any pipeline code errors or DB corruption.", input: "Pipeline Logs", output: "Code Fixes", schedule: "Daily at 05:30 AM"},
             "JSONAPI": {name: "JSON API Endpoint", purpose: "Lightweight serialized data exchange layer connecting the FastAPI backend to the Premium 3D Web UI.", input: "Python Data Structures", output: "Structured JSON Strings", schedule: "On-Request via AJAX"},
             "WEB_UI": {name: "frontend/index.html", purpose: "Premium 3D Sci-Fi Web Dashboard featuring active 3D tabs, glassmorphism, and dynamic Plotly charts.", input: "FastAPI JSON", output: "Interactive User Interface", schedule: "Client Browser"},
             "GIT_VAULT": {name: "Git Vault Backup", purpose: "Invisible version control system protecting the codebase against fatal logic errors.", input: "Modified Code", output: "Immutable Snapshot Commits", schedule: "Every 1 Hour (Windows Scheduled Task)"}

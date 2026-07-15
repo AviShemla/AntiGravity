@@ -4,7 +4,7 @@ try:
     psutil.Process(os.getpid()).nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
 except:
     pass
-os.environ["PYTENSOR_FLAGS"] = "cxx=,optimizer=fast_compile"
+os.environ["PYTENSOR_FLAGS"] = "optimizer=fast_compile"
 import pandas as pd
 import numpy as np
 import pymc as pm

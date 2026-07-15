@@ -195,8 +195,12 @@ Furthermore, it actively stamps a `CURRENT_MODEL_VERSION` flag (e.g. `V1.0 - Pur
 
 ---
 
-## 5. UI & Architecture Monitoring
-- **The Dashboard:** Hosted on a custom FastAPI `server.py` backend (`http://theoracle`), displaying a premium, 3D interactive web interface of the daily scorecards and ledgers fetched directly from SQLite.
+## 5. UI & Auto-Healing Architecture
+- **Zero-Touch Live Dashboard:** Hosted on a custom FastAPI `server.py` backend (`http://theoracle`), displaying a premium, 3D interactive web interface. The dashboard features a **3-Layer Zero-Touch Architecture**:
+  1. **Backend Hot-Reloading:** The `master_watchdog.py` runs Uvicorn with `--reload` to instantly ingest Python patches.
+  2. **Aggressive Frontend Cache-Busting:** `index.html` loads the Javascript payload with dynamic timestamps (`Date.now()`) to physically bypass stale browser caches.
+  3. **Live Auto-Polling:** The frontend Javascript uses a 60-second polling loop to automatically render pre-market `pending_orders` and natively transition them into live execution tracking without user intervention.
+- **Agentic Auto-Healing Watchdog:** Instead of passive QA email alerts, a scheduled AI Cron Job wakes up the Agent daily at 05:30 AM to proactively run `system_qa_auditor.py`. If errors are detected, the Agent autonomously writes code fixes, patches the database, and restarts the pipeline to guarantee a 100% green state before market open.
 - **The Visual Map:** The entire system structure is visualized in `Architecture_Map.html`.
 
 ### 🗺️ The Architecture Node Dictionary

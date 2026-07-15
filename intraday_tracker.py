@@ -83,8 +83,18 @@ def get_yesterday_metrics(ticker, target_date=None):
     try:
         return run_with_timeout(_get_yesterday_metrics_internal, args=(ticker, target_date), timeout_seconds=15)
     except TimeoutError:
-        print(f"    -> [TIMEOUT] yfinance froze while fetching yesterday's data for {ticker}.")
-        return None, None
+        print(f"    -> [TIMEOUT] yfinance froze while fetching yesterday's data for {ticker}. Falling back to Tiingo...")
+        from failover_downloader import download_ticker_with_failover
+        try:
+            df = download_ticker_with_failover(ticker)
+            if df.empty: return None, None
+            yest = df.iloc[-1]
+            yest_close = yest['Close']
+            yest_vwap = (yest['High'] + yest['Low'] + yest['Close']) / 3.0
+            return yest_close, yest_vwap
+        except Exception as e:
+            print(f"    -> [FAILOVER ERROR] Yesterday metrics fallback failed for {ticker}: {e}")
+            return None, None
     except Exception as e:
         print(f"EXCEPTION in get_yesterday_metrics wrapper for {ticker}: {e}")
         return None, None
@@ -120,8 +130,15 @@ def get_live_metrics(ticker, target_date=None):
     try:
         return run_with_timeout(_get_live_metrics_internal, args=(ticker, target_date), timeout_seconds=15)
     except TimeoutError:
-        print(f"    -> [TIMEOUT] yfinance froze while fetching live data for {ticker}.")
-        return None, 0.0
+        print(f"    -> [TIMEOUT] yfinance froze while fetching live data for {ticker}. Falling back to Tiingo...")
+        from failover_downloader import download_ticker_with_failover
+        try:
+            df = download_ticker_with_failover(ticker)
+            if df.empty: return None, 0.0
+            return df.iloc[-1]['Close'], 1e9
+        except Exception as e:
+            print(f"    -> [FAILOVER ERROR] Live metrics fallback failed for {ticker}: {e}")
+            return None, 0.0
     except Exception as e:
         print(f"EXCEPTION in get_live_metrics wrapper for {ticker}: {e}")
         return None, 0.0
@@ -291,13 +308,16 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         # ==========================================
         for ticker in pending_sells:
             print(f"\n  [EVALUATING] Pending SELL for {ticker} (Persona: {persona})")
-            yest_close, yest_vwap = get_yesterday_metrics(ticker, target_date)
+            yest_close, _ = get_yesterday_metrics(ticker, target_date)
             live_price, _ = get_live_metrics(ticker, target_date)
             
             time.sleep(0.3)
             
             if not yest_close or not live_price:
                 yfinance_failure = True
+                print(f"    -> [TIMEOUT] yfinance froze. Auto-aborting SELL for {ticker} to prevent orphaning.")
+                # We must abort the sell so it is added back to final_holdings
+                aborted_sells[ticker] = current_holdings[ticker]['price']
                 continue
                 
             vwap_multiplier = 1.005

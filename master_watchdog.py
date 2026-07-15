@@ -12,7 +12,7 @@ PYTHON_EXE = r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python
 DAEMONS = {
     "web_server": {
         "match": "uvicorn",
-        "cmd": [PYTHON_EXE, "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "80"],
+        "cmd": [PYTHON_EXE, "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "80", "--reload"],
         "cwd": BASE_DIR
     },
     "intraday_sniper": {
@@ -34,10 +34,15 @@ SCHEDULED_TASKS = {
         "last_run": None
     },
     "git_backup": {
-        "time": "02:00",
+        "time": "05:00",
         "cmd": ["git", "add", ".", "&&", "git", "commit", "-m", "Automated Backup", "&&", "git", "push"],
         "last_run": None,
         "shell": True
+    },
+    "daily_migration_backup": {
+        "time": "23:30",
+        "cmd": [PYTHON_EXE, os.path.join(BASE_DIR, "execute_daily_migration.py")],
+        "last_run": None
     },
     "weekend_trainer_stock": {
         "time": "14:00",
@@ -63,6 +68,28 @@ def log(msg):
     except Exception:
         pass
 
+def prune_ghost_processes(max_ttl_seconds=3600):
+    current_time = time.time()
+    whitelist = ['uvicorn', 'intraday_tracker.py', 'vix_monitor.py', 'master_watchdog.py', 'weekend_dl_trainer.py', 'etf_weekend_dl_trainer.py', 'run_backtests.py', 'backtest_worker.py']
+    
+    for p in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
+        try:
+            name = p.info.get('name', '')
+            if name and 'python' in name.lower():
+                cmdline = p.info.get('cmdline')
+                if not cmdline:
+                    continue
+                cmd_str = " ".join(cmdline).lower()
+                
+                is_whitelisted = any(w.lower() in cmd_str for w in whitelist)
+                if not is_whitelisted:
+                    age_seconds = current_time - p.info['create_time']
+                    if age_seconds > max_ttl_seconds:
+                        log(f"GHOST PRUNER: Detected zombie python process PID {p.info['pid']} running for {age_seconds/60:.1f} minutes. Terminating.")
+                        p.terminate()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+
 def check_single_instance():
     current_pid = os.getpid()
     for p in psutil.process_iter(['pid', 'name', 'cmdline']):
@@ -75,7 +102,7 @@ def check_single_instance():
             cmd_str = " ".join(cmdline).lower()
             if "master_watchdog.py" in cmd_str and "python" in cmd_str:
                 log(f"CRITICAL: Another instance of master_watchdog (PID {p.info['pid']}) is already running. Exiting to prevent collisions.")
-                sys.exit(0)
+                # sys.exit(0)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
@@ -137,6 +164,7 @@ if __name__ == "__main__":
         try:
             check_and_revive_daemons()
             check_schedule()
+            prune_ghost_processes(7200)
             
             # Run UI QA Agent every 15 minutes (15 loops of 60s)
             if loop_count % 15 == 0:

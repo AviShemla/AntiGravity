@@ -48,6 +48,17 @@ def fetch_json(url):
     except urllib.error.HTTPError as e:
         return False, f"HTTP Error {e.code}: {e.reason}"
     except urllib.error.URLError as e:
+        err_msg = str(e.reason)
+        if "10061" in err_msg or "actively refused it" in err_msg:
+            # SELF-HEALING SYSTEM: Auto-restart the crashed FastAPI server
+            log_alert(f"Detected offline server. Self-healing by rebooting start_server.py...")
+            try:
+                import subprocess
+                subprocess.Popen(["C:\\Users\\AviShemla\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", r"C:\Users\AviShemla\AntiGravity\start_server.py"], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+                time.sleep(3) # Wait for uvicorn to boot
+                return fetch_json(url) # Retry request
+            except Exception as e2:
+                return False, f"URL Error: {err_msg} (Self-heal failed: {str(e2)})"
         return False, f"URL Error: {e.reason}"
     except Exception as e:
         return False, f"Exception: {str(e)}"

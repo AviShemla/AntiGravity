@@ -83,11 +83,7 @@ def main():
         run_script(DL_INFERENCE_SCRIPT, "daily_dl_inference.py")
         
         # 3.8 Generate Daily Excel Reports (Fixing QA Desync)
-        log_msg("--- Generating Daily Excel Reports ---")
-        run_script(os.path.join(BASE_DIR, 'export_broker_excel_report.py'), "export_broker_excel_report.py")
-        run_script(os.path.join(BASE_DIR, 'export_etf_broker_excel.py'), "export_etf_broker_excel.py")
-        run_script(os.path.join(BASE_DIR, 'export_bayesian_scorecard_formatted.py'), "export_bayesian_scorecard_formatted.py")
-        run_script(os.path.join(BASE_DIR, 'export_etf_scorecard.py'), "export_etf_scorecard.py")
+        log_msg("--- Reports are handled inside pipeline controllers now ---")
 
         
         # 4. Weekend Fundamentals Check
@@ -162,6 +158,11 @@ def main():
         log_msg("--- Sending ETF Email Reports ---")
         ETF_EMAIL_SCRIPT = os.path.join(BASE_DIR, 'send_etf_email.py')
         run_script(ETF_EMAIL_SCRIPT, "send_etf_email.py")
+
+        # --- NEW: CLOUD DASHBOARD SYNCHRONIZATION ---
+        log_msg("--- Synchronizing Local Data to Turso Cloud Database ---")
+        SYNC_SCRIPT = os.path.join(BASE_DIR, 'migrate_to_sqlite.py')
+        subprocess.run([sys.executable, SYNC_SCRIPT], cwd=BASE_DIR)
 
         # --- NEW: SYSTEM HEALTH MONITOR ---
         # Note: We must run this explicitly AFTER the COMPLETELY FINISHED string is logged

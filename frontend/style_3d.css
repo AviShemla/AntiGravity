@@ -311,8 +311,8 @@ header p {
     background: #1e1e24;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
-    padding: 15px;
-    width: 250px;
+    padding: 18px;
+    width: 310px;
     text-align: center;
     position: relative;
     cursor: help;
@@ -324,20 +324,20 @@ header p {
 }
 .model-tooltip-card .tooltip-text {
     visibility: hidden;
-    width: 280px;
+    width: 350px;
     background-color: #111;
     color: #fff;
     text-align: left;
     border-radius: 6px;
-    padding: 15px;
+    padding: 18px;
     position: absolute;
     z-index: 1;
     top: 110%;
     left: 50%;
-    margin-left: -140px;
+    margin-left: -175px;
     opacity: 0;
     transition: opacity 0.3s;
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #333;
     box-shadow: 0 10px 20px rgba(0,0,0,0.8);
     line-height: 1.5;

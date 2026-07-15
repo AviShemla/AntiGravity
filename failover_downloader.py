@@ -239,6 +239,14 @@ def download_ticker_tiingo_api(ticker, period=None, start=None):
         safe_print(f"  [TIINGO ERROR] Failed to fetch {ticker} from Tiingo: {e}")
         return pd.DataFrame()
 
+def _fetch_yf_global(ticker_api, start, period):
+    import yfinance as yf
+    if start:
+        return yf.Ticker(ticker_api).history(start=start)
+    else:
+        rng = period if period else "5y"
+        return yf.Ticker(ticker_api).history(period=rng)
+
 def download_ticker_with_failover(ticker, period=None, start=None):
     """
     Downloads historical data with exponential retries and backup failover.
@@ -268,12 +276,9 @@ def download_ticker_with_failover(ticker, period=None, start=None):
             
     safe_print(f"  [YFINANCE] Fetching {ticker} (API String: {ticker_api})...")
     try:
-        if start:
-            df = yf.Ticker(ticker_api).history(start=start)
-        else:
-            rng = period if period else "5y"
-            df = yf.Ticker(ticker_api).history(period=rng)
-            
+        from timeout_runner import run_with_timeout
+        df = run_with_timeout(_fetch_yf_global, args=(ticker_api, start, period), timeout_seconds=8)
+        
         if not df.empty and 'Close' in df.columns:
             # Validate that YFinance didn't silently omit the most recent trading day
             import pandas_market_calendars as mcal

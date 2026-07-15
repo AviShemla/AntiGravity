@@ -200,7 +200,7 @@ def catchup_etf_pipeline():
 
         # 1. Export ETF Scorecards
         try:
-            with open(os.path.join(BASE_DIR, 'Dynamic_Target_ETFs.json'), 'r') as f:
+            with open(os.path.join(BASE_DIR, 'financial_data', 'Dynamic_Target_ETFs.json'), 'r') as f:
                 TARGET_ETFS = json.load(f)
         except Exception:
             TARGET_ETFS = ['XLK', 'XLV', 'XLY', 'XLF', 'XLC', 'XLI', 'XLE', 'XLP', 'XLU', 'XLRE', 'XLB']

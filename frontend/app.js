@@ -1,4 +1,8 @@
-document.addEventListener('DOMContentLoaded', () => {
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:80/api' 
+    : '/api';
+
+function initApp() {
     // Tab Switching Logic
     const navLinks = document.querySelectorAll('.nav-links li');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -41,11 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Load
     loadHoldings('Single', 'persona-stocks', 'stocks');
-});
 
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:80/api' 
-    : '/api';
+    // Live Auto-Polling Loop (Every 60,000ms = 1 minute)
+    setInterval(() => {
+        const activeTab = document.querySelector('.tab-link.active');
+        if (!activeTab) return;
+        const tabId = activeTab.getAttribute('data-tab');
+        if (tabId === 'stocks') loadHoldings('Single', 'persona-stocks', 'stocks');
+        else if (tabId === 'etfs') loadHoldings('ETF', 'persona-etfs', 'etfs');
+        else if (tabId === 'olympic') loadOlympic();
+        else if (tabId === 'prodshadow') loadProdShadow();
+        else if (tabId === 'autopsy') loadAutopsy();
+    }, 60000);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 // --- AUTO Y-AXIS RECALIBRATION ---
 function enableAutoYScale(divId) {
@@ -139,7 +157,11 @@ async function loadHoldings(mode, selectId, prefix) {
         
         const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
         
-        document.getElementById(`eq-${prefix}`).innerText = formatter.format(data.total_equity);
+        let eqText = formatter.format(data.total_equity);
+        if (data.is_pending) {
+            eqText += ' <span style="font-size: 0.5em; background: #FF851B; color: #111; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 8px; font-weight: bold; text-transform: uppercase;">PRE-MARKET (PENDING)</span>';
+        }
+        document.getElementById(`eq-${prefix}`).innerHTML = eqText;
         document.getElementById(`ret-${prefix}`).innerText = `${data.total_return > 0 ? '+' : ''}${data.total_return.toFixed(2)}%`;
         document.getElementById(`dd-${prefix}`).innerText = `${data.max_dd.toFixed(2)}%`;
         document.getElementById(`sharpe-${prefix}`).innerText = data.sharpe.toFixed(2);
@@ -176,34 +198,36 @@ async function loadHoldings(mode, selectId, prefix) {
         };
         
         // Y-Axis Padding for Zoom (Invisible Anchors)
-        let yMin = Math.min(...data.equity_curve.equity);
-        let yMax = Math.max(...data.equity_curve.equity);
-        let yPad = Math.max((yMax - yMin) * 0.20, Math.abs(yMax) * 0.02);
-        
-        const anchorTrace = {
-            x: [data.equity_curve.dates[0], data.equity_curve.dates[0]],
-            y: [yMin - yPad, yMax + yPad],
-            mode: 'markers',
-            marker: { color: 'rgba(0,0,0,0)' },
-            showlegend: false,
-            hoverinfo: 'skip'
-        };
-        
-        const layoutLine = Object.assign({}, STD_LAYOUT, {
-            title: { text: 'Historical Total Equity', font: { color: 'white' } },
-            xaxis: { 
-                color: 'white', 
-                gridcolor: 'rgba(255,255,255,0.1)', 
-                dtick: 86400000, 
-                tickformat: '%b %d',
-                rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } 
-            },
-            yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
-        });
-        const lineElement = document.getElementById(`line-${prefix}`);
-        if (lineElement) {
-            Plotly.newPlot(`line-${prefix}`, [traceLine, anchorTrace], layoutLine);
-            enableAutoYScale(`line-${prefix}`);
+        if (data.equity_curve.equity && data.equity_curve.equity.length > 0) {
+            let yMin = Math.min(...data.equity_curve.equity);
+            let yMax = Math.max(...data.equity_curve.equity);
+            let yPad = Math.max((yMax - yMin) * 0.20, Math.abs(yMax) * 0.02);
+            
+            const anchorTrace = {
+                x: [data.equity_curve.dates[0], data.equity_curve.dates[0]],
+                y: [yMin - yPad, yMax + yPad],
+                mode: 'markers',
+                marker: { color: 'rgba(0,0,0,0)' },
+                showlegend: false,
+                hoverinfo: 'skip'
+            };
+            
+            const layoutLine = Object.assign({}, STD_LAYOUT, {
+                title: { text: 'Historical Total Equity', font: { color: 'white' } },
+                xaxis: { 
+                    color: 'white', 
+                    gridcolor: 'rgba(255,255,255,0.1)', 
+                    dtick: 86400000, 
+                    tickformat: '%b %d',
+                    rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } 
+                },
+                yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
+            });
+            const lineElement = document.getElementById(`line-${prefix}`);
+            if (lineElement) {
+                Plotly.newPlot(`line-${prefix}`, [traceLine, anchorTrace], layoutLine);
+                enableAutoYScale(`line-${prefix}`);
+            }
         }
 
         // Sort table: Currently Holding 'Yes' first, then sort by PnL descending. Lock TOTAL PnL to bottom.
@@ -319,7 +343,7 @@ async function loadHoldings(mode, selectId, prefix) {
         document.getElementById(`dd-${prefix}`).innerText = "N/A";
         document.getElementById(`sharpe-${prefix}`).innerText = "N/A";
         document.getElementById(`win-${prefix}`).innerText = "N/A";
-        document.getElementById(`chart-${prefix}`).innerHTML = "<p style='color: #94a3b8; text-align: center; margin-top: 100px;'>Ledger not found or empty.</p>";
+        document.getElementById(`chart-${prefix}`).innerHTML = `<div style='color: red; text-align: left; margin-top: 20px; font-family: monospace;'><h3>UI Render Error:</h3><b>${error.message}</b><br><pre>${error.stack}</pre></div>`;
     }
 }
 
@@ -620,6 +644,26 @@ async function loadProdShadow() {
         const data = await res.json();
         
         if (data.dates.length === 0) return;
+
+        // --- INJECT PNL INTO DOM BOXES ---
+        const lastProd = data.prod[data.prod.length - 1];
+        const lastTrans = data.trans[data.trans.length - 1];
+        const lastV1 = data.v1[data.v1.length - 1];
+        const lastLstm = data.lstm[data.lstm.length - 1];
+        
+        const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        const formatPnL = (val) => {
+            const pnl = val - 10000;
+            const sign = pnl >= 0 ? '+' : '';
+            const color = pnl >= 0 ? '#32CD32' : '#FF4136';
+            return `${formatMoney(val)} <span style="color:${color}; font-size:12px;">(${sign}${formatMoney(pnl)})</span>`;
+        };
+        
+        if(document.getElementById('pnl-box-prod')) document.getElementById('pnl-box-prod').innerHTML = formatPnL(lastProd);
+        if(document.getElementById('pnl-box-trans')) document.getElementById('pnl-box-trans').innerHTML = formatPnL(lastTrans);
+        if(document.getElementById('pnl-box-v1')) document.getElementById('pnl-box-v1').innerHTML = formatPnL(lastV1);
+        if(document.getElementById('pnl-box-lstm')) document.getElementById('pnl-box-lstm').innerHTML = formatPnL(lastLstm);
+        // ----------------------------------
 
         const trProd = { x: data.dates, y: data.prod, name: 'Prod (BallsForBrains)', mode: 'lines', line: { color: '#32CD32', width: 4 } };
         const trTrans = { x: data.dates, y: data.trans, name: 'Shadow Transformer', mode: 'lines', line: { color: '#FF4136', width: 3, dash: 'dot' } };

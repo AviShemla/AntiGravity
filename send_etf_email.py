@@ -26,7 +26,7 @@ def build_holdings_html(export_dir):
         df_l = database_manager.get_ledger("ETF_Dynamic")
         if not df_l.empty:
                 last_row = df_l.iloc[-1]
-                pos_json = last_row.get('Positions_JSON', '{}')
+                pos_json = last_row.get('Holdings_JSON', '{}')
                 cash = float(last_row.get('Cash', 0))
                 
                 try:
@@ -34,11 +34,12 @@ def build_holdings_html(export_dir):
                 except:
                     positions = {}
                 
-                for asset, amount in positions.items():
+                for asset, amount_data in positions.items():
+                    dollar_amount = float(amount_data.get('dollars', 0.0)) if isinstance(amount_data, dict) else float(amount_data)
                     html += f'''
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; color: #004085;">{asset}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${amount:,.2f}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${dollar_amount:,.2f}</td>
                     </tr>
                     '''
                 

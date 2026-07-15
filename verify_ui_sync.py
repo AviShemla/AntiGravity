@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
-DB_PATH = os.path.join(BASE_DIR, "antigravity.db")
+DB_PATH = os.path.join(BASE_DIR, "antigravity_OLD_CONSERVATIVE_RULES.db")
 HTML_PATH = os.path.join(BASE_DIR, "frontend", "index.html")
 
 def verify_ui_sync():

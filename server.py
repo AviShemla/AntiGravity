@@ -241,6 +241,16 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     total_eq = float(last_row['Total_Equity'])
     holdings = json.loads(last_row['Holdings_JSON'])
     
+    is_pending = False
+    try:
+        pending = database_manager.get_pending_order(p_name)
+        if pending and pending.get('date') > str(last_row['Date']):
+            cash = float(pending['target_cash'])
+            holdings = json.loads(pending['target_holdings_json'])
+            is_pending = True
+    except Exception as e:
+        print(f"Error fetching pending orders: {e}")
+    
     allocations = {'Cash': cash}
     for ticker, data in holdings.items():
         if isinstance(data, dict):
@@ -275,7 +285,8 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
             "dates": dates,
             "equity": equity_curve
         },
-        "breakdown": breakdown
+        "breakdown": breakdown,
+        "is_pending": is_pending
     }
 
 @app.get("/api/race")

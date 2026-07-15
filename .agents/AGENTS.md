@@ -25,3 +25,14 @@ Whenever you generate a status report or system response for the user, you MUST 
 
 ## Systemic Persona Integrity Check
 Any time you modify a Virtual Broker script or the Master Pipeline, you MUST verify that ALL 8 personas (Single Stocks and ETFs) generate valid pending orders or active HOLD states in the database. Silent skips via hardcoded continue statements are strictly forbidden. The qa_task_auditor.py must run after every nightly process to mathematically prove 100% persona participation.
+
+## Git Commit Pre-Condition (Mandatory QA)
+Before running any `git commit` or `git push` command, you MUST execute a full QA cycle of the entire system (e.g. by running `qa_task_auditor.py` and other relevant QA scripts). You are explicitly forbidden from committing to Git unless the QA audit passes 100% GREEN (0 errors). If the QA fails, you must fix the errors first.
+
+## First Contact QA Enforcement
+If a system QA cycle fails (either via automated background watchdog alerts or a manual audit check), the ABSOLUTE FIRST THING you must do upon starting a new daily session or on first contact with the user is to present the exact QA failure logs and propose a concrete step-by-step fix. You must prioritize resolving QA failures over all other new feature requests or questions.
+
+## Trade Day Status Formatting
+Whenever the user asks for a 'trade day status' or an intraday update, ALWAYS output a markdown table combining all personas (Conservative, Neutral, Dynamic, BallsForBrains) across both Stocks and ETFs.
+The table MUST have the exact following columns:
+| Persona (Asset Class) | AI Recommendation (Pending Orders) | Intraday Sniper Execution Status | Intraday Trend (Live PnL) |

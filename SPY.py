@@ -258,7 +258,21 @@ def download_sp500_full_analysis(sectors_map, folder_path):
             print(f"[WARNING] Backup/Read failed, starting fresh. Error: {e}")
             existing_df = pd.DataFrame()
 
+    dl_archive_filename = "SP500_DeepLearning_Archive.csv"
+    dl_archive_path = os.path.join(folder_path, dl_archive_filename)
+    existing_dl_df = pd.DataFrame()
+    if os.path.exists(dl_archive_path):
+        print(f"[INFO] Existing Deep Learning Archive found at: {dl_archive_path}")
+        try:
+            existing_dl_df = pd.read_csv(dl_archive_path)
+            if not existing_dl_df.empty and 'Ticker' in existing_dl_df.columns and 'Date' in existing_dl_df.columns:
+                existing_dl_df['Date'] = pd.to_datetime(existing_dl_df['Date']).dt.tz_localize(None)
+        except Exception as e:
+            print(f"[WARNING] Deep Learning Archive read failed. Starting fresh. Error: {e}")
+            existing_dl_df = pd.DataFrame()
+            
     all_combined_data = []
+    all_dl_data = []
     vix_data = get_vix_data()
     tnx_data = get_tnx_data()
     
@@ -304,6 +318,12 @@ def download_sp500_full_analysis(sectors_map, folder_path):
                     if not ticker_history.empty:
                         all_combined_data.append(existing_df[existing_df['Ticker'] == ticker])
                         tickers_updated_count += 1
+                        
+                        # Forward the DL archive as well
+                        if not existing_dl_df.empty:
+                            dl_hist = existing_dl_df[existing_dl_df['Ticker'] == ticker]
+                            if not dl_hist.empty:
+                                all_dl_data.append(dl_hist)
                     else:
                         tickers_failed_count += 1
                     continue
@@ -321,6 +341,20 @@ def download_sp500_full_analysis(sectors_map, folder_path):
                     df = df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
                 else:
                     df = new_raw_df.sort_values('Date').reset_index(drop=True)
+                
+                # Append to Deep Learning Archive (Raw Data)
+                if not existing_dl_df.empty:
+                    dl_history = existing_dl_df[existing_dl_df['Ticker'] == ticker].copy()
+                    if not dl_history.empty:
+                        dl_df = pd.concat([dl_history, new_raw_df], ignore_index=True)
+                        dl_df = dl_df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
+                    else:
+                        dl_df = new_raw_df.sort_values('Date').reset_index(drop=True)
+                else:
+                    dl_df = new_raw_df.sort_values('Date').reset_index(drop=True)
+                
+                if not dl_df.empty:
+                    all_dl_data.append(dl_df.copy())
                 
                 if len(df) < 252:
                     tickers_failed_count += 1
@@ -407,6 +441,12 @@ def download_sp500_full_analysis(sectors_map, folder_path):
         if ticker not in valid_tickers_in_dict:
             ticker_history = existing_df[existing_df['Ticker'] == ticker].copy()
             all_combined_data.append(ticker_history)
+            
+            # Forward the DL archive for removed tickers
+            if not existing_dl_df.empty:
+                dl_hist = existing_dl_df[existing_dl_df['Ticker'] == ticker].copy()
+                if not dl_hist.empty:
+                    all_dl_data.append(dl_hist)
     
     if not all_combined_data:
         print("\n[CRITICAL] No ticker data was successfully calculated. Dataset is empty.")
@@ -414,6 +454,14 @@ def download_sp500_full_analysis(sectors_map, folder_path):
         
     final_df = pd.concat(all_combined_data, ignore_index=True)
     final_df['Date'] = pd.to_datetime(final_df['Date']).dt.tz_localize(None)
+    
+    if all_dl_data:
+        dl_final_df = pd.concat(all_dl_data, ignore_index=True)
+        try:
+            dl_final_df.to_csv(dl_archive_path, index=False)
+            print(f"\n[SUCCESS] Deep Learning Archive seamlessly saved to: {dl_archive_path} (Total Rows: {len(dl_final_df)})")
+        except Exception as e:
+            print(f"[CRITICAL ERROR] Failed to save Deep Learning Archive: {e}")
     
     # 🔥 🔥 🔥 מנגנון חישוב וקטורי מואץ לזיהוי רוטציית סקטורים (Sector Regime Shift Indicator) 🔥 🔥 🔥
     print("\n>>> Computing Sector Regime Shift Indicators...")
