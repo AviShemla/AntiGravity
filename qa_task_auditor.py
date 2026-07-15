@@ -202,6 +202,7 @@ if __name__ == "__main__":
         
     if errors == 0:
         print("--- All Tasks Audited: PASSED (0 Errors) ---")
+        os._exit(0)
     else:
         print(f"--- Task Auditor Failed with {errors} Errors! Self-Healing agents have been dispatched. ---")
-        sys.exit(1)
+        os._exit(1)

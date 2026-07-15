@@ -88,7 +88,7 @@ if __name__ == '__main__':
     
     if pass1 and pass2:
         print("\n[QA COMPLETE] All per-ticker continuity and orphaned holding checks passed.")
-        sys.exit(0)
+        os._exit(0)
     else:
         print("\n[QA COMPLETE] Critical data continuity failures detected.")
-        sys.exit(1)
+        os._exit(1)
