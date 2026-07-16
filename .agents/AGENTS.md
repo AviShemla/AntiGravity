@@ -49,12 +49,14 @@ When executing a 'full cycle QA', the agent MUST verify ALL of the following vec
 5. **Holistic Consistency**: PnL, historical ledgers, and live data must sync perfectly across all tables and outputs.
 6. **System Health**: Active background processes (watchdog, Uvicorn, sniper) must be running, with no rogue/zombie processes holding critical ports (e.g., Port 80).
 7. **Self-Healing Loop**: If any open issues are detected, the agent must proactively self-heal the issue and re-run the ENTIRE QA cycle from scratch.
+8. **Intraday Execution Blindspot (Pending Orders Volatility)**: `pending_orders` are naturally consumed and DELETED by the Sniper (`intraday_tracker.py`) throughout the trading day. Therefore, any mid-day QA checks that solely rely on the existence of rows in `pending_orders` will yield false negatives or skip validation entirely. To prove mid-day execution success, the QA auditor MUST query `capital_ledgers` or rely on a dedicated user report, rather than assuming `pending_orders` should always be populated.
+9. **SQLite Centralization (No Hardcoded DB Paths)**: Never hardcode direct queries to `system_state.db` or `ag_pipeline.db` using pure `sqlite3`. The database architecture dynamically maps tables across multiple files. All SQL operations must strictly route through `database_manager.execute_query()`. Bypassing the manager leads to 'no such table' errors and invalid assumptions.
+
 
 ## Continuous Learning Protocol
 After resolving any novel daily issue or bug, the agent MUST independently update this AGENTS.md rulebook. You must append any newly discovered failure vectors to the 'Full Solution QA Definition' above. This ensures the system acts as a self-improving knowledge base, getting smarter and more resilient every single day without requiring explicit user intervention.
 
 ## The Cold Facts Directive (No Assumption Policy)
-Stop assuming things. Most issues in this pipeline are due to assumption and not cold facts. We are dealing with math, stats, and pure science. There is absolutely NO PLACE for assumption or guessing. Every single action, migration, or debug step MUST be mathematically proven and verified via exhaustive grep searches and code audits before execution.
 
 
 ## 10000.00 Flatline Trap (Dashboard Integrity)
