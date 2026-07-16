@@ -357,3 +357,4 @@ def generate_excel():
 
 if __name__ == '__main__':
     generate_excel()
+    os._exit(0)

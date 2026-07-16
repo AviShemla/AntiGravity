@@ -315,4 +315,6 @@ def generate_excel():
     print(f"Successfully generated: {OUTPUT_EXCEL}")
 
 if __name__ == '__main__':
-    generate_excel()
+    generate_etf_excel()
+    import os
+    os._exit(0)

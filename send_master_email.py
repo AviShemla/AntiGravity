@@ -198,3 +198,6 @@ try:
     print("Test HTML Render Sent Successfully!")
 except Exception as e:
     print(f"Failed to send email. Error: {e}")
+finally:
+    import os
+    os._exit(0)

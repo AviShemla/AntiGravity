@@ -43,7 +43,7 @@ If there are alarming uncommitted Git states (e.g., critical patches sitting unc
 ## Full Solution QA Definition
 When executing a 'full cycle QA', the agent MUST verify ALL of the following vectors before declaring the system '100% Green':
 1. **Data Continuity**: No gaps, no orphaned tickers, mathematical accuracy.
-2. **Scripts & Process Lifecycle**: Scripts must exit cleanly without hanging terminals or leaking threads/memory.
+2. **Scripts & Process Lifecycle (Zombie Socket Deadlocks)**: Scripts must exit cleanly without hanging terminals. Any script that utilizes `yfinance` or network requests (like `requests`/`urllib3`) MUST explicitly call `os._exit(0)` at the end of execution to physically destroy the interpreter and prevent background connection pools from deadlocking the pipeline at EOF.
 3. **Dashboard Sync**: All UI tabs must fetch, render, and display up-to-date data without API crashes or connection pool locks.
 4. **Emails & Attachments**: Generated reports must mathematically match the database and dashboard.
 5. **Holistic Consistency**: PnL, historical ledgers, and live data must sync perfectly across all tables and outputs.

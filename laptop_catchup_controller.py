@@ -51,12 +51,9 @@ def get_missed_dates(pipeline_name):
         
     db_staged_date = None
     try:
-        conn = database_manager.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT date FROM pending_orders LIMIT 1")
-        row = c.fetchone()
-        if row: db_staged_date = row[0]
-        conn.close()
+        df = database_manager.execute_query("SELECT date FROM pending_orders LIMIT 1")
+        if not df.empty:
+            db_staged_date = df.iloc[0]['date']
     except Exception as e:
         print(f"Error checking pending orders: {e}")
         
@@ -168,10 +165,7 @@ def catchup_master_pipeline():
         
         print("\n--> Running Olympic Shootout Backtests (Generating New Chart Dots)...\n")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], cwd=BASE_DIR)
-        
-        if is_last:
-            print("\n--> Sending Executive Brief...\n")
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "executive_brief.py")], cwd=BASE_DIR)
+
 
     print("\nMaster Pipeline Catch-Up Complete!")
 
@@ -284,6 +278,8 @@ def catchup_everything_and_email():
         sys.exit(1)
         
     print("\nQA Audit Passed: 100% Green! Dispatching perfectly synchronized emails...")
+    print("\n--> Sending Executive Brief...\n")
+    subprocess.run([python_exe, os.path.join(BASE_DIR, "executive_brief.py")], cwd=BASE_DIR)
     subprocess.run([python_exe, os.path.join(BASE_DIR, "send_master_email.py")], cwd=BASE_DIR)
     subprocess.run([python_exe, os.path.join(BASE_DIR, "send_etf_email.py")], cwd=BASE_DIR)
     subprocess.run([python_exe, os.path.join(BASE_DIR, "send_championship_email.py")], cwd=BASE_DIR)

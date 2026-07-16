@@ -547,5 +547,7 @@ if __name__ == "__main__":
     if active_sectors_dict:
         # 2. Run the main pipeline
         download_sp500_full_analysis(active_sectors_dict, output_directory)
+        os._exit(0)
     else:
         print("[CRITICAL] Could not load or generate VIP tickers. Pipeline aborted.")
+        os._exit(1)
