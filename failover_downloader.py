@@ -296,8 +296,8 @@ def download_ticker_with_failover(ticker, period=None, start=None):
             # Since df.index is a datetime, we can check if it exists by matching dates
             matching_rows = df[df.index.date == last_closed_market_day]
             
-            # if matching_rows.empty or pd.isna(matching_rows['Close'].iloc[-1]):
-            #     raise ValueError(f"Yahoo Finance returned missing/NaN data for {last_closed_market_day}. Forcing Tiingo failover.")
+            if not start and (matching_rows.empty or pd.isna(matching_rows['Close'].iloc[-1])):
+                raise ValueError(f"Yahoo Finance returned missing/NaN data for {last_closed_market_day}. Forcing Tiingo failover.")
                 
             time.sleep(2) # Prevent rate limiting (Reduced from 5s to 2s)
             return df

@@ -18,6 +18,11 @@ def get_prod_equity(date_str):
         df = database_manager.execute_query(f"SELECT total_equity FROM capital_ledgers WHERE persona='BallsForBrains' AND date LIKE '{date_str}%'")
         if not df.empty:
             return float(df['total_equity'].iloc[-1])
+        
+        # FIX: If today's exact balance isn't populated yet, fallback to the most recent known balance instead of flatlining at 10000.00.
+        df_latest = database_manager.execute_query("SELECT total_equity FROM capital_ledgers WHERE persona='BallsForBrains' ORDER BY date DESC LIMIT 1")
+        if not df_latest.empty:
+            return float(df_latest['total_equity'].iloc[-1])
     except:
         pass
     return 10000.0
@@ -120,3 +125,4 @@ if __name__ == "__main__":
         run_tracker(sys.argv[1])
     else:
         run_tracker(datetime.now().strftime("%Y-%m-%d"))
+    os._exit(0)

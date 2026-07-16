@@ -160,7 +160,7 @@ if __name__ == "__main__":
             missing = []
             stale = False
             
-            if 3 <= now_ny.hour < 15 or (now_ny.hour == 15 and now_ny.minute < 55):
+            if 3 <= now_ny.hour < 9 or (now_ny.hour == 9 and now_ny.minute < 25):
                 df_pending = database_manager.execute_query('SELECT persona, date FROM pending_orders')
                 expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
                                      'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']

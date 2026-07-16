@@ -11,13 +11,24 @@ TURSO_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
 _global_client = None
 
+import threading
+_db_lock = threading.Lock()
+
 def get_connection():
     """Returns a connected libsql_client sync client from a global pool."""
     global _global_client
     if _global_client is None:
         if not TURSO_URL or not TURSO_TOKEN:
             raise ValueError("Missing TURSO credentials in .env file!")
-        _global_client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
+        client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
+        
+        original_execute = client.execute
+        def locked_execute(stmt, args=None):
+            with _db_lock:
+                return original_execute(stmt, args or [])
+        client.execute = locked_execute
+        
+        _global_client = client
     return _global_client
 
 import atexit

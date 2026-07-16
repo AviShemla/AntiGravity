@@ -45,7 +45,7 @@ def calculate_metrics(df, persona):
         roll_max = equity.cummax()
         drawdown = (equity - roll_max) / roll_max
         max_dd = drawdown.min() * 100
-        total_return = ((equity.iloc[-1] - equity.iloc[0]) / equity.iloc[0]) * 100
+        total_return = ((equity.iloc[-1] - 10000.0) / 10000.0) * 100
     else:
         max_dd, total_return = 0, 0
         
@@ -322,7 +322,7 @@ def get_race_data(mode: str = "Single"):
     try:
         spy = yf.download('SPY', start=plot_df.index.min(), end=plot_df.index.max() + pd.Timedelta(days=1), progress=False)
         if not spy.empty and len(plot_df.columns) > 0:
-            start_eq = plot_df.iloc[0, 0]
+            start_eq = 10000.0
             if isinstance(spy.columns, pd.MultiIndex):
                 spy_close = spy['Close']['SPY']
             else:
@@ -578,6 +578,10 @@ def get_prod_shadow():
     csv_path = os.path.join(r'C:\Users\AviShemla\AntiGravity\financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
     if not os.path.exists(csv_path): return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'table': []}
     df = pd.read_csv(csv_path)
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.sort_values('Date')
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
     df = df.ffill().fillna(10000.0)
     return {
         'dates': df['Date'].tolist(),

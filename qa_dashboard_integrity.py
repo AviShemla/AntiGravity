@@ -99,7 +99,14 @@ def test_dashboard_continuity():
             if latest_db_date != latest_shadow_date:
                 print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
                 sys.exit(1)
-            print(f"SUCCESS - Prod vs Shadow chart dates perfectly synced to Master Ledger ({latest_shadow_date}).")
+            
+            # --- NEW CHECK: 10000.00 Flatline Bug ---
+            recent_prod_values = shadow_df['Prod'].tail(3).values
+            if 10000.0 in recent_prod_values or "10000.0" in recent_prod_values or 10000 in recent_prod_values:
+                print(f"[CRITICAL FAIL] Prod vs Shadow Chart has Flatlined at 10000.0! Tracker Race Condition detected.")
+                sys.exit(1)
+                
+            print(f"SUCCESS - Prod vs Shadow chart perfectly synced to Master Ledger ({latest_shadow_date}) with NO flatline bugs.")
     except Exception as e:
         print(f"Warning: Could not run Shadow Sync Check: {e}")
 

@@ -55,3 +55,7 @@ After resolving any novel daily issue or bug, the agent MUST independently updat
 
 ## The Cold Facts Directive (No Assumption Policy)
 Stop assuming things. Most issues in this pipeline are due to assumption and not cold facts. We are dealing with math, stats, and pure science. There is absolutely NO PLACE for assumption or guessing. Every single action, migration, or debug step MUST be mathematically proven and verified via exhaustive grep searches and code audits before execution.
+
+
+## 10000.00 Flatline Trap (Dashboard Integrity)
+Whenever a script parses Prod_vs_Shadow_Results_MASTER.csv, the agent MUST explicitly check if the Prod equity has flatlined at exactly 10000.00. This is the mathematical signature of a race condition where a tracker ran before the daily SQLite database was populated. If detected, the agent MUST flag this as a QA Failure, purge the corrupted rows from the CSV, and forcefully re-run the tracker to backfill the missing data.

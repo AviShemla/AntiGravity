@@ -164,15 +164,16 @@ if __name__ == "__main__":
         try:
             check_and_revive_daemons()
             check_schedule()
-            prune_ghost_processes(7200)
+            prune_ghost_processes(3600)
             
             # Run UI QA Agent every 15 minutes (15 loops of 60s)
             if loop_count % 15 == 0:
                 subprocess.Popen([PYTHON_EXE, os.path.join(BASE_DIR, "qa_api_health.py")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 
-            # Run Task Auditor Agent every 60 minutes (60 loops of 60s)
-            if loop_count % 60 == 0:
+            # Run Task Auditor and Ghost Cleaner every 60 minutes (60 loops of 60s)
+            if loop_count > 0 and loop_count % 60 == 0:
                 subprocess.Popen([PYTHON_EXE, os.path.join(BASE_DIR, "qa_task_auditor.py")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen([PYTHON_EXE, os.path.join(BASE_DIR, "clean_ghosts.py")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 
         except Exception as e:
             log(f"CRITICAL WATCHDOG ERROR: {e}")
