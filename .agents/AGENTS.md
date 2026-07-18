@@ -68,3 +68,6 @@ After resolving any novel daily issue or bug, the agent MUST independently updat
 
 ## 10000.00 Flatline Trap (Dashboard Integrity)
 Whenever a script parses Prod_vs_Shadow_Results_MASTER.csv, the agent MUST explicitly check if the Prod equity has flatlined at exactly 10000.00. This is the mathematical signature of a race condition where a tracker ran before the daily SQLite database was populated. If detected, the agent MUST flag this as a QA Failure, purge the corrupted rows from the CSV, and forcefully re-run the tracker to backfill the missing data.
+
+## Intraday Shadow Chart Desync (Self-Healing)
+If `qa_dashboard_integrity.py` detects that the latest date in `Prod_vs_Shadow_Results_MASTER.csv` is AHEAD of the Master Ledger database date (e.g., due to an intraday run of the shadow tracker), the system MUST automatically self-heal by purging the future intraday rows from the CSV so it mathematically syncs back to the latest EOD database state. It should report a `[SELF-HEALING]` success rather than crashing with a Critical Fail.

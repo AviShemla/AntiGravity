@@ -97,8 +97,16 @@ def test_dashboard_continuity():
             latest_shadow_date = str(shadow_df.iloc[-1]['Date']).split()[0]
             
             if latest_db_date != latest_shadow_date:
-                print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
-                sys.exit(1)
+                if latest_shadow_date > latest_db_date:
+                    print(f"[SELF-HEALING] Prod vs Shadow Chart is AHEAD of DB (Intraday Tracker Run)! DB: {latest_db_date}, Chart: {latest_shadow_date}. Purging future rows...")
+                    shadow_df['Date_Obj'] = pd.to_datetime(shadow_df['Date'])
+                    shadow_df = shadow_df[shadow_df['Date_Obj'] <= pd.to_datetime(latest_db_date)]
+                    shadow_df.drop(columns=['Date_Obj'], inplace=True)
+                    shadow_df.to_csv(shadow_path, index=False)
+                    print(f"-> Successfully purged intraday rows. Chart now strictly synced to Master Ledger ({latest_db_date}).")
+                else:
+                    print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
+                    sys.exit(1)
             
             # --- NEW CHECK: 10000.00 Flatline Bug ---
             recent_prod_values = shadow_df['Prod'].tail(3).values
