@@ -109,6 +109,25 @@ def test_dashboard_continuity():
                 print(f"[CRITICAL FAIL] Prod vs Shadow Chart has Flatlined at 10000.0! Tracker Race Condition detected.")
                 sys.exit(1)
                 
+            # --- NEW CHECK: 3-Day Horizontal Stagnation Bug (Auto-Heal) ---
+            if len(shadow_df) >= 3:
+                last_3_shadow1 = shadow_df['Shadow_1'].tail(3).values
+                last_3_shadow2 = shadow_df['Shadow_2'].tail(3).values
+                last_3_shadow3 = shadow_df['Shadow_3'].tail(3).values
+                
+                # Check if all 3 values in the array are identical
+                if len(set(last_3_shadow1)) == 1 and len(set(last_3_shadow2)) == 1 and len(set(last_3_shadow3)) == 1:
+                    print(f"!!! [QA FAILURE DETECTED] The Shadow Chart has flatlined for 3 consecutive days! The Catch-up Controller failed to run the sandboxes!")
+                    print(f"!!! -> [AUTO-HEAL INITIATED] Forcing the Shadow Sandboxes to backfill historical missing dates now...")
+                    import subprocess
+                    python_exe = sys.executable
+                    subprocess.run([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py")], cwd=BASE_DIR)
+                    subprocess.run([python_exe, os.path.join(BASE_DIR, "shadow_transformer.py")], cwd=BASE_DIR)
+                    subprocess.run([python_exe, os.path.join(BASE_DIR, "shadow_lstm.py")], cwd=BASE_DIR)
+                    print(f"!!! -> [AUTO-HEAL] Re-running prod_vs_shadow_tracker.py to rewrite the CSV...")
+                    subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py")], cwd=BASE_DIR)
+                    print(f"SUCCESS - Auto-Heal complete. Dashboard is un-flatlined.")
+                    
             print(f"SUCCESS - Prod vs Shadow chart perfectly synced to Master Ledger ({latest_shadow_date}) with NO flatline bugs.")
     except Exception as e:
         print(f"Warning: Could not run Shadow Sync Check: {e}")

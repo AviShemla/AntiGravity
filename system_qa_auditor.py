@@ -175,6 +175,31 @@ def phase_d_dashboard_continuity():
         print(" !!! WARNING: qa_dashboard_integrity.py missing.")
         return False
 
+def phase_e_pre_market_validation():
+    log_header("PHASE E: Pre-Market Validation (Pending Orders)")
+    try:
+        from database_manager import execute_query
+        query = "SELECT DISTINCT persona FROM pending_orders"
+        df = execute_query(query)
+        if df.empty:
+            print(" !!! FATAL: No pending orders found for ANY persona!")
+            return False
+            
+        found_personas = df['persona'].tolist()
+        expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
+                             'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']
+        missing = [p for p in expected_personas if p not in found_personas]
+        
+        if missing:
+            print(f" !!! FAIL: Missing pending orders for personas: {missing}")
+            return False
+            
+        print(f" -> PASS: All {len(expected_personas)} Personas successfully queued pending orders for the next trade day.")
+        return True
+    except Exception as e:
+        print(f"!!! FAIL during Phase E: {e}")
+        return False
+
 def main():
     log_header("ANTI-GRAVITY DEEP SYSTEM QA AUDITOR")
     print(f"Execution Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -183,7 +208,8 @@ def main():
         "A": phase_a_data_integrity(),
         "B": phase_b_model_validation(),
         "C": phase_c_ledger_accounting(),
-        "D": phase_d_dashboard_continuity()
+        "D": phase_d_dashboard_continuity(),
+        "E": phase_e_pre_market_validation()
     }
     
     log_header("QA AUDIT SUMMARY")
