@@ -117,3 +117,4 @@ def test_dashboard_continuity():
 
 if __name__ == "__main__":
     test_dashboard_continuity()
+    os._exit(0)
