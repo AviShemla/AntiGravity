@@ -71,3 +71,6 @@ Whenever a script parses Prod_vs_Shadow_Results_MASTER.csv, the agent MUST expli
 
 ## Intraday Shadow Chart Desync (Graceful INTRADAY Tracking)
 If `qa_dashboard_integrity.py` detects that the latest date in `Prod_vs_Shadow_Results_MASTER.csv` is AHEAD of the Master Ledger database date (e.g., due to an intraday run of the shadow tracker), the system MUST gracefully allow this and report a SUCCESS message acknowledging active INTRADAY tracking. Do NOT purge the row, as that would destroy live user PnL.
+
+## The Zombie Hunter Protocol
+The system has an automated janitor (clean_ghosts.py) running every 60 minutes via the master watchdog. It hunts and kills any python process (except whitelisted ones like uvicorn/watchdog) running longer than 1 hour. It also physically deletes any .lock or in_progress.txt files older than 60 minutes. NEVER create permanent lockfiles without an expiration mechanism, and NEVER interfere with the master watchdog's ability to run the Zombie Hunter.
