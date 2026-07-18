@@ -208,6 +208,7 @@ For deep crash recovery, here is the exact purpose, input, output, and schedule 
 
 - **SSOT_DB (`antigravity.db`)** | Purpose: The Single Source of Truth SQLite core. Eliminates race conditions and fully decouples the Math Models, Execution Engines, and UI from fragile CSV files. | Input: Orders & Ledgers | Output: Verified States | Schedule: Always On
 - **MASTER (`master_pipeline.py`)** | Purpose: Central nervous system commanding automated daily execution. | Input: Windows Task Scheduler | Output: Orchestrated Scripts | Schedule: Daily at 1:00 AM
+- **WATCHDOG (`master_watchdog.py`)** | Purpose: Continuous background daemon that ensures system health. Automatically resurrects dead Uvicorn servers, hunts zombie processes, and triggers API health audits. | Input: Process Tree | Output: Alive Daemons | Schedule: Background Infinite Loop
 - **FAILOVER (`failover_downloader.py`)** | Purpose: Self-healing data fetcher. Uses exponential backoff and alternate Tiingo API to bypass yfinance failures. | Input: Tickers | Output: CSV Data | Schedule: On-Demand
 - **DATA_LOADER (`data_loader.py`)** | Purpose: Flawless matrix extraction. Pre-slices history and rigidly enforces no duplicate forward-dates pollute MCMC chains. | Input: Raw Price Data | Output: Clean Multi-Lag Arrays | Schedule: Pre-inference
 - **STOCK_PYMC (`export_bayesian_scorecard_TNX.py`)** | Purpose: Project Apollo causality engine. Correlates global macro features into Rust NUTS sampler. | Input: Top 15 Tickers + Macro | Output: P(UP) Predictions | Schedule: Daily
@@ -215,7 +216,7 @@ For deep crash recovery, here is the exact purpose, input, output, and schedule 
 - **DEEP_INFERENCE (`daily_dl_inference.py`)** | Purpose: Rapid millisecond Shadow Engine generating non-linear alpha predictions. | Input: `.pt` weights + daily tensors | Output: Shadow Scorecard | Schedule: Daily
 - **STOCK_BROKER (`virtual_broker.py`)** | Purpose: Calculates mathematical capital allocations based on scorecards. | Input: Predictive Scorecards | Output: Pending SQLite Orders | Schedule: Daily
 - **INTRADAY_SNIPER (`intraday_tracker.py`)** | Purpose: Constantly polls live market ask/bid prices during market hours. Executes intended target staging only when momentum is optimal. | Input: Pending SQLite Orders | Output: Executed SQLite Ledger | Schedule: Intraday
-- **BACKEND (`server.py`)** | Purpose: FastAPI REST Server bridging Python SQLite data to frontend web application. | Input: SQLite Ledgers & Scorecards | Output: JSON Endpoints | Schedule: Always Online
+- **BACKEND (`server.py`)** | Purpose: FastAPI REST Server bridging Python SQLite data to frontend web application. Endpoints include /api/race_data, /api/prod_shadow, and /api/olympic. | Input: SQLite Ledgers & Scorecards | Output: JSON Endpoints | Schedule: Managed by Watchdog
 - **QA_UI_AGENT (`qa_api_health.py`)** | Purpose: Automated watchdog script that acts as an invisible user clicking through the dashboard every 15 minutes. It strictly queries local API JSON payloads to verify structural math integrity. If a backend tab crashes, it logs an alert to `master_watchdog.log` without aggressively mutating state. | Input: REST API Endpoints | Output: Health Validations | Schedule: Every 15 mins
 
 ---

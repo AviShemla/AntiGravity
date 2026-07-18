@@ -320,7 +320,8 @@ def get_race_data(mode: str = "Single"):
         }
         
     try:
-        spy = yf.download('SPY', start=plot_df.index.min(), end=plot_df.index.max() + pd.Timedelta(days=1), progress=False)
+        # spy = yf.download('SPY', start=plot_df.index.min(), end=plot_df.index.max() + pd.Timedelta(days=1), progress=False)
+        spy = pd.DataFrame() # Disabled to prevent Uvicorn connection pool deadlocks
         if not spy.empty and len(plot_df.columns) > 0:
             start_eq = 10000.0
             if isinstance(spy.columns, pd.MultiIndex):

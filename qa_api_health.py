@@ -20,7 +20,7 @@ INCEPTION_DATES = {
     "Neutral": "2026-07-08"
 }
 
-def log_alert(msg):
+def log_alert(msg, require_intervention=False):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_line = f"[{timestamp}] QA_UI_AGENT_ALERT: {msg}"
     print(log_line)
@@ -30,12 +30,13 @@ def log_alert(msg):
     except:
         pass
         
-    try:
-        import subprocess
-        script_path = os.path.join(r"C:\Users\AviShemla\AntiGravity", "send_email_notification.py")
-        subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - UI Agent", msg], creationflags=0x08000000)
-    except Exception as e:
-        print(f"Failed to trigger email alert: {e}")
+    if require_intervention:
+        try:
+            import subprocess
+            script_path = os.path.join(r"C:\Users\AviShemla\AntiGravity", "send_email_notification.py")
+            subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - UI Agent", msg], creationflags=0x08000000)
+        except Exception as e:
+            print(f"Failed to trigger email alert: {e}")
 
 def fetch_json(url):
     try:
@@ -50,27 +51,14 @@ def fetch_json(url):
     except urllib.error.URLError as e:
         err_msg = str(e.reason).lower()
         if "10061" in err_msg or "actively refused" in err_msg or "timed out" in err_msg or "timeout" in err_msg:
-            # SELF-HEALING SYSTEM: Auto-restart the entire ecosystem to clear deadlocks
-            log_alert(f"Detected offline/deadlocked server (Error: {err_msg}). Self-healing by rebooting entire watchdog...")
-            try:
-                import subprocess
-                subprocess.Popen(["C:\\Users\\AviShemla\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", r"C:\Users\AviShemla\AntiGravity\restart_watchdog.py"], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-                time.sleep(5) # Wait for watchdog to kill zombies and reboot uvicorn
-                return fetch_json(url) # Retry request
-            except Exception as e2:
-                return False, f"URL Error: {err_msg} (Self-heal failed: {str(e2)})"
+            log_alert(f"Detected offline/deadlocked server (Error: {err_msg}). The Master Watchdog will revive it naturally.", require_intervention=False)
+            return False, f"URL Error: {err_msg} (Watchdog will self-heal)"
         return False, f"URL Error: {e.reason}"
     except Exception as e:
         err_msg = str(e).lower()
-        if "timed out" in err_msg or "timeout" in err_msg:
-            log_alert(f"Detected offline/deadlocked server via Exception (Error: {err_msg}). Self-healing by rebooting entire watchdog...")
-            try:
-                import subprocess
-                subprocess.Popen(["C:\\Users\\AviShemla\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", r"C:\Users\AviShemla\AntiGravity\restart_watchdog.py"], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-                time.sleep(5) # Wait for watchdog to kill zombies and reboot uvicorn
-                return fetch_json(url) # Retry request
-            except Exception as e2:
-                return False, f"Exception Error: {err_msg} (Self-heal failed: {str(e2)})"
+        if "10061" in err_msg or "actively refused" in err_msg or "timed out" in err_msg or "timeout" in err_msg:
+            log_alert(f"Detected offline/deadlocked server via Exception (Error: {err_msg}). The Master Watchdog will revive it naturally.", require_intervention=False)
+            return False, f"Exception Error: {err_msg} (Watchdog will self-heal)"
         return False, f"Exception: {str(e)}"
 
 def run_qa():

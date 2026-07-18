@@ -179,8 +179,8 @@ try:
                 
                 html_dashboard += f'''
                 <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">{p}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: {color}; font-weight: bold;">{sign}${daily_pnl:,.2f}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><strong>ETF_{p}</strong></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right; color: {color};"><strong>{sign}${abs(daily_pnl):.2f}</strong></td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${eq:,.2f}</td>
                     <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${cash:,.2f}</td>
                 </tr>
