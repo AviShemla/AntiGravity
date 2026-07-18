@@ -98,12 +98,7 @@ def test_dashboard_continuity():
             
             if latest_db_date != latest_shadow_date:
                 if latest_shadow_date > latest_db_date:
-                    print(f"[SELF-HEALING] Prod vs Shadow Chart is AHEAD of DB (Intraday Tracker Run)! DB: {latest_db_date}, Chart: {latest_shadow_date}. Purging future rows...")
-                    shadow_df['Date_Obj'] = pd.to_datetime(shadow_df['Date'])
-                    shadow_df = shadow_df[shadow_df['Date_Obj'] <= pd.to_datetime(latest_db_date)]
-                    shadow_df.drop(columns=['Date_Obj'], inplace=True)
-                    shadow_df.to_csv(shadow_path, index=False)
-                    print(f"-> Successfully purged intraday rows. Chart now strictly synced to Master Ledger ({latest_db_date}).")
+                    print(f"SUCCESS - Prod vs Shadow chart is actively tracking INTRADAY (Chart: {latest_shadow_date}, DB: {latest_db_date}).")
                 else:
                     print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
                     sys.exit(1)
