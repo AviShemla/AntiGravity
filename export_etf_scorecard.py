@@ -473,3 +473,6 @@ if __name__ == '__main__':
     parser.add_argument("--target-date", type=str, help="Target date to simulate catch-up execution")
     args = parser.parse_args()
     export_etf_scorecard(args.target, target_date=args.target_date)
+    import os
+    os._exit(0)
+

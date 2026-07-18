@@ -265,4 +265,5 @@ def run_financial_audit():
         return 0
 
 if __name__ == "__main__":
-    sys.exit(run_financial_audit())
+    result = run_financial_audit()
+    os._exit(result)

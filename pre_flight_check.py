@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 import datetime
@@ -18,14 +19,14 @@ def run_qa_suite():
         if result.returncode != 0:
             log_msg("CRITICAL: QA Suite Failed! Deployment Blocked.")
             print(result.stderr)
-            sys.exit(1)
+            os._exit(1)
             
         log_msg("SUCCESS: All assertions passed. System is 100% Green and ready for deployment.")
-        sys.exit(0)
+        os._exit(0)
         
     except FileNotFoundError:
         log_msg("ERROR: pytest is not installed or not found in PATH.")
-        sys.exit(1)
+        os._exit(1)
 
 if __name__ == "__main__":
     run_qa_suite()

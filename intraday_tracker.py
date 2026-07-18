@@ -448,7 +448,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
             for t, p in approved_sells.items():
                 executed_memory[t] = {"type": "SELL", "price": p}
             for t, p in aborted_sells.items():
-                executed_memory[t] = {"type": "ABORTED_SELL", "price": p}
+                executed_memory[t] = {"type": "ABORTED_SELL", "price": p, "cash_reversed": False}
             
             # Start with the pure overnight intended Target Holdings
             final_holdings = target_holdings.copy()
@@ -516,19 +516,25 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                 elif record["type"] == "ABORTED_SELL":
                     units = current_holdings[ticker]['units']
                     
-                    # Reverse the broker's cash credit because we did NOT sell it
-                    allocated_dollars = units * current_holdings[ticker]['price']
-                    broker_credited = allocated_dollars + state['Daily_PnL_JSON'].get(ticker, 0.0)
-                    
-                    final_cash -= broker_credited
-                    
-                    # Add back to holdings. The broker's credited value represents the precise End-of-Day value it assumed we sold it for.
-                    # Since we are holding it, this becomes its new cost basis for tomorrow!
-                    final_holdings[ticker] = {
-                        'dollars': broker_credited,
-                        'units': units,
-                        'price': broker_credited / units if units > 0 else 0.0
-                    }
+                    if not record.get("cash_reversed", False):
+                        # Reverse the broker's cash credit because we did NOT sell it
+                        allocated_dollars = units * current_holdings[ticker]['price']
+                        broker_credited = allocated_dollars + state['Daily_PnL_JSON'].get(ticker, 0.0)
+                        
+                        final_cash -= broker_credited
+                        
+                        # Add back to holdings. The broker's credited value represents the precise End-of-Day value it assumed we sold it for.
+                        # Since we are holding it, this becomes its new cost basis for tomorrow!
+                        final_holdings[ticker] = {
+                            'dollars': broker_credited,
+                            'units': units,
+                            'price': broker_credited / units if units > 0 else 0.0
+                        }
+                        record["cash_reversed"] = True
+                    else:
+                        # We already reversed this in a previous watchdog pass today.
+                        # Preserve the holding exactly as it is in current_holdings (which already reflects the credit).
+                        final_holdings[ticker] = current_holdings[ticker]
                     
                     # We DO NOT modify the PNL here, because the PNL predicted by the broker is perfectly accurate for an asset held to close!
                     
@@ -543,6 +549,10 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
             # Dynamically recalculate live Total Equity to account for any realized PnL from intraday Take-Profits or Stop-Losses
             live_total_equity = final_cash + sum(item['dollars'] for item in final_holdings.values())
             
+            if executed_memory:
+                client = database_manager.get_connection()
+                client.execute("UPDATE pending_orders SET executed_intraday_trades_json = ? WHERE persona = ?", [json.dumps(executed_memory), persona])
+                
             # Create the final committed row in SQLite
             database_manager.save_ledger_row(
                 persona=persona,
@@ -629,3 +639,4 @@ if __name__ == "__main__":
     parser.add_argument("--target-date", type=str, help="Target date to simulate catch-up execution")
     args = parser.parse_args()
     run_intraday_tracker(target_date=args.target_date)
+    os._exit(0)

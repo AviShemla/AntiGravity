@@ -75,7 +75,7 @@ def run_qa():
         status = f"FAILURE - Pipeline aborted due to array mismatch or data corruption: {e}"
         log_qa_result(status, "URGENT INVESTIGATION REQUIRED. Pipeline execution halted.")
         import sys
-        sys.exit(1)
+        os._exit(1)
 
 if __name__ == '__main__':
     run_qa()

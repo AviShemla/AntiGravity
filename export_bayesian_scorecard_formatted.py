@@ -375,7 +375,7 @@ if __name__ == '__main__':
     
     if not os.path.exists(portfolio_path):
         print(f"Error: {portfolio_path} not found.")
-        sys.exit(1)
+        os._exit(1)
         
     top_5 = pd.read_csv(portfolio_path)
     if 'OOS_Accuracy' not in top_5.columns:

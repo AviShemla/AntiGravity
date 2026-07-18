@@ -195,10 +195,10 @@ def main():
         
     if all_passed:
         print("\nSUCCESS: The Anti-Gravity System is mathematically bulletproof.")
-        sys.exit(0)
+        os._exit(0)
     else:
         print("\nCRITICAL ALERT: System QA Audit found mathematical flaws!")
-        sys.exit(1)
+        os._exit(1)
 
 if __name__ == "__main__":
     main()

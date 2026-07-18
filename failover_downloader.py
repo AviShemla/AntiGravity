@@ -276,8 +276,7 @@ def download_ticker_with_failover(ticker, period=None, start=None):
             
     safe_print(f"  [YFINANCE] Fetching {ticker} (API String: {ticker_api})...")
     try:
-        from timeout_runner import run_with_timeout
-        df = run_with_timeout(_fetch_yf_global, args=(ticker_api, start, period), timeout_seconds=8)
+        df = _fetch_yf_global(ticker_api, start, period)
         
         if not df.empty and 'Close' in df.columns:
             # Validate that YFinance didn't silently omit the most recent trading day
@@ -299,7 +298,7 @@ def download_ticker_with_failover(ticker, period=None, start=None):
             if not start and (matching_rows.empty or pd.isna(matching_rows['Close'].iloc[-1])):
                 raise ValueError(f"Yahoo Finance returned missing/NaN data for {last_closed_market_day}. Forcing Tiingo failover.")
                 
-            time.sleep(2) # Prevent rate limiting (Reduced from 5s to 2s)
+            time.sleep(0.5) # Prevent rate limiting (Reduced from 5s to 0.5s)
             return df
     except Exception as e:
         safe_print(f"  [YFINANCE ERROR] {e}")

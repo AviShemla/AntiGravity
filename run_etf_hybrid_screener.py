@@ -10,5 +10,8 @@ import sys
 from etf_fast_screener import screen_hybrid_matrix
 
 if __name__ == '__main__':
+    import os
     target = sys.argv[1] if len(sys.argv) > 1 else 'XLK'
     screen_hybrid_matrix(target)
+    os._exit(0)
+

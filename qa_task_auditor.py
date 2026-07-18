@@ -160,7 +160,8 @@ if __name__ == "__main__":
             missing = []
             stale = False
             
-            if 3 <= now_ny.hour < 9 or (now_ny.hour == 9 and now_ny.minute < 25):
+            # Check between 18:00 PM and 09:25 AM to ensure the night pipeline populated tomorrow's orders
+            if now_ny.hour >= 18 or now_ny.hour < 9 or (now_ny.hour == 9 and now_ny.minute < 25):
                 df_pending = database_manager.execute_query('SELECT persona, date FROM pending_orders')
                 expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
                                      'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']

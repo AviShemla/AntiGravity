@@ -24,7 +24,7 @@ print("\n[QA] STEP 1: Running Full QA Financial Audit...")
 qa1 = subprocess.run([PY, "qa_financial_audit.py"], cwd=BASE_DIR)
 if qa1.returncode != 0:
     print("\n[ERROR] QA FAILED after rebuild. Stopping. Fix virtual_broker.py further.")
-    sys.exit(1)
+    os._exit(1)
 
 print("\n[OK] QA PASSED on rebuilt ledgers!")
 
@@ -54,7 +54,7 @@ print("\n[QA] STEP 4: Final Full QA Audit (post catch-up)...")
 qa2 = subprocess.run([PY, "qa_financial_audit.py"], cwd=BASE_DIR)
 if qa2.returncode != 0:
     print("\n[ERROR] QA FAILED after catch-up. Stopping before Git commit.")
-    sys.exit(1)
+    os._exit(1)
 
 print("\n[OK] FINAL QA PASSED! All ledgers are mathematically clean.")
 

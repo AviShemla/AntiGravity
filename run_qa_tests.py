@@ -186,7 +186,7 @@ try:
             log(f"Test 3 FAILED: sim_dates is missing or invalid.")
             
     except SystemExit:
-        # sys.exit(0) is called if it's completely up to date.
+        # os._exit(0) is called if it's completely up to date.
         log(f"Test 3 PASSED: Marathon Engine initialized successfully (Up to date).")
     except Exception as e:
         log(f"Test 3 RUN exception: {e}")

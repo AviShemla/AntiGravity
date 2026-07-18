@@ -19,7 +19,7 @@ try:
     atexit.register(release_lock)
 except FileExistsError:
     print("FATAL: Master Pipeline is already running. OS Lockfile prevents duplicate execution.")
-    sys.exit(1)
+    os._exit(1)
 
 try:
     # Elevate the master production pipeline to HIGH PRIORITY to ensure live trades never get starved
@@ -64,7 +64,7 @@ def main():
         qa_res = subprocess.run([sys.executable, QA_SCRIPT], cwd=BASE_DIR)
         if qa_res.returncode != 0:
             log_msg("!!! FATAL: Pre-Flight QA Check Failed. Aborting Pipeline to prevent array mismatch deadlocks !!!")
-            sys.exit(1)
+            os._exit(1)
             
         # 1. Single Stocks
         run_script(SINGLE_STOCK_SCRIPT, "daily_pipeline.py")
@@ -117,7 +117,7 @@ def main():
         qa_dash_res = subprocess.run([sys.executable, DASH_QA_SCRIPT], cwd=BASE_DIR)
         if qa_dash_res.returncode != 0:
             log_msg("!!! FATAL: Dashboard Continuity QA Check Failed. Sync Mismatch Detected! Aborting Pipeline !!!")
-            sys.exit(1)
+            os._exit(1)
         
         # 7. Executive Assistant Brief (Now includes Ghost Results)
         EXECUTIVE_SCRIPT = os.path.join(BASE_DIR, 'executive_brief.py')
@@ -129,21 +129,21 @@ def main():
         data_qa_res = subprocess.run([sys.executable, DATA_QA_SCRIPT], cwd=BASE_DIR)
         if data_qa_res.returncode != 0:
             log_msg("!!! FATAL: Data Continuity Errors Detected! Orphaned Holdings or Missing Tail-Ends. Aborting Pipeline !!!")
-            sys.exit(1)
+            os._exit(1)
             
         log_msg("--- Running Deep ML Models QA ---")
         MODEL_QA_SCRIPT = os.path.join(BASE_DIR, 'qa_models.py')
         model_qa_res = subprocess.run([sys.executable, MODEL_QA_SCRIPT], cwd=BASE_DIR)
         if model_qa_res.returncode != 0:
             log_msg("!!! FATAL: Bayesian Model Boundary or Scorecard Errors Detected! Aborting Pipeline !!!")
-            sys.exit(1)
+            os._exit(1)
 
         log_msg("--- Running Strict Financial QA Audit ---")
         FINANCIAL_QA_SCRIPT = os.path.join(BASE_DIR, 'qa_financial_audit.py')
         fin_qa_res = subprocess.run([sys.executable, FINANCIAL_QA_SCRIPT], cwd=BASE_DIR)
         if fin_qa_res.returncode != 0:
             log_msg("!!! FATAL: Phantom Bleed or Accounting Error Detected! Aborting Pipeline !!!")
-            sys.exit(1)
+            os._exit(1)
             
         # 8. Continuous 1-Day Predictive Run
         log_msg("--- Initiating 1-Day Predictive Run ---")
@@ -184,3 +184,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    import os
+    os._exit(0)

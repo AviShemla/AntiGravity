@@ -30,7 +30,7 @@ try:
     past_sessions = schedule[schedule['market_close'] < now]
     if past_sessions.empty:
         print("No completed market sessions found in the last 7 days. Skipping.")
-        sys.exit(0)
+        os._exit(0)
         
     last_completed_session = past_sessions.iloc[-1]
     

@@ -14,7 +14,7 @@ try:
     from sklearn.metrics import accuracy_score, precision_score, classification_report
 except ImportError:
     print("[FATAL ERROR] PyTorch or Scikit-Learn not installed. Please wait for pip installation to finish.")
-    sys.exit(1)
+    os._exit(1)
 
 # Configuration
 TICKER = 'AAPL' # Using Apple as the hyper-liquid benchmark
@@ -33,7 +33,7 @@ def load_and_preprocess_data():
     print(f">>> Loading Master Dataset from {DATA_FILE}...")
     if not os.path.exists(DATA_FILE):
         print(f"[ERROR] Could not find dataset at {DATA_FILE}")
-        sys.exit(1)
+        os._exit(1)
         
     df = pd.read_csv(DATA_FILE)
     df['Date'] = pd.to_datetime(df['Date'])

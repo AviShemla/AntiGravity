@@ -37,7 +37,7 @@ def create_sequences(data, target, seq_length):
 def load_universe_data():
     if not os.path.exists(DATA_FILE):
         print(f"[FATAL ERROR] Dataset not found at {DATA_FILE}")
-        sys.exit(1)
+        os._exit(1)
         
     print(">>> Loading historical dataset...")
     df = pd.read_csv(DATA_FILE)

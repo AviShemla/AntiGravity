@@ -14,12 +14,12 @@ try:
     print(f"     -> ENGINE:    {config.BAYESIAN_ENGINE}")
 except ImportError:
     print("[FAIL] CRITICAL ERROR: config.py could not be loaded!")
-    sys.exit(1)
+    os._exit(1)
 
 # Check Paths
 if not os.path.exists(config.DATA_DIR):
     print(f"[FAIL] CRITICAL ERROR: Data directory missing: {config.DATA_DIR}")
-    sys.exit(1)
+    os._exit(1)
 else:
     print(f"[OK] Data directory verified.")
 

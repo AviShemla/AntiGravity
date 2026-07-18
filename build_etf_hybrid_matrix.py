@@ -137,5 +137,8 @@ def build_hybrid_matrix(target_etf, period='5y'):
 
 if __name__ == '__main__':
     import sys
+    import os
     target = sys.argv[1] if len(sys.argv) > 1 else 'XLK'
     build_hybrid_matrix(target)
+    os._exit(0)
+

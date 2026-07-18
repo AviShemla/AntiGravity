@@ -34,16 +34,16 @@ def main():
             content = f.read()
         if "FAILED" in content or "ERROR" in content:
             log("QA Audit FAILED! Aborting git commit and migration backup.")
-            sys.exit(1)
+            os._exit(1)
         else:
             log("QA Audit PASSED 100% GREEN.")
     else:
         log("QA_Results.txt missing! Aborting.")
-        sys.exit(1)
+        os._exit(1)
         
     # 2. Run Migration Zipper (Google Drive)
     if not run_script("zip_migration.py"):
-        sys.exit(1)
+        os._exit(1)
         
     # 3. Git Commit and Push
     log("Committing to Git...")
@@ -58,7 +58,7 @@ def main():
         
     # 4. Send Email Notification
     if not run_script("send_migration_email.py"):
-        sys.exit(1)
+        os._exit(1)
         
     log("=== Daily Migration Backup Completed Successfully ===")
 

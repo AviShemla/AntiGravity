@@ -194,7 +194,7 @@ def run_qa_logical_flows():
     print("========================================")
     
     if failed > 0:
-        sys.exit(1)
+        os._exit(1)
 
 if __name__ == "__main__":
     run_qa_logical_flows()

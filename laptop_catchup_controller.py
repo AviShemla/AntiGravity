@@ -96,7 +96,7 @@ def catchup_master_pipeline():
         error_msg = f"Pipeline Aborted. SPY.py failed with Exit Code: {res.returncode}"
         print(error_msg)
         send_error_email("AntiGravity Error: SPY.py Failed", error_msg)
-        sys.exit(1)
+        os._exit(1)
         
     for idx, target_date in enumerate(missed_dates):
         is_last = (idx == len(missed_dates) - 1)
@@ -152,7 +152,7 @@ def catchup_master_pipeline():
         fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR)
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting Catchup!")
-            sys.exit(1)
+            os._exit(1)
             
         # 7. QA Blacklist
         qa_script = os.path.join(BASE_DIR, "qa_blacklist.py")
@@ -252,7 +252,7 @@ def catchup_etf_pipeline():
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting ETF Catchup!")
             subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: ETF QA Audit Failed", "The Financial QA Auditor caught a mathematical discrepancy and aborted the ETF pipeline. Check server logs immediately."], cwd=BASE_DIR)
-            sys.exit(1)
+            os._exit(1)
             
         # 6. Mark Complete
         mark_completed('etf_pipeline', target_date)
@@ -275,7 +275,7 @@ def catchup_everything_and_email():
         print("FATAL: Final QA Audit Failed! The system is NOT 100% green.")
         print("Emails will NOT be dispatched to prevent broken reporting.")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: Master QA Audit Failed", "The Final QA Auditor caught a mathematical discrepancy and aborted the master pipeline. Check server logs immediately."], cwd=BASE_DIR)
-        sys.exit(1)
+        os._exit(1)
         
     print("\nQA Audit Passed: 100% Green! Dispatching perfectly synchronized emails...")
     print("\n--> Sending Executive Brief...\n")
@@ -292,3 +292,4 @@ if __name__ == "__main__":
         catchup_master_pipeline()
     else:
         catchup_everything_and_email()
+    os._exit(0)

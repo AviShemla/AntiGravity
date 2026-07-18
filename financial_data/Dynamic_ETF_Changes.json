@@ -7,13 +7,10 @@
         "RGTZ",
         "UDOW",
         "XLF",
+        "XLP",
         "XLRE",
         "XLV"
     ],
-    "Added": [
-        "XLP"
-    ],
-    "Dropped": [
-        "XLI"
-    ]
+    "Added": [],
+    "Dropped": []
 }

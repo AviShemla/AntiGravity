@@ -9,6 +9,8 @@ import yfinance as yf
 import json
 import datetime
 
+import threading
+
 sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
 from failover_downloader import download_ticker_with_failover
 
@@ -180,35 +182,58 @@ def fix_yfinance_dataframe(df):
 
 def get_vix_data():
     print("\n>>> Fetching CBOE Volatility Index (VIX) data...")
+    result = [None]
+    def _fetch():
+        try:
+            result[0] = yf.download("^VIX", period="5y", interval="1d")
+        except Exception as e:
+            print(f"[WARNING] VIX fetch error: {e}")
+    t = threading.Thread(target=_fetch, daemon=True)
+    t.start()
+    t.join(timeout=30)
+    if t.is_alive():
+        print("[WARNING] VIX download timed out after 30s — skipping.")
+        return pd.DataFrame()
+    vix_df = result[0]
+    if vix_df is None or vix_df.empty:
+        return pd.DataFrame()
     try:
-        vix_df = yf.download("^VIX", period="5y", interval="1d")
-        if not vix_df.empty:
-            vix_df = fix_yfinance_dataframe(vix_df)
-            vix_df.rename(columns=lambda x: 'Date' if x.lower() == 'date' else ('VIX_Close' if x.lower() == 'close' else x), inplace=True)
-            vix_df = vix_df[['Date', 'VIX_Close']]
-            vix_df['Date'] = pd.to_datetime(vix_df['Date']).dt.tz_localize(None)
-            vix_df['Market_Fear_Level'] = np.where(vix_df['VIX_Close'] >= 30, 'Extreme Panic',
-                                          np.where(vix_df['VIX_Close'] >= 20, 'High Volatility', 'Complacency / Calm'))
-            return vix_df
+        vix_df = fix_yfinance_dataframe(vix_df)
+        vix_df.rename(columns=lambda x: 'Date' if x.lower() == 'date' else ('VIX_Close' if x.lower() == 'close' else x), inplace=True)
+        vix_df = vix_df[['Date', 'VIX_Close']]
+        vix_df['Date'] = pd.to_datetime(vix_df['Date']).dt.tz_localize(None)
+        vix_df['Market_Fear_Level'] = np.where(vix_df['VIX_Close'] >= 30, 'Extreme Panic',
+                                      np.where(vix_df['VIX_Close'] >= 20, 'High Volatility', 'Complacency / Calm'))
+        return vix_df
     except Exception as e:
         print(f"[WARNING] Could not retrieve VIX data due to an error: {e}")
     return pd.DataFrame()
 
 def get_tnx_data():
     print("\n>>> Fetching 10-Year Treasury Yield (^TNX) data...")
+    result = [None]
+    def _fetch():
+        try:
+            result[0] = yf.download("^TNX", period="5y", interval="1d")
+        except Exception as e:
+            print(f"[WARNING] TNX fetch error: {e}")
+    t = threading.Thread(target=_fetch, daemon=True)
+    t.start()
+    t.join(timeout=30)
+    if t.is_alive():
+        print("[WARNING] TNX download timed out after 30s — skipping.")
+        return pd.DataFrame()
+    tnx_df = result[0]
+    if tnx_df is None or tnx_df.empty:
+        return pd.DataFrame()
     try:
-        tnx_df = yf.download("^TNX", period="5y", interval="1d")
-        if not tnx_df.empty:
-            tnx_df = fix_yfinance_dataframe(tnx_df)
-            tnx_df.rename(columns=lambda x: 'Date' if x.lower() == 'date' else ('TNX_Close' if x.lower() == 'close' else x), inplace=True)
-            tnx_df = tnx_df[['Date', 'TNX_Close']]
-            tnx_df['Date'] = pd.to_datetime(tnx_df['Date']).dt.tz_localize(None)
-            
-            # Feature Engineering for TNX
-            tnx_df['TNX_Lag1_Return'] = tnx_df['TNX_Close'].pct_change(fill_method=None)
-            tnx_df['TNX_Trend_5d'] = tnx_df['TNX_Close'].rolling(window=5).mean()
-            
-            return tnx_df
+        tnx_df = fix_yfinance_dataframe(tnx_df)
+        tnx_df.rename(columns=lambda x: 'Date' if x.lower() == 'date' else ('TNX_Close' if x.lower() == 'close' else x), inplace=True)
+        tnx_df = tnx_df[['Date', 'TNX_Close']]
+        tnx_df['Date'] = pd.to_datetime(tnx_df['Date']).dt.tz_localize(None)
+        tnx_df['TNX_Lag1_Return'] = tnx_df['TNX_Close'].pct_change(fill_method=None)
+        tnx_df['TNX_Trend_5d'] = tnx_df['TNX_Close'].rolling(window=5).mean()
+        return tnx_df
     except Exception as e:
         print(f"[WARNING] Could not retrieve TNX data due to an error: {e}")
     return pd.DataFrame()
@@ -241,6 +266,8 @@ def download_sp500_full_analysis(sectors_map, folder_path):
     tickers_updated_count = 0
     tickers_added_count = 0
     tickers_failed_count = 0
+    processed_tickers = set()
+    checkpoint_path = os.path.join(folder_path, "spy_checkpoint.pkl")
     
     if os.path.exists(full_path):
         print(f"\n[INFO] Existing data file found at: {full_path}")
@@ -273,6 +300,22 @@ def download_sp500_full_analysis(sectors_map, folder_path):
             
     all_combined_data = []
     all_dl_data = []
+    
+    if os.path.exists(checkpoint_path):
+        try:
+            import pickle
+            with open(checkpoint_path, 'rb') as f:
+                ckpt = pickle.load(f)
+                all_combined_data = ckpt.get('all_combined_data', [])
+                all_dl_data = ckpt.get('all_dl_data', [])
+                processed_tickers = ckpt.get('processed_tickers', set())
+                tickers_updated_count = ckpt.get('tickers_updated_count', 0)
+                tickers_added_count = ckpt.get('tickers_added_count', 0)
+                tickers_failed_count = ckpt.get('tickers_failed_count', 0)
+            print(f"\n[INFO] Resuming from checkpoint! {len(processed_tickers)} tickers already processed.")
+        except Exception as e:
+            print(f"[WARNING] Failed to load checkpoint: {e}")
+
     vix_data = get_vix_data()
     tnx_data = get_tnx_data()
     
@@ -292,6 +335,9 @@ def download_sp500_full_analysis(sectors_map, folder_path):
         print(f"\n>>> Starting Sector: {sector_name} ({len(ticker_list)} Hardcoded Tickers)")
         
         for ticker in ticker_list:
+            if ticker in processed_tickers:
+                continue
+                
             is_new_ticker = ticker not in max_dates_per_ticker
             try:
                 if not is_new_ticker:
@@ -435,7 +481,23 @@ def download_sp500_full_analysis(sectors_map, folder_path):
             except Exception as e:
                 print(f"Error processing {ticker}: {e}")
                 tickers_failed_count += 1
-                continue
+            
+            processed_tickers.add(ticker)
+            if len(processed_tickers) % 20 == 0:
+                try:
+                    import pickle
+                    with open(checkpoint_path, 'wb') as f:
+                        pickle.dump({
+                            'all_combined_data': all_combined_data,
+                            'all_dl_data': all_dl_data,
+                            'processed_tickers': processed_tickers,
+                            'tickers_updated_count': tickers_updated_count,
+                            'tickers_added_count': tickers_added_count,
+                            'tickers_failed_count': tickers_failed_count
+                        }, f)
+                    print(f"  [CHECKPOINT] Saved progress at {len(processed_tickers)} tickers.")
+                except Exception as e:
+                    print(f"  [WARNING] Failed to save checkpoint: {e}")
 
     for ticker, last_date in max_dates_per_ticker.items():
         if ticker not in valid_tickers_in_dict:
@@ -463,20 +525,39 @@ def download_sp500_full_analysis(sectors_map, folder_path):
         except Exception as e:
             print(f"[CRITICAL ERROR] Failed to save Deep Learning Archive: {e}")
     
-    # 🔥 🔥 🔥 מנגנון חישוב וקטורי מואץ לזיהוי רוטציית סקטורים (Sector Regime Shift Indicator) 🔥 🔥 🔥
-    print("\n>>> Computing Sector Regime Shift Indicators...")
-    # חישוב תשואת השוק הכללית (ממוצע נע של כלל המניות ב-60 הימים האחרונים)
-    final_df['Market_Mean_60d'] = final_df.groupby('Date')['Daily_Return_%'].transform('mean').rolling(window=60, min_periods=1).mean()
-    # חישוב תשואת הסקטור הספציפי באותה נקודת זמן
-    final_df['Sector_Mean_60d'] = final_df.groupby(['Date', 'Sector'])['Daily_Return_%'].transform('mean').rolling(window=60, min_periods=1).mean()
+    # Sector Regime Shift Indicator - Optimized vectorized version
+    print("\n>>> Computing Sector Regime Shift Indicators (vectorized)...")
+    final_df['Daily_Return_%'] = pd.to_numeric(final_df['Daily_Return_%'], errors='coerce')
     
-    # עמודה 1: ציון המומנטום היחסי של הסקטור מול השוק
+    # Step 1: Compute daily market mean (mean return across ALL tickers per date)
+    print("    Step 1/4: Computing daily market mean...")
+    daily_market_mean = final_df.groupby('Date')['Daily_Return_%'].mean().rename('_daily_market_mean')
+    
+    # Step 2: Compute 60-day rolling market mean on the date-level series (fast - only N_dates rows)
+    print("    Step 2/4: Computing 60d rolling market mean...")
+    market_mean_60d = daily_market_mean.sort_index().rolling(window=60, min_periods=1).mean().rename('Market_Mean_60d')
+    
+    # Step 3: Compute daily sector mean per (Date, Sector)
+    print("    Step 3/4: Computing daily sector means...")
+    daily_sector_mean = final_df.groupby(['Date', 'Sector'])['Daily_Return_%'].mean().rename('_daily_sector_mean').reset_index()
+    
+    # Step 4: Compute 60-day rolling sector mean per sector
+    print("    Step 4/4: Computing 60d rolling sector means...")
+    daily_sector_mean = daily_sector_mean.sort_values('Date')
+    daily_sector_mean['Sector_Mean_60d'] = daily_sector_mean.groupby('Sector')['_daily_sector_mean'].transform(
+        lambda x: x.rolling(window=60, min_periods=1).mean()
+    )
+    
+    # Merge back onto the main DataFrame
+    final_df = final_df.merge(market_mean_60d, on='Date', how='left')
+    final_df = final_df.merge(daily_sector_mean[['Date', 'Sector', 'Sector_Mean_60d']], on=['Date', 'Sector'], how='left')
+    
     final_df['Sector_Momentum_Score'] = final_df['Sector_Mean_60d'] - final_df['Market_Mean_60d']
-    # עמודה 2: קביעת משטר השוק של הסקטור (BULL במומנטום חיובי, BEAR במומנטום שלילי)
     final_df['Sector_Regime'] = np.where(final_df['Sector_Momentum_Score'] >= 0, 'BULL_REGIME', 'BEAR_REGIME')
     
-    # ניקוי עמודות העזר הזמניות
+    # Drop temp columns
     final_df.drop(columns=['Market_Mean_60d', 'Sector_Mean_60d'], errors='ignore', inplace=True)
+    print("    Sector Regime computation complete.")
     
     if not vix_data.empty:
         print(">>> Re-merging historical VIX index risk levels...")
@@ -533,6 +614,13 @@ def download_sp500_full_analysis(sectors_map, folder_path):
         if os.path.exists(backup_path):
             os.remove(backup_path)
             print("\n[CLEANUP] Temporary backup file removed successfully.")
+        
+        if os.path.exists(checkpoint_path):
+            try:
+                os.remove(checkpoint_path)
+                print("[CLEANUP] Removed intermediate checkpoint file.")
+            except Exception:
+                pass
     except Exception as e:
         print(f"\n[CRITICAL ERROR] Failed to save new CSV file: {e}")
         if os.path.exists(backup_path):

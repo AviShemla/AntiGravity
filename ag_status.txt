@@ -1,0 +1,21 @@
+LEDGERS:
+              persona           d
+0      BallsForBrains  2026-07-15
+1        Conservative  2026-07-15
+2             Dynamic  2026-07-15
+3  ETF_BallsForBrains  2026-07-16
+4    ETF_Conservative  2026-07-16
+5         ETF_Dynamic  2026-07-16
+6         ETF_Neutral  2026-07-16
+7             Neutral  2026-07-15
+
+CONTINUITY:
+        pipeline_name last_completed_date
+0      daily_pipeline          2026-07-14
+1  etf_daily_pipeline          2026-07-14
+2        etf_pipeline          2026-07-14
+3     master_pipeline          2026-07-14
+
+PENDING COUNT:
+   cnt
+0    0

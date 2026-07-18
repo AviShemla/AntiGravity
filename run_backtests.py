@@ -23,7 +23,7 @@ def acquire_lock():
         atexit.register(remove_lock)
     except FileExistsError:
         print("FATAL: Marathon Shootout is already running. OS Lockfile prevents duplicate execution.")
-        sys.exit(1)
+        os._exit(1)
 
 try:
     psutil.Process(os.getpid()).nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         
     if len(sim_dates) == 0:
         print("\n>>> Marathon is already completely up to date! Nothing to simulate today.")
-        sys.exit(0)
+        os._exit(0)
 
     print(f"\n>>> Simulated Dates: {[d.strftime('%Y-%m-%d') for d in sim_dates]}")
 

@@ -70,7 +70,7 @@ def log(msg):
 
 def prune_ghost_processes(max_ttl_seconds=3600):
     current_time = time.time()
-    whitelist = ['uvicorn', 'intraday_tracker.py', 'vix_monitor.py', 'master_watchdog.py', 'weekend_dl_trainer.py', 'etf_weekend_dl_trainer.py', 'run_backtests.py', 'backtest_worker.py']
+    whitelist = ['uvicorn', 'intraday_tracker.py', 'vix_monitor.py', 'master_watchdog.py', 'weekend_dl_trainer.py', 'etf_weekend_dl_trainer.py', 'run_backtests.py', 'backtest_worker.py', 'laptop_catchup_controller.py', 'SPY.py', 'master_pipeline.py', 'etf_pipeline.py', 'daily_pipeline.py']
     
     for p in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
         try:
@@ -102,7 +102,7 @@ def check_single_instance():
             cmd_str = " ".join(cmdline).lower()
             if "master_watchdog.py" in cmd_str and "python" in cmd_str:
                 log(f"CRITICAL: Another instance of master_watchdog (PID {p.info['pid']}) is already running. Exiting to prevent collisions.")
-                # sys.exit(0)
+                # os._exit(0)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
