@@ -1,7 +1,7 @@
 import pytest
 import httpx
 
-API_BASE = "http://localhost:80/api"
+API_BASE = "http://66.42.118.26:80/api"
 
 def test_neutral_holdings_api():
     """

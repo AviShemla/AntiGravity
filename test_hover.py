@@ -5,7 +5,7 @@ async def run():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page(viewport={'width': 1280, 'height': 720})
-        await page.goto('http://localhost/Architecture_Map.html')
+        await page.goto('http://66.42.118.26/Architecture_Map.html')
         await page.wait_for_timeout(2000)
         
         # Find the node that has JSON API text

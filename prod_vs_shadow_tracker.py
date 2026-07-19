@@ -71,6 +71,11 @@ def run_tracker(target_date):
         print(f"Date {target_date} already processed. Skipping.")
         return
         
+    dt_obj = datetime.strptime(target_date, "%Y-%m-%d")
+    if dt_obj.weekday() >= 5:
+        print(f"Date {target_date} is a weekend. The market is closed. Skipping.")
+        return
+        
     ret_trans = get_return(state["holdings_transformer"], target_date)
     ret_v1 = get_return(state["holdings_v1"], target_date)
     ret_lstm = get_return(state["holdings_lstm"], target_date)

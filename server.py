@@ -464,7 +464,7 @@ def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = 
 
 @app.get("/api/olympic")
 def get_olympic_data():
-    merged_path = os.path.join(BASE_DIR, 'Olympic_Shootout_Results_MASTER.csv')
+    merged_path = os.path.join(BASE_DIR, 'financial_data', 'Olympic_Shootout_Results_MASTER.csv')
     
     if not os.path.exists(merged_path):
         raise HTTPException(status_code=404, detail="Olympic backtest results not found")

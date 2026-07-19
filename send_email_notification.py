@@ -1,1 +1,1 @@
-import sys; sys.exit(0)
+import os; os._exit(0)

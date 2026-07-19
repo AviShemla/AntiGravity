@@ -2,7 +2,7 @@ import pytest
 import httpx
 import datetime
 
-API_BASE = "http://localhost:80/api"
+API_BASE = "http://66.42.118.26:80/api"
 
 def test_regression_3am_hardcode_bug():
     """

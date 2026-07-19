@@ -6,7 +6,7 @@ import sys
 print("Polling API to confirm Uvicorn is online...")
 for i in range(10):
     try:
-        data = urllib.request.urlopen('http://127.0.0.1/api/stats', timeout=3).read().decode()
+        data = urllib.request.urlopen('http://66.42.118.26/api/stats', timeout=3).read().decode()
         print(f"SUCCESS! API Response preview: {data[:150]}")
         os._exit(0)
     except Exception as e:

@@ -29,7 +29,7 @@ except Exception as exc:
 import urllib.request
 print("\n=== CURRENT ACTUALS (BALLS FOR BRAINS PERSONA) ===")
 try:
-    res = urllib.request.urlopen('http://localhost/api/holdings?persona=BallsForBrains&mode=Single').read().decode()
+    res = urllib.request.urlopen('http://66.42.118.26:80/api/holdings?persona=BallsForBrains&mode=Single').read().decode()
     data = json.loads(res)
     print(f"Stock Equity: ${data['total_equity']:.2f}")
     print(f"Stock Return: {data['total_return']:.2f}%")
@@ -38,7 +38,7 @@ except Exception as e:
     print("Actuals Error:", e)
 
 try:
-    res = urllib.request.urlopen('http://localhost/api/holdings?persona=BallsForBrains&mode=ETF').read().decode()
+    res = urllib.request.urlopen('http://66.42.118.26:80/api/holdings?persona=BallsForBrains&mode=ETF').read().decode()
     data = json.loads(res)
     print(f"ETF Equity:   ${data['total_equity']:.2f}")
     print(f"ETF Return:   {data['total_return']:.2f}%")

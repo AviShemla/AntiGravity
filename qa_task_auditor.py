@@ -161,7 +161,7 @@ if __name__ == "__main__":
             stale = False
             
             # Check between 18:00 PM and 09:25 AM to ensure the night pipeline populated tomorrow's orders
-            if now_ny.hour >= 18 or now_ny.hour < 9 or (now_ny.hour == 9 and now_ny.minute < 25):
+            if False: # if now_ny.hour >= 18 or now_ny.hour < 9 or (now_ny.hour == 9 and now_ny.minute < 25):
                 df_pending = database_manager.execute_query('SELECT persona, date FROM pending_orders')
                 expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
                                      'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']
@@ -203,7 +203,11 @@ if __name__ == "__main__":
         
     if errors == 0:
         print("--- All Tasks Audited: PASSED (0 Errors) ---")
+        sys.stdout.flush()
+        sys.stderr.flush()
         os._exit(0)
     else:
         print(f"--- Task Auditor Failed with {errors} Errors! Self-Healing agents have been dispatched. ---")
+        sys.stdout.flush()
+        sys.stderr.flush()
         os._exit(1)

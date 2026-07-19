@@ -33,14 +33,24 @@ def run_unified_qa():
 @flow(name="AntiGravity Nightly Protocol", log_prints=True)
 def antigravity_nightly_flow():
     print("Starting AntiGravity Nightly Protocol via Prefect...")
-    # The daily_pipeline.py handles both single stocks and ETFs internally.
     run_etf_pipeline()
     run_unified_qa()
     print("Nightly Protocol Complete!")
 
+@flow(name="On-Demand System QA", log_prints=True)
+def on_demand_qa_flow():
+    print("Starting On-Demand System QA via Prefect...")
+    run_unified_qa()
+    print("QA Complete!")
+
 if __name__ == "__main__":
-    # If run directly, serve it on a schedule or run it once
-    if len(sys.argv) > 1 and sys.argv[1] == "serve":
-        antigravity_nightly_flow.serve(name="nightly-deployment", cron="0 18 * * *")
+    import sys
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "serve":
+            antigravity_nightly_flow.serve(name="nightly-deployment", cron="0 18 * * *")
+        elif sys.argv[1] == "qa":
+            on_demand_qa_flow()
+        else:
+            print("Invalid argument. Use 'serve' or 'qa'.")
     else:
         antigravity_nightly_flow()

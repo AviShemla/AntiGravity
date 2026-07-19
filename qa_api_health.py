@@ -5,7 +5,7 @@ import time
 import datetime
 import os
 
-API_BASE = "http://127.0.0.1:80/api"
+API_BASE = "http://66.42.118.26:80/api"
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'master_watchdog.log')
 PERSONAS = ["Conservative", "Neutral", "BallsForBrains"]
 
@@ -159,3 +159,4 @@ def run_qa():
 
 if __name__ == "__main__":
     run_qa()
+    os._exit(0)
