@@ -5,7 +5,7 @@ import os
 import sys
 import time
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -15,7 +15,7 @@ all_predictors_df, return_pivot, std_adj_returns, df, stdev_pivot = load_predict
 shifted_preds = all_predictors_df.shift(1)
 
 # Load Top 5 winners from the fast screener
-screener_df = pd.read_csv(r'C:\Users\AviShemla\AntiGravity\financial_data\Fast_Screener_Results.csv')
+screener_df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Fast_Screener_Results.csv'))
 top_5 = screener_df.head(5)
 
 start_date = pd.to_datetime('2025-05-01')

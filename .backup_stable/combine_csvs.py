@@ -1,7 +1,7 @@
 import os
 import csv
 
-nasdaq_dir = r'C:\Users\AviShemla\AntiGravity'
+nasdaq_dir = os.path.dirname(os.path.abspath(__file__))
 output_file = os.path.join(nasdaq_dir, 'Nasdaq_Data_All_Sectors_Combined.csv')
 
 csv_files = [f for f in os.listdir(nasdaq_dir) if f.startswith('Nasdaq_Data_Combined_') and f.endswith('.csv')]

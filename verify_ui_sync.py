@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "antigravity_OLD_CONSERVATIVE_RULES.db")
 HTML_PATH = os.path.join(BASE_DIR, "frontend", "index.html")
 

@@ -3,8 +3,8 @@ from rembg import remove
 import os
 
 def fix_logo():
-    input_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo.jpg'
-    output_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo_fixed.png'
+    input_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo.jpg')
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo_fixed.png')
     
     print("1. Running AI Background Removal...")
     input_image = Image.open(input_path).convert("RGBA")

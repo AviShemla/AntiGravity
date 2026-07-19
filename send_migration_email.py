@@ -36,11 +36,11 @@ try:
     mail.HTMLBody = html_body
     
     # Attach the scripts
-    bat_script = r"C:\Users\AviShemla\AntiGravity\Setup_New_Laptop.bat"
-    req_script = r"C:\Users\AviShemla\AntiGravity\requirements.txt"
+    bat_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Setup_New_Laptop.bat')
+    req_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'requirements.txt')
     
     # Outlook blocks .bat files, so we copy it to .txt for the attachment
-    safe_bat_script = r"C:\Users\AviShemla\AntiGravity\Setup_New_Laptop.txt"
+    safe_bat_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Setup_New_Laptop.txt')
     if os.path.exists(bat_script):
         import shutil
         shutil.copy(bat_script, safe_bat_script)

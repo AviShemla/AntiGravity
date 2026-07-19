@@ -5,7 +5,7 @@ import sqlite3
 import json
 import sys
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def setup_mock_db_and_json():

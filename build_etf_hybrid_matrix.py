@@ -7,7 +7,7 @@ from etf_whale_extractor import get_60_percent_whales
 import os
 from etf_whale_extractor import get_60_percent_whales
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.makedirs(BASE_DIR, exist_ok=True)
 
 # Standard Macro-Economic tracking ETFs

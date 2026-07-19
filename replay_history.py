@@ -5,7 +5,7 @@ import os
 
 print("--- STARTING HISTORICAL REPLAY ---")
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 EXCEL_PATH = os.path.join(BASE_DIR, "financial_data", "Top5_Bayesian_Scorecard_Formatted.xlsx")
 
 PYTHON_EXE = r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe"

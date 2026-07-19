@@ -13,7 +13,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -137,5 +137,5 @@ plt.yticks(ticks=np.arange(len(feature_cols)), labels=feature_cols[::-1])
 plt.title("Feature Importance (Posterior Weights)")
 plt.axvline(0, color='red', linestyle='--')
 plt.tight_layout()
-plt.savefig(r'C:\Users\AviShemla\AntiGravity\financial_data\JPM_Integrated_BLR_Weights.png')
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'JPM_Integrated_BLR_Weights.png'))
 print("\nSaved feature weights plot to JPM_Integrated_BLR_Weights.png")

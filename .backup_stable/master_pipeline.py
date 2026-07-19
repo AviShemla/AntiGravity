@@ -5,7 +5,7 @@ import datetime
 import sys
 
 # Paths
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SINGLE_STOCK_SCRIPT = os.path.join(BASE_DIR, 'daily_pipeline.py')
 ETF_SCRIPT = os.path.join(BASE_DIR, 'etf_daily_pipeline.py')
 FUNDAMENTALS_SCRIPT = os.path.join(BASE_DIR, 'extract_fundamentals.py')

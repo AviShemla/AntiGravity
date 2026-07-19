@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import database_manager
 
-FINANCIAL_DIR = r"C:\Users\AviShemla\AntiGravity\financial_data"
+FINANCIAL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 EXCEL_FILES = {
     "MultiPersona": os.path.join(FINANCIAL_DIR, "MultiPersona_Broker_30Day_Trial.xlsx"),
     "ETF": os.path.join(FINANCIAL_DIR, "ETF_Broker_30Day_Trial.xlsx")

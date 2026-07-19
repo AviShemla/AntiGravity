@@ -7,7 +7,7 @@ import time
 def extract_mega_macro():
     print("=== EXTRACTING MEGA-MACRO PHASE 1 PREDICTORS ===")
     
-    BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DATA_DIR = os.path.join(BASE_DIR, "financial_data")
     os.makedirs(DATA_DIR, exist_ok=True)
     

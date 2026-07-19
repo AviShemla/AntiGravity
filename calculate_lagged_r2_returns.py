@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
-output_file = r'C:\Users\AviShemla\AntiGravity\Stock_Lagged_R2_Matrix_Returns.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
+output_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Stock_Lagged_R2_Matrix_Returns.csv')
 
 print("Reading data...")
 df = pd.read_csv(input_file)

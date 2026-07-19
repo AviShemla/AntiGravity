@@ -127,7 +127,7 @@ if __name__ == "__main__":
     print("=====================================================\n")
     
     # 1. Read Prod 10 Stocks
-    portfolio_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Active_Portfolio.csv'
+    portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
     if not os.path.exists(portfolio_path):
         print(f"Error: {portfolio_path} not found.")
         exit(1)

@@ -5,7 +5,7 @@ import os
 import sys
 
 # Add directory to path to import
-sys.path.append(r"C:\Users\AviShemla\AntiGravity")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import intraday_tracker
 
 def test_volume_gating():

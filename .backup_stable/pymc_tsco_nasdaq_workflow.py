@@ -6,7 +6,7 @@ import os
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
 champion_ticker = 'TSCO'
 
 import yfinance as yf
@@ -185,5 +185,5 @@ if __name__ == '__main__':
     print("\n\n=== Final PyMC Technical Workflow Summary ===")
     print(summary_df.to_string(index=False))
     
-    out_path = r'C:\Users\AviShemla\AntiGravity\PyMC_TSCO_NASDAQ_Technical_Results.csv'
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'PyMC_TSCO_NASDAQ_Technical_Results.csv')
     summary_df.to_csv(out_path, index=False)

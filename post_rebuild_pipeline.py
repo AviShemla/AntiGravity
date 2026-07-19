@@ -1,3 +1,4 @@
+import os
 """
 post_rebuild_pipeline.py
 Runs automatically after rebuild completes:
@@ -9,7 +10,7 @@ Runs automatically after rebuild completes:
 """
 import subprocess, sys, os, datetime
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
 
 def run(cmd, label):

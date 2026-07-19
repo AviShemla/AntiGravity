@@ -7,7 +7,7 @@ import pytz
 import json
 from datetime import datetime, timedelta
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ==========================================
 # INDICATOR UTILS

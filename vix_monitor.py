@@ -4,7 +4,7 @@ import json
 import os
 import datetime
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(BASE_DIR, "financial_data", "vix_score.json")
 
 def fetch_vix():

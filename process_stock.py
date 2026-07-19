@@ -1,8 +1,9 @@
+import os
 from PIL import Image
 import numpy as np
 
 img_path = r"C:\Users\AviShemla\.gemini\antigravity\brain\e6da8969-1069-4402-8307-e101b4874b0c\media__1780393317744.png"
-out_path = r"C:\Users\AviShemla\AntiGravity\frontend\stock_icon.png"
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend/stock_icon.png')
 
 img = Image.open(img_path).convert("RGBA")
 data = np.array(img)

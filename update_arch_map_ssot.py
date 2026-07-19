@@ -1,6 +1,7 @@
+import os
 import re
 
-with open(r'C:\Users\AviShemla\AntiGravity\Architecture_Map.html', 'r', encoding='utf-8') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Architecture_Map.html'), 'r', encoding='utf-8') as f:
     html = f.read()
 
 # 1. Update the CSS class for Database
@@ -30,7 +31,7 @@ js_ssot = '"SSOT_DB": {name: "antigravity.db", purpose: "The Single Source of Tr
 if '"SSOT_DB"' not in html:
     html = html.replace('"MASTER":', js_ssot + '\n            "MASTER":')
 
-with open(r'C:\Users\AviShemla\AntiGravity\Architecture_Map.html', 'w', encoding='utf-8') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Architecture_Map.html'), 'w', encoding='utf-8') as f:
     f.write(html)
 
 print("Architecture Map updated successfully to reflect SSOT!")

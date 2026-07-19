@@ -6,7 +6,7 @@ import sys
 from blacklist_engine import get_blacklisted_tickers
 import database_manager
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 EXCEL_PATH = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted_MOCK.xlsx')
 
 PERSONAS = {
@@ -401,6 +401,13 @@ def run_virtual_broker():
                             latest_price = ticker_data['Close'].dropna().iloc[-1]
                             units = int(raw_alloc_dollars // latest_price)
                             alloc_dollars = units * latest_price
+                            
+                            # STRICT FAILSAFE: Enforce absolute maximum cap
+                            max_allowed_dollars = settled_equity * config['max_alloc']
+                            if alloc_dollars > max_allowed_dollars:
+                                alloc_dollars = max_allowed_dollars
+                                units = int(alloc_dollars // latest_price)
+                                alloc_dollars = units * latest_price
                         else:
                             # Fallback if yfinance fails
                             units = 0

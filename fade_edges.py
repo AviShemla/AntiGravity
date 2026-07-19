@@ -2,8 +2,8 @@ from PIL import Image, ImageDraw, ImageFilter
 import os
 
 def smooth_edges():
-    input_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo_fixed.png'
-    output_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo_fixed.png'
+    input_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo_fixed.png')
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo_fixed.png')
     
     try:
         img = Image.open(input_path).convert("RGBA")

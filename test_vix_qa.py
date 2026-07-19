@@ -3,7 +3,7 @@ import json
 import importlib.util
 import sys
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VIX_PATH = os.path.join(BASE_DIR, "financial_data", "vix_score.json")
 
 def simulate_vix(vix_value):

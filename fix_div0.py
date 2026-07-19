@@ -1,6 +1,7 @@
+import os
 import sys
 
-files = [r'C:\Users\AviShemla\AntiGravity\virtual_broker.py', r'C:\Users\AviShemla\AntiGravity\etf_virtual_broker.py']
+files = [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'virtual_broker.py'), os.path.join(os.path.dirname(os.path.abspath(__file__)), 'etf_virtual_broker.py')]
 
 for f in files:
     with open(f, 'r') as file:

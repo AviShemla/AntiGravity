@@ -3,7 +3,7 @@ import numpy as np
 import pymc as pm
 import os
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
 def export_etf_scorecard(target_etf='XLK'):
@@ -143,7 +143,7 @@ def export_etf_scorecard(target_etf='XLK'):
         # --- Inject Meta-Tracker Hyper-Priors ---
         import json
         try:
-            prior_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Meta_Alpha_Priors.json'
+            prior_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Meta_Alpha_Priors.json')
             with open(prior_path, 'r') as f:
                 meta_priors = json.load(f)
         except Exception as e:

@@ -2,11 +2,11 @@ import os
 import re
 
 files_to_patch = [
-    r"C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_formatted.py",
-    r"C:\Users\AviShemla\AntiGravity\export_etf_scorecard.py",
-    r"C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_TNX.py",
-    r"C:\Users\AviShemla\AntiGravity\virtual_broker.py",
-    r"C:\Users\AviShemla\AntiGravity\etf_virtual_broker.py"
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export_bayesian_scorecard_formatted.py'),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export_etf_scorecard.py'),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export_bayesian_scorecard_TNX.py'),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'virtual_broker.py'),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'etf_virtual_broker.py')
 ]
 
 def patch_file(filepath):

@@ -16,7 +16,7 @@ RECIPIENT_EMAIL = "avi.shemla@gmail.com"
 try:
     import pandas_market_calendars as mcal
     
-    BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     ledger_path = os.path.join(BASE_DIR, 'financial_data', 'ETF_Capital_Ledger_Dynamic.csv')
     
     nyse = mcal.get_calendar('NYSE')
@@ -73,7 +73,7 @@ def send_outlook_email(subject, html_body, attachment_path=None, logo_path=None)
         print(f"Failed to send email via Outlook. Error: {e}")
 
 print("=== STARTING MULTI-ETF DAILY PIPELINE ===")
-export_dir = r"C:\Users\AviShemla\AntiGravity"
+export_dir = os.path.dirname(os.path.abspath(__file__))
 python_exe = sys.executable
 
 # Clear warning logs at startup

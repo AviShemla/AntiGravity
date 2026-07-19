@@ -8,7 +8,7 @@ import atexit
 import sys
 import time
 
-LOCK_FILE = r"C:\Users\AviShemla\AntiGravity\run_backtests.lock"
+LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'run_backtests.lock')
 
 def acquire_lock():
     try:

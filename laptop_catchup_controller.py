@@ -10,10 +10,10 @@ try:
 except ImportError:
     mcal = None
 
-sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import database_manager
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 python_exe = sys.executable
 
 def get_missed_dates(pipeline_name):

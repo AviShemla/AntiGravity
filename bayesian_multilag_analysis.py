@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.linear_model import BayesianRidge
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
 champion_ticker = 'LIN'
 
 print("Reading and prepping data...")
@@ -58,6 +58,6 @@ summary_df = pd.DataFrame(results)
 print("\n--- Bayesian Analysis Multi-Lag & MA3 Summary ---")
 print(summary_df.to_string(index=False))
 
-output_path = os.path.join(r'C:\Users\AviShemla\AntiGravity', 'Bayesian_MultiLag_Analysis_LIN.csv')
+output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Bayesian_MultiLag_Analysis_LIN.csv')
 summary_df.to_csv(output_path, index=False)
 print(f"\nFull results saved to {output_path}")

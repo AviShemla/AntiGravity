@@ -3,7 +3,7 @@ import numpy as np
 import os
 import json
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 try:
     with open(os.path.join(BASE_DIR, 'Dynamic_Target_ETFs.json'), 'r') as f:
         TARGET_ETFS = json.load(f)

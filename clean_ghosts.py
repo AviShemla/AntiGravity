@@ -5,7 +5,7 @@ import psutil
 import datetime
 import subprocess
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(BASE_DIR, "zombie_hunter.log")
 
 def log(msg):
@@ -31,8 +31,8 @@ def hunt_zombies():
             if not cmdline: continue
             cmd_str = " ".join(cmdline).lower()
             
-            # Protect Watchdog and Uvicorn
-            if "master_watchdog" in cmd_str or "uvicorn" in cmd_str:
+            # Protect Watchdog, Uvicorn, and long-running pipelines
+            if any(w in cmd_str for w in ["master_watchdog", "uvicorn", "catchup_controller", "run_backtests"]):
                 continue
                 
             # Target Python processes

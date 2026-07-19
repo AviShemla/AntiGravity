@@ -7,7 +7,7 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import database_manager
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'financial_data')
 
 def test_dashboard_continuity():

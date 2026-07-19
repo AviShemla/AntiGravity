@@ -7,7 +7,7 @@ import yfinance as yf
 from datetime import datetime
 from failover_downloader import download_ticker_with_failover
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "financial_data")
 MASTER_CSV = os.path.join(DATA_DIR, "Prod_vs_Shadow_Results_MASTER.csv")
 STATE_JSON = os.path.join(DATA_DIR, "prod_shadow_state.json")

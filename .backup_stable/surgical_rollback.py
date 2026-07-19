@@ -3,7 +3,7 @@ import glob
 import os
 
 print("=== EXECUTING SURGICAL ETF ROLLBACK ===")
-base_dir = r'C:\Users\AviShemla\AntiGravity\financial_data'
+base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
 # 1. Strip 2026-06-04 rows from ETF Ledgers
 for f in glob.glob(os.path.join(base_dir, 'ETF_Capital_Ledger_*.csv')):

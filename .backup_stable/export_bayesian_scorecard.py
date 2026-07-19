@@ -4,7 +4,7 @@ import pymc as pm
 import os
 import sys
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -13,14 +13,14 @@ print("Loading data for Excel Export...")
 all_predictors_df, return_pivot, std_adj_returns, df, stdev_pivot = load_predictors()
 shifted_preds = all_predictors_df.shift(1)
 
-screener_df = pd.read_csv(r'C:\Users\AviShemla\AntiGravity\financial_data\Fast_Screener_Results.csv')
+screener_df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Fast_Screener_Results.csv'))
 top_5 = screener_df.head(5)
 
 start_date = pd.to_datetime('2025-05-01')
 end_date = return_pivot.index.max()
 returns_df = return_pivot.loc[(return_pivot.index >= start_date) & (return_pivot.index <= end_date)]
 
-excel_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard.xlsx'
+excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard.xlsx')
 
 with pd.ExcelWriter(excel_path) as writer:
     for idx, row in top_5.iterrows():

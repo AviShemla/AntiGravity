@@ -3,7 +3,7 @@ import numpy as np
 import statsmodels.api as sm
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
 champion_ticker = 'GOOG'
 
 print("Reading and prepping data...")

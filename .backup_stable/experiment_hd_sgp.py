@@ -5,7 +5,7 @@ import os
 import sys
 from sklearn.cluster import KMeans
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="

@@ -18,7 +18,7 @@ def test_data_gaps_per_ticker(csv_path):
     global_max_date = df['Date'].max()
     
     import json
-    vip_path = r'C:\Users\AviShemla\AntiGravity\financial_data\VIP_Tickers.json'
+    vip_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'VIP_Tickers.json')
     active_tickers = set()
     if os.path.exists(vip_path):
         try:
@@ -80,8 +80,8 @@ def test_orphaned_tickers_in_db(db_path, csv_path):
     return True
 
 if __name__ == '__main__':
-    csv_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
-    db_path = r'C:\Users\AviShemla\AntiGravity\antigravity.db'
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'antigravity.db')
     
     pass1 = test_data_gaps_per_ticker(csv_path)
     pass2 = test_orphaned_tickers_in_db(db_path, csv_path)

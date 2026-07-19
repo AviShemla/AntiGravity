@@ -27,7 +27,7 @@ TEST_YEAR = 2026
 # Features
 FEATURES = ['Close', 'Volume', 'Daily_Return_%', 'RSI_14d', 'ADX_14d', 'VIX_Close', 'TNX_Close']
 
-DATA_FILE = r"C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv"
+DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 
 def load_and_preprocess_data():
     print(f">>> Loading Master Dataset from {DATA_FILE}...")

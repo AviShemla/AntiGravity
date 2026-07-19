@@ -3,7 +3,7 @@ import json
 import os
 import glob
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 ledgers = glob.glob(os.path.join(BASE_DIR, 'ETF_Capital_Ledger_*.csv'))
 
 print('=== EXECUTING REFUND FOR ETFs ===\n')

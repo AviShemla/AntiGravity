@@ -10,20 +10,20 @@ import etf_dl_dataset_builder
 print(">>> [DAILY INFERENCE] Waking up Deep Learning Shadow Engine...")
 
 SEQ_LENGTH = 60
-MODELS_DIR = r"C:\Users\AviShemla\AntiGravity\models"
+MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
 WEIGHTS_FILE = os.path.join(MODELS_DIR, 'transformer_weights.pt')
 SCALER_FILE = os.path.join(MODELS_DIR, 'transformer_scaler.pkl')
-DATA_FILE = r"C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv"
+DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 
 ETF_WEIGHTS_FILE = os.path.join(MODELS_DIR, 'transformer_etf_weights.pt')
 ETF_SCALER_FILE = os.path.join(MODELS_DIR, 'transformer_etf_scaler.pkl')
-ETF_DATA_FILE = r"C:\Users\AviShemla\AntiGravity\financial_data\Unified_ETF_DeepLearning_Dataset.csv"
+ETF_DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Unified_ETF_DeepLearning_Dataset.csv')
 
 def get_dynamic_assets():
     import pandas as pd
     import os, sys
     
-    portfolio_path = r"C:\Users\AviShemla\AntiGravity\financial_data\Active_Portfolio.csv"
+    portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
     stocks = ['NVDA', 'AAPL']
     etfs = ['SPY', 'QQQ']
     
@@ -34,10 +34,10 @@ def get_dynamic_assets():
             stocks = df['Ticker'].head(10).tolist()
             
             # Dynamic ETF Extraction based on Whale Priors
-            sys.path.append(r'C:\Users\AviShemla\AntiGravity')
+            sys.path.append(os.path.dirname(os.path.abspath(__file__)))
             from etf_whale_extractor import get_60_percent_whales_with_weights
             
-            fund_path = r"C:\Users\AviShemla\AntiGravity\financial_data\SP500_Fundamentals_Score.csv"
+            fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
             fund_df = pd.read_csv(fund_path).set_index('Ticker') if os.path.exists(fund_path) else pd.DataFrame()
             
             all_etfs = ['XLK', 'XLF', 'XLV', 'XLE', 'XLY', 'XLP', 'XLU', 'XLI', 'XLB', 'XLC', 'XLRE']
@@ -203,7 +203,7 @@ def run_daily_inference():
         results_df = pd.DataFrame(predictions)
         results_df = results_df.sort_values(by='Transformer_P(UP)', ascending=False)
         
-        output_path = r"C:\Users\AviShemla\AntiGravity\Shadow_Transformer_Scorecard.csv"
+        output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Shadow_Transformer_Scorecard.csv')
         results_df.to_csv(output_path, index=False)
         
         print("\n==============================================")

@@ -10,7 +10,7 @@ import engine_config
 sampler_config = engine_config.configure_bayesian_engine()
 sv_config = engine_config.configure_sv_engine()
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors, extract_train_test_split
 from failover_downloader import is_quarantined, log_warning
 
@@ -19,7 +19,7 @@ def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="
     n = len(dates_t)
     
     # Try to load history to preserve the dashboard
-    old_sc_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx'
+    old_sc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
     if os.path.exists(old_sc_path):
         try:
             old_df = pd.read_excel(old_sc_path)
@@ -217,7 +217,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         
         try:
             import sys
-            sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             import database_manager
             import json
             for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
@@ -243,7 +243,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         # --- Inject Meta-Tracker Hyper-Priors ---
         import json
         try:
-            prior_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Meta_Alpha_Priors.json'
+            prior_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Meta_Alpha_Priors.json')
             with open(prior_path, 'r') as f:
                 meta_priors = json.load(f)
         except Exception as e:
@@ -390,7 +390,7 @@ if __name__ == '__main__':
     all_predictors_df.loc[next_biz_day] = np.nan
     
     # Merge Mega-Macro Tensors
-    mega_macro_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Mega_Macro_Features.csv'
+    mega_macro_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Mega_Macro_Features.csv')
     if os.path.exists(mega_macro_path):
         print("Merging Mega-Macro Phase 1 Tensors into global matrix...")
         mega_macro_df = pd.read_csv(mega_macro_path)
@@ -406,8 +406,8 @@ if __name__ == '__main__':
     
     shifted_preds = all_predictors_df.shift(1)
 
-    portfolio_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Active_Portfolio.csv'
-    excel_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx'
+    portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
+    excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 
     top_5 = pd.read_csv(portfolio_path)
     
@@ -420,7 +420,7 @@ if __name__ == '__main__':
     scorecards = {}
     feat_cols_dict = {}
 
-    fund_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Fundamentals_Score.csv'
+    fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
     if os.path.exists(fund_path):
         fund_df = pd.read_csv(fund_path)

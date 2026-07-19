@@ -16,7 +16,7 @@ def remove_black(in_path, out_path, tolerance=25):
 logo_src = r"C:\Users\AviShemla\.gemini\antigravity\brain\e6da8969-1069-4402-8307-e101b4874b0c\media__1780389447885.jpg"
 autopsy_src = r"C:\Users\AviShemla\.gemini\antigravity\brain\e6da8969-1069-4402-8307-e101b4874b0c\media__1780388742677.jpg"
 
-base_dir = r"C:\Users\AviShemla\AntiGravity"
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 remove_black(logo_src, os.path.join(base_dir, "oracle_eye.png"))
 remove_black(logo_src, os.path.join(base_dir, "oracle_logo.png"))

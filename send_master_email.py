@@ -4,7 +4,7 @@ import json
 import win32com.client
 import config
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 export_dir = BASE_DIR
 scorecard_path = os.path.join(BASE_DIR, 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 trial_report_path = os.path.join(BASE_DIR, 'financial_data', 'MultiPersona_Broker_30Day_Trial.xlsx')

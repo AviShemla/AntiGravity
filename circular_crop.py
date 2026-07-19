@@ -1,8 +1,9 @@
+import os
 from PIL import Image, ImageDraw
 
 def circular_crop():
-    input_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo.jpg'
-    output_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo_fixed.png'
+    input_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo.jpg')
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo_fixed.png')
     
     try:
         # Open original image

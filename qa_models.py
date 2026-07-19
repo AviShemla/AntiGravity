@@ -5,7 +5,7 @@ import openpyxl
 from failover_downloader import log_warning, safe_print
 print = safe_print
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 STOCK_EXCEL = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 ETF_EXCEL = os.path.join(BASE_DIR, 'All_ETFs_Scorecard.xlsx')
 

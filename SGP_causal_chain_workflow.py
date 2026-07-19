@@ -15,7 +15,7 @@ import sys
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -124,6 +124,6 @@ plt.ylabel("Raw Daily Return %")
 plt.legend()
 plt.grid(alpha=0.3)
 plt.tight_layout()
-plot_path = r'C:\Users\AviShemla\AntiGravity\financial_data\TGT_Causal_Chain_Plot.png'
+plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'TGT_Causal_Chain_Plot.png')
 plt.savefig(plot_path, dpi=300)
 print(f"\nPlot saved to {plot_path}")

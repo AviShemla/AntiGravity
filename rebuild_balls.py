@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # We must clear the pending_orders table for BallsForBrains to prevent intraday_tracker from executing old ghost orders or future orders during the rebuild
 import database_manager

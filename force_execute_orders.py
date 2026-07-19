@@ -1,8 +1,9 @@
+import os
 import sqlite3
 import json
 import pandas as pd
 
-conn = sqlite3.connect(r"C:\Users\AviShemla\AntiGravity\antigravity.db")
+conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'antigravity.db'))
 
 pending = pd.read_sql_query("SELECT * FROM pending_orders", conn)
 

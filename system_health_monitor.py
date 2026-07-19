@@ -3,7 +3,7 @@ import json
 import subprocess
 from datetime import datetime
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 python_exe = r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe"
 LOG_FILE = os.path.join(BASE_DIR, "master_pipeline_log.txt")
 STATE_FILE = os.path.join(BASE_DIR, "system_health_streak.json")

@@ -2,11 +2,11 @@ import sys
 import os
 import traceback
 
-with open(r'C:\Users\AviShemla\AntiGravity\tracker_debug.txt', 'w') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tracker_debug.txt'), 'w') as f:
     f.write("Starting test...\n")
     f.flush()
     try:
-        sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import intraday_tracker
         f.write("Imported intraday_tracker\n")
         f.flush()

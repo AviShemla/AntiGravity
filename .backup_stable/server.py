@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
 def calculate_metrics(df, persona):
     if 'Total_Equity' in df.columns:

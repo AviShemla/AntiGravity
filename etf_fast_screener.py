@@ -5,7 +5,7 @@ import itertools
 from sklearn.linear_model import LogisticRegression
 import time
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 MACRO_ETFS = ['SPY', 'TLT', 'GLD', 'UUP']
 
 def screen_hybrid_matrix(target_etf):

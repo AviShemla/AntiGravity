@@ -1,8 +1,8 @@
 import re
 import os
 
-DASHBOARD_PATH = r"C:\Users\AviShemla\AntiGravity\dashboard_v1.py"
-SERVER_PATH = r"C:\Users\AviShemla\AntiGravity\server.py"
+DASHBOARD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dashboard_v1.py')
+SERVER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server.py')
 
 def patch_file(filepath):
     if not os.path.exists(filepath):

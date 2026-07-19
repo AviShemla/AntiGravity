@@ -1,7 +1,7 @@
 from PIL import Image, ImageEnhance
 import os
 
-path = r"C:\Users\AviShemla\AntiGravity\frontend\autopsy_icon.png"
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend/autopsy_icon.png')
 if os.path.exists(path):
     img = Image.open(path)
     enhancer = ImageEnhance.Brightness(img)

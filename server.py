@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
 def calculate_metrics(df, persona):
     if 'Total_Equity' in df.columns:
@@ -576,7 +576,7 @@ def get_autopsy_data():
 
 @app.get('/api/prod_shadow')
 def get_prod_shadow():
-    csv_path = os.path.join(r'C:\Users\AviShemla\AntiGravity\financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
+    csv_path = os.path.join(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data'), 'Prod_vs_Shadow_Results_MASTER.csv')
     if not os.path.exists(csv_path): return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'table': []}
     df = pd.read_csv(csv_path)
     if 'Date' in df.columns:

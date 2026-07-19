@@ -11,7 +11,7 @@ import datetime
 
 import threading
 
-sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from failover_downloader import download_ticker_with_failover
 
 

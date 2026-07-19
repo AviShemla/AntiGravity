@@ -2,7 +2,7 @@ import win32com.client
 import os
 import pandas as pd
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RECIPIENT_EMAIL = "avi.shemla@gmail.com"
 
 def send_victorious_email():

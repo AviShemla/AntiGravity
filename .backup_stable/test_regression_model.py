@@ -3,7 +3,7 @@ import numpy as np
 import statsmodels.api as sm
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
 champion_ticker = 'GOOG'
 
 print("Reading and prepping data...")
@@ -85,5 +85,5 @@ plt.plot(y_test.index, y_test.values, label='Actual Returns', alpha=0.6)
 plt.plot(y_test.index, y_pred_test.values, label='Predicted Returns', color='red', linewidth=2)
 plt.title(f'GOOG Return Prediction vs Actual (Out-of-Sample Test Set)')
 plt.legend()
-plt.savefig(r'C:\Users\AviShemla\AntiGravity\regression_test_performance.png')
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'regression_test_performance.png'))
 print(f"Performance plot saved.")

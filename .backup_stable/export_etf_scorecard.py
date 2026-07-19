@@ -5,7 +5,7 @@ import os
 import sys
 import gc
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
 def write_etf_excel(target_etf, sc, features):

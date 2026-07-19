@@ -1,7 +1,8 @@
+import os
 from PIL import Image
 
 in_path = r"C:\Users\AviShemla\.gemini\antigravity\brain\e6da8969-1069-4402-8307-e101b4874b0c\media__1780390852309.jpg"
-out_path = r"C:\Users\AviShemla\AntiGravity\etf_icon.png"
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'etf_icon.png')
 
 img = Image.open(in_path).convert("RGBA")
 datas = img.getdata()

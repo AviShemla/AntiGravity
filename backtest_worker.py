@@ -21,7 +21,7 @@ import sys
 import subprocess
 import gc
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors, extract_train_test_split
 
 def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, next_biz_day, fundamental_score=0.0):
@@ -292,7 +292,7 @@ if __name__ == '__main__':
 
     scorecards = {}
     
-    fund_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Fundamentals_Score.csv'
+    fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
     if os.path.exists(fund_path):
         fund_df = pd.read_csv(fund_path)

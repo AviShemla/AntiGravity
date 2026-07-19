@@ -9,13 +9,13 @@ import sys
 # Suppress PyTensor compiler warnings
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 print("Loading data for Magnitude Prediction Experiment...")
 all_predictors_df, return_pivot, std_adj_returns, df, stdev_pivot = load_predictors()
 
-portfolio = pd.read_csv(r'C:\Users\AviShemla\AntiGravity\financial_data\Active_Portfolio.csv')
+portfolio = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv'))
 target_ticker = 'TSLA' # We'll use TSLA since it's volatile and great for magnitude tests
 
 row = portfolio[portfolio['Ticker'] == target_ticker].iloc[0]

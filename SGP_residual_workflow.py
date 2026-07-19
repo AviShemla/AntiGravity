@@ -12,7 +12,7 @@ import pymc as pm
 import matplotlib.pyplot as plt
 import os
 import sys
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors, prepare_sgp_data
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -114,9 +114,9 @@ if __name__ == '__main__':
         ax.legend(); ax.grid(alpha=0.3)
 
     plt.tight_layout()
-    plot_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SGP_Residual_Plot.png'
+    plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SGP_Residual_Plot.png')
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"\nPlot saved: {plot_path}")
 
-    summary.to_csv(r'C:\Users\AviShemla\AntiGravity\financial_data\SGP_Residual_Summary.csv', index=False)
+    summary.to_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SGP_Residual_Summary.csv'), index=False)

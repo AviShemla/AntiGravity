@@ -2,7 +2,7 @@ import sqlite3
 import json
 import os
 
-DB_PATH = r"C:\Users\AviShemla\AntiGravity\antigravity.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'antigravity.db')
 
 def force_clear():
     conn = sqlite3.connect(DB_PATH)

@@ -17,8 +17,8 @@ SEQ_LENGTH = 60 # 60-day context window for Attention
 EPOCHS = 1 # Accelerated to 1 epoch for an instant execution benchmark
 BATCH_SIZE = 128
 LEARNING_RATE = 0.0005
-MODELS_DIR = r"C:\Users\AviShemla\AntiGravity\models"
-DATA_FILE = r"C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv"
+MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
+DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 
 # Our Target Alpha Universe (Top 15 Momentum Stocks normally fetched from fast_screener)
 TOP_15_TICKERS = ['NVDA', 'META', 'AMZN', 'MSFT', 'AAPL', 'GOOGL', 'TSLA', 'AVGO', 'LLY', 'JPM', 'UNH', 'XOM', 'V', 'JNJ', 'PG']

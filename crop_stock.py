@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 in_path = r"C:\Users\AviShemla\.gemini\antigravity\brain\e6da8969-1069-4402-8307-e101b4874b0c\media__1780391897996.jpg"
-out_path = r"C:\Users\AviShemla\AntiGravity\frontend\stock_icon.png"
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend/stock_icon.png')
 
 img = Image.open(in_path).convert("RGBA")
 w, h = img.size

@@ -3,7 +3,7 @@ import numpy as np
 import os
 import datetime
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 log_file = os.path.join(BASE_DIR, 'QA_Historical_Log.md')
 
 def log_qa_result(status_msg, resolution_msg):

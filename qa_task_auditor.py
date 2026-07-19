@@ -5,7 +5,7 @@ import subprocess
 import pandas as pd
 import pandas_market_calendars as mcal
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(BASE_DIR, "master_watchdog.log")
 
 def log_alert(msg):
@@ -19,7 +19,7 @@ def log_alert(msg):
         pass
         
     try:
-        script_path = os.path.join(r"C:\Users\AviShemla\AntiGravity", "send_email_notification.py")
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "send_email_notification.py")
         subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - Task Auditor", msg], creationflags=0x08000000)
     except Exception as e:
         print(f"Failed to trigger email alert: {e}")

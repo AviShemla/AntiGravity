@@ -1,7 +1,8 @@
+import os
 import sys
 import datetime
 
-f = r'C:\Users\AviShemla\AntiGravity\intraday_tracker.py'
+f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'intraday_tracker.py')
 with open(f, 'r', encoding='utf-8') as file:
     content = file.read()
     

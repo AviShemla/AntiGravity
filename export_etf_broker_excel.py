@@ -2,13 +2,13 @@ import pandas as pd
 import numpy as np
 import os
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 OUTPUT_EXCEL = os.path.join(BASE_DIR, 'ETF_Broker_30Day_Trial.xlsx')
 PERSONAS = ["Conservative", "Neutral", "BallsForBrains"]
 
 def process_ledger(persona_name):
     import sys
-    sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import database_manager
     df = database_manager.get_ledger(f"ETF_{persona_name}")
     if df.empty:

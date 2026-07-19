@@ -6,7 +6,7 @@ import sys
 import subprocess
 import gc
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -253,8 +253,8 @@ if __name__ == '__main__':
     
     shifted_preds = all_predictors_df.shift(1)
 
-    portfolio_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Active_Portfolio.csv'
-    excel_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Test_SV_Scorecard.xlsx'
+    portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
+    excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Test_SV_Scorecard.xlsx')
 
     top_5 = pd.read_csv(portfolio_path)
     
@@ -267,7 +267,7 @@ if __name__ == '__main__':
     scorecards = {}
     feat_cols_dict = {}
 
-    fund_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Fundamentals_Score.csv'
+    fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
     if os.path.exists(fund_path):
         fund_df = pd.read_csv(fund_path)

@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
-output_plot = r'C:\Users\AviShemla\AntiGravity\goog_googl_lagged_annotated.png'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
+output_plot = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'goog_googl_lagged_annotated.png')
 
 print("Reading data...")
 df = pd.read_csv(input_file)

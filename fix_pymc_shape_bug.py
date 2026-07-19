@@ -2,7 +2,7 @@ import os
 import re
 import glob
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 files = glob.glob(os.path.join(BASE_DIR, "*.py"))
 
 for filepath in files:

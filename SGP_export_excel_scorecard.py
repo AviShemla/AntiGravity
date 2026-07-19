@@ -19,7 +19,7 @@ from openpyxl.utils import get_column_letter
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-input_file      = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+input_file      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 champion_ticker = 'JPM'
 N_ROWS          = 30   # number of most-recent rows to show in the scorecard
 
@@ -277,7 +277,7 @@ for ci, w in enumerate(col_widths, 1):
 # ---- Freeze panes ----
 ws.freeze_panes = "A4"
 
-out_path = r'C:\Users\AviShemla\AntiGravity\financial_data\JPM_SGP_Scorecard.xlsx'
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'JPM_SGP_Scorecard.xlsx')
 wb.save(out_path)
 print(f"\nExcel scorecard saved to: {out_path}")
 print(f"Lag1 accuracy (last {N_ROWS} days): {lag1_acc:.1%}")

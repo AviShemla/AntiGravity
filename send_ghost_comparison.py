@@ -20,7 +20,7 @@ def send_ghost_comparison():
     (Note: No real trades were executed based on this experimental scorecard).
     """
     
-    attachment_path = r'C:\Users\AviShemla\AntiGravity\financial_data\TNX_Test_Scorecard.xlsx'
+    attachment_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'TNX_Test_Scorecard.xlsx')
     
     try:
         outlook = win32com.client.Dispatch('outlook.application')

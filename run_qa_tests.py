@@ -6,7 +6,7 @@ import sys
 import shutil
 import datetime
 
-workspace = r"C:\Users\AviShemla\AntiGravity"
+workspace = os.path.dirname(os.path.abspath(__file__))
 os.chdir(workspace)
 sys.path.insert(0, workspace)
 

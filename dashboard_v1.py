@@ -45,13 +45,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
 # --- DATA LOADERS ---
 @st.cache_data(ttl=60) # cache for 60 seconds
 def get_latest_holdings(persona="BallsForBrains", mode="Single"):
     import sys
-    sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import database_manager
     if mode == "Single":
         df = database_manager.get_ledger(persona)
@@ -237,7 +237,7 @@ def get_recent_trades(df, persona, limit=5):
 
 def get_asset_breakdown(persona, mode):
     import sys
-    sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import database_manager
     if mode == "Single":
         df = database_manager.get_ledger(persona)
@@ -341,7 +341,7 @@ def get_losing_trades(persona, mode):
         blacklisted_set = set()
 
     import sys
-    sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import database_manager
     if mode == "Single":
         ledger = database_manager.get_ledger(persona)
@@ -500,7 +500,7 @@ with tab1:
         if allocs:
             max_dd, sharpe, win_rate, total_return = 0, 0, 0, 0
             import sys
-            sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             import database_manager
             df_trial = database_manager.get_ledger(persona_s)
             if not df_trial.empty:
@@ -562,7 +562,7 @@ with tab1:
             all_ledgers = []
             for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
                 import sys
-                sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
                 import database_manager
                 df_p = database_manager.get_ledger(p)
                 if not df_p.empty:
@@ -737,7 +737,7 @@ with tab1:
                 all_ledgers = []
                 for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
                     import sys
-                    sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+                    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
                     import database_manager
                     import json
                     df_p = database_manager.get_ledger(p)
@@ -895,7 +895,7 @@ with tab2:
             all_ledgers_e = []
             for p in ["Conservative", "Neutral", "BallsForBrains"]:
                 import sys
-                sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
                 import database_manager
                 df_p = database_manager.get_ledger(f"ETF_{p}")
                 if not df_p.empty:
@@ -1055,7 +1055,7 @@ with tab2:
                 all_ledgers_e = []
                 for p in ["Conservative", "Neutral", "BallsForBrains"]:
                     import sys
-                    sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+                    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
                     import database_manager
                     import json
                     df_p = database_manager.get_ledger(f"ETF_{p}")

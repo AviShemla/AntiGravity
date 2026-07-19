@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import subprocess
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "financial_data")
 CSV_PATH = os.path.join(DATA_DIR, "Prod_vs_Shadow_Results_MASTER.csv")
 STATE_PATH = os.path.join(DATA_DIR, "prod_shadow_state.json")

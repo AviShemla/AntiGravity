@@ -1,9 +1,10 @@
+import os
 from rembg import remove
 from PIL import Image
 
 def fix_logo():
-    input_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo.jpg'
-    output_path = r'C:\Users\AviShemla\AntiGravity\oracle_logo_fixed.png'
+    input_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo.jpg')
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'oracle_logo_fixed.png')
     
     print(f"Loading {input_path}...")
     try:

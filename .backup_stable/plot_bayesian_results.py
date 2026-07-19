@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import os
 import matplotlib.dates as mdates
 
-excel_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard.xlsx'
-output_dir = r'C:\Users\AviShemla\AntiGravity\financial_data'
+excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard.xlsx')
+output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.makedirs(output_dir, exist_ok=True)
 
 tickers = ['MU', 'CRL', 'NCLH', 'ROKU', 'TSLA']

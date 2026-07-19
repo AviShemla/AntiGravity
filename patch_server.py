@@ -1,7 +1,7 @@
 import re
 import os
 
-SERVER_PATH = r"C:\Users\AviShemla\AntiGravity\server.py"
+SERVER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server.py')
 
 with open(SERVER_PATH, "r") as f:
     content = f.read()

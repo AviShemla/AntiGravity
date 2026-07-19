@@ -1,7 +1,7 @@
 import zipfile
 import os
 
-source_dir = r"C:\Users\AviShemla\AntiGravity"
+source_dir = os.path.dirname(os.path.abspath(__file__))
 zip_path = r"C:\Users\AviShemla\AG_BCK\AntiGravity_Full_Migration_Backup.zip"
 
 print("Starting robust migration zip protocol...")

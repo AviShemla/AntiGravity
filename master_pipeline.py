@@ -6,7 +6,7 @@ import sys
 import psutil
 import atexit
 
-LOCK_FILE = r"C:\Users\AviShemla\AntiGravity\master_pipeline.lock"
+LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'master_pipeline.lock')
 try:
     lock_fd = os.open(LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     def release_lock():
@@ -28,7 +28,7 @@ except Exception as e:
     pass
 
 # Paths
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SINGLE_STOCK_SCRIPT = os.path.join(BASE_DIR, 'daily_pipeline.py')
 ETF_SCRIPT = os.path.join(BASE_DIR, 'etf_daily_pipeline.py')
 FUNDAMENTALS_SCRIPT = os.path.join(BASE_DIR, 'extract_fundamentals.py')

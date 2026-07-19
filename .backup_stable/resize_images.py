@@ -1,7 +1,7 @@
 from PIL import Image
 import os
 
-base_dir = r"C:\Users\AviShemla\AntiGravity"
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 def resize_img(filename, size=(200, 200)):
     path = os.path.join(base_dir, filename)

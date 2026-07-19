@@ -7,7 +7,7 @@ import os
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-input_file = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 champion_ticker = 'JPM'
 
 print("Reading S&P 500 data...")
@@ -196,11 +196,11 @@ if __name__ == '__main__':
     print(f"Lag 2 Directional Accuracy (last 30 days): {lag2_acc:.1f}%")
     
     # Save to CSV
-    csv_path = r'C:\Users\AviShemla\AntiGravity\JPM_GP_Scorecard_Last30.csv'
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'JPM_GP_Scorecard_Last30.csv')
     last30_display.to_csv(csv_path)
     print(f"\nScorecard saved to: {csv_path}")
     
-    out_path = r'C:\Users\AviShemla\AntiGravity\PyMC_TGT_GP_Results.csv'
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'PyMC_TGT_GP_Results.csv')
     summary_df.to_csv(out_path, index=False)
     
     # --- Side-by-side comparison plot ---
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     axes[1].grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plot_path = r'C:\Users\AviShemla\AntiGravity\JPM_GP_Comparison_Plot.png'
+    plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'JPM_GP_Comparison_Plot.png')
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"\nComparison plot saved to: {plot_path}")
     plt.close()

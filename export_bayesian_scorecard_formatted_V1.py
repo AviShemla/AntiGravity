@@ -5,7 +5,7 @@ import os
 import sys
 import subprocess
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -217,9 +217,9 @@ if __name__ == '__main__':
     
     shifted_preds = all_predictors_df.shift(1)
 
-    portfolio_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Active_Portfolio.csv'
-    screener_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Fast_Screener_Results.csv'
-    excel_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx'
+    portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
+    screener_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Fast_Screener_Results.csv')
+    excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 
     top_5 = pd.read_csv(portfolio_path)
     start_date = pd.to_datetime('2025-05-01')
@@ -232,7 +232,7 @@ if __name__ == '__main__':
     retrained_tickers = []
     suspended_tickers = []
 
-    fund_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Fundamentals_Score.csv'
+    fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
     if os.path.exists(fund_path):
         fund_df = pd.read_csv(fund_path)
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     if failed_tickers:
         print(f"\n[RETRAINING PROTOCOL INITIATED] Retraining required for: {failed_tickers}")
         print("Running Adaptive fast_screener.py to discover best chains (This will take a few minutes)...")
-        subprocess.run([sys.executable, "fast_screener.py"], cwd=r"C:\Users\AviShemla\AntiGravity")
+        subprocess.run([sys.executable, "fast_screener.py"], cwd=os.path.dirname(os.path.abspath(__file__)))
         
         new_screener = pd.read_csv(screener_path)
         

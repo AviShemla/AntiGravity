@@ -19,7 +19,7 @@ try:
     import pandas_market_calendars as mcal
     import pandas as pd
     
-    BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     ledger_path = os.path.join(BASE_DIR, 'financial_data', 'Capital_Ledger_Dynamic.csv')
     
     nyse = mcal.get_calendar('NYSE')
@@ -76,7 +76,7 @@ def send_outlook_email(subject, html_body, attachment_path=None, logo_path=None)
         print(f"Failed to send email via Outlook. Error: {e}")
 
 print("=== STARTING DAILY PIPELINE ===")
-sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     from failover_downloader import clear_warnings, clear_quarantined_tickers
     clear_warnings()
@@ -86,9 +86,9 @@ except Exception as e:
 
 print("Step 1: Running SPY.py from AntiGravity folder...")
 
-spy_path = r"C:\Users\AviShemla\AntiGravity\SPY.py"
-export_dir = r"C:\Users\AviShemla\AntiGravity"
-data_file = r"C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv"
+spy_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'SPY.py')
+export_dir = os.path.dirname(os.path.abspath(__file__))
+data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 
 python_exe = sys.executable
 
@@ -137,7 +137,7 @@ stats_text = (
 
 print("\nStep 1.5: Running Meta-Predictor Tracker (Sunday Alpha Recalibration)...")
 if datetime.datetime.today().weekday() == 6: # Sunday
-    meta_script = r"C:\Users\AviShemla\AntiGravity\meta_predictor_tracker.py"
+    meta_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'meta_predictor_tracker.py')
     try:
         subprocess.run([python_exe, meta_script], cwd=export_dir, capture_output=True, text=True, timeout=600)
         print("  => Meta-Predictor Tracker successfully recalculated Alpha Priors.")
@@ -148,7 +148,7 @@ else:
 
 print("\nStep 2: Running export_bayesian_scorecard_formatted.py...")
 
-export_script = r"C:\Users\AviShemla\AntiGravity\export_bayesian_scorecard_formatted.py"
+export_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export_bayesian_scorecard_formatted.py')
 try:
     result2 = subprocess.run([python_exe, export_script], cwd=export_dir, capture_output=True, text=True, timeout=1800)
 except subprocess.TimeoutExpired as e:
@@ -172,7 +172,7 @@ suspended_match = re.search(r"=== SUSPENDED TICKERS SUMMARY ===\n(.*)", export_o
 suspended_text = suspended_match.group(1).strip() if suspended_match else "None"
 
 print("\nStep 2.5: Running QA Models Bounds Validation...")
-qa_models_script = r"C:\Users\AviShemla\AntiGravity\qa_models.py"
+qa_models_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'qa_models.py')
 try:
     result_qa = subprocess.run([python_exe, qa_models_script], cwd=export_dir, capture_output=True, text=True, timeout=120)
     print(result_qa.stdout)
@@ -182,7 +182,7 @@ except Exception as e:
     print(f"  => QA Models execution failed: {e}")
 
 print("\nStep 3: Running Virtual Broker...")
-broker_script = r"C:\Users\AviShemla\AntiGravity\virtual_broker.py"
+broker_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'virtual_broker.py')
 try:
     result3 = subprocess.run([python_exe, broker_script], cwd=export_dir, capture_output=True, text=True, timeout=600)
     broker_output = result3.stdout
@@ -190,14 +190,14 @@ except subprocess.TimeoutExpired as e:
     broker_output = "Virtual Broker timed out."
 
 print("\nStep 4: Generating 30-Day Trial Excel Report...")
-excel_exporter = r"C:\Users\AviShemla\AntiGravity\export_broker_excel_report.py"
+excel_exporter = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export_broker_excel_report.py')
 try:
     subprocess.run([python_exe, excel_exporter], cwd=export_dir, capture_output=True, text=True, timeout=120)
 except subprocess.TimeoutExpired:
     print("Excel report generation timed out.")
 
 print("\nStep 5: Running Automated QA Assistant (Blacklist Audit)...")
-qa_script = r"C:\Users\AviShemla\AntiGravity\qa_blacklist.py"
+qa_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'qa_blacklist.py')
 try:
     if os.path.exists(qa_script):
         subprocess.run([python_exe, qa_script], cwd=export_dir, capture_output=True, text=True, timeout=120)
@@ -208,8 +208,8 @@ except subprocess.TimeoutExpired:
 print("\n=== DAILY PIPELINE COMPLETED SUCCESSFULLY ===")
 
 # Excel Attachment Paths
-scorecard_path = r"C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx"
-trial_report_path = r"C:\Users\AviShemla\AntiGravity\financial_data\MultiPersona_Broker_30Day_Trial.xlsx"
+scorecard_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
+trial_report_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'MultiPersona_Broker_30Day_Trial.xlsx')
 
 # Draft and send the success HTML email
 email_subject = "AntiGravity: Single Stocks Daily Pipeline Completed Successfully"

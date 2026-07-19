@@ -1,8 +1,9 @@
+import os
 import json
 import pandas as pd
 import math
 
-pending_file = r'C:\Users\AviShemla\AntiGravity\financial_data\Pending_Orders.json'
+pending_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Pending_Orders.json')
 with open(pending_file, 'r') as f:
     orders = json.load(f)
 

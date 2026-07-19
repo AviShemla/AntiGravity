@@ -7,7 +7,7 @@ import argparse
 import logging
 
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "qa_audit.log")
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 logging.basicConfig(
     filename=LOG_FILE,

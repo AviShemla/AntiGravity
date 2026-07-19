@@ -1,7 +1,8 @@
+import os
 import pandas as pd
 import numpy as np
 
-excel_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard.xlsx'
+excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard.xlsx')
 print(f"Reading probabilities from {excel_path}...\n")
 
 tickers = ['MU', 'CRL', 'NCLH', 'ROKU', 'TSLA']

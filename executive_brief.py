@@ -3,7 +3,7 @@ import os
 import json
 import datetime
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RECIPIENT_EMAIL = "avi.shemla@gmail.com"
 
 def get_ledger_stats(persona_name):

@@ -3,7 +3,7 @@ import numpy as np
 import os
 import sys
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import engine_config
 from data_loader import extract_train_test_split
 
@@ -27,11 +27,11 @@ def run_qa_logical_flows():
         if b_config.get("draws", 0) < 1000 or b_config.get("tune", 0) < 1000:
             print("  => WARNING: Draws/Tune are dangerously low. Self-healing engine_config.py...")
             import re
-            with open(r'C:\Users\AviShemla\AntiGravity\engine_config.py', 'r') as f:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'engine_config.py'), 'r') as f:
                 content = f.read()
             content = re.sub(r'"draws":\s*\d+', '"draws": 1000', content)
             content = re.sub(r'"tune":\s*\d+', '"tune": 1000', content)
-            with open(r'C:\Users\AviShemla\AntiGravity\engine_config.py', 'w') as f:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'engine_config.py'), 'w') as f:
                 f.write(content)
             print("  => HEALED: Updated engine_config.py draws and tune parameters to 1000.")
             
@@ -40,7 +40,7 @@ def run_qa_logical_flows():
         if "cxx=" in pt_flags:
             print("  => WARNING: PyTensor C++ compiler is actively disabled (cxx=). Self-healing...")
             for script in ['engine_config.py', 'backtest_worker.py']:
-                path = os.path.join(r'C:\Users\AviShemla\AntiGravity', script)
+                path = os.path.join(os.path.dirname(os.path.abspath(__file__)), script)
                 if os.path.exists(path):
                     with open(path, 'r') as f:
                         content = f.read()
@@ -136,9 +136,9 @@ def run_qa_logical_flows():
     print("\n[TEST 5] Genesis Timeline Synchronization")
     try:
         # Ensure 2025-05-01 is not hardcoded anywhere in the virtual broker initializations
-        with open(r'C:\Users\AviShemla\AntiGravity\virtual_broker.py', 'r', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'virtual_broker.py'), 'r', encoding='utf-8') as f:
             vb_content = f.read()
-        with open(r'C:\Users\AviShemla\AntiGravity\etf_virtual_broker.py', 'r', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'etf_virtual_broker.py'), 'r', encoding='utf-8') as f:
             evb_content = f.read()
             
         assert "2025-05-01" not in vb_content, "CRITICAL FAILURE: virtual_broker.py contains a hardcoded 1-year genesis jump (2025-05-01)!"
@@ -153,7 +153,7 @@ def run_qa_logical_flows():
     # TEST 6: Scaler Data Leakage Prevention
     print("\n[TEST 6] Deep Learning Train/Test Scaling Leakage")
     try:
-        with open(r'C:\Users\AviShemla\AntiGravity\etf_weekend_dl_trainer.py', 'r', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'etf_weekend_dl_trainer.py'), 'r', encoding='utf-8') as f:
             trainer_code = f.read()
         # Assert scaler.fit is ONLY called on training data, never on the whole dataset
         assert "scaler.fit(X)" not in trainer_code and "scaler.fit_transform(X)" not in trainer_code, "CRITICAL FAILURE: Scaler is fitting the entire dataset, leaking future statistical variance!"
@@ -167,7 +167,7 @@ def run_qa_logical_flows():
     # TEST 7: Python Scope Isolation
     print("\n[TEST 7] Python Scope Isolation (UnboundLocalError)")
     try:
-        with open(r'C:\Users\AviShemla\AntiGravity\run_backtests.py', 'r', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'run_backtests.py'), 'r', encoding='utf-8') as f:
             bt_code = f.read()
         # Ensure 'import json' is not nested inside any try/except blocks inside run_simulation
         assert bt_code.find("def run_simulation") < bt_code.find("import json") or bt_code.find("import json") < bt_code.find("def run_simulation"), "CRITICAL FAILURE: import json is trapped inside the local scope of run_simulation!"
@@ -180,7 +180,7 @@ def run_qa_logical_flows():
     # TEST 8: Phantom Ledger Sync
     print("\n[TEST 8] Intraday Phantom Ledger Payload Sync")
     try:
-        with open(r'C:\Users\AviShemla\AntiGravity\intraday_tracker.py', 'r', encoding='utf-8') as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'intraday_tracker.py'), 'r', encoding='utf-8') as f:
             tracker_code = f.read()
         assert "approved_sells[ticker] = live_price" in tracker_code, "CRITICAL FAILURE: Intraday tracker authorizes sells but never appends them to the payload dictionary!"
         print("  => PASSED: Intraday sell authorizations physically mutate the payload arrays.")

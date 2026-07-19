@@ -6,7 +6,7 @@ import json
 import warnings
 warnings.filterwarnings('ignore')
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.makedirs(BASE_DIR, exist_ok=True)
 OUT_PATH = os.path.join(BASE_DIR, 'Master_ETF_Universe.json')
 

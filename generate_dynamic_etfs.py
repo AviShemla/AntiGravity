@@ -4,7 +4,7 @@ import yfinance as yf
 import os
 import json
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.makedirs(BASE_DIR, exist_ok=True)
 
 # Load the dynamically generated Master Universe from the Sunday Screener

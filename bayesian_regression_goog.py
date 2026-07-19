@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.linear_model import BayesianRidge
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
 champion_ticker = 'GOOG'
 
 print("Reading and prepping data...")
@@ -62,5 +62,5 @@ plt.plot(y_test.index, y_test.values, label='Actual Returns', alpha=0.5)
 plt.plot(y_test.index, y_pred_test, label='Bayesian Prediction', color='green', linewidth=2)
 plt.title(f'GOOG Bayesian Prediction vs Actual (Out-of-Sample)')
 plt.legend()
-plt.savefig(r'C:\Users\AviShemla\AntiGravity\bayesian_test_performance.png')
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bayesian_test_performance.png'))
 print(f"\nBayesian performance plot saved.")

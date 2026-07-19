@@ -1,6 +1,6 @@
 import os
 
-base_dir = r"C:\Users\AviShemla\AntiGravity"
+base_dir = os.path.dirname(os.path.abspath(__file__))
 search_str = "OneDrive"
 
 def search_files(directory):

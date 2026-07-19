@@ -10,7 +10,7 @@ import pymc as pm
 import pytensor.tensor as pt
 import os
 import sys
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors, prepare_sgp_data
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
@@ -104,6 +104,6 @@ if __name__ == '__main__':
     print("\n=== Last 30 Days Scorecard (Lag 1) ===")
     print(sc1.round(3).to_string())
 
-    csv_path = r'C:\Users\AviShemla\AntiGravity\financial_data\BLR_JPM_Summary.csv'
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'BLR_JPM_Summary.csv')
     summary.to_csv(csv_path, index=False)
     print(f"\nSaved: {csv_path}")

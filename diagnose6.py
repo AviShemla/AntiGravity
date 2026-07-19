@@ -1,5 +1,6 @@
+import os
 import sys
-sys.path.append(r'C:\Users\AviShemla\AntiGravity')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import database_manager
 import pandas as pd
 import sqlite3

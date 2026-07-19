@@ -16,7 +16,7 @@ import os
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-input_file    = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+input_file    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 champion_ticker = 'JPM'
 N_SPLITS      = 5   # 5 walk-forward folds
 
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     print(f"\nVERDICT: {verdict}")
 
     # Save
-    csv_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SGP_WalkForward_Audit.csv'
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SGP_WalkForward_Audit.csv')
     results_df.to_csv(csv_path, index=False)
     print(f"\nFull results saved to: {csv_path}")
 
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     ax.legend()
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    plot_path = r'C:\Users\AviShemla\AntiGravity\financial_data\SGP_WalkForward_R2_Plot.png'
+    plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SGP_WalkForward_R2_Plot.png')
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"Plot saved to: {plot_path}")
     plt.close()

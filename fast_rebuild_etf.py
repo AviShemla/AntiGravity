@@ -4,7 +4,7 @@ import subprocess
 import os
 import sys
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def reset_etf_db():
     conn = sqlite3.connect(os.path.join(BASE_DIR, "antigravity.db"))

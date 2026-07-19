@@ -5,7 +5,7 @@ import os
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 DATA_PATH = os.path.join(BASE_DIR, 'SP500_Clean_Advanced_Analysis.csv')
 PRIORS_OUT_PATH = os.path.join(BASE_DIR, 'Meta_Alpha_Priors.json')
 

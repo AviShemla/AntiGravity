@@ -1,7 +1,8 @@
+import os
 import sqlite3
 import pandas as pd
 
-conn = sqlite3.connect(r'C:\Users\AviShemla\AntiGravity\financial_data\Capital_Ledger.db')
+conn = sqlite3.connect(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Capital_Ledger.db'))
 tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
 print("Tables:", tables)
 

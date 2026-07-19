@@ -2,7 +2,7 @@ import os
 import glob
 import shutil
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FINANCIAL_DIR = os.path.join(BASE_DIR, 'financial_data')
 ARCHIVE_DIR = os.path.join(FINANCIAL_DIR, 'LEGACY_ARCHIVE_DO_NOT_USE')
 

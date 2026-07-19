@@ -10,7 +10,7 @@ import pandas_market_calendars as mcal
 import database_manager
 import config
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ==========================================
 # INDICATOR UTILS & VIX WATCHDOG

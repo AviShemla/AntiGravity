@@ -5,7 +5,7 @@ import sys
 from sklearn.linear_model import LogisticRegression
 import time
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 print("Loading data for 5-Level Causality Experiment...")
@@ -140,7 +140,7 @@ print(f"\n5-Level Screening complete in {elapsed:.1f} seconds!")
 res_df = pd.DataFrame(results).sort_values(by='OOS_Accuracy', ascending=False)
 res_df['OOS_Accuracy'] = (res_df['OOS_Accuracy'] * 100).round(1)
 
-out_path = r'C:\Users\AviShemla\AntiGravity\financial_data\Experiment_5Lag_Results.csv'
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Experiment_5Lag_Results.csv')
 res_df.to_csv(out_path, index=False)
 
 print("\n=== TOP 15 MOST PREDICTABLE TICKERS (5-LAG MODEL) ===")

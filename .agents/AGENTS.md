@@ -74,3 +74,6 @@ If `qa_dashboard_integrity.py` detects that the latest date in `Prod_vs_Shadow_R
 
 ## The Zombie Hunter Protocol
 The system has an automated janitor (clean_ghosts.py) running every 60 minutes via the master watchdog. It hunts and kills any python process (except whitelisted ones like uvicorn/watchdog) running longer than 1 hour. It also physically deletes any .lock or in_progress.txt files older than 60 minutes. NEVER create permanent lockfiles without an expiration mechanism, and NEVER interfere with the master watchdog's ability to run the Zombie Hunter.
+
+## The Uvicorn Deadlock Directive (Zero-Trust Dashboard QA)
+Before answering ANY user question regarding a hanging dashboard, a broken UI tab, or a 'Loading...' screen, the agent MUST explicitly query the status of the Uvicorn process and check master_watchdog.log for 'Detected offline/deadlocked server'. The agent is strictly forbidden from assuming a UI issue is a simple path or code error without FIRST verifying that Uvicorn is actively listening on Port 80 and is not deadlocked.

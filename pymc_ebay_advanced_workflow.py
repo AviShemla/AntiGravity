@@ -6,7 +6,7 @@ import os
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-input_file = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 champion_ticker = 'EBAY'
 
 print("Reading S&P 500 data...")
@@ -127,5 +127,5 @@ if __name__ == '__main__':
     print("\n\n=== Final PyMC Technical Workflow Summary ===")
     print(summary_df.to_string(index=False))
     
-    out_path = r'C:\Users\AviShemla\AntiGravity\PyMC_EBAY_Advanced_Results.csv'
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'PyMC_EBAY_Advanced_Results.csv')
     summary_df.to_csv(out_path, index=False)

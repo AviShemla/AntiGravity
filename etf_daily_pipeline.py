@@ -16,7 +16,7 @@ RECIPIENT_EMAIL = "avi.shemla@gmail.com"
 try:
     import pandas_market_calendars as mcal
     
-    BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     ledger_path = os.path.join(BASE_DIR, 'financial_data', 'ETF_Capital_Ledger_Dynamic.csv')
     
     nyse = mcal.get_calendar('NYSE')

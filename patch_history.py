@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PYTHON_EXE = r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe"
 
 # Dates that were skipped for Single Stock personas due to missing PyMC scorecards

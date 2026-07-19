@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 python_exe = sys.executable
 target_date = "2026-06-15"
 

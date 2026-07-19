@@ -1,3 +1,4 @@
+import os
 # =============================================================================
 # data_loader.py  — Shared data loading utility for all AntiGravity workflows
 # Handles schema variations in SP500_Clean_Advanced_Analysis.csv automatically
@@ -5,7 +6,7 @@
 import pandas as pd
 import numpy as np
 
-DATA_PATH = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 
 
 def _pick(df, candidates):

@@ -1,7 +1,8 @@
+import os
 import pandas as pd
 import numpy as np
 
-tnx_path = r'C:\Users\AviShemla\AntiGravity\financial_data\TNX_Test_Scorecard.xlsx'
+tnx_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'TNX_Test_Scorecard.xlsx')
 
 try:
     tnx_excel = pd.ExcelFile(tnx_path)

@@ -2,7 +2,7 @@ import os
 import datetime
 from blacklist_engine import get_blacklisted_tickers
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 log_file = os.path.join(BASE_DIR, 'QA_Historical_Log.md')
 
 def qa_blacklist():

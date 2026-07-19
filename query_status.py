@@ -1,7 +1,8 @@
+import os
 import sys
 import pandas as pd
 import json
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import database_manager
 
 conn = database_manager.get_connection()
@@ -30,7 +31,7 @@ for p in personas:
 
 print("\n--- PRED VS ACTUAL (from Scorecard) ---")
 try:
-    df_stock = pd.read_excel(r'C:\Users\AviShemla\AntiGravity\financial_data\Top5_Bayesian_Scorecard_Formatted.xlsx', sheet_name=None)
+    df_stock = pd.read_excel(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx'), sheet_name=None)
     print("Stock Predictions:")
     for sheet_name, df in df_stock.items():
         latest = df.tail(1).iloc[0]
@@ -44,7 +45,7 @@ except Exception as e:
     print("Error reading stock scorecard:", e)
 
 try:
-    xls = pd.ExcelFile(r'C:\Users\AviShemla\AntiGravity\financial_data\All_ETFs_Scorecard.xlsx')
+    xls = pd.ExcelFile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'All_ETFs_Scorecard.xlsx'))
     print("\nETF Predictions:")
     for sheet_name in xls.sheet_names:
         df = pd.read_excel(xls, sheet_name=sheet_name, skiprows=2)

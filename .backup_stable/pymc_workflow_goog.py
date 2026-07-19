@@ -5,7 +5,7 @@ import arviz as az
 import matplotlib.pyplot as plt
 import os
 
-input_file = r'C:\Users\AviShemla\AntiGravity\Nasdaq_Data_All_Sectors_Combined.csv'
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Nasdaq_Data_All_Sectors_Combined.csv')
 champion_ticker = 'GOOG'
 predictor_tickers = ['UPST', 'NVCR', 'COIN', 'U', 'SIRI']
 
@@ -63,12 +63,12 @@ if __name__ == '__main__':
 
     # Plotting Results
     az.plot_trace(trace)
-    plt.savefig(r'C:\Users\AviShemla\AntiGravity\pymc_trace_plots.png')
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pymc_trace_plots.png'))
 
     plt.figure()
     az.plot_ppc(posterior_predictive, num_pp_samples=100)
     plt.title("Posterior Predictive Check")
-    plt.savefig(r'C:\Users\AviShemla\AntiGravity\pymc_ppc_plot.png')
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pymc_ppc_plot.png'))
 
     # 7. Out-of-sample Prediction
     print("7. Out-of-sample Prediction...")

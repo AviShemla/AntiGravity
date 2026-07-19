@@ -7,7 +7,7 @@ from sklearn.metrics import r2_score, accuracy_score
 import os
 import sys
 
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 
 # 1. Load data
@@ -148,6 +148,6 @@ axes[1].set_title('Distribution of VIX')
 axes[1].legend()
 
 plt.tight_layout()
-plt.savefig(r'C:\Users\AviShemla\AntiGravity\financial_data\Recent_Failure_Diagnostic.png')
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Recent_Failure_Diagnostic.png'))
 print("\nSaved diagnostic plot to Recent_Failure_Diagnostic.png")
 

@@ -6,7 +6,7 @@ import datetime
 import os
 
 API_BASE = "http://127.0.0.1:80/api"
-LOG_FILE = r"C:\Users\AviShemla\AntiGravity\master_watchdog.log"
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'master_watchdog.log')
 PERSONAS = ["Conservative", "Neutral", "BallsForBrains"]
 
 INCEPTION_DATES = {
@@ -33,7 +33,7 @@ def log_alert(msg, require_intervention=False):
     if require_intervention:
         try:
             import subprocess
-            script_path = os.path.join(r"C:\Users\AviShemla\AntiGravity", "send_email_notification.py")
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "send_email_notification.py")
             subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - UI Agent", msg], creationflags=0x08000000)
         except Exception as e:
             print(f"Failed to trigger email alert: {e}")

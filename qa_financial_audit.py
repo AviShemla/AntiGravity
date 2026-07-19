@@ -5,7 +5,7 @@ import json
 import os
 import sys
 
-BASE_DIR     = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR     = os.path.join(BASE_DIR, "financial_data")
 TARGET_ETFS  = ['XLK','XLV','XLY','XLF','XLC','XLI','XLE','XLP','XLU','XLRE','XLB']
 

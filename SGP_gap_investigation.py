@@ -14,7 +14,7 @@ import os
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-input_file      = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+input_file      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 champion_ticker = 'JPM'
 
 print("Reading data...")

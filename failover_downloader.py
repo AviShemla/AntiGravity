@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 QUARANTINE_FILE = os.path.join(BASE_DIR, 'financial_data', 'quarantined_tickers.json')
 WARNINGS_FILE = os.path.join(BASE_DIR, 'financial_data', 'pipeline_warnings.txt')
 

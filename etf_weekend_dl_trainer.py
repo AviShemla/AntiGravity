@@ -8,7 +8,7 @@ import joblib
 from sklearn.preprocessing import StandardScaler
 from dl_transformer_model import TimeSeriesTransformer
 
-BASE_DIR = r"C:\Users\AviShemla\AntiGravity"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "financial_data", "Unified_ETF_DeepLearning_Dataset.csv")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 os.makedirs(MODELS_DIR, exist_ok=True)

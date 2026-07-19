@@ -18,7 +18,7 @@ import os
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
 # --- Config ---
-input_file    = r'C:\Users\AviShemla\AntiGravity\financial_data\SP500_Clean_Advanced_Analysis.csv'
+input_file    = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 champion_ticker = 'JPM'
 N_STATES      = 3   # hidden regimes: bear / neutral / bull
 
@@ -244,11 +244,11 @@ if __name__ == '__main__':
     axes[1].legend(); axes[1].grid(alpha=0.3)
 
     plt.tight_layout()
-    plot_path = r'C:\Users\AviShemla\AntiGravity\financial_data\BHMM_JPM_Predictions.png'
+    plot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'BHMM_JPM_Predictions.png')
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"\nPlot saved to: {plot_path}")
     plt.close()
 
-    csv_path = r'C:\Users\AviShemla\AntiGravity\financial_data\BHMM_JPM_Scorecard_Last30.csv'
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'BHMM_JPM_Scorecard_Last30.csv')
     last30_display.to_csv(csv_path)
     print(f"Scorecard saved to: {csv_path}")

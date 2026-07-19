@@ -8,7 +8,7 @@ import time
 import sys
 
 # Paths
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, 'financial_data', 'SP500_Clean_Advanced_Analysis.csv')
 ARTIFACT_DIR = r'C:\Users\AviShemla\.gemini\antigravity\brain\e6da8969-1069-4402-8307-e101b4874b0c'
 

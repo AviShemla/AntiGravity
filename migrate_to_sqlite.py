@@ -4,7 +4,7 @@ import pandas as pd
 import json
 import database_manager
 
-FINANCIAL_DIR = r"C:\Users\AviShemla\AntiGravity\financial_data"
+FINANCIAL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
 def migrate_capital_ledgers():
     print(">>> Migrating Capital Ledgers...")

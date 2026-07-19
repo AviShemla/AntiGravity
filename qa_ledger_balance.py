@@ -4,7 +4,7 @@ import os
 import sys
 
 # Add directory to path so we can import the virtual broker logic
-sys.path.insert(0, r'C:\Users\AviShemla\AntiGravity')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from virtual_broker import calculate_kelly_fraction
 
 def run_qa_ledger_balance():

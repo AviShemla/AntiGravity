@@ -3,7 +3,7 @@ import pandas as pd
 import glob
 from openpyxl import load_workbook
 
-BASE_DIR = r'C:\Users\AviShemla\AntiGravity\financial_data'
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
 TARGET_ETFS = ['XLK', 'XLV', 'XLY', 'XLF', 'XLC', 'XLI', 'XLE', 'XLP', 'XLU', 'XLRE', 'XLB']
 
@@ -28,7 +28,7 @@ for etf in TARGET_ETFS:
 
 # Now recompile the master scorecard
 import sys
-sys.path.insert(0, r"C:\Users\AviShemla\AntiGravity")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import subprocess
-subprocess.run([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", os.path.join(r"C:\Users\AviShemla\AntiGravity", "compile_etf_scorecards.py")], cwd=r"C:\Users\AviShemla\AntiGravity", check=True)
+subprocess.run([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", os.path.join(os.path.dirname(os.path.abspath(__file__)), "compile_etf_scorecards.py")], cwd=os.path.dirname(os.path.abspath(__file__)), check=True)
 print("Master scorecard recompiled.")
