@@ -314,7 +314,7 @@ def generate_excel():
     writer.close()
     print(f"Successfully generated: {OUTPUT_EXCEL}")
 
-if __name__ == '__main__':
-    generate_etf_excel()
+if __name__ == "__main__":
+    generate_excel()
     import os
     os._exit(0)

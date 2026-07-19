@@ -244,10 +244,21 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     is_pending = False
     try:
         pending = database_manager.get_pending_order(p_name)
-        if pending and pending.get('date') > str(last_row['Date']):
+        if pending and pending.get('date') >= str(last_row['Date']):
             cash = float(pending['target_cash'])
             holdings = json.loads(pending['target_holdings_json'])
-            is_pending = True
+            
+            trades = pending.get('executed_intraday_trades_json', '{}')
+            if isinstance(trades, str):
+                try:
+                    trades = json.loads(trades)
+                except:
+                    trades = {}
+                    
+            if trades:  # If there are actual trades (not empty list or dict)
+                is_pending = "PRE-MARKET (PENDING)"
+            else:
+                is_pending = "Only HOLD for today"
     except Exception as e:
         print(f"Error fetching pending orders: {e}")
     
@@ -464,7 +475,7 @@ def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = 
 
 @app.get("/api/olympic")
 def get_olympic_data():
-    merged_path = os.path.join(BASE_DIR, 'financial_data', 'Olympic_Shootout_Results_MASTER.csv')
+    merged_path = os.path.join(BASE_DIR, 'Olympic_Shootout_Results_MASTER.csv')
     
     if not os.path.exists(merged_path):
         raise HTTPException(status_code=404, detail="Olympic backtest results not found")
@@ -486,6 +497,21 @@ def get_olympic_data():
         r_c, d_c = calc_o_metrics(df_merged, 'EL_CAP (70% Liquidity)')
         r_v, d_v = calc_o_metrics(df_merged, 'EL_VOLTI (70% Stability)')
         r_ch, d_ch = calc_o_metrics(df_merged, 'CHAMPION (Live VIP)')
+        
+        is_pending = False
+        try:
+            pending = database_manager.get_pending_order('BallsForBrains')
+            if pending:
+                trades = pending.get('executed_intraday_trades_json', '{}')
+                if isinstance(trades, str):
+                    try: trades = json.loads(trades)
+                    except: trades = {}
+                if trades:
+                    is_pending = "PRE-MARKET (PENDING)"
+                else:
+                    is_pending = "Only HOLD for today"
+        except:
+            pass
         
         metrics = {
             "EL_CAP": {"return": r_c, "dd": d_c, "rank": int(ranks['EL_CAP (70% Liquidity)'])},
@@ -584,13 +610,30 @@ def get_prod_shadow():
         df = df.sort_values('Date')
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
     df = df.ffill().fillna(10000.0)
+    
+    is_pending = False
+    try:
+        pending = database_manager.get_pending_order('BallsForBrains')
+        if pending:
+            trades = pending.get('executed_intraday_trades_json', '{}')
+            if isinstance(trades, str):
+                try: trades = json.loads(trades)
+                except: trades = {}
+            if trades:
+                is_pending = "PRE-MARKET (PENDING)"
+            else:
+                is_pending = "Only HOLD for today"
+    except:
+        pass
+        
     return {
         'dates': df['Date'].tolist(),
         'prod': df['Prod'].tolist(),
         'trans': df['Shadow_Transformer'].tolist(),
         'v1': df['Sandbox_V1'].tolist(),
         'lstm': df.get('Shadow_LSTM', pd.Series([10000.0]*len(df))).tolist(),
-        'table': df.iloc[::-1].to_dict('records')
+        'table': df.iloc[::-1].to_dict('records'),
+        'is_pending': is_pending
     }
 
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

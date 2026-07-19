@@ -159,7 +159,8 @@ async function loadHoldings(mode, selectId, prefix) {
         
         let eqText = formatter.format(data.total_equity);
         if (data.is_pending) {
-            eqText += ' <span style="font-size: 0.5em; background: #FF851B; color: #111; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 8px; font-weight: bold; text-transform: uppercase;">PRE-MARKET (PENDING)</span>';
+            const bg = data.is_pending === "Only HOLD for today" ? "#808080" : "#FF851B";
+            eqText += ` <span style="font-size: 0.5em; background: ${bg}; color: #111; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 8px; font-weight: bold; text-transform: uppercase;">${data.is_pending}</span>`;
         }
         document.getElementById(`eq-${prefix}`).innerHTML = eqText;
         document.getElementById(`ret-${prefix}`).innerText = `${data.total_return > 0 ? '+' : ''}${data.total_return.toFixed(2)}%`;
@@ -531,12 +532,18 @@ async function loadOlympic() {
             }
         }, 1000);
         
+        let pendingHtml = '';
+        if (data.is_pending) {
+            const bg = data.is_pending === "Only HOLD for today" ? "#808080" : "#FF851B";
+            pendingHtml = ` <br><span style="font-size: 0.5em; background: ${bg}; color: #111; padding: 2px 6px; border-radius: 4px; vertical-align: middle; font-weight: bold; text-transform: uppercase;">${data.is_pending}</span>`;
+        }
+        
         // 2. Metrics
-        document.getElementById('o-ret-cap').innerText = `${data.metrics.EL_CAP.return > 0 ? '+' : ''}${data.metrics.EL_CAP.return.toFixed(2)}%`;
+        document.getElementById('o-ret-cap').innerHTML = `${data.metrics.EL_CAP.return > 0 ? '+' : ''}${data.metrics.EL_CAP.return.toFixed(2)}%${pendingHtml}`;
         document.getElementById('o-dd-cap').innerText = `Max DD: ${data.metrics.EL_CAP.dd.toFixed(2)}%`;
-        document.getElementById('o-ret-vol').innerText = `${data.metrics.EL_VOLTI.return > 0 ? '+' : ''}${data.metrics.EL_VOLTI.return.toFixed(2)}%`;
+        document.getElementById('o-ret-vol').innerHTML = `${data.metrics.EL_VOLTI.return > 0 ? '+' : ''}${data.metrics.EL_VOLTI.return.toFixed(2)}%${pendingHtml}`;
         document.getElementById('o-dd-vol').innerText = `Max DD: ${data.metrics.EL_VOLTI.dd.toFixed(2)}%`;
-        document.getElementById('o-ret-champ').innerText = `${data.metrics.CHAMPION.return > 0 ? '+' : ''}${data.metrics.CHAMPION.return.toFixed(2)}%`;
+        document.getElementById('o-ret-champ').innerHTML = `${data.metrics.CHAMPION.return > 0 ? '+' : ''}${data.metrics.CHAMPION.return.toFixed(2)}%${pendingHtml}`;
         document.getElementById('o-dd-champ').innerText = `Max DD: ${data.metrics.CHAMPION.dd.toFixed(2)}%`;
         
         // 3. Race Chart
@@ -652,17 +659,22 @@ async function loadProdShadow() {
         const lastLstm = data.lstm[data.lstm.length - 1];
         
         const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
-        const formatPnL = (val) => {
+        const formatPnL = (val, is_pending=false) => {
             const pnl = val - 10000;
             const sign = pnl >= 0 ? '+' : '';
             const color = pnl >= 0 ? '#32CD32' : '#FF4136';
-            return `${formatMoney(val)} <span style="color:${color}; font-size:12px;">(${sign}${formatMoney(pnl)})</span>`;
+            let html = `${formatMoney(val)} <span style="color:${color}; font-size:12px;">(${sign}${formatMoney(pnl)})</span>`;
+            if (is_pending) {
+                const bg = is_pending === "Only HOLD for today" ? "#808080" : "#FF851B";
+                html += ` <span style="font-size: 0.5em; background: ${bg}; color: #111; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 8px; font-weight: bold; text-transform: uppercase;">${is_pending}</span>`;
+            }
+            return html;
         };
         
-        if(document.getElementById('pnl-box-prod')) document.getElementById('pnl-box-prod').innerHTML = formatPnL(lastProd);
-        if(document.getElementById('pnl-box-trans')) document.getElementById('pnl-box-trans').innerHTML = formatPnL(lastTrans);
-        if(document.getElementById('pnl-box-v1')) document.getElementById('pnl-box-v1').innerHTML = formatPnL(lastV1);
-        if(document.getElementById('pnl-box-lstm')) document.getElementById('pnl-box-lstm').innerHTML = formatPnL(lastLstm);
+        if(document.getElementById('pnl-box-prod')) document.getElementById('pnl-box-prod').innerHTML = formatPnL(lastProd, data.is_pending);
+        if(document.getElementById('pnl-box-trans')) document.getElementById('pnl-box-trans').innerHTML = formatPnL(lastTrans, data.is_pending);
+        if(document.getElementById('pnl-box-v1')) document.getElementById('pnl-box-v1').innerHTML = formatPnL(lastV1, data.is_pending);
+        if(document.getElementById('pnl-box-lstm')) document.getElementById('pnl-box-lstm').innerHTML = formatPnL(lastLstm, data.is_pending);
         // ----------------------------------
 
         const trProd = { x: data.dates, y: data.prod, name: 'Prod (BallsForBrains)', mode: 'lines', line: { color: '#32CD32', width: 4 } };
