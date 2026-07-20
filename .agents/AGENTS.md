@@ -84,3 +84,6 @@ The system is strictly limited to sending a MAXIMUM of 4 scheduled summary email
 
 ## Schedule Manager Pre-Flight Enforcement
 Whenever creating or modifying a schedule manager, orchestrator, or pipeline script (like prefect_pipeline.py or a cron manager), you MUST ensure that the pre-flight checks (preflight_check.py) are scheduled as the absolute first step before any other pipeline logic runs. This is critical to ensure the environment is fully verified before execution begins.
+
+## Zero-Trust Validation Policy
+NEVER give an answer regarding anything before physically validating it. You must explicitly run scripts, pull live data from the server, query databases, or check live logs to absolutely confirm an action was successful or a state is true. Declaring a task "done" without explicit, real-world proof of validation is strictly forbidden.
