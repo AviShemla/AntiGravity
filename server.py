@@ -147,7 +147,7 @@ def get_recent_trades(df, persona, limit=5):
             
     return trades[:limit]
 
-def get_asset_breakdown(df):
+def get_asset_breakdown(df, active_holdings):
     if df.empty:
         return []
     
@@ -162,34 +162,26 @@ def get_asset_breakdown(df):
                 pnl_dict = {}
                 
         for asset, pnl in pnl_dict.items():
+            if asset == 'Cash': continue
             if asset not in stats:
                 stats[asset] = {'Total Realized PnL ($)': 0.0, 'Trades Executed': 0, 'Wins': 0}
             
-            try:
-                pnl_val = float(pnl)
-                if np.isnan(pnl_val): pnl_val = 0.0
-            except:
+            pnl_val = float(pnl) if not isinstance(pnl, dict) else float(pnl.get('dollars', 0.0))
+            if pnl_val == 0.0:
                 pnl_val = 0.0
             stats[asset]['Total Realized PnL ($)'] += pnl_val
             stats[asset]['Trades Executed'] += 1
             if pnl_val > 0:
                 stats[asset]['Wins'] += 1
                 
-    try:
-        last_holdings = json.loads(str(df.iloc[-1]['Holdings_JSON']))
-    except:
-        last_holdings = {}
-        
-    for asset in last_holdings:
+    for asset in active_holdings:
         if asset != 'Cash' and asset not in stats:
             stats[asset] = {'Total Realized PnL ($)': 0.0, 'Trades Executed': 0, 'Wins': 0}
         
     res = []
     for asset, data in stats.items():
         win_rate = (data['Wins'] / data['Trades Executed']) * 100 if data['Trades Executed'] > 0 else 0
-        currently_holding = "Yes" if asset in last_holdings else "No"
-        
-        holding_val = last_holdings.get(asset, 0.0)
+        holding_val = active_holdings.get(asset, 0.0)
         if isinstance(holding_val, dict):
             deployed_cap = holding_val.get('dollars', 0.0)
         else:
@@ -197,6 +189,8 @@ def get_asset_breakdown(df):
                 deployed_cap = float(holding_val)
             except:
                 deployed_cap = 0.0
+                
+        currently_holding = "Yes" if deployed_cap > 1.0 else "No"
                 
         res.append({
             'Asset': asset,
@@ -309,7 +303,7 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     equity_curve = df['Total_Equity'].tolist()
     
     # Get Asset Breakdown Table
-    breakdown = get_asset_breakdown(df)
+    breakdown = get_asset_breakdown(df, holdings)
             
     return {
         "total_equity": total_eq,

@@ -9,16 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; padding: 0 20px;">
-        <div style="display: flex; align-items: center;">
-            <img src="/oracle_logo_fixed.png?v=5" alt="The ORACLE" class="hero-logo">
-            <div>
-                <h1>The ORACLE</h1>
-                <p>Read-Only Bayesian Live Web Dashboard</p>
-            </div>
-        </div>
+    <header>
+        <img src="/oracle_logo_fixed.png?v=5" alt="The ORACLE" class="hero-logo">
         <div>
-            <a href="/Architecture_Map.html" target="_blank" style="padding: 10px 20px; background-color: #58a6ff; color: #0d1117; text-decoration: none; border-radius: 8px; font-weight: bold; font-family: 'Inter', sans-serif; box-shadow: 0 0 15px rgba(88,166,255,0.3); transition: all 0.3s ease;">View Architecture Blueprint</a>
+            <h1>The ORACLE</h1>
+            <p>Read-Only Bayesian Live Web Dashboard</p>
         </div>
     </header>
 
@@ -34,6 +29,9 @@
             <li data-tab="prodshadow"><img src="/oracle_logo_fixed.png" class="nav-icon" alt="ProdVsShadow" style="width:20px;height:20px;"> Prod vs Shadow</li>
             <li data-tab="autopsy">
                 <img src="/autopsy_icon.png" class="nav-icon" alt="Autopsy"> Trade Autopsy
+            </li>
+            <li data-tab="blueprint">
+                <img src="/ai_icon.png" class="nav-icon" alt="Blueprint"> Architecture Blueprint
             </li>
         </ul>
     </div>
@@ -457,6 +455,13 @@
                     <thead></thead><tbody></tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- BLUEPRINT TAB -->
+        <div id="blueprint" class="tab-content">
+            <h2 style="text-align: center; color: #58a6ff; margin-top: 10px;">The ORACLE Architecture Blueprint</h2>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px;">Hover over any node for technical details.</p>
+            <iframe src="/Architecture_Map.html?v=13" style="width: 100%; height: 80vh; border: 1px solid #30363d; border-radius: 12px; background: #161b22; box-shadow: 0 4px 15px rgba(0,0,0,0.5);"></iframe>
         </div>
     </main>    
     <script>

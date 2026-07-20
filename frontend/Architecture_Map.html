@@ -44,12 +44,10 @@
             text-align: center;
         }
         .mermaid svg {
-            min-width: 1200px;
             width: 100% !important;
+            min-width: 1100px;
             height: auto !important;
             margin: 0 auto;
-            display: block;
-            overflow: visible !important;
         }
         .node {
             cursor: crosshair;
@@ -105,61 +103,76 @@
 </head>
 <body>
 
-    <h1>The ORACLE Core Architecture</h1>
-    <p>Hover your mouse over any component to explore its deep system metrics.</p>
+
 
     <div id="custom-tooltip"></div>
 
     <div class="mermaid">
     graph TD
         %% Inputs
-        classDef input fill:#0d1117,stroke:#1f6feb,stroke-width:3px,color:#c9d1d9,font-weight:bold;
-        classDef pipeline fill:#0d1117,stroke:#d29922,stroke-width:3px,color:#c9d1d9,font-weight:bold;
-        classDef model fill:#0d1117,stroke:#238636,stroke-width:3px,color:#c9d1d9,font-weight:bold;
-        classDef output fill:#0d1117,stroke:#f85149,stroke-width:3px,color:#c9d1d9,font-weight:bold;
-        classDef broker fill:#0d1117,stroke:#a371f7,stroke-width:3px,color:#c9d1d9,font-weight:bold;
-        classDef ui fill:#0d1117,stroke:#8b949e,stroke-width:3px,color:#c9d1d9,font-weight:bold;
+        classDef input fill:#0d1117,stroke:#1f6feb,stroke-width:3px,color:#c9d1d9;
+        classDef pipeline fill:#0d1117,stroke:#d29922,stroke-width:3px,color:#c9d1d9;
+        classDef model fill:#0d1117,stroke:#238636,stroke-width:3px,color:#c9d1d9;
+        classDef output fill:#0d1117,stroke:#f85149,stroke-width:3px,color:#c9d1d9;
+        classDef broker fill:#0d1117,stroke:#a371f7,stroke-width:3px,color:#c9d1d9;
+        classDef ui fill:#0d1117,stroke:#8b949e,stroke-width:3px,color:#c9d1d9;
+        classDef database fill:#0d1117,stroke:#e34c26,stroke-width:4px,color:#c9d1d9;
+        classDef script fill:#0d1117,stroke:#ff69b4,stroke-width:3px,color:#c9d1d9;
 
         %% Data Sources
-        YF[(Yahoo Finance<br>Price Data)]:::input
-        FAILOVER[failover_downloader.py<br>Self-Healing API]:::pipeline
-        FRED[(FRED<br>Macro Data)]:::input
-        VIX[(VIX Monitor<br>Fear Gauge)]:::input
+        YF["Yahoo Finance<br>Price Data"]:::input
+        TIINGO["Tiingo Institutional<br>API Fallback"]:::input
+        FAILOVER["failover_downloader.py<br>Self-Healing API"]:::pipeline
+        FRED["FRED<br>Macro Data"]:::input
+        VIX["VIX Monitor<br>Fear Gauge"]:::input
+
+        %% Connections
+        YF --> FAILOVER
+        TIINGO --> FAILOVER
+
+        %% The Core
+        SSOT_DB["antigravity.db<br>4-Point SSOT Core"]:::database
 
         %% Orchestration
-        MASTER[Prefect on Vultr Cloud<br>Orchestrator]:::pipeline
+        ENGINE_CONFIG["engine_config.py<br>PyTensor C-Graph Injector"]:::pipeline
+        MASTER["master_pipeline.py<br>Orchestrator"]:::pipeline
         
         %% Stock Pipeline
-        subgraph Daily Stock Universe
-            STOCK_SCREEN[fast_screener.py<br>Top 15 Momentum]:::pipeline
-            STOCK_PYMC[pymc_top_winners_workflow.py<br>Bayesian Inference]:::model
-            QA_MODELS[qa_models.py<br>Bounds Validator]:::model
-            STOCK_BROKER[virtual_broker.py<br>3-Persona Executor]:::broker
-            STOCK_SCORE[Top5_Scorecard.xlsx]:::output
-            STOCK_LEDGER[(Turso LibSQL<br>Capital Ledgers)]:::output
-            QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
+        subgraph DAILY_STOCKS [Daily Stock Universe]
+            STOCK_SCREEN["fast_screener.py<br>Top 15 Momentum"]:::pipeline
+            DATA_LOADER["data_loader.py<br>Matrix Array Validation"]:::pipeline
+            STOCK_PYMC["export_bayesian_scorecard.py<br>Apollo Causality Engine"]:::model
+            YIELD_CURVE["TNX Yield Curve<br>Risk Sensor"]:::model
+            QA_MODELS["qa_models.py<br>Bounds Validator"]:::model
+            SECTOR_GRAVITY["sector_gravity.py<br>Macro Momentum Filter"]:::pipeline
+            STOCK_BROKER["virtual_broker.py<br>3-Persona Staging"]:::broker
+            INTRADAY_SNIPER["intraday_tracker.py<br>Intraday Execution Engine"]:::broker
+            STOCK_SCORE["Top5_Scorecard.xlsx"]:::output
+            QA_BLACKLIST["qa_blacklist.py<br>Blacklist Auditor"]:::pipeline
+            IDEMPOTENT_OVERRIDE["Idempotent Integrity<br>Ledger Overwrite"]:::model
         end
 
         %% The Bridge
-        subgraph The Weekend Bridge
-            FUNDAMENTALS[extract_fundamentals.py<br>S&P 500 Fundamentals]:::model
-            STOCK_DB[(S&P 500<br>Fundamental Database)]:::input
+        subgraph WEEKEND_BRIDGE [The Weekend Bridge]
+            FUNDAMENTALS["extract_fundamentals.py<br>SP 500 Fundamentals"]:::model
+            STOCK_DB["SP 500<br>Fundamental Database"]:::input
+            SUNDAY_SCREENER["ETF_Universe_Screener.py<br>Nasdaq FTP 50M Liquidity Scan"]:::pipeline
+            MASTER_ETF_JSON["Master_ETF_Universe.json<br>Top 35 Menu"]:::input
         end
 
         %% ETF Pipeline
-        subgraph Daily Sector ETF Universe
-            ETF_SCREEN[etf_fast_screener.py<br>11 SPDR Sectors]:::pipeline
-            ETF_PYMC[process_etf.py<br>Hierarchical PyMC]:::model
-            ETF_BROKER[etf_virtual_broker.py]:::broker
-            ETF_SCORE[All_ETFs_Scorecard.xlsx]:::output
+        subgraph ETF_UNIVERSE [Dynamic Thematic ETF Universe]
+            ETF_SCREEN["generate_dynamic_etfs.py<br>Dynamic Top 10 Funnel"]:::pipeline
+            ETF_PYMC["export_etf_scorecard.py<br>Rust SV PyMC Engine"]:::model
+            ETF_BROKER["etf_virtual_broker.py<br>VIX-Aware Broker"]:::broker
+            ETF_SCORE["All_ETFs_Scorecard.xlsx"]:::output
         end
 
         %% UI & Backend
         BACKEND["FastAPI<br>Uvicorn Server"]:::pipeline
         WEB_UI["Premium 3D<br>Web UI"]:::ui
         GIT_VAULT["Git Vault<br>Auto-Backup"]:::ui
-        AGENT_WATCHDOG["Watchdogd Daemon<br>on Vultr OS"]:::agent
-        INTRADAY_SNIPER[intraday_tracker.py<br>VWAP Sniper]:::broker
+        EXEC_BRIEF["executive_brief.py<br>Executive Assistant"]:::pipeline
 
         %% Routing
         YF --> FAILOVER
@@ -168,68 +181,93 @@
         FAILOVER --> FUNDAMENTALS
         FRED --> FUNDAMENTALS
         
+        ENGINE_CONFIG --> MASTER
         MASTER --> STOCK_SCREEN
         MASTER --> ETF_SCREEN
         MASTER --> FUNDAMENTALS
         MASTER --> GIT_VAULT
+        MASTER --> EXEC_BRIEF
 
-        STOCK_SCREEN --> STOCK_PYMC
+        STOCK_SCREEN --> DATA_LOADER
+        DATA_LOADER --> STOCK_PYMC
+        YIELD_CURVE --> STOCK_PYMC
         STOCK_PYMC --> QA_MODELS
         QA_MODELS --> STOCK_SCORE
+        SECTOR_GRAVITY --> STOCK_BROKER
         STOCK_SCORE --> STOCK_BROKER
         VIX --> STOCK_BROKER
-        STOCK_BROKER --> INTRADAY_SNIPER
-        INTRADAY_SNIPER --> STOCK_LEDGER
-        STOCK_LEDGER --> QA_BLACKLIST
+        STOCK_BROKER --> SSOT_DB
+        SSOT_DB -.-> INTRADAY_SNIPER
+        VIX --> INTRADAY_SNIPER
+        INTRADAY_SNIPER --> IDEMPOTENT_OVERRIDE
+        IDEMPOTENT_OVERRIDE --> SSOT_DB
+        SSOT_DB -.-> QA_BLACKLIST
 
         FUNDAMENTALS --> STOCK_DB
-        STOCK_DB -.->|Stock Fundamental Priors| ETF_PYMC
+        STOCK_DB -.-> ETF_PYMC
 
+        SUNDAY_SCREENER --> MASTER_ETF_JSON
+        MASTER_ETF_JSON --> ETF_SCREEN
         ETF_SCREEN --> ETF_PYMC
         ETF_PYMC --> ETF_SCORE
         ETF_SCORE --> ETF_BROKER
         VIX --> ETF_BROKER
 
-        STOCK_LEDGER --> BACKEND
+        SSOT_DB --> BACKEND
         STOCK_SCORE --> BACKEND
         ETF_SCORE --> BACKEND
         QA_BLACKLIST --> BACKEND
-        BACKEND -.-> JSONAPI[JSON API]:::pipeline
-        JSONAPI -.-> WEB_UI
+        BACKEND -.-> WEB_UI
+        QA_UI_AGENT["qa_api_health.py<br>UI Health Poller"]:::script
+        BACKEND -.-> QA_UI_AGENT
+
+        SSOT_DB --> EXEC_BRIEF
+        ETF_SCORE --> EXEC_BRIEF
+
     </div>
 
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         
         const nodeData = {
-            "MASTER": {name: "Prefect Cloud Pipeline", purpose: "Commands the automated daily execution of all sub-systems, beginning strictly with pre-flight checks.", source: "Prefect Scheduled Trigger", target: "Python Pipeline Scripts", file_type: ".py Orchestrator", result: "Triggered Daily at 1:00 AM (Local)"},
-            "YF": {name: "Yahoo Finance API", purpose: "High-speed ingestion of daily price action.", source: "Internet (Yahoo)", target: "failover_downloader.py", file_type: "JSON / REST", result: "Historical OHLCV DataFrames"},
-            "FAILOVER": {name: "failover_downloader.py", purpose: "Self-healing data fetcher bypassing failures.", source: "YF API", target: "Screener Scripts", file_type: ".py script", result: "CSV Data or Quarantine Log"},
-            "FRED": {name: "FRED API", purpose: "Grounds the models in macroeconomic reality.", source: "Federal Reserve", target: "extract_fundamentals.py", file_type: "REST API", result: "Inflation, Interest Rates, GDP"},
-            "VIX": {name: "VIX Safety Monitor", purpose: "Monitors market panic for stop losses.", source: "CBOE Volatility", target: "Virtual Brokers", file_type: "Live Feed", result: "Risk damping multipliers"},
-            "STOCK_SCREEN": {name: "fast_screener.py", purpose: "Wide-net filtration for momentum patterns.", source: "FAILOVER Data", target: "pymc_top_winners_workflow.py", file_type: ".py script", result: "Top 15 Tickers Isolated"},
-            "STOCK_PYMC": {name: "Bayesian Inference", purpose: "Deep probabilistic inference using Monte Carlo Markov Chains.", source: "fast_screener.py", target: "qa_models.py", file_type: ".py script", result: "P(UP) & Expected Return probabilities"},
-            "QA_MODELS": {name: "qa_models.py", purpose: "Audits Bayesian model outputs for mathematical anomalies.", source: "STOCK_PYMC", target: "Top5_Scorecard.xlsx", file_type: ".py script", result: "Cleaned/Overwritten Scorecards"},
-            "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Dynamic capital allocation engine evaluating predictive edge.", source: "Top5_Scorecard.xlsx", target: "Capital_Ledgers.csv", file_type: ".py script", result: "Virtual USD Trades Executed"},
-            "STOCK_SCORE": {name: "Top5_Scorecard.xlsx", purpose: "Immutable record of daily mathematical predictions.", source: "QA_MODELS", target: "virtual_broker.py", file_type: ".xlsx spreadsheet", result: "Formatted Daily AI Predictions"},
-            "STOCK_LEDGER": {name: "Turso LibSQL Capital Ledgers", purpose: "Persistent accounting database tracking capital, PnL, and holdings.", source: "virtual_broker.py", target: "FastAPI Backend", file_type: "SQLite Database", result: "Time-Series Ledger"},
-            "QA_BLACKLIST": {name: "qa_blacklist.py", purpose: "Validates Blacklist Engine by auditing Ledgers for serial offenders.", source: "Capital_Ledgers.csv", target: "Email Alerts", file_type: ".py script", result: "QA Historical Log Updated"},
-            "FUNDAMENTALS": {name: "extract_fundamentals.py", purpose: "Bridge linking underlying stock health to overarching ETF sectors.", source: "FAILOVER / FRED", target: "SP500_Fundamentals.csv", file_type: ".py script", result: "S&P 500 Master DB Updated"},
-            "STOCK_DB": {name: "SP500_Fundamentals.csv", purpose: "Aggregated valuation metrics (P/E, EPS, Debt).", source: "extract_fundamentals.py", target: "process_etf.py", file_type: ".csv dataset", result: "Hierarchical Prior Weights for PyMC"},
-            "ETF_SCREEN": {name: "etf_fast_screener.py", purpose: "Identifies momentum and trend strength across SPDR sectors.", source: "FAILOVER Data", target: "process_etf.py", file_type: ".py script", result: "Active Sectors Isolated"},
-            "ETF_PYMC": {name: "process_etf.py", purpose: "Hierarchical sector modeling anchored by fundamental stock health.", source: "etf_fast_screener.py / STOCK_DB", target: "All_ETFs_Scorecard.xlsx", file_type: ".py script", result: "Sector P(UP) Predictions Generated"},
-            "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Sector-level capital allocation engine.", source: "All_ETFs_Scorecard.xlsx", target: "Capital_Ledgers.csv", file_type: ".py script", result: "Virtual ETF Trades Executed"},
-            "ETF_SCORE": {name: "All_ETFs_Scorecard.xlsx", purpose: "Compiled master record of all 11 ETF sector predictions.", source: "process_etf.py", target: "etf_virtual_broker.py", file_type: ".xlsx spreadsheet", result: "Merged Excel Report"},
-            "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Polls live market prices to execute staged pre-market orders.", source: "SQLite Pending Orders", target: "Capital_Ledgers.csv", file_type: ".py script", result: "Settled Trades Intraday"},
-            "BACKEND": {name: "server.py", purpose: "FastAPI Zero-Touch Server with a 60-second live auto-polling loop.", source: "Turso Capital Ledgers", target: "JSON API Endpoint", file_type: ".py server", result: "Live Read-Only Backend Hosted"},
-            "AGENT_WATCHDOG": {name: "Watchdogd Daemon", purpose: "Robust Unix system-level daemon acting as the master supervisor.", source: "Vultr OS", target: "All Background Processes", file_type: "System Daemon", result: "Continuous System Health"},
-            "JSONAPI": {name: "JSON API Endpoint", purpose: "Lightweight serialized data exchange layer.", source: "FastAPI Server", target: "Web UI Dashboard", file_type: "JSON", result: "Structured Data Delivery"},
-            "WEB_UI": {name: "frontend/index.html", purpose: "Premium 3D Sci-Fi Web Dashboard featuring active 3D tabs.", source: "JSON API Endpoint", target: "Client Browser", file_type: "HTML/JS/CSS", result: "Interactive User Interface Rendered"},
-            "GIT_VAULT": {name: "Git Vault Backup", purpose: "Invisible version control system protecting the codebase.", source: "Local Workspace", target: "GitHub Cloud", file_type: "Git Commit", result: "Immutable Snapshot Saved"}
+
+            "STATE": {name: "SYSTEM_STATE.md", purpose: "The dynamic memory layer of the AI assistant, tracking all crashes, recoveries, and task progress.", input: "System Events", output: "Context Memory", schedule: "Always Updated"},
+            "BLUEPRINT": {name: "AntiGravity_Master_Blueprint.md", purpose: "The immutable core architectural directives for the AntiGravity system.", input: "Human Architect", output: "Core Rules", schedule: "Static"},
+            "PREFLIGHT": {name: "preflight_check.py", purpose: "Diagnostic tool that scans the local Python environment for dependencies and kills zombie background processes before major pipeline executions.", input: "OS Environment", output: "Clean Execution State", schedule: "Pre-Run Hook"},
+            "SSOT_DB": {name: "antigravity.db", purpose: "The Single Source of Truth SQLite core. Eliminates race conditions and fully decouples the Math Models, Execution Engines, and UI from fragile CSV files.", input: "Orders & Ledgers", output: "Verified States", schedule: "Always On", dependencies: "CRITICAL: Entire system halts if locked", failsafe: "SQLite natively handles WAL journaling for concurrency"},
+            "MASTER": {name: "master_pipeline.py", purpose: "Central nervous system that commands the automated daily execution of all sub-systems.", input: "Windows Task Scheduler Trigger", output: "Orchestrated Python Scripts", schedule: "Daily at 1:00 AM", dependencies: "Windows OS Scheduler", failsafe: "Triggers Executive Email on fatal abortion"},
+            "YF": {name: "Yahoo Finance API", purpose: "High-speed ingestion of daily price action and moving average technicals.", input: "S&P 500 & ETF Tickers", output: "Historical OHLCV DataFrames", schedule: "Real-time query", dependencies: "Active Internet Pipeline", failsafe: "Triggers FAILOVER Node automatically"},
+            "TIINGO": {name: "Tiingo Institutional API", purpose: "Bulletproof failover fallback providing clean EOD data if Yahoo throws 429 bans.", input: "API Token & Ticker", output: "Normalized Pandas DataFrame", schedule: "Emergency Pivot", dependencies: "api_keys.json vault", failsafe: "Drops missing dates securely without crashing"},
+            "FAILOVER": {name: "failover_downloader.py", purpose: "Self-healing data fetcher. Uses exponential backoff and alternate Tiingo API to bypass yfinance failures. Quarantines dead tickers.", input: "Tickers", output: "CSV Data or Quarantine Log", schedule: "On-Demand via Pipelines", dependencies: "yfinance / tiingo modules", failsafe: "Hard-quarantines broken tickers to prevent loops"},
+            "FRED": {name: "FRED API", purpose: "Grounds the models in macroeconomic reality using Federal Reserve data.", input: "Economic Series IDs", output: "Inflation, Interest Rates, GDP", schedule: "Real-time query"},
+            "VIX": {name: "VIX Safety Monitor", purpose: "Background watchdog monitoring the CBOE volatility index for market panic.", input: "Live ^VIX Price", output: "Risk damping multipliers (0.0x to 1.0x)", schedule: "Every 1 Hour"},
+            "STOCK_SCREEN": {name: "fast_screener.py", purpose: "Wide-net filtration engine to isolate statistically significant momentum patterns.", input: "500 Stock Price Histories", output: "Top 15 Tickers", schedule: "Daily via Master Pipeline"},
+            "DATA_LOADER": {name: "data_loader.py (Project Apollo)", purpose: "Ensures flawless matrix extraction. Pre-slices historical DataFrames and rigidly enforces that no duplicate forward-dates pollute the Bayesian MCMC chains.", input: "Raw Price Data", output: "Clean Multi-Lag Arrays", schedule: "Pre-inference Hook"},
+            "ENGINE_CONFIG": {name: "engine_config.py (Project Apollo)", purpose: "Deep OS-level injector that forcefully sets Windows environment variables to compel PyTensor to utilize the ultra-fast C++ optimizer (`cxx=`).", input: "Windows OS", output: "Accelerated Compile State", schedule: "Boot Time"},
+            "STOCK_PYMC": {name: "export_bayesian_scorecard_TNX.py", purpose: "Project Apollo causality engine. Dynamically correlates the top 3 global macro features (e.g. TNX 10-Year Yield) and feeds them into the Rust NUTS sampler to predict return direction.", input: "Top 15 Tickers + Macro Features", output: "P(UP) & Expected Return/Vol", schedule: "Daily via Master Pipeline"},
+            "QA_MODELS": {name: "qa_models.py", purpose: "Audits Bayesian model outputs for anomalies. Forces a HOLD override if P(UP)>100% or returns are unrealistic.", input: "Scorecards", output: "Cleaned/Overwritten Scorecards", schedule: "Daily via Master Pipeline"},
+            "QA_UI_AGENT": {name: "qa_api_health.py", purpose: "Continuously polls the local JSON API endpoints (Holdings, Olympics, etc) every 15 minutes to mathematically verify UI data structures are intact and the server is online. Logs alerts to master watchdog.", input: "JSON Endpoints", output: "Alert Logs", schedule: "Every 15 Minutes"},
+            "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Calculates mathematical capital allocations and stages them for tomorrow's market open.", input: "Predictive Scorecards", output: "Pending_Orders.json", schedule: "Daily via Master Pipeline"},
+            "PENDING_ORDERS": {name: "Pending_Orders.json", purpose: "Staging ground bridging the nightly analytics with the live Intraday Sniper execution engine.", input: "Virtual Broker JSON", output: "Target Executions", schedule: "Daily"},
+            "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Constantly polls live market ask/bid prices during market hours. Executes intended target staging only when momentum is optimal.", input: "Pending_Orders.json", output: "Capital_Ledgers.csv", schedule: "Intraday Market Hours"},
+            "STOCK_SCORE": {name: "Top5_Scorecard.xlsx", purpose: "Immutable record of the daily mathematical predictions.", input: "PyMC Traces", output: "Formatted Excel Report", schedule: "Daily"},
+            "STOCK_LEDGER": {name: "Capital_Ledgers.csv", purpose: "Persistent accounting database tracking capital, PnL, and holdings for all 3 Personas.", input: "Executed Trades", output: "Time-Series Ledger", schedule: "Daily"},
+            "QA_BLACKLIST": {name: "qa_blacklist.py", purpose: "Validates the Blacklist Engine by auditing the Capital Ledgers for serial offenders (3+ strikes).", input: "Capital Ledgers", output: "QA Historical Log & Email Warning", schedule: "Daily via Master Pipeline"},
+            "FUNDAMENTALS": {name: "extract_fundamentals.py", purpose: "The vital bridge linking underlying stock health to overarching ETF sectors.", input: "Macro & Earnings Data", output: "S&P 500 Master DB", schedule: "Saturdays via Master Pipeline"},
+            "STOCK_DB": {name: "SP500_Fundamentals.csv", purpose: "Aggregated valuation metrics (P/E, EPS, Debt) serving as Bayesian Priors.", input: "JSON Metrics", output: "Hierarchical Prior Weights", schedule: "Saturdays"},
+            "ETF_SCREEN": {name: "etf_fast_screener.py", purpose: "Identifies momentum and trend strength across the 11 major SPDR sectors.", input: "11 ETF Tickers", output: "Active Sectors", schedule: "Daily via Master Pipeline"},
+            "ETF_PYMC": {name: "process_etf.py", purpose: "Hierarchical sector modeling anchored by underlying fundamental stock health.", input: "Sector Prices & Stock Priors", output: "Sector P(UP) Predictions", schedule: "Daily via Master Pipeline"},
+            "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Sector-level capital allocation engine.", input: "Sector Predictions", output: "Virtual ETF Trades", schedule: "Daily via Master Pipeline"},
+            "ETF_SCORE": {name: "All_ETFs_Scorecard.xlsx", purpose: "Compiled master record of all 11 ETF sector predictions.", input: "Individual ETF Excel outputs", output: "Merged Excel Report", schedule: "Daily"},
+            "BACKEND": {name: "server.py", purpose: "FastAPI REST Server that bridges Python CSV/Excel data to the frontend web application.", input: "Ledgers & Scorecards", output: "JSON Endpoints", schedule: "Always Online (Port 80)", dependencies: "antigravity.db", failsafe: "Auto-restarts via Uvicorn worker manager"},
+            "WEB_UI": {name: "frontend/index.html", purpose: "Premium 3D Sci-Fi Web Dashboard featuring active 3D tabs, glassmorphism, and dynamic Plotly charts.", input: "FastAPI JSON", output: "Interactive User Interface", schedule: "Client Browser", dependencies: "Modern WebGL Browser", failsafe: "Graceful degradation on older clients"},
+            "GIT_VAULT": {name: "Git Vault Backup", purpose: "Invisible version control system protecting the codebase against fatal logic errors.", input: "Modified Code", output: "Immutable Snapshot Commits", schedule: "Every 1 Hour (Windows Scheduled Task)", dependencies: "Git CLI Installed", failsafe: "Ignores heavy media files to prevent repo bloat"},
+            "EXEC_BRIEF": {name: "executive_brief.py", purpose: "Compiles system health, overnight issues (429 rate limits), and daily PnL into a premium HTML email for executive review.", input: "Global Ledgers & Warning Logs", output: "Outlook HTML Email", schedule: "Daily via Master Pipeline (End)", dependencies: "Gmail SMTP Settings", failsafe: "Logs silently if network is entirely down"},
+            "IDEMPOTENT_OVERRIDE": {name: "Idempotent Integrity Engine", purpose: "Prevents double-entry ledger duplication during pipeline re-execution by dynamically truncating today's prediction rows before writing.", input: "Virtual Broker Execution", output: "Clean Overwritten Ledger", schedule: "Always-On Safety Check", dependencies: "SQLite Locks", failsafe: "Aborts write if database checksum fails"}
         };
 
         mermaid.initialize({ 
-            startOnLoad: true, 
+            startOnLoad: false,
             theme: 'dark', 
             securityLevel: 'loose',
             flowchart: {
@@ -238,68 +276,87 @@
             }
         });
 
-        // Wait for mermaid to render, then attach hover events
-        setTimeout(() => {
-            const tooltip = document.getElementById('custom-tooltip');
-            
-            // Mermaid uses SVG elements with id strings that match the node name inside a parent g.node
-            document.querySelectorAll('.node').forEach(node => {
-                node.addEventListener('mouseenter', (e) => {
-                    const rawId = node.id || "";
-                    const textContent = node.textContent || "";
-                    let data = null;
+        // The hidden iframe rendering fix using IntersectionObserver:
+        // Mermaid cannot calculate SVG dimensions if the parent tab is display: none.
+        // This observer waits until the user clicks the tab and the iframe becomes visible before rendering.
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(async (entry) => {
+                if (entry.isIntersecting) {
+                    observer.disconnect();
+                    try {
+                        await mermaid.run();
+                    } catch(e) {
+                        console.error("Mermaid run failed:", e);
+                    }
+                }
+            });
+        });
+        observer.observe(document.body);
 
-                    // Extremely robust matching: check ID, check text content for the key, or check text content for the display name
-                    for(let key in nodeData) {
-                        if(rawId.includes(key) || textContent.includes(key) || textContent.includes(nodeData[key].name)) {
+        // Use Event Delegation to dynamically capture hovers.
+        // This ensures the tooltip works even if Mermaid takes longer than 1.5s to render.
+        const tooltip = document.getElementById('custom-tooltip');
+
+        document.addEventListener('mouseover', (e) => {
+            const node = e.target.closest('.node');
+            if (node) {
+                const rawId = node.id || "";
+                let data = null;
+
+                // 1. Try splitting the raw id first
+                const parts = rawId.split('-');
+                for (let i = parts.length - 1; i >= 0; i--) {
+                    if (nodeData[parts[i]]) {
+                        data = nodeData[parts[i]];
+                        break;
+                    }
+                }
+
+                // 2. Fallback to includes check
+                if (!data) {
+                    for (let key in nodeData) {
+                        if (rawId.includes(key)) {
                             data = nodeData[key];
-                            break; // Stop at first match
+                            break;
                         }
                     }
+                }
 
-                    if (data) {
-                        tooltip.innerHTML = `
-                            <div class="tooltip-title">${data.name}</div>
-                            <div class="tooltip-row"><span class="tooltip-label">Purpose:</span> <span class="tooltip-value">${data.purpose}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Source:</span> <span class="tooltip-value">${data.source}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Target:</span> <span class="tooltip-value">${data.target}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">File Type:</span> <span class="tooltip-value">${data.file_type}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Result:</span> <span class="tooltip-value">${data.result}</span></div>
-                        `;
-                        tooltip.style.opacity = '1';
+                if (data) {
+                    let html = `
+                        <div class="tooltip-title">${data.name}</div>
+                        <div class="tooltip-row"><span class="tooltip-label">Purpose:</span> <span class="tooltip-value">${data.purpose}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Input:</span> <span class="tooltip-value">${data.input}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Output:</span> <span class="tooltip-value">${data.output}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Schedule:</span> <span class="tooltip-value">${data.schedule}</span></div>
+                    `;
+                    if (data.dependencies) {
+                        html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #d29922;">Dependencies:</span> <span class="tooltip-value">${data.dependencies}</span></div>`;
                     }
-                });
-
-                node.addEventListener('mousemove', (e) => {
-                    let x = e.clientX + 20;
-                    let y = e.clientY + 20;
-                    
-                    const tooltipRect = tooltip.getBoundingClientRect();
-                    
-                    // Boundary detection: right edge
-                    if (x + tooltipRect.width > window.innerWidth) {
-                        x = e.clientX - tooltipRect.width - 20;
+                    if (data.failsafe) {
+                        html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #2ea043;">Failsafe:</span> <span class="tooltip-value">${data.failsafe}</span></div>`;
                     }
-                    
-                    // Boundary detection: bottom edge
-                    if (y + tooltipRect.height > window.innerHeight) {
-                        y = e.clientY - tooltipRect.height - 20;
-                    }
+                    tooltip.innerHTML = html;
+                    tooltip.style.opacity = '1';
+                }
+            } else {
+                tooltip.style.opacity = '0';
+            }
+        });
 
-                    // Strict clamps so it never falls off the left or top edge on tiny screens
-                    x = Math.max(10, x);
-                    y = Math.max(10, y);
-                    
-                    // Since it is position: fixed, we use purely viewport coordinates without scroll offsets
-                    tooltip.style.left = x + 'px';
-                    tooltip.style.top = y + 'px';
-                });
+        document.addEventListener('mousemove', (e) => {
+            if (tooltip.style.opacity === '1') {
+                tooltip.style.left = (e.clientX + 20) + 'px';
+                tooltip.style.top = (e.clientY + 20) + 'px';
+            }
+        });
 
-                node.addEventListener('mouseleave', () => {
-                    tooltip.style.opacity = '0';
-                });
-            });
-        }, 1500); // Give mermaid time to render the SVG
+        // Hide tooltip if mouse leaves the page
+        document.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget) {
+                tooltip.style.opacity = '0';
+            }
+        });
     </script>
 </body>
 </html>
