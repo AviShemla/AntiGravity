@@ -1,0 +1,5 @@
+        pipeline_name last_completed_date
+0     master_pipeline          2026-07-17
+1        etf_pipeline          2026-07-17
+2      daily_pipeline          2026-07-14
+3  etf_daily_pipeline          2026-07-14

@@ -127,7 +127,7 @@
         VIX[(VIX Monitor<br>Fear Gauge)]:::input
 
         %% Orchestration
-        MASTER[master_pipeline.py<br>Orchestrator]:::pipeline
+        MASTER[Prefect on Vultr Cloud<br>Orchestrator]:::pipeline
         
         %% Stock Pipeline
         subgraph Daily Stock Universe
@@ -136,7 +136,7 @@
             QA_MODELS[qa_models.py<br>Bounds Validator]:::model
             STOCK_BROKER[virtual_broker.py<br>3-Persona Executor]:::broker
             STOCK_SCORE[Top5_Scorecard.xlsx]:::output
-            STOCK_LEDGER[Capital_Ledgers.csv]:::output
+            STOCK_LEDGER[(Turso LibSQL<br>Capital Ledgers)]:::output
             QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
         end
 
@@ -158,7 +158,8 @@
         BACKEND["FastAPI<br>Uvicorn Server"]:::pipeline
         WEB_UI["Premium 3D<br>Web UI"]:::ui
         GIT_VAULT["Git Vault<br>Auto-Backup"]:::ui
-        AGENT_WATCHDOG["Agentic<br>Auto-Healing Watchdog"]:::agent
+        AGENT_WATCHDOG["Watchdogd Daemon<br>on Vultr OS"]:::agent
+        INTRADAY_SNIPER[intraday_tracker.py<br>VWAP Sniper]:::broker
 
         %% Routing
         YF --> FAILOVER
@@ -177,7 +178,8 @@
         QA_MODELS --> STOCK_SCORE
         STOCK_SCORE --> STOCK_BROKER
         VIX --> STOCK_BROKER
-        STOCK_BROKER --> STOCK_LEDGER
+        STOCK_BROKER --> INTRADAY_SNIPER
+        INTRADAY_SNIPER --> STOCK_LEDGER
         STOCK_LEDGER --> QA_BLACKLIST
 
         FUNDAMENTALS --> STOCK_DB
@@ -200,30 +202,30 @@
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         
         const nodeData = {
-            "MASTER": {name: "master_pipeline.py", purpose: "Central nervous system that commands the automated daily execution of all sub-systems.", input: "Windows Task Scheduler Trigger", output: "Orchestrated Python Scripts", schedule: "Daily at Midnight"},
-            "YF": {name: "Yahoo Finance API", purpose: "High-speed ingestion of daily price action and moving average technicals.", input: "S&P 500 & ETF Tickers", output: "Historical OHLCV DataFrames", schedule: "Real-time query"},
-            "FAILOVER": {name: "failover_downloader.py", purpose: "Self-healing data fetcher. Uses exponential backoff and alternate Yahoo APIs to bypass yfinance failures. Quarantines dead tickers.", input: "Tickers", output: "CSV Data or Quarantine Log", schedule: "On-Demand via Pipelines"},
-            "FRED": {name: "FRED API", purpose: "Grounds the models in macroeconomic reality using Federal Reserve data.", input: "Economic Series IDs", output: "Inflation, Interest Rates, GDP", schedule: "Real-time query"},
-            "VIX": {name: "VIX Safety Monitor", purpose: "Background watchdog monitoring the CBOE volatility index for market panic.", input: "Live ^VIX Price", output: "Risk damping multipliers (0.0x to 1.0x)", schedule: "Every 1 Hour"},
-            "STOCK_SCREEN": {name: "fast_screener.py", purpose: "Wide-net filtration engine to isolate statistically significant momentum patterns.", input: "500 Stock Price Histories", output: "Top 15 Tickers", schedule: "Daily via Master Pipeline"},
-            "STOCK_PYMC": {name: "pymc_top_winners.py", purpose: "Deep probabilistic inference using Monte Carlo Markov Chains to predict return direction.", input: "Top 15 Tickers", output: "P(UP) & Expected Return/Vol", schedule: "Daily via Master Pipeline"},
-            "QA_MODELS": {name: "qa_models.py", purpose: "Audits Bayesian model outputs for anomalies. Forces a HOLD override if P(UP)>100% or returns are unrealistic.", input: "Scorecards", output: "Cleaned/Overwritten Scorecards", schedule: "Daily via Master Pipeline"},
-            "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Dynamic capital allocation engine evaluating predictive edge via the Kelly Criterion.", input: "Predictive Scorecards", output: "Virtual USD Trades", schedule: "Daily via Master Pipeline"},
-            "STOCK_SCORE": {name: "Top5_Scorecard.xlsx", purpose: "Immutable record of the daily mathematical predictions.", input: "PyMC Traces", output: "Formatted Excel Report", schedule: "Daily"},
-            "STOCK_LEDGER": {name: "Capital_Ledgers.csv", purpose: "Persistent accounting database tracking capital, PnL, and holdings for all 3 Personas.", input: "Executed Trades", output: "Time-Series Ledger", schedule: "Daily"},
-            "QA_BLACKLIST": {name: "qa_blacklist.py", purpose: "Validates the Blacklist Engine by auditing the Capital Ledgers for serial offenders (3+ strikes).", input: "Capital Ledgers", output: "QA Historical Log & Email Warning", schedule: "Daily via Master Pipeline"},
-            "FUNDAMENTALS": {name: "extract_fundamentals.py", purpose: "The vital bridge linking underlying stock health to overarching ETF sectors.", input: "Macro & Earnings Data", output: "S&P 500 Master DB", schedule: "Saturdays via Master Pipeline"},
-            "STOCK_DB": {name: "SP500_Fundamentals.csv", purpose: "Aggregated valuation metrics (P/E, EPS, Debt) serving as Bayesian Priors.", input: "JSON Metrics", output: "Hierarchical Prior Weights", schedule: "Saturdays"},
-            "ETF_SCREEN": {name: "etf_fast_screener.py", purpose: "Identifies momentum and trend strength across the 11 major SPDR sectors.", input: "11 ETF Tickers", output: "Active Sectors", schedule: "Daily via Master Pipeline"},
-            "ETF_PYMC": {name: "process_etf.py", purpose: "Hierarchical sector modeling anchored by underlying fundamental stock health.", input: "Sector Prices & Stock Priors", output: "Sector P(UP) Predictions", schedule: "Daily via Master Pipeline"},
-            "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Sector-level capital allocation engine.", input: "Sector Predictions", output: "Virtual ETF Trades", schedule: "Daily via Master Pipeline"},
-            "ETF_SCORE": {name: "All_ETFs_Scorecard.xlsx", purpose: "Compiled master record of all 11 ETF sector predictions.", input: "Individual ETF Excel outputs", output: "Merged Excel Report", schedule: "Daily"},
-            "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Polls live market prices to execute staged pre-market orders. Manages dynamic VIX-based stop-losses intraday.", input: "Pending SQLite Orders", output: "Settled SQLite Ledger", schedule: "Intraday (Watchdog Managed)"},
-            "BACKEND": {name: "server.py", purpose: "FastAPI Zero-Touch Server. Hot-Reloads instantly on backend patches. Bridges SQLite to frontend with a 60-second live auto-polling loop and cache-busting logic.", input: "Ledgers & Pending Orders", output: "JSON Endpoints", schedule: "Always Online (Port 80)"},
-            "AGENT_WATCHDOG": {name: "AI Cron Scheduler", purpose: "Agentic Auto-Healing loop. Wakes the AI Agent daily to run system_qa_auditor.py. Autonomously patches any pipeline code errors or DB corruption.", input: "Pipeline Logs", output: "Code Fixes", schedule: "Daily at 05:30 AM"},
-            "JSONAPI": {name: "JSON API Endpoint", purpose: "Lightweight serialized data exchange layer connecting the FastAPI backend to the Premium 3D Web UI.", input: "Python Data Structures", output: "Structured JSON Strings", schedule: "On-Request via AJAX"},
-            "WEB_UI": {name: "frontend/index.html", purpose: "Premium 3D Sci-Fi Web Dashboard featuring active 3D tabs, glassmorphism, and dynamic Plotly charts.", input: "FastAPI JSON", output: "Interactive User Interface", schedule: "Client Browser"},
-            "GIT_VAULT": {name: "Git Vault Backup", purpose: "Invisible version control system protecting the codebase against fatal logic errors.", input: "Modified Code", output: "Immutable Snapshot Commits", schedule: "Every 1 Hour (Windows Scheduled Task)"}
+            "MASTER": {name: "Prefect Cloud Pipeline", purpose: "Commands the automated daily execution of all sub-systems, beginning strictly with pre-flight checks.", source: "Prefect Scheduled Trigger", target: "Python Pipeline Scripts", file_type: ".py Orchestrator", result: "Triggered Daily at 1:00 AM (Local)"},
+            "YF": {name: "Yahoo Finance API", purpose: "High-speed ingestion of daily price action.", source: "Internet (Yahoo)", target: "failover_downloader.py", file_type: "JSON / REST", result: "Historical OHLCV DataFrames"},
+            "FAILOVER": {name: "failover_downloader.py", purpose: "Self-healing data fetcher bypassing failures.", source: "YF API", target: "Screener Scripts", file_type: ".py script", result: "CSV Data or Quarantine Log"},
+            "FRED": {name: "FRED API", purpose: "Grounds the models in macroeconomic reality.", source: "Federal Reserve", target: "extract_fundamentals.py", file_type: "REST API", result: "Inflation, Interest Rates, GDP"},
+            "VIX": {name: "VIX Safety Monitor", purpose: "Monitors market panic for stop losses.", source: "CBOE Volatility", target: "Virtual Brokers", file_type: "Live Feed", result: "Risk damping multipliers"},
+            "STOCK_SCREEN": {name: "fast_screener.py", purpose: "Wide-net filtration for momentum patterns.", source: "FAILOVER Data", target: "pymc_top_winners_workflow.py", file_type: ".py script", result: "Top 15 Tickers Isolated"},
+            "STOCK_PYMC": {name: "Bayesian Inference", purpose: "Deep probabilistic inference using Monte Carlo Markov Chains.", source: "fast_screener.py", target: "qa_models.py", file_type: ".py script", result: "P(UP) & Expected Return probabilities"},
+            "QA_MODELS": {name: "qa_models.py", purpose: "Audits Bayesian model outputs for mathematical anomalies.", source: "STOCK_PYMC", target: "Top5_Scorecard.xlsx", file_type: ".py script", result: "Cleaned/Overwritten Scorecards"},
+            "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Dynamic capital allocation engine evaluating predictive edge.", source: "Top5_Scorecard.xlsx", target: "Capital_Ledgers.csv", file_type: ".py script", result: "Virtual USD Trades Executed"},
+            "STOCK_SCORE": {name: "Top5_Scorecard.xlsx", purpose: "Immutable record of daily mathematical predictions.", source: "QA_MODELS", target: "virtual_broker.py", file_type: ".xlsx spreadsheet", result: "Formatted Daily AI Predictions"},
+            "STOCK_LEDGER": {name: "Turso LibSQL Capital Ledgers", purpose: "Persistent accounting database tracking capital, PnL, and holdings.", source: "virtual_broker.py", target: "FastAPI Backend", file_type: "SQLite Database", result: "Time-Series Ledger"},
+            "QA_BLACKLIST": {name: "qa_blacklist.py", purpose: "Validates Blacklist Engine by auditing Ledgers for serial offenders.", source: "Capital_Ledgers.csv", target: "Email Alerts", file_type: ".py script", result: "QA Historical Log Updated"},
+            "FUNDAMENTALS": {name: "extract_fundamentals.py", purpose: "Bridge linking underlying stock health to overarching ETF sectors.", source: "FAILOVER / FRED", target: "SP500_Fundamentals.csv", file_type: ".py script", result: "S&P 500 Master DB Updated"},
+            "STOCK_DB": {name: "SP500_Fundamentals.csv", purpose: "Aggregated valuation metrics (P/E, EPS, Debt).", source: "extract_fundamentals.py", target: "process_etf.py", file_type: ".csv dataset", result: "Hierarchical Prior Weights for PyMC"},
+            "ETF_SCREEN": {name: "etf_fast_screener.py", purpose: "Identifies momentum and trend strength across SPDR sectors.", source: "FAILOVER Data", target: "process_etf.py", file_type: ".py script", result: "Active Sectors Isolated"},
+            "ETF_PYMC": {name: "process_etf.py", purpose: "Hierarchical sector modeling anchored by fundamental stock health.", source: "etf_fast_screener.py / STOCK_DB", target: "All_ETFs_Scorecard.xlsx", file_type: ".py script", result: "Sector P(UP) Predictions Generated"},
+            "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Sector-level capital allocation engine.", source: "All_ETFs_Scorecard.xlsx", target: "Capital_Ledgers.csv", file_type: ".py script", result: "Virtual ETF Trades Executed"},
+            "ETF_SCORE": {name: "All_ETFs_Scorecard.xlsx", purpose: "Compiled master record of all 11 ETF sector predictions.", source: "process_etf.py", target: "etf_virtual_broker.py", file_type: ".xlsx spreadsheet", result: "Merged Excel Report"},
+            "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Polls live market prices to execute staged pre-market orders.", source: "SQLite Pending Orders", target: "Capital_Ledgers.csv", file_type: ".py script", result: "Settled Trades Intraday"},
+            "BACKEND": {name: "server.py", purpose: "FastAPI Zero-Touch Server with a 60-second live auto-polling loop.", source: "Turso Capital Ledgers", target: "JSON API Endpoint", file_type: ".py server", result: "Live Read-Only Backend Hosted"},
+            "AGENT_WATCHDOG": {name: "Watchdogd Daemon", purpose: "Robust Unix system-level daemon acting as the master supervisor.", source: "Vultr OS", target: "All Background Processes", file_type: "System Daemon", result: "Continuous System Health"},
+            "JSONAPI": {name: "JSON API Endpoint", purpose: "Lightweight serialized data exchange layer.", source: "FastAPI Server", target: "Web UI Dashboard", file_type: "JSON", result: "Structured Data Delivery"},
+            "WEB_UI": {name: "frontend/index.html", purpose: "Premium 3D Sci-Fi Web Dashboard featuring active 3D tabs.", source: "JSON API Endpoint", target: "Client Browser", file_type: "HTML/JS/CSS", result: "Interactive User Interface Rendered"},
+            "GIT_VAULT": {name: "Git Vault Backup", purpose: "Invisible version control system protecting the codebase.", source: "Local Workspace", target: "GitHub Cloud", file_type: "Git Commit", result: "Immutable Snapshot Saved"}
         };
 
         mermaid.initialize({ 
@@ -243,15 +245,15 @@
             // Mermaid uses SVG elements with id strings that match the node name inside a parent g.node
             document.querySelectorAll('.node').forEach(node => {
                 node.addEventListener('mouseenter', (e) => {
-                    // Extract the raw node ID (Mermaid prefixes it with flowchart-...)
-                    const rawId = node.id;
-                    const nodeId = rawId.split('-').pop(); // rough extraction
-                    let data = nodeData[nodeId];
-                    
-                    // Fallback to searching the id string
-                    if(!data) {
-                        for(let key in nodeData) {
-                            if(rawId.includes(key)) data = nodeData[key];
+                    const rawId = node.id || "";
+                    const textContent = node.textContent || "";
+                    let data = null;
+
+                    // Extremely robust matching: check ID, check text content for the key, or check text content for the display name
+                    for(let key in nodeData) {
+                        if(rawId.includes(key) || textContent.includes(key) || textContent.includes(nodeData[key].name)) {
+                            data = nodeData[key];
+                            break; // Stop at first match
                         }
                     }
 
@@ -259,9 +261,10 @@
                         tooltip.innerHTML = `
                             <div class="tooltip-title">${data.name}</div>
                             <div class="tooltip-row"><span class="tooltip-label">Purpose:</span> <span class="tooltip-value">${data.purpose}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Input:</span> <span class="tooltip-value">${data.input}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Output:</span> <span class="tooltip-value">${data.output}</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Schedule:</span> <span class="tooltip-value">${data.schedule}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Source:</span> <span class="tooltip-value">${data.source}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Target:</span> <span class="tooltip-value">${data.target}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">File Type:</span> <span class="tooltip-value">${data.file_type}</span></div>
+                            <div class="tooltip-row"><span class="tooltip-label">Result:</span> <span class="tooltip-value">${data.result}</span></div>
                         `;
                         tooltip.style.opacity = '1';
                     }
@@ -271,20 +274,25 @@
                     let x = e.clientX + 20;
                     let y = e.clientY + 20;
                     
-                    // Boundary detection: if the tooltip goes off the right edge of the screen, flip it to the left
                     const tooltipRect = tooltip.getBoundingClientRect();
+                    
+                    // Boundary detection: right edge
                     if (x + tooltipRect.width > window.innerWidth) {
                         x = e.clientX - tooltipRect.width - 20;
                     }
                     
-                    // Boundary detection: if the tooltip goes off the bottom edge of the screen, flip it upwards
+                    // Boundary detection: bottom edge
                     if (y + tooltipRect.height > window.innerHeight) {
                         y = e.clientY - tooltipRect.height - 20;
                     }
+
+                    // Strict clamps so it never falls off the left or top edge on tiny screens
+                    x = Math.max(10, x);
+                    y = Math.max(10, y);
                     
-                    // Add scroll offset since clientX/Y is relative to viewport
-                    tooltip.style.left = (x + window.scrollX) + 'px';
-                    tooltip.style.top = (y + window.scrollY) + 'px';
+                    // Since it is position: fixed, we use purely viewport coordinates without scroll offsets
+                    tooltip.style.left = x + 'px';
+                    tooltip.style.top = y + 'px';
                 });
 
                 node.addEventListener('mouseleave', () => {

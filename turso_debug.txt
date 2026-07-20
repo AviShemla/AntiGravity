@@ -1,1 +1,1 @@
-{'result': {'cols': [{'name': 'max_date', 'decltype': None}], 'rows': [[{'type': 'text', 'value': '2026-07-17'}]], 'affected_row_count': 0, 'last_insert_rowid': None, 'replication_index': None, 'rows_read': 91, 'rows_written': 0, 'query_duration_ms': 224.738}}
+{'result': {'cols': [{'name': 'max_date', 'decltype': None}], 'rows': [[{'type': 'text', 'value': '2026-07-17'}]], 'affected_row_count': 0, 'last_insert_rowid': None, 'replication_index': None, 'rows_read': 91, 'rows_written': 0, 'query_duration_ms': 234.014}}

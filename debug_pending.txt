@@ -1,0 +1,1 @@
+{'persona': 'BallsForBrains', 'date': '2026-07-17', 'target_cash': 8790.87, 'target_total_equity': 9910.2, 'target_holdings_json': '{"ELV": {"dollars": 1119.33, "units": 3, "price": 373.1099853515625}}', 'daily_pnl_json': '{"NDAQ": -36.54, "MCD": -28.75, "BLK": -14.85, "NEE": -8.8}', 'executed_intraday_trades_json': '{}'}

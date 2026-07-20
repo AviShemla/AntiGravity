@@ -244,18 +244,48 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     is_pending = False
     try:
         pending = database_manager.get_pending_order(p_name)
-        if pending and pending.get('date') >= str(last_row['Date']):
+        if pending and pending.get('date')[:10] >= str(last_row['Date'])[:10]:
             cash = float(pending['target_cash'])
-            holdings = json.loads(pending['target_holdings_json'])
+            target_holdings = json.loads(pending['target_holdings_json'])
             
-            trades = pending.get('executed_intraday_trades_json', '{}')
-            if isinstance(trades, str):
-                try:
-                    trades = json.loads(trades)
-                except:
-                    trades = {}
-                    
-            if trades:  # If there are actual trades (not empty list or dict)
+            # Compare target_holdings with last_row['Holdings_JSON'] to see if trades are actually pending
+            last_holdings = json.loads(last_row['Holdings_JSON'])
+            
+            has_changes = False
+            if abs(cash - float(last_row['Cash'])) > 1.0:
+                has_changes = True
+            else:
+                for t, d in target_holdings.items():
+                    target_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                    last_val = last_holdings.get(t, 0.0)
+                    last_val = float(last_val.get('dollars', 0.0)) if isinstance(last_val, dict) else float(last_val)
+                    if abs(target_val - last_val) > 1.0:
+                        has_changes = True
+                        break
+                        
+                if not has_changes:
+                    for t, d in last_holdings.items():
+                        if t == 'Cash': continue
+                        last_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                        target_val = target_holdings.get(t, 0.0)
+                        target_val = float(target_val.get('dollars', 0.0)) if isinstance(target_val, dict) else float(target_val)
+                        if abs(target_val - last_val) > 1.0:
+                            has_changes = True
+                            break
+                        
+                if not has_changes:
+                    for t, d in last_holdings.items():
+                        if t == 'Cash': continue
+                        last_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                        target_val = target_holdings.get(t, 0.0)
+                        target_val = float(target_val.get('dollars', 0.0)) if isinstance(target_val, dict) else float(target_val)
+                        if abs(target_val - last_val) > 1.0:
+                            has_changes = True
+                            break
+            
+            holdings = target_holdings
+            
+            if has_changes:
                 is_pending = "PRE-MARKET (PENDING)"
             else:
                 is_pending = "Only HOLD for today"
@@ -500,13 +530,37 @@ def get_olympic_data():
         
         is_pending = False
         try:
+            df_trial = database_manager.get_ledger('BallsForBrains')
             pending = database_manager.get_pending_order('BallsForBrains')
-            if pending:
-                trades = pending.get('executed_intraday_trades_json', '{}')
-                if isinstance(trades, str):
-                    try: trades = json.loads(trades)
-                    except: trades = {}
-                if trades:
+            if pending and not df_trial.empty and pending.get('date')[:10] >= str(df_trial.iloc[-1]['Date'])[:10]:
+                target_holdings = json.loads(pending['target_holdings_json'])
+                last_row = df_trial.iloc[-1]
+                cash = float(pending['target_cash'])
+                last_holdings = json.loads(last_row['Holdings_JSON'])
+                
+                has_changes = False
+                if abs(cash - float(last_row['Cash'])) > 1.0:
+                    has_changes = True
+                else:
+                    for t, d in target_holdings.items():
+                        target_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                        last_val = last_holdings.get(t, 0.0)
+                        last_val = float(last_val.get('dollars', 0.0)) if isinstance(last_val, dict) else float(last_val)
+                        if abs(target_val - last_val) > 1.0:
+                            has_changes = True
+                            break
+                            
+                    if not has_changes:
+                        for t, d in last_holdings.items():
+                            if t == 'Cash': continue
+                            last_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                            target_val = target_holdings.get(t, 0.0)
+                            target_val = float(target_val.get('dollars', 0.0)) if isinstance(target_val, dict) else float(target_val)
+                            if abs(target_val - last_val) > 1.0:
+                                has_changes = True
+                                break
+                            
+                if has_changes:
                     is_pending = "PRE-MARKET (PENDING)"
                 else:
                     is_pending = "Only HOLD for today"
@@ -613,13 +667,25 @@ def get_prod_shadow():
     
     is_pending = False
     try:
+        df_trial = database_manager.get_ledger('BallsForBrains')
         pending = database_manager.get_pending_order('BallsForBrains')
-        if pending:
-            trades = pending.get('executed_intraday_trades_json', '{}')
-            if isinstance(trades, str):
-                try: trades = json.loads(trades)
-                except: trades = {}
-            if trades:
+        if pending and not df_trial.empty and pending.get('date')[:10] >= str(df_trial.iloc[-1]['Date'])[:10]:
+            target_holdings = json.loads(pending['target_holdings_json'])
+            last_holdings = json.loads(df_trial.iloc[-1]['Holdings_JSON'])
+            
+            has_changes = False
+            if abs(float(pending['target_cash']) - float(df_trial.iloc[-1]['Cash'])) > 1.0:
+                has_changes = True
+            else:
+                for t, d in target_holdings.items():
+                    target_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                    last_val = last_holdings.get(t, 0.0)
+                    last_val = float(last_val.get('dollars', 0.0)) if isinstance(last_val, dict) else float(last_val)
+                    if abs(target_val - last_val) > 1.0:
+                        has_changes = True
+                        break
+                        
+            if has_changes:
                 is_pending = "PRE-MARKET (PENDING)"
             else:
                 is_pending = "Only HOLD for today"

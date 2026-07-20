@@ -77,3 +77,10 @@ The system has an automated janitor (clean_ghosts.py) running every 60 minutes v
 
 ## The Uvicorn Deadlock Directive (Zero-Trust Dashboard QA)
 Before answering ANY user question regarding a hanging dashboard, a broken UI tab, or a 'Loading...' screen, the agent MUST explicitly query the status of the Uvicorn process and check master_watchdog.log for 'Detected offline/deadlocked server'. The agent is strictly forbidden from assuming a UI issue is a simple path or code error without FIRST verifying that Uvicorn is actively listening on Port 80 and is not deadlocked.
+
+
+## No Email Spam Policy (Strict Notification Protocol)
+The system is strictly limited to sending a MAXIMUM of 4 scheduled summary emails per day (Executive, Stock, ETF, Marathon Olympic), and ONLY if the QA pipeline is 100% Green. If QA fails, the system must self-heal and re-run quietly. Zero QA alert emails are permitted unless all self-healing retries are exhausted and manual user intervention is absolutely required.
+
+## Schedule Manager Pre-Flight Enforcement
+Whenever creating or modifying a schedule manager, orchestrator, or pipeline script (like prefect_pipeline.py or a cron manager), you MUST ensure that the pre-flight checks (preflight_check.py) are scheduled as the absolute first step before any other pipeline logic runs. This is critical to ensure the environment is fully verified before execution begins.
