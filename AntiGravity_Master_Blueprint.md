@@ -143,7 +143,7 @@ It is designed to systematically extract alpha from the market using heavy downs
 ---
 
 ## 2. The Global Pipeline Flow
-The entire system operates on a rigid, hierarchical pipeline. It is fully automated via Windows Task Scheduler.
+The entire system operates on a rigid, hierarchical pipeline. It is fully automated via **Prefect Server** hosted natively on a remote **Vultr VPS**, fully decoupling the infrastructure from local hardware constraints.
 
 ### 📅 The Schedule
 1. **The Heavy ETF Screener:** Runs **Sunday at 1:00 AM**. Scrapes 5,000+ ETFs from the Nasdaq FTP, filters for $50M daily liquidity, and outputs a 35-ETF Master Universe.
@@ -208,7 +208,7 @@ For deep crash recovery, here is the exact purpose, input, output, and schedule 
 
 - **SSOT_DB (`antigravity.db`)** | Purpose: The Single Source of Truth SQLite core. Eliminates race conditions and fully decouples the Math Models, Execution Engines, and UI from fragile CSV files. | Input: Orders & Ledgers | Output: Verified States | Schedule: Always On
 - **MASTER (`master_pipeline.py`)** | Purpose: Central nervous system commanding automated daily execution. | Input: Windows Task Scheduler | Output: Orchestrated Scripts | Schedule: Daily at 1:00 AM
-- **WATCHDOG (`master_watchdog.py`)** | Purpose: Continuous background daemon that ensures system health. Automatically resurrects dead Uvicorn servers, hunts zombie processes, and triggers API health audits. | Input: Process Tree | Output: Alive Daemons | Schedule: Background Infinite Loop
+- **WATCHDOG DEPRECATED (systemd/Prefect)** | Purpose: `master_watchdog.py` has been incinerated. The pipeline is now completely orchestrated by the **Prefect Server** running natively on the **Vultr VPS**. `ag-uvicorn`, `ag-sniper`, and `ag-vix` run as indestructible Linux `systemd` daemons. | Input: Prefect DAGs | Output: Cloud-Native execution | Schedule: Always On
 - **FAILOVER (`failover_downloader.py`)** | Purpose: Self-healing data fetcher. Uses exponential backoff and alternate Tiingo API to bypass yfinance failures. | Input: Tickers | Output: CSV Data | Schedule: On-Demand
 - **DATA_LOADER (`data_loader.py`)** | Purpose: Flawless matrix extraction. Pre-slices history and rigidly enforces no duplicate forward-dates pollute MCMC chains. | Input: Raw Price Data | Output: Clean Multi-Lag Arrays | Schedule: Pre-inference
 - **STOCK_PYMC (`export_bayesian_scorecard_TNX.py`)** | Purpose: Project Apollo causality engine. Correlates global macro features into Rust NUTS sampler. | Input: Top 15 Tickers + Macro | Output: P(UP) Predictions | Schedule: Daily
@@ -279,3 +279,10 @@ If the AI Agent is deployed into a totally broken environment, execute the follo
 - **Execution Routing**: Rewrote daily_pipeline.py to ensure it explicitly triggers the ETF pipeline, the executive_brief.py global dashboard, and the un_backtests.py Marathon simulator consecutively. Restructured the Championship email to pull dynamic data from Olympic_Shootout_Results_MASTER.csv.
 - **Status**: QA completed without crashes. Fully synchronized.
 
+
+---
+### ?? July 2026 Update: Vultr VPS & Prefect Orchestration Migration
+- **Architecture Upgrades**: Completely incinerated local master_watchdog.py and Windows Task Scheduler dependencies. Migrated the entire orchestration layer to **Prefect Server** hosted on a dedicated **Vultr VPS** (66.42.118.26). prefect_pipeline.py now controls all cron jobs natively.
+- **Daemonization**: Deployed g-uvicorn, g-sniper, and g-vix as indestructible systemd background services natively on the Linux VPS, ensuring the dashboard and intraday sniper survive any local network disconnects.
+- **Database Pivot**: Began the structural pivot to **Turso DB** for centralized cloud synchronization to finally eradicate all CSV/Excel files from the architecture.
+- **Status**: Pipeline decoupled from local laptop hardware. Fully cloud-native and mathematically resilient.
