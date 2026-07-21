@@ -41,8 +41,10 @@ def compute_rsi(data, window=14):
     RSI = 100.0 - (100.0 / (1.0 + RS))
     return RSI.fillna(50)
 
-def fetch_and_prep_data(ticker):
+def fetch_and_prep_data(ticker, target_date=None):
     df = yf.download(ticker, period="5y", progress=False)
+    if target_date:
+        df = df[df.index <= target_date]
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.droplevel(1)
         
@@ -65,10 +67,10 @@ def create_sequences(data, target, seq_length):
         ys.append(y)
     return np.array(xs), np.array(ys)
 
-def process_stock(ticker):
+def process_stock(ticker, target_date=None):
     start_time = time.time()
     try:
-        df = fetch_and_prep_data(ticker)
+        df = fetch_and_prep_data(ticker, target_date)
         if df.empty or len(df) < SEQ_LENGTH + 10:
             return ticker, 0.5, 0.0, "Failed (No Data)"
             

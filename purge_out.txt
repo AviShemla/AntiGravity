@@ -1,0 +1,2 @@
+Connecting DIRECTLY to Turso to PURGE pending orders: https://theoracle-avishe.aws-eu-west-1.turso.io
+Purged all pending orders. Rows affected: 8

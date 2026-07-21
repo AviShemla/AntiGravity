@@ -1,0 +1,28 @@
+Connecting DIRECTLY to Turso: https://theoracle-avishe.aws-eu-west-1.turso.io
+
+--- TURSO PENDING ORDERS DATES ---
+Conservative: 2026-07-21
+Neutral: 2026-07-21
+BallsForBrains: 2026-07-21
+Dynamic: 2026-07-21
+ETF_Conservative: 2026-07-21
+ETF_Neutral: 2026-07-21
+ETF_BallsForBrains: 2026-07-21
+ETF_Dynamic: 2026-07-21
+
+--- TURSO CAPITAL LEDGERS (LATEST) ---
+ETF_BallsForBrains | Date: 2026-07-20
+ETF_Conservative | Date: 2026-07-20
+ETF_Dynamic | Date: 2026-07-20
+ETF_Neutral | Date: 2026-07-20
+BallsForBrains | Date: 2026-07-17
+Conservative | Date: 2026-07-17
+Dynamic | Date: 2026-07-17
+ETF_BallsForBrains | Date: 2026-07-17
+ETF_Conservative | Date: 2026-07-17
+ETF_Dynamic | Date: 2026-07-17
+ETF_Neutral | Date: 2026-07-17
+Neutral | Date: 2026-07-17
+BallsForBrains | Date: 2026-07-16
+Conservative | Date: 2026-07-16
+Dynamic | Date: 2026-07-16

@@ -1,0 +1,10 @@
+--- Pending Orders Dates ---
+              persona        date
+0        Conservative  2026-07-20
+1             Neutral  2026-07-20
+2      BallsForBrains  2026-07-20
+3             Dynamic  2026-07-20
+4    ETF_Conservative  2026-07-21
+5         ETF_Neutral  2026-07-21
+6  ETF_BallsForBrains  2026-07-21
+7         ETF_Dynamic  2026-07-21

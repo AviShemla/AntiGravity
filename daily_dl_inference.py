@@ -70,7 +70,7 @@ TARGET_UNIVERSE, ETF_UNIVERSE = get_dynamic_assets()
 
 FEATURES = ['Close', 'Volume', 'Daily_Return_%', 'RSI_14d', 'ADX_14d', 'VIX_Close', 'TNX_Close']
 
-def run_daily_inference():
+def run_daily_inference(target_date=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     predictions = []
     
@@ -93,7 +93,10 @@ def run_daily_inference():
 
         with torch.no_grad():
             for ticker in TARGET_UNIVERSE:
-                ticker_df = df[df['Ticker'] == ticker].copy().sort_values('Date').reset_index(drop=True).dropna(subset=FEATURES)
+                ticker_df = df[df['Ticker'] == ticker].copy().sort_values('Date').reset_index(drop=True)
+                if target_date:
+                    ticker_df = ticker_df[ticker_df['Date'] <= pd.to_datetime(target_date)]
+                ticker_df = ticker_df.dropna(subset=FEATURES)
                 if len(ticker_df) < SEQ_LENGTH:
                     continue
                 
@@ -145,6 +148,8 @@ def run_daily_inference():
             with torch.no_grad():
                 for ticker in ETF_UNIVERSE:
                     ticker_df = etf_df[etf_df['Ticker'] == ticker].copy().sort_values('Date').reset_index(drop=True)
+                    if target_date:
+                        ticker_df = ticker_df[ticker_df['Date'] <= pd.to_datetime(target_date)]
                     if len(ticker_df) < SEQ_LENGTH:
                         continue
                     
@@ -177,14 +182,14 @@ def run_daily_inference():
         
         print(f"    -> Running fast online LSTM training for {len(TARGET_UNIVERSE)} stocks...")
         with ThreadPoolExecutor(max_workers=3) as executor:
-            future_to_t = {executor.submit(dl_lstm_shadow.process_stock, t): t for t in TARGET_UNIVERSE}
+            future_to_t = {executor.submit(dl_lstm_shadow.process_stock, t, target_date): t for t in TARGET_UNIVERSE}
             for future in as_completed(future_to_t):
                 t = future_to_t[future]
                 try:
                     ticker, prob, last_close, err = future.result()
                     if err is None:
                         predictions.append({
-                            'Date': pd.Timestamp.now().strftime('%Y-%m-%d'),
+                            'Date': target_date if target_date else pd.Timestamp.now().strftime('%Y-%m-%d'),
                             'Ticker': ticker,
                             'Last_Close': last_close,
                             'Transformer_P(UP)': round(prob, 4),
@@ -213,4 +218,9 @@ def run_daily_inference():
         print(results_df.head(20).to_string())
 
 if __name__ == "__main__":
-    run_daily_inference()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--target-date', type=str, default=None, help='Target date for prediction (YYYY-MM-DD)')
+    args, unknown = parser.parse_known_args()
+    
+    run_daily_inference(target_date=args.target_date)

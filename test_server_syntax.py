@@ -1,0 +1,10 @@
+import paramiko
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect('66.42.118.26', username='root', password='M,w5_=k@eHA!ecEK')
+stdin, stdout, stderr = ssh.exec_command("cd /opt/antigravity && ./venv/bin/python3 server.py")
+print("STDOUT:")
+print(stdout.read().decode())
+print("STDERR:")
+print(stderr.read().decode())
+ssh.close()

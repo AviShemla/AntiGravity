@@ -31,15 +31,15 @@ def hunt_zombies():
             if not cmdline: continue
             cmd_str = " ".join(cmdline).lower()
             
-            # Protect Watchdog, Uvicorn, and long-running pipelines
-            if any(w in cmd_str for w in ["master_watchdog", "uvicorn", "catchup_controller", "run_backtests"]):
+            # Protect Uvicorn, and long-running pipelines
+            if any(w in cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests"]):
                 continue
                 
             # Target Python processes
             if "python" in p.info.get('name', '').lower() or "py.exe" in p.info.get('name', '').lower():
-                # If running for more than 3600 seconds (1 hour)
-                if now - p.info['create_time'] > 3600:
-                    msg = f"Purged Ghost Process (Running > 1hr): PID {p.info['pid']} -> {cmd_str}"
+                # If running for more than 1200 seconds (20 mins)
+                if now - p.info['create_time'] > 1200:
+                    msg = f"Purged Ghost Process (Running > 20min): PID {p.info['pid']} -> {cmd_str}"
                     log(msg)
                     killed_processes.append(msg)
                     p.kill()

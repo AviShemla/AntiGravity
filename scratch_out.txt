@@ -1,0 +1,17 @@
+--- Pending Orders by Persona ---
+              persona  count
+0      BallsForBrains      1
+1        Conservative      1
+2             Dynamic      1
+3  ETF_BallsForBrains      1
+4    ETF_Conservative      1
+5         ETF_Dynamic      1
+6         ETF_Neutral      1
+7             Neutral      1
+
+--- Capital Ledgers on 2026-07-20 ---
+              persona
+0  ETF_BallsForBrains
+1    ETF_Conservative
+2         ETF_Dynamic
+3         ETF_Neutral

@@ -123,6 +123,16 @@ def run_tracker(target_date):
     state["last_date"] = target_date
     save_state(state)
     print(f"Saved stats: Prod=${prod_equity}, Trans=${state['Transformer']:.2f}, V1=${state['V1_Classic']:.2f}, LSTM=${state['LSTM_Shadow']:.2f}")
+    
+    # --- Sync Dashboard CSVs to Vultr ---
+    print("\n--- Deploying Updated CSV to Vultr Dashboard ---")
+    try:
+        import sys
+        import subprocess
+        subprocess.run([sys.executable, os.path.join(BASE_DIR, "fast_deploy.py")], cwd=BASE_DIR)
+        print("Deploy complete.")
+    except Exception as e:
+        print(f"Deploy failed: {e}")
 
 if __name__ == "__main__":
     import sys

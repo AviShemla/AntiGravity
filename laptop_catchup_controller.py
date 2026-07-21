@@ -116,7 +116,7 @@ def catchup_master_pipeline():
             
         # 1.5 Deep Learning Inference Engine
         print("\n--> Running Deep Learning AI Inference Engine (V2 Upgrade)...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "daily_dl_inference.py")], cwd=BASE_DIR, check=True)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "daily_dl_inference.py"), "--target-date", target_date], cwd=BASE_DIR, check=True)
             
         # 2. Bayesian Scorecard Formatted
         print("\n--> Running export_bayesian_scorecard_formatted.py...")
@@ -133,7 +133,7 @@ def catchup_master_pipeline():
 
         # 4. Virtual Broker
         print("\n--> Running virtual_broker.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "virtual_broker.py"), "--target-date", target_date], cwd=BASE_DIR, check=True)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "virtual_broker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True)
         
         # 5. Intraday Tracker (Executes EOD)
         today_ny = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
@@ -165,6 +165,14 @@ def catchup_master_pipeline():
         
         print("\n--> Running Olympic Shootout Backtests (Generating New Chart Dots)...\n")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], cwd=BASE_DIR)
+
+        # 9. Shadow Sandboxes
+        print("\n--> Running V1 Classic Shadow Sandbox synchronously for historical backfill...")
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py"), "--target-date", target_date], cwd=BASE_DIR)
+        
+        # 10. Update Shadow Tracker
+        print(f"\n--> Updating Prod vs Shadow Tracker for {target_date}...")
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py"), target_date], cwd=BASE_DIR)
 
 
     print("\nMaster Pipeline Catch-Up Complete!")
@@ -258,8 +266,7 @@ def catchup_etf_pipeline():
         mark_completed('etf_pipeline', target_date)
         
         if is_last:
-            print("\n--> Running V1 Classic Shadow Sandbox (Background Detached)...")
-            subprocess.Popen([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py")], cwd=BASE_DIR)
+            pass # Sandbox logic moved to Master Pipeline loop for chronological backfilling
 
     print("\nETF Pipeline Catch-Up Complete!")
 

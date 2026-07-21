@@ -14,6 +14,18 @@ _global_client = None
 import threading
 _db_lock = threading.Lock()
 
+_local_client = None
+
+def get_local_connection():
+    global _local_client
+    if _local_client is None:
+        db_dir = os.path.join(os.path.dirname(__file__), "financial_data")
+        os.makedirs(db_dir, exist_ok=True)
+        local_db_path = os.path.join(db_dir, "ag_pipeline_fallback.db")
+        _local_client = libsql_client.create_client_sync(url=f"file:{local_db_path}")
+        _init_db_schema(_local_client)
+    return _local_client
+
 def get_connection():
     """Returns a connected libsql_client sync client from a global pool."""
     global _global_client
@@ -23,9 +35,29 @@ def get_connection():
         client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
         
         original_execute = client.execute
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError
+        import concurrent.futures
+        
+        # Create a single executor pool for this client
+        _executor = ThreadPoolExecutor(max_workers=5)
+        
         def locked_execute(stmt, args=None):
             with _db_lock:
-                return original_execute(stmt, args or [])
+                try:
+                    # Submit the network call to the executor and wait with timeout
+                    future = _executor.submit(original_execute, stmt, args or [])
+                    return future.result(timeout=10)
+                except TimeoutError:
+                    print(f"  [TURSO DEADLOCK DETECTED] Network call timed out after 10s. Falling back to local SQLite database.")
+                    local_client = get_local_connection()
+                    return local_client.execute(stmt, args or [])
+                except Exception as e:
+                    err_msg = str(e).lower()
+                    if 'result' in err_msg or '503' in err_msg or '429' in err_msg or 'timeout' in err_msg or 'failed to fetch' in err_msg:
+                        print(f"  [TURSO DEADLOCK DETECTED] {e}. Falling back to local SQLite database.")
+                        local_client = get_local_connection()
+                        return local_client.execute(stmt, args or [])
+                    raise e
         client.execute = locked_execute
         
         _global_client = client
@@ -49,9 +81,8 @@ def execute_query(query, args=None):
         return pd.DataFrame(columns=res.columns)
     return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
 
-def init_db():
-    """Initializes the database schema if it doesn't exist."""
-    client = get_connection()
+def _init_db_schema(client):
+    """Initializes the database schema for the given client."""
     try:
         # 1. Capital Ledgers Table
         client.execute('''
@@ -112,6 +143,11 @@ def init_db():
         ''')
     finally:
         pass
+
+def init_db():
+    """Initializes the database schema if it doesn't exist."""
+    client = get_connection()
+    _init_db_schema(client)
 
 def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
     """

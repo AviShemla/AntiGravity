@@ -215,7 +215,7 @@ async function loadHoldings(mode, selectId, prefix) {
             
             const layoutLine = Object.assign({}, STD_LAYOUT, {
                 title: { text: 'Historical Total Equity', font: { color: 'white' } },
-                xaxis: { 
+                xaxis: { type: 'category', tickangle: 0, 
                     color: 'white', 
                     gridcolor: 'rgba(255,255,255,0.1)', 
                     dtick: 86400000, 
@@ -327,7 +327,7 @@ async function loadHoldings(mode, selectId, prefix) {
                 raceTraces.push(rAnchorTrace);
                 
                 const raceLayout = Object.assign({}, STD_LAYOUT, {
-                    xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+                    xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
                     yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
                 });
                 Plotly.newPlot(`race-${prefix}`, raceTraces, raceLayout);
@@ -381,7 +381,7 @@ function plotNormalDist(mu, sigma, targetDiv) {
     Plotly.newPlot(targetDiv, [traceLoss, traceWin], Object.assign({}, STD_LAYOUT, {
         title: { text: 'Bayesian Probability Distribution', font: { color: 'white' }, y: 0.95 },
         margin: { t: 60, b: 40, l: 50, r: 10 },
-        xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+        xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
         yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
     }));
 }
@@ -439,7 +439,7 @@ async function handleViewChange(prefix) {
             
             Plotly.newPlot(`chart-pred-${prefix}`, [trExp, trAct, trAnchor], Object.assign({}, STD_LAYOUT, {
                 title: { text: 'Historical Predictions vs Actual Returns', font: { color: 'white' } },
-                xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+                xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
                 yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '.2%' }
             }));
             enableAutoYScale(`chart-pred-${prefix}`);
@@ -492,7 +492,7 @@ async function handleViewChange(prefix) {
             const rAnchor = { x: [rt[0].x[0], rt[0].x[0]], y: [rMin - rPad, rMax + rPad], mode: 'markers', marker: { color: 'rgba(0,0,0,0)' }, showlegend: false, hoverinfo: 'skip' };
             rt.push(rAnchor);
             Plotly.newPlot(`chart-single-race-${prefix}`, rt, Object.assign({}, STD_LAYOUT, {
-                xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+                xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
                 yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
             }));
             enableAutoYScale(`chart-single-race-${prefix}`);
@@ -562,7 +562,7 @@ async function loadOlympic() {
         const rAnchor = { x: [data.chart_data.dates[0], data.chart_data.dates[0]], y: [rMin - rPad, rMax + rPad], mode: 'markers', marker: { color: 'rgba(0,0,0,0)' }, showlegend: false, hoverinfo: 'skip' };
         
         Plotly.newPlot('chart-olympic-race', [trCap, trVol, trChamp, rAnchor], Object.assign({}, STD_LAYOUT, {
-            xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+            xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' }
         }));
         enableAutoYScale('chart-olympic-race');
@@ -598,7 +598,7 @@ async function loadAutopsy() {
                 };
                 Plotly.newPlot(`chart-autopsy-serial-${prefix}`, [trOffenders], Object.assign({}, STD_LAYOUT, {
                     title: { text: 'Top 10 Serial Offenders (Total Loss $)', font: { color: 'white' } },
-                    xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+                    xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
                     yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
                     bargap: 0.8
                 }));
@@ -616,7 +616,7 @@ async function loadAutopsy() {
                 };
                 Plotly.newPlot(`chart-autopsy-day-${prefix}`, [trDays], Object.assign({}, STD_LAYOUT, {
                     title: { text: 'Vulnerability by Day of Week', font: { color: 'white' } },
-                    xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+                    xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
                     yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
                     bargap: 0.8
                 }));
@@ -683,7 +683,7 @@ async function loadProdShadow() {
         const trLstm = { x: data.dates, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
         
         Plotly.newPlot('chart-prod-shadow', [trProd, trTrans, trV1, trLstm], Object.assign({}, STD_LAYOUT, {
-            xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+            xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
             title: { text: "Performance Race: Prod vs Shadows", font: { color: 'white' } }
         }));

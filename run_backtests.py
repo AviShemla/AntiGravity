@@ -385,5 +385,16 @@ if __name__ == '__main__':
             
         df_merged.to_csv(out_file, index=False)
         print(f">>> Saved Marathon Update: {out_file}")
+        
+        # --- Sync Dashboard CSVs to Vultr ---
+        print("\n--- Deploying Updated CSV to Vultr Dashboard ---")
+        try:
+            import sys
+            import subprocess
+            subprocess.run([sys.executable, os.path.join(BASE_DIR, "fast_deploy.py")], cwd=BASE_DIR)
+            print("Deploy complete.")
+        except Exception as e:
+            print(f"Deploy failed: {e}")
+            
     except Exception as e:
         print(f"Failed to generate final CSV: {e}")

@@ -13,10 +13,17 @@
 All agents working on the AntiGravity pipeline MUST run `qa_data_continuity_per_ticker.py` as part of the standard QA routine. This ensures that no individual stock is silently orphaned due to global max date checks or SQLite grandfathering failures.
 
 ## Pre-Market Health Check
-Always ensure that master_watchdog.py is running before the market opens. If it is not running, forcefully resurrect it using PowerShell. A background cron schedule is set to wake the agent at 14:00 local time (GMT+3) daily to perform this check automatically.
+The system now uses Prefect and Vultr for orchestration instead of a local master_watchdog.py. Do NOT attempt to run or resurrect master_watchdog.py locally. Rely entirely on the Prefect orchestrator for background task execution and health monitoring. A background cron schedule is set to wake the agent at 14:00 local time (GMT+3) daily to perform systemic health checks automatically.
 
 ## Zero-Hallucination Policy
 NEVER answer questions about the system architecture, configuration, pipelines, or logic based on memory or assumptions. YOU MUST ALWAYS use `grep_search` and `view_file` to physically verify the exact code in the current codebase BEFORE answering. If you assume or guess, you are failing the user.
+਍‭⨪䅑愠摮䰠杯捩污嘠牥晩捩瑡潩⩮㨪圠敨⁮潣普物業杮愠戠杵椠⁳楦數Ɽ䴠单⁔潬楧慣汬⁹敶楲祦琠敨漠瑵異⁴慤慴愠慧湩瑳戠獵湩獥⁳潣獮牴楡瑮⁳攨朮‮慭⁸潰楳楴湯猠穩湩⁧楬業獴⸩䤠⁦桴⁥畯灴瑵渠浵敢獲氠潯⁫慭桴浥瑡捩污祬椠灭獯楳汢⁥慢敳⁤湯琠敨猠獹整⁭畲敬ⱳ椠癮獥楴慧整琠敨搠瑡⁡潳牵散戠晥牯⁥敤汣牡湩⁧桴⁥獩畳⁥敲潳癬摥മ
+## MIGRATION BACKUP FOLDER
+Whenever generating a migration backup, it MUST be saved directly to **C:\Users\AviShemla\AG_BCK** so that Google Drive can sync it. DO NOT say it is on the Desktop or anywhere else.
+
+
+## Zero-Hallucination Policy
+NEVER answer questions about the system architecture, configuration, pipelines, or logic based on memory or assumptions. YOU MUST ALWAYS use `grep_search` and `view_file` to physically verify the exact code in the current codebase BEFORE answering. If you assume or guess, you are failing the user.
 ਍‭⨪䅑愠摮䰠杯捩污嘠牥晩捩瑡潩⩮㨪圠敨⁮潣普物業杮愠戠杵椠⁳楦數Ɽ䴠单⁔潬楧慣汬⁹敶楲祦琠敨漠瑵異⁴慤慴愠慧湩瑳戠獵湩獥⁳潣獮牴楡瑮⁳攨朮‮慭⁸潰楳楴湯猠穩湩⁧楬業獴⸩䤠⁦桴⁥畯灴瑵渠浵敢獲氠潯⁫慭桴浥瑡捩污祬椠灭獯楳汢⁥慢敳⁤湯琠敨猠獹整⁭畲敬ⱳ椠癮獥楴慧整琠敨搠瑡⁡潳牵散戠晥牯⁥敤汣牡湩⁧桴⁥獩畳⁥敲潳癬摥മ
 ## MIGRATION BACKUP FOLDER
 Whenever generating a migration backup, it MUST be saved directly to **C:\Users\AviShemla\AG_BCK** so that Google Drive can sync it. DO NOT say it is on the Desktop or anywhere else.
@@ -28,8 +35,8 @@ When analyzing Top5_Bayesian_Scorecard_Formatted.xlsx or any ETF scorecard, ALWA
 ## QA Grandfathering Logic
 The qa_data_continuity_per_ticker.py script must always cross-reference VIP_Tickers.json to correctly grandfather legacy stock holdings. Do not alter this logic to flag them as orphaned.
 
-## Watchdog Survival Policy
-NEVER kill the `master_watchdog.py` process during background housekeeping or when purging ghost tasks via `manage_task`. You MUST explicitly skip any task or process running the master watchdog. The master watchdog is the core OS-level supervisor of the dashboard and must never be terminated by an AI agent under any circumstances.
+## Orchestrator Survival Policy
+The system now uses Prefect and Vultr for orchestration. The legacy local `master_watchdog.py` is deprecated. Do not attempt to run it. Ensure any remaining ghost processes of `master_watchdog.py` are immediately terminated to prevent conflicts with Prefect.
 ## Reporting Timestamp Rule
 Whenever you generate a status report or system response for the user, you MUST include the current real-world timestamp so the user knows exactly when the report was generated.
 
@@ -76,7 +83,7 @@ Whenever a script parses Prod_vs_Shadow_Results_MASTER.csv, the agent MUST expli
 If `qa_dashboard_integrity.py` detects that the latest date in `Prod_vs_Shadow_Results_MASTER.csv` is AHEAD of the Master Ledger database date (e.g., due to an intraday run of the shadow tracker), the system MUST gracefully allow this and report a SUCCESS message acknowledging active INTRADAY tracking. Do NOT purge the row, as that would destroy live user PnL.
 
 ## The Zombie Hunter Protocol
-The system has an automated janitor (clean_ghosts.py) running every 60 minutes via the master watchdog. It hunts and kills any python process (except whitelisted ones like uvicorn/watchdog) running longer than 1 hour. It also physically deletes any .lock or in_progress.txt files older than 60 minutes. NEVER create permanent lockfiles without an expiration mechanism, and NEVER interfere with the master watchdog's ability to run the Zombie Hunter.
+The system has an automated janitor (`clean_ghosts.py`) running every 60 minutes via the Prefect orchestrator on Vultr. It hunts and kills any python process (except whitelisted ones like uvicorn) running longer than 1 hour. It also physically deletes any `.lock` or `in_progress.txt` files older than 60 minutes. NEVER create permanent lockfiles without an expiration mechanism, and NEVER interfere with Prefect's ability to run the Zombie Hunter.
 
 ## The Uvicorn Deadlock Directive (Zero-Trust Dashboard QA)
 Before answering ANY user question regarding a hanging dashboard, a broken UI tab, or a 'Loading...' screen, the agent MUST explicitly query the status of the Uvicorn process and check master_watchdog.log for 'Detected offline/deadlocked server'. The agent is strictly forbidden from assuming a UI issue is a simple path or code error without FIRST verifying that Uvicorn is actively listening on Port 80 and is not deadlocked.
@@ -109,3 +116,25 @@ You do not need to be asked to critique an idea. By default, you must act as a r
 
 ## Agent Environment Janitor Protocol
 Before going idle or completing a major task sequence, every agent MUST physically execute manage_task(Action='list') to audit its own background processes. Any dormant un_command or schedule threads that are no longer actively required MUST be explicitly killed. Leaving zombie threads running on the user's laptop causes memory leaks and system crashes, which is a direct violation of the Zero-Trust Protocol.
+
+## Market Open Readiness Directive
+The system MUST NEVER encounter an open trade day without having mathematically verified, target-date-matched instructions (predictions/allocations) ready in the Turso database for BOTH the System and the Intraday Sniper.
+This directive MUST be strictly enforced in the post-night-run QA (system_qa_auditor.py) and dynamically in the preflight_check.py to prevent the Sniper or any other execution engine from operating on stale or empty data.
+ 
+## Explicit Schema Synchronization Rule
+Any schema changes must be applied simultaneously to Turso and Local fallback. 
+
+## Explicit Pipeline Interlock Rule
+ETF scripts MUST query the Single Stock process_continuity ledger and physically abort if the target_date does not match the expected execution date.
+
+## Strict UI Sync Rule
+Any update to Dashboard CSV files locally MUST trigger an automatic fast_deploy.py push to Vultr and an aggressive Uvicorn restart.
+
+## AI Credit Optimization Rule
+Always use Gemini Flash subagents automatically for boilerplate coding and extensive file reading. Do not use the main 'Pro' model for structurally repetitive tasks or finding variables in massive documentation.
+
+## Distributed Architecture Rule (Laptop vs Vultr)
+The pipeline is strictly split between a "Repair Agent" and an "Active Trader" to prevent CPU bottlenecks:
+1. **The Laptop (Repair Technician):** Exclusively used for heavy, long-running historical backfills (e.g., PyMC Catch-Up models). It grinds data locally and pushes historical rows to Turso in the background.
+2. **Vultr (Live Active Trader):** Managed exclusively by the Prefect Orchestrator. It runs the daily live data pulls, creates current target allocations, and executes Intraday Sniper logic at market open.
+**Constraint:** NEVER run historical backfills on Vultr while the market is open. Always offload historical repairs to the laptop to ensure Vultr's CPU is 100% dedicated to live execution.

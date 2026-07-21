@@ -13,6 +13,21 @@ os.makedirs(BASE_DIR, exist_ok=True)
 # Standard Macro-Economic tracking ETFs
 MACRO_ETFS = ['SPY', 'TLT', 'GLD', 'UUP']
 
+# --- Explicit Pipeline Interlock Rule ---
+try:
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import database_manager
+    stock_last = database_manager.get_last_continuity_date('master_pipeline')
+    etf_last = database_manager.get_last_continuity_date('etf_pipeline')
+    if stock_last and etf_last and etf_last >= stock_last:
+        print(f"[QA INTERLOCK] FATAL: Stock Pipeline has not advanced! (Stock: {stock_last}, ETF: {etf_last})")
+        print("ETF Pipeline cannot run on stale priors. Aborting.")
+        os._exit(1)
+except Exception as e:
+    print(f"Warning: Interlock check failed: {e}")
+# ----------------------------------------
+
 def build_hybrid_matrix(target_etf, period='5y'):
     print(f"--- Building Hybrid Matrix for {target_etf} ---")
     

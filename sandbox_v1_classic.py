@@ -28,7 +28,16 @@ def run_sandbox():
     print("=== STARTING V1 CLASSIC SHADOW SANDBOX ===")
     print("==============================================\n")
     
-    target_date = get_target_date()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--target-date', type=str, help='Target date for prediction (YYYY-MM-DD)')
+    args, unknown = parser.parse_known_args()
+    
+    if args.target_date:
+        target_date = args.target_date
+    else:
+        target_date = get_target_date()
+        
     print(f"Target Date: {target_date}")
     
     # 1. Load VIP Stocks
