@@ -32,7 +32,7 @@ def hunt_zombies():
             cmd_str = " ".join(cmdline).lower()
             
             # Protect Uvicorn, and long-running pipelines
-            if any(w in cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests"]):
+            if any(w in cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests", "intraday_tracker", "vix_monitor"]):
                 continue
                 
             # Target Python processes

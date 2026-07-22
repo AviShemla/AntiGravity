@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import psutil
 from prefect import flow, task
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -96,6 +97,32 @@ def run_clean_ghosts():
     print("Running Clean Ghosts...")
     result = subprocess.run([python_exe, "clean_ghosts.py"], cwd=BASE_DIR)
 
+@task(name="Ensure Intraday Sniper", retries=0)
+def ensure_intraday_sniper():
+    print("Checking Intraday Sniper status...")
+    for p in psutil.process_iter(['cmdline']):
+        try:
+            if p.info['cmdline'] and 'intraday_tracker.py' in " ".join(p.info['cmdline']).lower():
+                print("Intraday Sniper is already running. OK.")
+                return
+        except Exception:
+            pass
+    print("Launching Intraday Sniper in the background...")
+    subprocess.Popen([python_exe, "intraday_tracker.py"], cwd=BASE_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+@task(name="Ensure VIX Watchdog", retries=0)
+def ensure_vix_watchdog():
+    print("Checking VIX Watchdog status...")
+    for p in psutil.process_iter(['cmdline']):
+        try:
+            if p.info['cmdline'] and 'vix_monitor.py' in " ".join(p.info['cmdline']).lower():
+                print("VIX Watchdog is already running. OK.")
+                return
+        except Exception:
+            pass
+    print("Launching VIX Watchdog in the background...")
+    subprocess.Popen([python_exe, "vix_monitor.py"], cwd=BASE_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 @flow(name="AntiGravity Git Backup", log_prints=True)
 def antigravity_git_backup_flow():
     run_git_backup()
@@ -111,6 +138,12 @@ def antigravity_daily_migration_flow():
 @flow(name="AntiGravity API Health QA", log_prints=True)
 def antigravity_api_health_flow():
     run_api_health()
+
+@flow(name="AntiGravity Market Daemons", log_prints=True)
+def antigravity_market_daemons_flow():
+    print("Ensuring Market Daemons are active...")
+    ensure_intraday_sniper()
+    ensure_vix_watchdog()
 
 @flow(name="AntiGravity Maintenance", log_prints=True)
 def antigravity_maintenance_flow():
@@ -128,6 +161,9 @@ if __name__ == "__main__":
             antigravity_daily_migration_flow.serve(name="daily-migration", cron="30 23 * * *")
             antigravity_api_health_flow.serve(name="api-health", cron="*/15 * * * *")
             antigravity_maintenance_flow.serve(name="maintenance-qa", cron="0 * * * *")
+            
+            # Run daemon health-check every 15 minutes during market hours (13:00 to 20:00 UTC, Mon-Fri)
+            antigravity_market_daemons_flow.serve(name="market-daemons-health", cron="*/15 13-20 * * 1-5")
         elif sys.argv[1] == "qa":
             on_demand_qa_flow()
         else:
