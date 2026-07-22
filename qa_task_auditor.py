@@ -105,7 +105,7 @@ if __name__ == "__main__":
         if not check_file_freshness_dynamic(file_stock, last_market_close_ts, "[QA 1] Stock Scorecard Pipeline"): errors += 1
 
         # QA 2: Daily Pipeline (ETF Scorecard)
-        file_etf = os.path.join(BASE_DIR, "financial_data", "ETF_Top5_Bayesian_Scorecard_Formatted.xlsx")
+        file_etf = os.path.join(BASE_DIR, "financial_data", "All_ETFs_Scorecard.xlsx")
         if not check_file_freshness_dynamic(file_etf, last_market_close_ts, "[QA 2] ETF Scorecard Pipeline"): errors += 1
 
         # Check running processes

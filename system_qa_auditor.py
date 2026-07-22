@@ -149,9 +149,30 @@ def phase_c_ledger_accounting():
         if fatal_errors > 0:
             print(f"!!! FAIL: Discovered {fatal_errors} critical accounting failures in the SQLite ledger!")
             return False
-        else:
-            print(" -> PASS: Mathematical bridge completely verified. Cash + Holdings perfectly equals Equity for all transactions since Day 1.")
-            return True
+            
+        print(" -> PASS: Mathematical bridge completely verified. Cash + Holdings perfectly equals Equity for all transactions since Day 1.")
+        
+        print(" -> Auditing Date Continuity in Capital Ledgers...")
+        holidays = ['2026-07-03']
+        missing_detected = False
+        for p in df['persona'].unique():
+            pdf = df[df['persona'] == p].copy()
+            pdf['date_obj'] = pd.to_datetime(pdf['date'])
+            if len(pdf) > 1:
+                all_buss = pd.date_range(start=pdf['date_obj'].min(), end=pdf['date_obj'].max(), freq='B')
+                exist = pd.DatetimeIndex(pdf['date_obj']).normalize()
+                miss = all_buss.difference(exist)
+                missing_dates = [d.strftime('%Y-%m-%d') for d in miss if d.strftime('%Y-%m-%d') not in holidays]
+                if missing_dates:
+                    print(f"  !!! FATAL CONTINUITY HOLE: {p} is missing dates: {missing_dates}")
+                    missing_detected = True
+                    
+        if missing_detected:
+            print("!!! FAIL: Discovered physical missing business days in capital_ledgers!")
+            return False
+            
+        print(" -> PASS: 100% Date Continuity verified across all capital_ledgers. No missing days.")
+        return True
             
     except Exception as e:
         print(f"!!! FAIL during Phase C: {e}")
