@@ -7,14 +7,21 @@ import datetime
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_FILE = os.path.join(BASE_DIR, "financial_data", "vix_score.json")
 
+def _fetch_vix_internal():
+    df = yf.download("^VIX", period="1d", interval="1m", progress=False)
+    if df.empty: return None
+    if isinstance(df.columns, type(df.index)):
+        pass
+    latest_vix = float(df['Close'].iloc[-1].item())
+    return latest_vix
+
 def fetch_vix():
+    from timeout_runner import run_with_timeout
     try:
-        df = yf.download("^VIX", period="1d", interval="1m", progress=False)
-        if df.empty: return None
-        if isinstance(df.columns, type(df.index)): # handle multiindex if present
-            pass
-        latest_vix = float(df['Close'].iloc[-1].item())
-        return latest_vix
+        return run_with_timeout(_fetch_vix_internal, timeout_seconds=15)
+    except TimeoutError:
+        print("Failed to fetch VIX: [TIMEOUT] yfinance froze.")
+        return None
     except Exception as e:
         print(f"Failed to fetch VIX: {e}")
         return None
