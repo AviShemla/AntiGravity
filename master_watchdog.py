@@ -7,7 +7,7 @@ import psutil
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PYTHON_EXE = r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe"
+PYTHON_EXE = sys.executable
 
 DAEMONS = {
     "web_server": {
