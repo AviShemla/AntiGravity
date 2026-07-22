@@ -3,6 +3,7 @@ import urllib.error
 import json
 import time
 import datetime
+import sys
 import os
 
 API_BASE = "http://66.42.118.26:80/api"
@@ -34,7 +35,10 @@ def log_alert(msg, require_intervention=False):
         try:
             import subprocess
             script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "send_email_notification.py")
-            subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - UI Agent", msg], creationflags=0x08000000)
+            if os.name == 'nt':
+                subprocess.Popen([sys.executable, script_path, "AntiGravity QA Alert - UI Agent", msg], creationflags=0x08000000)
+            else:
+                subprocess.Popen([sys.executable, script_path, "AntiGravity QA Alert - UI Agent", msg])
         except Exception as e:
             print(f"Failed to trigger email alert: {e}")
 

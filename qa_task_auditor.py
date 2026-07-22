@@ -20,7 +20,10 @@ def log_alert(msg):
         
     try:
         script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "send_email_notification.py")
-        subprocess.Popen([r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe", script_path, "AntiGravity QA Alert - Task Auditor", msg], creationflags=0x08000000)
+        if os.name == 'nt':
+            subprocess.Popen([sys.executable, script_path, "AntiGravity QA Alert - Task Auditor", msg], creationflags=0x08000000)
+        else:
+            subprocess.Popen([sys.executable, script_path, "AntiGravity QA Alert - Task Auditor", msg])
     except Exception as e:
         print(f"Failed to trigger email alert: {e}")
 
