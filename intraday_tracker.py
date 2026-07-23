@@ -195,6 +195,29 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
     
     if not rows:
         print("No pending orders.")
+        if is_eod_fallback:
+            print("EOD Fallback triggered with no pending orders. Forcing EOD ledger carryover for all personas to prevent data gaps.")
+            # Get all distinct personas from capital_ledgers
+            all_personas_df = database_manager.execute_query("SELECT DISTINCT persona FROM capital_ledgers WHERE persona NOT LIKE 'ETF_%'")
+            for p_row in all_personas_df.values:
+                p = p_row[0]
+                ledger = database_manager.get_ledger(p)
+                if not ledger.empty:
+                    last_row = ledger.iloc[-1]
+                    # Only append if the date isn't already there
+                    date_str = target_date if target_date else datetime.now(pytz.timezone('America/New_York')).strftime("%Y-%m-%d")
+                    if last_row['Date'] < date_str:
+                        database_manager.save_ledger_row(
+                            persona=p,
+                            date=date_str,
+                            cash=float(last_row['Cash']),
+                            total_equity=float(last_row['Total_Equity']),
+                            holdings_json=json.loads(last_row['Holdings_JSON']) if isinstance(last_row['Holdings_JSON'], str) else last_row['Holdings_JSON'],
+                            daily_pnl_json=json.loads(last_row['Daily_PnL_JSON']) if isinstance(last_row['Daily_PnL_JSON'], str) else last_row['Daily_PnL_JSON'],
+                            intraday_status="CARRYOVER (100% HOLD)",
+                            engine_version=config.CURRENT_MODEL_VERSION
+                        )
+                        print(f"  -> Carried over EOD ledger for {p} to {date_str}")
         return False
         
     completed_personas = []
@@ -308,7 +331,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         # ==========================================
         for ticker in pending_sells:
             print(f"\n  [EVALUATING] Pending SELL for {ticker} (Persona: {persona})")
-            yest_close, _ = get_yesterday_metrics(ticker, target_date)
+            yest_close, yest_vwap = get_yesterday_metrics(ticker, target_date)
             live_price, _ = get_live_metrics(ticker, target_date)
             
             time.sleep(0.3)
@@ -554,9 +577,10 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                 client.execute("UPDATE pending_orders SET executed_intraday_trades_json = ? WHERE persona = ?", [json.dumps(executed_memory), persona])
                 
             # Create the final committed row in SQLite
+            final_date = target_date if target_date else state['Date']
             database_manager.save_ledger_row(
                 persona=persona,
-                date=state['Date'],
+                date=final_date,
                 cash=round(final_cash, 2),
                 total_equity=round(live_total_equity, 2),
                 holdings_json=final_holdings,

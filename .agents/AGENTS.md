@@ -143,6 +143,11 @@ The pipeline is strictly split between a "Repair Agent" and an "Active Trader" t
 The dashboard is ONLY located in the modern Javascript stack (`frontend/app.js` and `server.py`). The legacy Streamlit scripts (`dashboard.py` or `dashboard_v1.py`) are strictly abandoned. DO NOT attempt to patch or view them.
 
 ## Orchestration & Scheduling Rule
+
+## Dashboard UI Architecture Rule
+The dashboard is ONLY located in the modern Javascript stack (`frontend/app.js` and `server.py`). The legacy Streamlit scripts (`dashboard.py` or `dashboard_v1.py`) are strictly abandoned. DO NOT attempt to patch or view them.
+
+## Orchestration & Scheduling Rule
 Schedule orchestration is ONLY run via Vultr and Prefect. NEVER use local master_watchdog.py, cron, or schedule manager scripts locally on the laptop. 
 
 ## Production Database Constraint
@@ -150,3 +155,10 @@ Production Database is ONLY Turso. The system must never rely on local SQLite fo
 
 ## Direct Source Verification Rule (Anti-Hallucination)
 When checking anything, ALWAYS query the real source directly! Never rely on stale terminal logs, cached local states, or assumptions. You must actively SSH into Vultr, query the live database, or inspect the live remote files before diagnosing an issue or proposing a fix.
+
+## PRIME DIRECTIVE: Database Terminology Constraint
+**NEVER use the terminology "SQLite" or "SQLite database" when communicating with the user or describing the production database.** 
+The production environment is STRICTLY built on **Turso** and orchestrated via **Vultr**. You must exclusively refer to the database as "Turso". Local SQLite is strictly an invisible fallback mechanism and must never be referenced as the primary state of truth in communication.
+
+## Dashboard QA Auditor Rule
+Whenever the user reports a discrepancy on the UI/Dashboard (e.g., missing lines, wrong dates, flatlines), you MUST NEVER guess the cause. You must act as the `Dashboard_QA_Agent` (or invoke it) to mathematically prove the state of the data in the Turso database (`capital_ledgers`) versus the CSVs and the UI plotting logic. Only provide an answer when you have irrefutable database logs backing your conclusion. No bullshit answers; stand by the data.

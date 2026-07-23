@@ -1,6 +1,3 @@
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect('C:/Users/AviShemla/AntiGravity/antigravity.db')
-df = pd.read_sql("SELECT * FROM capital_ledgers WHERE persona='BallsForBrains' LIMIT 10", conn)
-print(df.to_string())
+import database_manager
+df = database_manager.execute_query("SELECT persona, date, intraday_status FROM capital_ledgers WHERE date = '2026-07-23'")
+print(df)

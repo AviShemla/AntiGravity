@@ -1,6 +1,15 @@
-import sqlite3
-conn = sqlite3.connect('C:/Users/AviShemla/AntiGravity/antigravity.db')
-c = conn.cursor()
-c.execute("SELECT date, persona, cash, total_equity FROM capital_ledgers WHERE persona='BallsForBrains' ORDER BY date DESC LIMIT 3")
-for row in c.fetchall(): print(row)
-conn.close()
+import paramiko
+
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect("66.42.118.26", username="root", password="M,w5_=k@eHA!ecEK")
+
+cmd = '''cd /opt/antigravity && ./venv/bin/python3 -c "
+import database_manager as dbm
+df = dbm.get_ledger('BallsForBrains')
+print(df.tail(4)[['Date', 'Total_Equity', 'Holdings_JSON']])
+"'''
+stdin, stdout, stderr = ssh.exec_command(cmd)
+print(stdout.read().decode())
+print(stderr.read().decode())
+ssh.close()

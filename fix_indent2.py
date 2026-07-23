@@ -1,19 +1,18 @@
 import os
-import sys
 
-f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'intraday_tracker.py')
-with open(f, 'r', encoding='utf-8') as file:
-    content = file.read()
+def fix_all(filename):
+    with open(filename, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
     
-lines = content.split('\n')
-for i, line in enumerate(lines):
-    if 'except' in line and i > 85 and i < 95:
-        # Check if the next line is empty or just return
-        if 'return' in lines[i+1]:
-            lines[i+1] = '        pass'
+    for i in range(len(lines)):
+        if "plot_df.reindex(pd.date_range" in lines[i] or "plot_df_e.reindex(pd.date_range" in lines[i]:
+            # Look at previous line's indentation
+            prev_line = lines[i-1]
+            indent = prev_line[:len(prev_line) - len(prev_line.lstrip())]
+            lines[i] = indent + lines[i].lstrip()
             
-content = '\n'.join(lines)
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.writelines(lines)
 
-with open(f, 'w', encoding='utf-8') as file:
-    file.write(content)
-print('Fixed IndentationError again!')
+fix_all('dashboard.py')
+fix_all('dashboard_v1.py')

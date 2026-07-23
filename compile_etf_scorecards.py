@@ -10,6 +10,21 @@ try:
 except Exception:
     TARGET_ETFS = ['XLK', 'XLV', 'XLY', 'XLF', 'XLC', 'XLI', 'XLE', 'XLP', 'XLU', 'XLRE', 'XLB']
 
+try:
+    import database_manager
+    df_held = database_manager.execute_query("SELECT holdings_json FROM capital_ledgers WHERE persona LIKE 'ETF_%'")
+    for idx, row in df_held.iterrows():
+        try:
+            holdings = json.loads(row['holdings_json']) if isinstance(row['holdings_json'], str) else row['holdings_json']
+            for t in holdings.keys():
+                if t != 'Cash' and t not in TARGET_ETFS:
+                    TARGET_ETFS.append(t)
+        except Exception as e:
+            pass
+except Exception as e:
+    print(f"Warning: Could not fetch active ETF holdings for scorecard compilation. Error: {e}")
+
+
 def merge_scorecards():
     print("--- Compiling All ETF Scorecards into a single workbook ---")
     out_excel = os.path.join(BASE_DIR, 'All_ETFs_Scorecard.xlsx')

@@ -193,7 +193,10 @@ if __name__ == "__main__":
                 else:
                     log_alert("-> Auto-spawning Catch-Up Controller...")
                     subprocess.Popen([sys.executable, "laptop_catchup_controller.py"], cwd=BASE_DIR, creationflags=0x08000000)
-                    errors += 1
+                    if datetime.now().hour >= 14:
+                        errors += 1
+                    else:
+                        log_alert("-> Note: Before 14:00, missing pending orders is expected. Not counting as a fatal error.")
                     
         # QA 10: ETF/Stock Sequencing
         stock_last = database_manager.get_last_continuity_date('master_pipeline')

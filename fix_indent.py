@@ -1,19 +1,28 @@
 import os
-import sys
 
-f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'intraday_tracker.py')
-with open(f, 'r', encoding='utf-8') as file:
-    content = file.read()
-    
-# Clean up any bad indents around line 97
-lines = content.split('\n')
-for i, line in enumerate(lines):
-    if 'return' in line and i > 90 and i < 105:
-        # Just safely indent it to 4 spaces
-        lines[i] = '    return'
+def fix_indent(filename):
+    with open(filename, 'r', encoding='utf-8') as f:
+        content = f.read()
+        
+    content = content.replace(
+        "                plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()\n                    plot_df = plot_df.reindex(",
+        "                plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()\n                plot_df = plot_df.reindex("
+    )
+    content = content.replace(
+        "                    plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()\n                    plot_df = plot_df.reindex(",
+        "                    plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()\n                    plot_df = plot_df.reindex("
+    )
+    content = content.replace(
+        "                plot_df_e = pd.concat(all_ledgers_e, axis=1).sort_index().ffill()\n                    plot_df_e = plot_df_e.reindex(",
+        "                plot_df_e = pd.concat(all_ledgers_e, axis=1).sort_index().ffill()\n                plot_df_e = plot_df_e.reindex("
+    )
+    content = content.replace(
+        "                    plot_df_e = pd.concat(all_ledgers_e, axis=1).sort_index().ffill()\n                    plot_df_e = plot_df_e.reindex(",
+        "                    plot_df_e = pd.concat(all_ledgers_e, axis=1).sort_index().ffill()\n                    plot_df_e = plot_df_e.reindex("
+    )
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(content)
 
-content = '\n'.join(lines)
-
-with open(f, 'w', encoding='utf-8') as file:
-    file.write(content)
-print('Fixed IndentationError!')
+fix_indent('dashboard.py')
+fix_indent('dashboard_v1.py')
+print("Fixed")
