@@ -343,6 +343,8 @@ def get_race_data(mode: str = "Single"):
         raise HTTPException(status_code=404, detail="No ledger data available")
         
     plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()
+    plot_df.index = pd.to_datetime(plot_df.index)
+    plot_df = plot_df.reindex(pd.date_range(start=plot_df.index.min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill()
     
     # Filter to last 35 days for performance
     plot_df = plot_df[plot_df.index >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
@@ -658,6 +660,10 @@ def get_prod_shadow():
         df = df.sort_values('Date')
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
     df = df.ffill().fillna(10000.0)
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.set_index('Date').reindex(pd.date_range(start=df['Date'].min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill().reset_index().rename(columns={'index': 'Date'})
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
     
     is_pending = False
     try:

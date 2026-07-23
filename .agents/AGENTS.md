@@ -138,3 +138,12 @@ The pipeline is strictly split between a "Repair Agent" and an "Active Trader" t
 1. **The Laptop (Repair Technician):** Exclusively used for heavy, long-running historical backfills (e.g., PyMC Catch-Up models). It grinds data locally and pushes historical rows to Turso in the background.
 2. **Vultr (Live Active Trader):** Managed exclusively by the Prefect Orchestrator. It runs the daily live data pulls, creates current target allocations, and executes Intraday Sniper logic at market open.
 **Constraint:** NEVER run historical backfills on Vultr while the market is open. Always offload historical repairs to the laptop to ensure Vultr's CPU is 100% dedicated to live execution.
+
+## Dashboard UI Architecture Rule
+The dashboard is ONLY located in the modern Javascript stack (`frontend/app.js` and `server.py`). The legacy Streamlit scripts (`dashboard.py` or `dashboard_v1.py`) are strictly abandoned. DO NOT attempt to patch or view them.
+
+## Orchestration & Scheduling Rule
+Schedule orchestration is ONLY run via Vultr and Prefect. NEVER use local master_watchdog.py, cron, or schedule manager scripts locally on the laptop. 
+
+## Production Database Constraint
+Production Database is ONLY Turso. The system must never rely on local SQLite for true production data or state changes unless explicitly handling local fallbacks.
