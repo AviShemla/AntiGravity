@@ -352,7 +352,7 @@ def get_race_data(mode: str = "Single"):
     series_data = {}
     for col in plot_df.columns:
         series_data[col] = {
-            "dates": plot_df.index.strftime('%Y-%m-%d').tolist(),
+            "dates": plot_df.index.strftime('%d/%m/%Y').tolist(),
             "values": plot_df[col].replace({np.nan: None}).tolist()
         }
         
@@ -368,7 +368,7 @@ def get_race_data(mode: str = "Single"):
             norm_spy = spy_close / spy_close.iloc[0] * start_eq
             norm_spy = norm_spy.reindex(plot_df.index).ffill().bfill()
             series_data["SPY"] = {
-                "dates": norm_spy.index.strftime('%Y-%m-%d').tolist(),
+                "dates": norm_spy.index.strftime('%d/%m/%Y').tolist(),
                 "values": norm_spy.replace({np.nan: None}).tolist()
             }
     except:
@@ -658,12 +658,12 @@ def get_prod_shadow():
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.sort_values('Date')
-        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+        df['Date'] = df['Date'].dt.strftime('%d/%m/%Y')
     df = df.ffill().fillna(10000.0)
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.set_index('Date').reindex(pd.date_range(start=df['Date'].min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill().reset_index().rename(columns={'index': 'Date'})
-        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+        df['Date'] = df['Date'].dt.strftime('%d/%m/%Y')
     
     is_pending = False
     try:
