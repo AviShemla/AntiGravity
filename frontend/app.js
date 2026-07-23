@@ -215,10 +215,8 @@ async function loadHoldings(mode, selectId, prefix) {
             
             const layoutLine = Object.assign({}, STD_LAYOUT, {
                 title: { text: 'Historical Total Equity', font: { color: 'white' } },
-                xaxis: { type: 'category', tickformat: "%d/%m/%Y", tickmode: "linear", dtick: 86400000, tickangle: -45, color: 'white', 
+                xaxis: { type: 'category', tickangle: -45, color: 'white', 
                     gridcolor: 'rgba(255,255,255,0.1)', 
-                    dtick: 86400000, 
-                    tickformat: '%b %d',
                     rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } 
                 },
                 yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }

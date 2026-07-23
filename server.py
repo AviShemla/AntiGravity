@@ -299,7 +299,8 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     max_dd, sharpe, win_rate, total_return = calculate_metrics(df, persona)
     
     # Calculate Equity Curve
-    dates = df['Date'].tolist()
+    df['Date'] = pd.to_datetime(df['Date'])
+    dates = df['Date'].dt.strftime('%d/%m/%Y').tolist()
     equity_curve = df['Total_Equity'].tolist()
     
     # Get Asset Breakdown Table
