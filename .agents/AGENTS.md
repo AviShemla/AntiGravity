@@ -147,3 +147,6 @@ Schedule orchestration is ONLY run via Vultr and Prefect. NEVER use local master
 
 ## Production Database Constraint
 Production Database is ONLY Turso. The system must never rely on local SQLite for true production data or state changes unless explicitly handling local fallbacks.
+
+## Direct Source Verification Rule (Anti-Hallucination)
+When checking anything, ALWAYS query the real source directly! Never rely on stale terminal logs, cached local states, or assumptions. You must actively SSH into Vultr, query the live database, or inspect the live remote files before diagnosing an issue or proposing a fix.
