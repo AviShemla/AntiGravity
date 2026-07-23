@@ -587,6 +587,8 @@ with tab1:
             
             if all_ledgers:
                 plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()
+                plot_df.index = pd.to_datetime(plot_df.index)
+                plot_df = plot_df.reindex(pd.date_range(start=plot_df.index.min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill()
                 plot_df = plot_df[plot_df.index >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
                 
                 fig_pnl = go.Figure()
@@ -638,7 +640,7 @@ with tab1:
                 fig_pnl.update_layout(
                     **STD_LAYOUT,
                     height=550,
-                    xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
+                    xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
                     yaxis=dict(tickformat="$.2f")
                 )
                 st.plotly_chart(fig_pnl, use_container_width=True, key="pnl_portfolio_main")
@@ -705,7 +707,7 @@ with tab1:
                             **STD_LAYOUT,
                             height=550,
                             yaxis=dict(tickformat=".2%"),
-                            xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1))
+                            xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1))
                         )
                         st.plotly_chart(fig_line, use_container_width=True, key="line_single")
                     except Exception as e:
@@ -776,6 +778,8 @@ with tab1:
                 
                 if all_ledgers:
                     plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()
+                    plot_df.index = pd.to_datetime(plot_df.index)
+                    plot_df = plot_df.reindex(pd.date_range(start=plot_df.index.min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill()
                     plot_df = plot_df[plot_df.index >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
                     
                     fig_pnl = go.Figure()
@@ -828,7 +832,7 @@ with tab1:
                     fig_pnl.update_layout(
                         **STD_LAYOUT,
                         height=550,
-                        xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
+                        xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
                         yaxis=dict(tickformat="$.2f")
                     )
                     st.plotly_chart(fig_pnl, use_container_width=True, key="pnl_single_multi")
@@ -1000,6 +1004,8 @@ with tab2:
             
             if all_ledgers_e:
                 plot_df_e = pd.concat(all_ledgers_e, axis=1).sort_index().ffill()
+                plot_df_e.index = pd.to_datetime(plot_df_e.index)
+                plot_df_e = plot_df_e.reindex(pd.date_range(start=plot_df_e.index.min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill()
                 plot_df_e = plot_df_e[plot_df_e.index >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
                 
                 fig_pnl_e = go.Figure()
@@ -1051,7 +1057,7 @@ with tab2:
                 fig_pnl_e.update_layout(
                     **STD_LAYOUT,
                     height=550,
-                    xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
+                    xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
                     yaxis=dict(tickformat="$.2f")
                 )
                 st.plotly_chart(fig_pnl_e, use_container_width=True, key="pnl_portfolio_etf")
@@ -1107,7 +1113,7 @@ with tab2:
                             margin=dict(t=10, b=10, l=10, r=10), height=380,
                             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                             yaxis=dict(range=[y_min_e - y_pad_e, y_max_e + y_pad_e], tickformat=".2%"),
-                            xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1))
+                            xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1))
                         )
                         st.plotly_chart(fig_line_e, use_container_width=True, key="line_etf")
                     except Exception as e:
@@ -1174,6 +1180,8 @@ with tab2:
                 
                 if all_ledgers_e:
                     plot_df_e = pd.concat(all_ledgers_e, axis=1).sort_index().ffill()
+                    plot_df_e.index = pd.to_datetime(plot_df_e.index)
+                    plot_df_e = plot_df_e.reindex(pd.date_range(start=plot_df_e.index.min(), end=pd.Timestamp.now().normalize(), freq='B')).ffill()
                     plot_df_e = plot_df_e[plot_df_e.index >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
                     
                     fig_pnl_e = go.Figure()
@@ -1212,7 +1220,7 @@ with tab2:
                         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font=dict(color='white'),
                         margin=dict(t=10, b=10, l=10, r=10), height=320,
                         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                        xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
+                        xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
                         hoverlabel=dict(bgcolor="#2A2A2A", font_size=12, font_family="sans-serif", font_color="white")
                     )
                     st.plotly_chart(fig_pnl_e, use_container_width=True, key="pnl_etf_multi")
@@ -1251,7 +1259,7 @@ with tab2:
                         fig_pnl_e.update_layout(
                             **STD_LAYOUT,
                             height=550,
-                            xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
+                            xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1)),
                             yaxis=dict(tickformat="$.2f")
                         )
                         st.plotly_chart(fig_pnl_e, use_container_width=True, key="pnl_etf_single_new")
@@ -1405,7 +1413,7 @@ with tab3:
             **STD_LAYOUT,
             height=600,
             yaxis=dict(tickformat="$.2f"),
-            xaxis=dict(rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1))
+            xaxis=dict(tickformat="%d/%m/%Y", tickmode="linear", dtick=86400000.0, tickangle=-45, rangeslider=dict(visible=True, thickness=0.08, bgcolor='#383838', bordercolor='#1E90FF', borderwidth=1))
         )
         st.plotly_chart(fig_oly, use_container_width=True, key="pnl_olympic")
         
