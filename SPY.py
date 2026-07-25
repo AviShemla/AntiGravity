@@ -1,8 +1,6 @@
 import os
-from prefect import task, flow
-from prefect.task_runners import ThreadPoolTaskRunner
+import concurrent.futures
 
-@task(retries=2, retry_delay_seconds=30)
 def process_single_ticker(ticker, sector_name, is_new_ticker, max_dates_per_ticker, existing_df, existing_dl_df):
     try:
         import pandas as pd
@@ -175,7 +173,6 @@ def process_single_ticker(ticker, sector_name, is_new_ticker, max_dates_per_tick
         print(f"Error processing {ticker}: {e}")
         return pd.DataFrame(), pd.DataFrame(), "FAILED"
 
-@flow(name="SPY_Data_Ingestion_Flow", task_runner=ThreadPoolTaskRunner(max_workers=5))
 def run_prefect_data_ingestion(sectors_map, processed_tickers, max_dates_per_ticker, existing_df, existing_dl_df):
     tasks_input = []
     valid_tickers_in_dict = []
@@ -188,17 +185,8 @@ def run_prefect_data_ingestion(sectors_map, processed_tickers, max_dates_per_tic
             is_new_ticker = ticker not in max_dates_per_ticker
             tasks_input.append((ticker, sector_name, is_new_ticker, max_dates_per_ticker, existing_df, existing_dl_df))
     
-    print(f">>> Mapping Prefect over {len(tasks_input)} tickers in parallel chunks...")
-    
-    # Execute mapping
-    results = process_single_ticker.map(
-        [t[0] for t in tasks_input],
-        [t[1] for t in tasks_input],
-        [t[2] for t in tasks_input],
-        [t[3] for t in tasks_input],
-        [t[4] for t in tasks_input],
-        [t[5] for t in tasks_input]
-    )
+    import concurrent.futures
+    print(f">>> Executing over {len(tasks_input)} tickers in parallel chunks...")
     
     all_combined_data = []
     all_dl_data = []
@@ -206,9 +194,13 @@ def run_prefect_data_ingestion(sectors_map, processed_tickers, max_dates_per_tic
     tickers_added_count = 0
     tickers_failed_count = 0
     
-    # Wait for futures to complete
-    for res_future in results:
-        df, dl_df, status = res_future.result()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = []
+        for t in tasks_input:
+            futures.append(executor.submit(process_single_ticker, t[0], t[1], t[2], t[3], t[4], t[5]))
+            
+        for future in concurrent.futures.as_completed(futures):
+            df, dl_df, status = future.result()
         if status == "SUCCESS_NEW":
             all_combined_data.append(df)
             all_dl_data.append(dl_df)

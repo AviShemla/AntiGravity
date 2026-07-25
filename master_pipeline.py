@@ -69,6 +69,11 @@ def main():
         # 1. Single Stocks
         run_script(SINGLE_STOCK_SCRIPT, "daily_pipeline.py")
         
+        # --- SYNC STOCKS TO CLOUD BEFORE ETF PIPELINE ---
+        log_msg("--- Synchronizing Local Stock Data to Turso to satisfy ETF Interlock ---")
+        SYNC_SCRIPT = os.path.join(BASE_DIR, 'migrate_to_sqlite.py')
+        subprocess.run([sys.executable, SYNC_SCRIPT], cwd=BASE_DIR)
+        
         # 2. Cooldown
         cooldown_mins = 2
         log_msg(f"Sleeping for {cooldown_mins} minutes to clear RAM and cool CPU...")

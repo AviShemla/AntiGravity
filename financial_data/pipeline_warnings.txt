@@ -1,0 +1,10 @@
+🚨 Model crash for ADSK: 'ADSK'. Forcing quarantine and HOLD.
+🚨 Model crash for GPC: 'GPC'. Forcing quarantine and HOLD.
+🚨 Model crash for ADM: 'ADM'. Forcing quarantine and HOLD.
+🚨 Model crash for ELV: 'ELV'. Forcing quarantine and HOLD.
+🚨 Model crash for NDAQ: 'NDAQ'. Forcing quarantine and HOLD.
+🚨 Model crash for CB: 'CB'. Forcing quarantine and HOLD.
+🚨 Model crash for MCD: 'MCD'. Forcing quarantine and HOLD.
+🚨 Model crash for NKE: 'NKE'. Forcing quarantine and HOLD.
+🚨 Model crash for BLK: 'BLK'. Forcing quarantine and HOLD.
+🚨 Model crash for NEE: 'NEE'. Forcing quarantine and HOLD.

@@ -317,4 +317,14 @@ def generate_excel():
 if __name__ == "__main__":
     generate_excel()
     import os
-    import sys; sys.stdout.flush(); os._exit(0)
+    import sys
+    try:
+        import database_manager
+        import datetime
+        database_manager.update_continuity("etf_pipeline", datetime.datetime.now().strftime("%Y-%m-%d"))
+        print("[TURSO] Synced etf_pipeline continuity to today.")
+    except Exception as e:
+        print(f"Warning: Could not sync etf_pipeline continuity: {e}")
+        
+    sys.stdout.flush()
+    os._exit(0)

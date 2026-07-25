@@ -261,6 +261,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         
         if max_r_hat > 1.05:
             raise ValueError(f"PyMC Convergence Failure (R-hat = {max_r_hat:.3f} > 1.05). Hallucination blocked.")
+            
+        # E-BFMI (Energy Bayesian Fraction of Missing Information) Check
+        energy = az.bfmi(trace)
+        low_energy_chains = [chain_idx for chain_idx, e_val in enumerate(energy) if e_val < 0.2]
+        
+        if low_energy_chains:
+            raise ValueError(f"PyMC Convergence Failure (E-BFMI < 0.2 in chains {low_energy_chains}). Severe energy divergence blocked.")
         # --------------------------------------------
         
         pm.set_data({"X": X_test_s, "y_dir": np.zeros(len(X_test_s), dtype=int), "y_mag": np.zeros(len(X_test_s))})

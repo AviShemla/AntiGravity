@@ -8,6 +8,7 @@ import atexit
 import sys
 import time
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 try:
     psutil.Process(os.getpid()).nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)

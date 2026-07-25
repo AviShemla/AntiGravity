@@ -4,6 +4,9 @@ import sys
 import psutil
 from prefect import flow, task
 
+os.environ["PREFECT_API_REQUEST_TIMEOUT"] = "300"
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 python_exe = sys.executable
 

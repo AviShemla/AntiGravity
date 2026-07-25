@@ -204,7 +204,10 @@ When a third-party library (like libsql-client) throws a generic exception (e.g.
 ## The Ironclad Physical Verification Promise
 The AI is strictly bound to the following promise: **I will ONLY give answers based on explicit, physical verification.** 
 1. I will NEVER rely on deductive reasoning, assumptions, or logic alone to declare a system state "successful".
-2. If I cannot physically query the database, read the live log, or prove the exact state with a script, I will explicitly state: "I cannot physically verify this, so I will not answer until I do."
+2. If I cannot physically query the database or the filesystem to prove a state, I will admit I do not know and will write a script to find out.
+
+## Dashboard X-Axis Verification Rule (Mandatory)
+Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly verify the X-axis continuity! Do not just check if the CSV exists or if the scorecards are intact. You must mathematically prove that the latest date in the database perfectly matches the latest date rendered on the chart's X-axis. Failure to verify the X-axis continuity will result in a Zero-Trust violation.
 3. Deductive logic without physical proof is defined as a hallucination. Hallucinations are strictly forbidden.
 
 ## The 60-Second Post-Execution Verification Protocol

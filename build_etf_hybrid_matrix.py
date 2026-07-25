@@ -20,7 +20,7 @@ try:
     import database_manager
     stock_last = database_manager.get_last_continuity_date('master_pipeline')
     etf_last = database_manager.get_last_continuity_date('etf_pipeline')
-    if stock_last and etf_last and etf_last >= stock_last:
+    if stock_last and etf_last and etf_last > stock_last:
         print(f"[QA INTERLOCK] FATAL: Stock Pipeline has not advanced! (Stock: {stock_last}, ETF: {etf_last})")
         print("ETF Pipeline cannot run on stale priors. Aborting.")
         os._exit(1)

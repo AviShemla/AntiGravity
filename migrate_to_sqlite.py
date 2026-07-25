@@ -90,9 +90,10 @@ def set_initial_continuity():
     
     if not df.empty and df['max_date'].iloc[0]:
         max_date = df['max_date'].iloc[0]
-        database_manager.update_continuity("daily_pipeline", max_date)
-        database_manager.update_continuity("etf_daily_pipeline", max_date)
-        print(f"  => Master continuity locked at: {max_date}")
+        print(f"[TURSO] Updating system continuity for Master Pipeline -> {max_date}")
+        database_manager.update_continuity("master_pipeline", max_date)
+
+        print(f"[SUCCESS] process_continuity synced to {max_date}")
     else:
         print("  => No ledger dates found, skipping continuity init.")
 
