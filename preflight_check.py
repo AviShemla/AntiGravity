@@ -116,4 +116,4 @@ else:
     print(f"[OK] No zombie background processes detected.")
 
 print("\n>>> ALL SYSTEMS GREEN. SAFE TO EXECUTE. <<<")
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

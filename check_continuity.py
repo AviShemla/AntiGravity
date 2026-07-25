@@ -11,7 +11,7 @@ try:
     df = execute_query('SELECT * FROM process_continuity')
     print(df.to_string())
 except Exception as e: print(e)
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)
 """
 
 stdin, stdout, stderr = ssh.exec_command(f'cd /opt/antigravity && source venv/bin/activate && python -u -c "{script}"')

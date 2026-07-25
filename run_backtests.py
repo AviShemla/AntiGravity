@@ -8,22 +8,6 @@ import atexit
 import sys
 import time
 
-LOCK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'run_backtests.lock')
-
-def acquire_lock():
-    try:
-        lock_fd = os.open(LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        def remove_lock():
-            try:
-                os.close(lock_fd)
-            except:
-                pass
-            if os.path.exists(LOCK_FILE):
-                os.remove(LOCK_FILE)
-        atexit.register(remove_lock)
-    except FileExistsError:
-        print("FATAL: Marathon Shootout is already running. OS Lockfile prevents duplicate execution.")
-        os._exit(1)
 
 try:
     psutil.Process(os.getpid()).nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
@@ -90,7 +74,6 @@ def generate_lists():
     return list(set(el_cap)), list(set(el_volti))
 
 if __name__ == '__main__':
-    acquire_lock()
     el_cap_tickers, el_volti_tickers = generate_lists()
     print(f"Loaded {len(el_cap_tickers)} tickers for EL_CAP, {len(el_volti_tickers)} for EL_VOLTI")
 
@@ -141,7 +124,7 @@ if __name__ == '__main__':
         
     if len(sim_dates) == 0:
         print("\n>>> Marathon is already completely up to date! Nothing to simulate today.")
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
 
     print(f"\n>>> Simulated Dates: {[d.strftime('%Y-%m-%d') for d in sim_dates]}")
 

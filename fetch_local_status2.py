@@ -10,4 +10,4 @@ try:
     df_ledger = execute_query("SELECT persona, date, total_equity, cash_balance FROM capital_ledgers ORDER BY date DESC LIMIT 8")
     print(df_ledger.to_string())
 except: pass
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

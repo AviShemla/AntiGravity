@@ -253,6 +253,16 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag, observed=y_data_mag, shape=X_data.shape[0])
         
         trace = pm.sample(draws=1000, tune=1000, chains=2, target_accept=0.9, random_seed=42, progressbar=False)
+        
+        # --- PANDERA/PYMC QA POST-CHECK (Phase 3) ---
+        import arviz as az
+        summary = az.summary(trace)
+        max_r_hat = summary['r_hat'].max()
+        
+        if max_r_hat > 1.05:
+            raise ValueError(f"PyMC Convergence Failure (R-hat = {max_r_hat:.3f} > 1.05). Hallucination blocked.")
+        # --------------------------------------------
+        
         pm.set_data({"X": X_test_s, "y_dir": np.zeros(len(X_test_s), dtype=int), "y_mag": np.zeros(len(X_test_s))})
         pp = pm.sample_posterior_predictive(trace, var_names=["p", "y_obs_mag"], progressbar=False)
         
@@ -393,8 +403,10 @@ if __name__ == '__main__':
     if os.path.exists(fund_path):
         fund_df = pd.read_csv(fund_path)
 
-    import concurrent.futures
+    from prefect import task, flow
+    from prefect.task_runners import ThreadPoolTaskRunner
 
+    @task(retries=2, retry_delay_seconds=30)
     def process_row(idx, row):
         ticker = row['Ticker']
         depth = int(row.get('Depth', 3))
@@ -430,14 +442,18 @@ if __name__ == '__main__':
             sc = make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, f"Model Crash: {e}")
             return ticker, sc, []
 
-    print("\n--- Spawning PyMC Models (Parallel Capped at 3 Threads) ---")
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(process_row, idx, row) for idx, row in top_10.iterrows()]
-        for future in concurrent.futures.as_completed(futures):
-            ticker, sc, feat_cols = future.result()
-            if sc is not None:
-                scorecards[ticker] = sc
-                feat_cols_dict[ticker] = feat_cols
+    print("\n--- Spawning PyMC Models via Prefect Mapping ---")
+    @flow(name="PyMC_Bayesian_Flow", task_runner=ThreadPoolTaskRunner(max_workers=3))
+    def run_pymc_flow(top_10):
+        return process_row.map([idx for idx in top_10.index], [row for _, row in top_10.iterrows()])
+        
+    results = run_pymc_flow(top_10)
+    
+    for res_future in results:
+        ticker, sc, feat_cols = res_future.result()
+        if sc is not None:
+            scorecards[ticker] = sc
+            feat_cols_dict[ticker] = feat_cols
 
     print("\nWriting formatted Test Excel Scorecard...")
     writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')

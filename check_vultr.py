@@ -1,7 +1,10 @@
 import paramiko
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
-stdin, stdout, stderr = ssh.exec_command("ls -lh /opt/")
-print(stdout.read().decode())
+ssh.connect('66.42.118.26', port=22, username='root', password='M,w5_=k@eHA!ecEK')
+i, o, e = ssh.exec_command('cd /opt/antigravity && /opt/antigravity/venv/bin/python -u -c "import database_manager; client = database_manager.get_connection(); res = client.execute(\'SELECT persona, intraday_status FROM capital_ledgers WHERE date = \\\'2026-07-24\\\'\'); print(res.rows); import os; os._exit(0)"')
+print("STDOUT:")
+print(o.read().decode('utf-8'))
+print("STDERR:")
+print(e.read().decode('utf-8'))
 ssh.close()

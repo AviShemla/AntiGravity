@@ -1,0 +1,40 @@
+# prefect.yaml
+# Core orchestration manifest for the Antigravity Pipeline
+
+name: antigravity-pipeline
+prefect-version: 3.0.0
+
+# Build and Push steps (assumes code is packaged or deployed as standard scripts)
+build:
+push:
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: C:\Users\AviShemla\AntiGravity
+
+# Individual Deployment Blueprints
+deployments:
+  - name: antigravity-nightly-production
+    version: 1.0.0
+    description: "Deep history simulation engine with strict single-instance constraints."
+    
+    # Points to your main entrypoint function
+    entrypoint: prefect_pipeline.py:antigravity_nightly_flow
+    work_pool:
+      name: default-agent-pool
+      work_queue_name: default
+
+    # ORCHESTRATION GUARDRAILS (Highest Priority Risk Mitigation)
+    # This block prevents overlapping runs entirely at the cloud orchestrator level
+    global_concurrency_limit_identifiers:
+      - "antigravity-master-slot"
+
+    # Job level infrastructure overrides
+    job_variables:
+      env:
+        PYTHONUNBUFFERED: "1"
+        PREFECT_LOGGING_LEVEL: "INFO"
+    
+    parameters: {}
+    tags:
+      - "high-memory"
+      - "quant-backtest"

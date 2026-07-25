@@ -1,15 +1,6 @@
-import paramiko
-
-ssh = paramiko.SSHClient()
-ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect("66.42.118.26", username="root", password="M,w5_=k@eHA!ecEK")
-
-cmd = '''cd /opt/antigravity && ./venv/bin/python3 -c "
-import database_manager as dbm
-df = dbm.get_ledger('BallsForBrains')
-print(df.tail(4)[['Date', 'Total_Equity', 'Holdings_JSON']])
-"'''
-stdin, stdout, stderr = ssh.exec_command(cmd)
-print(stdout.read().decode())
-print(stderr.read().decode())
-ssh.close()
+import database_manager as db
+try:
+    res = db.execute_query("SELECT persona, date, total_equity, intraday_status FROM capital_ledgers WHERE date='2026-07-24'")
+    print(res)
+except Exception as e:
+    print(f"Error: {e}")

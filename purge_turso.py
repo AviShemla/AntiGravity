@@ -18,4 +18,4 @@ with open('purge_out.txt', 'w') as f:
     except Exception as e:
         f.write(f"Turso Connection Error: {e}\n")
 
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

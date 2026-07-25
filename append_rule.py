@@ -1,8 +1,9 @@
 rule = """
-## Direct Source Verification Rule (Anti-Hallucination)
-When checking anything, ALWAYS query the real source directly! Never rely on stale terminal logs, cached local states, or assumptions. You must actively SSH into Vultr, query the live database, or inspect the live remote files before diagnosing an issue or proposing a fix.
+
+## The Masked Exception Fallacy (Never Trust Generic Library Errors)
+When a third-party library (like libsql-client) throws a generic exception (e.g., KeyError), you are STRICTLY FORBIDDEN from assuming it is a network rate-limit, timeout, or deadlock without absolute proof. Often, these generic errors mask underlying syntax errors (like bad SQL column names) because the library fails to properly parse the API's error payload.
+**Rule:** Before declaring a remote service "deadlocked" or abandoning the primary production architecture for a fallback bypass, you MUST manually execute a raw HTTP request to the API or check the exact schema to mathematically prove whether the failure is a syntax error or a true infrastructure failure. Never violate the Distributed Architecture Rule based on a swallowed exception.
 """
 
-with open(".agents/AGENTS.md", "a", encoding="utf-8") as f:
+with open('C:/Users/AviShemla/AntiGravity/.agents/AGENTS.md', 'a') as f:
     f.write(rule)
-print("Rule appended to AGENTS.md")

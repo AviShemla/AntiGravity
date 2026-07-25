@@ -28,6 +28,15 @@ def check_vultr():
         
     if "prefect_pipeline.py serve" not in processes:
         print("CRITICAL QA FAILURE: Prefect Orchestrator is NOT serving on Vultr!")
+        print("--- INITIATING AUTO-HEAL PROTOCOL ---")
+        print("1. Hunting Zombies...")
+        ssh.exec_command("/opt/antigravity/venv/bin/python /opt/antigravity/clean_ghosts.py")
+        print("2. Restarting Prefect Server Daemon...")
+        ssh.exec_command("source /opt/antigravity/venv/bin/activate && nohup prefect server start > /opt/antigravity/prefect_server_daemon.log 2>&1 &")
+        import time; time.sleep(5)
+        print("3. Restarting Pipeline Service...")
+        ssh.exec_command("source /opt/antigravity/venv/bin/activate && nohup python /opt/antigravity/prefect_pipeline.py serve > /opt/antigravity/prefect_serve.log 2>&1 &")
+        print("PASS: Auto-Heal complete. Prefect Orchestrator has been restarted.")
     else:
         print("PASS: Prefect is serving on Vultr.")
         

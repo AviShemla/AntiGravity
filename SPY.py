@@ -1,4 +1,233 @@
 import os
+from prefect import task, flow
+from prefect.task_runners import ThreadPoolTaskRunner
+
+@task(retries=2, retry_delay_seconds=30)
+def process_single_ticker(ticker, sector_name, is_new_ticker, max_dates_per_ticker, existing_df, existing_dl_df):
+    try:
+        import pandas as pd
+        import numpy as np
+        from failover_downloader import download_ticker_with_failover
+        
+        # Local helper inside task to prevent global scope issues
+        def fix_yfinance_dataframe(df):
+            if df.empty:
+                return df
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.droplevel(1)
+            df = df.reset_index()
+            if 'Date' not in df.columns and 'index' in df.columns:
+                df = df.rename(columns={'index': 'Date'})
+            return df
+            
+        def calculate_ras_signal(row):
+            if pd.isna(row['Plus_DI_14d']) or pd.isna(row['Minus_DI_14d']): return 'HOLD'
+            if row['Plus_DI_14d'] > row['Minus_DI_14d']: return 'BUY'
+            elif row['Minus_DI_14d'] > row['Plus_DI_14d']: return 'SELL'
+            return 'HOLD'
+
+        if not is_new_ticker:
+            last_date = max_dates_per_ticker.get(ticker)
+            if not last_date:
+                start_date = None
+            else:
+                start_date = (last_date + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            print(f"Downloading incremental data for {ticker} starting from {start_date}...")
+            new_raw_df = download_ticker_with_failover(ticker, start=start_date)
+            new_raw_df = fix_yfinance_dataframe(new_raw_df)
+            
+            ticker_history = existing_df[existing_df['Ticker'] == ticker].copy() if not existing_df.empty else pd.DataFrame()
+            cols_to_keep = ['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume', 'Ticker', 'Sector', 'Daily_STDEV', 'Analyst_Consensus', 'Analyst_Upside_%']
+            ticker_history = ticker_history[[c for c in cols_to_keep if c in ticker_history.columns]]
+            
+            for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+                if col in ticker_history.columns:
+                    ticker_history[col] = pd.to_numeric(ticker_history[col], errors='coerce')
+        else:
+            print(f"Downloading full 5y data for {ticker}...")
+            new_raw_df = download_ticker_with_failover(ticker, period="5y")
+            new_raw_df = fix_yfinance_dataframe(new_raw_df)
+            ticker_history = pd.DataFrame()
+
+        if new_raw_df.empty or 'Close' not in new_raw_df.columns:
+            if not ticker_history.empty:
+                dl_hist = existing_dl_df[existing_dl_df['Ticker'] == ticker] if not existing_dl_df.empty else pd.DataFrame()
+                return ticker_history, dl_hist, "UPDATED_EMPTY"
+            else:
+                return pd.DataFrame(), pd.DataFrame(), "FAILED"
+        
+        new_raw_df['Date'] = pd.to_datetime(new_raw_df['Date']).dt.tz_localize(None)
+        new_raw_df['Ticker'] = ticker
+        new_raw_df['Sector'] = sector_name
+        
+        for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+            if col in new_raw_df.columns:
+                new_raw_df[col] = pd.to_numeric(new_raw_df[col], errors='coerce')
+        
+        # --- PANDERA DATA GATEKEEPER ---
+        import pandera as pa
+        # Drop rows with NaNs in core price columns before validating
+        new_raw_df = new_raw_df.dropna(subset=['Open', 'High', 'Low', 'Close', 'Volume'])
+        
+        schema = pa.DataFrameSchema({
+            "Date": pa.Column("datetime64[ns]", nullable=False),
+            "Open": pa.Column(float, coerce=True, nullable=False),
+            "High": pa.Column(float, coerce=True, nullable=False),
+            "Low": pa.Column(float, coerce=True, nullable=False),
+            "Close": pa.Column(float, coerce=True, nullable=False),
+            "Volume": pa.Column(float, coerce=True, nullable=False)
+        })
+        try:
+            if not new_raw_df.empty:
+                new_raw_df = schema.validate(new_raw_df, lazy=True)
+        except pa.errors.SchemaErrors as err:
+            print(f"[QA FAILURE] Pandera Validation Failed for {ticker}: Quarantine Triggered.")
+            return pd.DataFrame(), pd.DataFrame(), "FAILED_VALIDATION"
+        # -------------------------------
+        
+        if not ticker_history.empty:
+            df = pd.concat([ticker_history, new_raw_df], ignore_index=True)
+            df = df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
+        else:
+            df = new_raw_df.sort_values('Date').reset_index(drop=True)
+        
+        # Deep Learning Archive (Raw Data)
+        if not existing_dl_df.empty:
+            dl_history = existing_dl_df[existing_dl_df['Ticker'] == ticker].copy()
+            if not dl_history.empty:
+                dl_df = pd.concat([dl_history, new_raw_df], ignore_index=True)
+                dl_df = dl_df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
+            else:
+                dl_df = new_raw_df.sort_values('Date').reset_index(drop=True)
+        else:
+            dl_df = new_raw_df.sort_values('Date').reset_index(drop=True)
+        
+        if len(df) < 252:
+            return pd.DataFrame(), pd.DataFrame(), "FAILED_LENGTH"
+        
+        # --- חישובים טכניים ---
+        df['Daily_Return_%'] = df['Close'].pct_change() * 100
+        df['Daily_STDEV'] = df[['Open', 'High', 'Low', 'Close']].std(axis=1)
+        df['STDEV_5d'] = df['Close'].rolling(window=5).std()
+        df['STDEV_10d'] = df['Close'].rolling(window=10).std()
+        df['STDEV_20d'] = df['Close'].rolling(window=20).std()
+        df['Max_High_20d'] = df['High'].rolling(window=20).max()
+        df['Min_Low_20d'] = df['Low'].rolling(window=20).min()
+        
+        delta = df['Close'].diff()
+        gain = np.where(delta > 0, delta, 0)
+        loss = np.where(delta < 0, -delta, 0)
+        
+        avg_gain = pd.Series(gain).ewm(com=13, min_periods=14).mean().values
+        avg_loss = pd.Series(loss).ewm(com=13, min_periods=14).mean().values
+        
+        avg_loss = np.where(avg_loss == 0, 0.00001, avg_loss)
+        rs = avg_gain / avg_loss
+        df['RSI_14d'] = 100 - (100 / (1 + rs))
+        
+        prev_high = df['High'].shift(1)
+        prev_low = df['Low'].shift(1)
+        prev_close = df['Close'].shift(1)
+        
+        tr1 = df['High'] - df['Low']
+        tr2 = (df['High'] - prev_close).abs()
+        tr3 = (df['Low'] - prev_close).abs()
+        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        df['ATR_14d'] = tr.ewm(com=13, min_periods=14).mean().values
+        
+        up_move = df['High'] - prev_high
+        down_move = prev_low - df['Low']
+        
+        plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0)
+        minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0)
+        
+        smoothed_plus_dm = pd.Series(plus_dm).ewm(com=13, min_periods=14).mean().values
+        smoothed_minus_dm = pd.Series(minus_dm).ewm(com=13, min_periods=14).mean().values
+        
+        safe_atr = np.where(df['ATR_14d'] == 0, 0.00001, df['ATR_14d'])
+        df['Plus_DI_14d'] = 100 * (smoothed_plus_dm / safe_atr)
+        df['Minus_DI_14d'] = 100 * (smoothed_minus_dm / safe_atr)
+        
+        di_sum = df['Plus_DI_14d'] + df['Minus_DI_14d']
+        di_sum = np.where(di_sum == 0, 0.00001, di_sum)
+        dx = 100 * ((df['Plus_DI_14d'] - df['Minus_DI_14d']).abs() / di_sum)
+        df['ADX_14d'] = pd.Series(dx).ewm(com=13, min_periods=14).mean().values
+        
+        raw_stop = df['Max_High_20d'] - (2.5 * df['ATR_14d'])
+        df['Dynamic_Stop_Loss'] = np.maximum.accumulate(raw_stop.fillna(0))
+        df.loc[df['ATR_14d'].isna(), 'Dynamic_Stop_Loss'] = np.nan
+        
+        df['RAS_Signal'] = df.apply(calculate_ras_signal, axis=1)
+        
+        if 'Analyst_Consensus' not in df.columns:
+            df['Analyst_Consensus'] = "N/A"
+            df['Analyst_Upside_%'] = np.nan
+        
+        df = df.dropna(subset=['Close', 'RSI_14d', 'ADX_14d']).reset_index(drop=True)
+        
+        if not df.empty:
+            return df, dl_df, "SUCCESS_NEW" if is_new_ticker else "SUCCESS_UPDATE"
+        else:
+            return pd.DataFrame(), pd.DataFrame(), "FAILED"
+            
+    except Exception as e:
+        print(f"Error processing {ticker}: {e}")
+        return pd.DataFrame(), pd.DataFrame(), "FAILED"
+
+@flow(name="SPY_Data_Ingestion_Flow", task_runner=ThreadPoolTaskRunner(max_workers=5))
+def run_prefect_data_ingestion(sectors_map, processed_tickers, max_dates_per_ticker, existing_df, existing_dl_df):
+    tasks_input = []
+    valid_tickers_in_dict = []
+    
+    for sector_name, ticker_list in sectors_map.items():
+        for ticker in ticker_list:
+            valid_tickers_in_dict.append(ticker)
+            if ticker in processed_tickers:
+                continue
+            is_new_ticker = ticker not in max_dates_per_ticker
+            tasks_input.append((ticker, sector_name, is_new_ticker, max_dates_per_ticker, existing_df, existing_dl_df))
+    
+    print(f">>> Mapping Prefect over {len(tasks_input)} tickers in parallel chunks...")
+    
+    # Execute mapping
+    results = process_single_ticker.map(
+        [t[0] for t in tasks_input],
+        [t[1] for t in tasks_input],
+        [t[2] for t in tasks_input],
+        [t[3] for t in tasks_input],
+        [t[4] for t in tasks_input],
+        [t[5] for t in tasks_input]
+    )
+    
+    all_combined_data = []
+    all_dl_data = []
+    tickers_updated_count = 0
+    tickers_added_count = 0
+    tickers_failed_count = 0
+    
+    # Wait for futures to complete
+    for res_future in results:
+        df, dl_df, status = res_future.result()
+        if status == "SUCCESS_NEW":
+            all_combined_data.append(df)
+            all_dl_data.append(dl_df)
+            tickers_added_count += 1
+        elif status == "SUCCESS_UPDATE":
+            all_combined_data.append(df)
+            all_dl_data.append(dl_df)
+            tickers_updated_count += 1
+        elif status == "UPDATED_EMPTY":
+            all_combined_data.append(df)
+            if not dl_df.empty:
+                all_dl_data.append(dl_df)
+            tickers_updated_count += 1
+        else:
+            tickers_failed_count += 1
+
+    return all_combined_data, all_dl_data, tickers_updated_count, tickers_added_count, tickers_failed_count, valid_tickers_in_dict
+
+
 import sys
 import time
 import shutil  
@@ -331,175 +560,16 @@ def download_sp500_full_analysis(sectors_map, folder_path):
 
     valid_tickers_in_dict = [ticker for sublist in sectors_map.values() for ticker in sublist]
 
-    for sector_name, ticker_list in sectors_map.items():
-        print(f"\n>>> Starting Sector: {sector_name} ({len(ticker_list)} Hardcoded Tickers)")
-        
-        for ticker in ticker_list:
-            if ticker in processed_tickers:
-                continue
-                
-            is_new_ticker = ticker not in max_dates_per_ticker
-            try:
-                if not is_new_ticker:
-                    last_date = max_dates_per_ticker[ticker]
-                    start_date = (last_date + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
-                    print(f"Downloading incremental data for {ticker} starting from {start_date}...")
-                    new_raw_df = download_ticker_with_failover(ticker, start=start_date)
-                    new_raw_df = fix_yfinance_dataframe(new_raw_df)
-                    
-                    ticker_history = existing_df[existing_df['Ticker'] == ticker].copy()
-                    cols_to_keep = ['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume', 'Ticker', 'Sector', 'Daily_STDEV', 'Analyst_Consensus', 'Analyst_Upside_%']
-                    ticker_history = ticker_history[[c for c in cols_to_keep if c in ticker_history.columns]]
-                    
-                    for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-                        if col in ticker_history.columns:
-                            ticker_history[col] = pd.to_numeric(ticker_history[col], errors='coerce')
-                else:
-                    print(f"Downloading full 5y data for {ticker}...")
-                    new_raw_df = download_ticker_with_failover(ticker, period="5y")
-                    new_raw_df = fix_yfinance_dataframe(new_raw_df)
-                    ticker_history = pd.DataFrame()
-
-                if new_raw_df.empty or 'Close' not in new_raw_df.columns:
-                    if not ticker_history.empty:
-                        all_combined_data.append(existing_df[existing_df['Ticker'] == ticker])
-                        tickers_updated_count += 1
-                        
-                        # Forward the DL archive as well
-                        if not existing_dl_df.empty:
-                            dl_hist = existing_dl_df[existing_dl_df['Ticker'] == ticker]
-                            if not dl_hist.empty:
-                                all_dl_data.append(dl_hist)
-                    else:
-                        tickers_failed_count += 1
-                    continue
-                
-                new_raw_df['Date'] = pd.to_datetime(new_raw_df['Date']).dt.tz_localize(None)
-                new_raw_df['Ticker'] = ticker
-                new_raw_df['Sector'] = sector_name
-                
-                for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-                    if col in new_raw_df.columns:
-                        new_raw_df[col] = pd.to_numeric(new_raw_df[col], errors='coerce')
-                
-                if not ticker_history.empty:
-                    df = pd.concat([ticker_history, new_raw_df], ignore_index=True)
-                    df = df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
-                else:
-                    df = new_raw_df.sort_values('Date').reset_index(drop=True)
-                
-                # Append to Deep Learning Archive (Raw Data)
-                if not existing_dl_df.empty:
-                    dl_history = existing_dl_df[existing_dl_df['Ticker'] == ticker].copy()
-                    if not dl_history.empty:
-                        dl_df = pd.concat([dl_history, new_raw_df], ignore_index=True)
-                        dl_df = dl_df.drop_duplicates(subset=['Date']).sort_values('Date').reset_index(drop=True)
-                    else:
-                        dl_df = new_raw_df.sort_values('Date').reset_index(drop=True)
-                else:
-                    dl_df = new_raw_df.sort_values('Date').reset_index(drop=True)
-                
-                if not dl_df.empty:
-                    all_dl_data.append(dl_df.copy())
-                
-                if len(df) < 252:
-                    tickers_failed_count += 1
-                    continue
-                
-                # --- חישובים טכניים ---
-                df['Daily_Return_%'] = df['Close'].pct_change() * 100
-                df['Daily_STDEV'] = df[['Open', 'High', 'Low', 'Close']].std(axis=1)
-                df['STDEV_5d'] = df['Close'].rolling(window=5).std()
-                df['STDEV_10d'] = df['Close'].rolling(window=10).std()
-                df['STDEV_20d'] = df['Close'].rolling(window=20).std()
-                df['Max_High_20d'] = df['High'].rolling(window=20).max()
-                df['Min_Low_20d'] = df['Low'].rolling(window=20).min()
-                
-                delta = df['Close'].diff()
-                gain = np.where(delta > 0, delta, 0)
-                loss = np.where(delta < 0, -delta, 0)
-                
-                avg_gain = pd.Series(gain).ewm(com=13, min_periods=14).mean().values
-                avg_loss = pd.Series(loss).ewm(com=13, min_periods=14).mean().values
-                
-                avg_loss = np.where(avg_loss == 0, 0.00001, avg_loss)
-                rs = avg_gain / avg_loss
-                df['RSI_14d'] = 100 - (100 / (1 + rs))
-                
-                prev_high = df['High'].shift(1)
-                prev_low = df['Low'].shift(1)
-                prev_close = df['Close'].shift(1)
-                
-                tr1 = df['High'] - df['Low']
-                tr2 = (df['High'] - prev_close).abs()
-                tr3 = (df['Low'] - prev_close).abs()
-                tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-                
-                df['ATR_14d'] = tr.ewm(com=13, min_periods=14).mean().values
-                
-                up_move = df['High'] - prev_high
-                down_move = prev_low - df['Low']
-                
-                plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0)
-                minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0)
-                
-                smoothed_plus_dm = pd.Series(plus_dm).ewm(com=13, min_periods=14).mean().values
-                smoothed_minus_dm = pd.Series(minus_dm).ewm(com=13, min_periods=14).mean().values
-                
-                safe_atr = np.where(df['ATR_14d'] == 0, 0.00001, df['ATR_14d'])
-                df['Plus_DI_14d'] = 100 * (smoothed_plus_dm / safe_atr)
-                df['Minus_DI_14d'] = 100 * (smoothed_minus_dm / safe_atr)
-                
-                di_sum = df['Plus_DI_14d'] + df['Minus_DI_14d']
-                di_sum = np.where(di_sum == 0, 0.00001, di_sum)
-                dx = 100 * ((df['Plus_DI_14d'] - df['Minus_DI_14d']).abs() / di_sum)
-                df['ADX_14d'] = pd.Series(dx).ewm(com=13, min_periods=14).mean().values
-                
-                raw_stop = df['Max_High_20d'] - (2.5 * df['ATR_14d'])
-                df['Dynamic_Stop_Loss'] = np.maximum.accumulate(raw_stop.fillna(0))
-                df.loc[df['ATR_14d'].isna(), 'Dynamic_Stop_Loss'] = np.nan
-                
-                df['RAS_Signal'] = df.apply(calculate_ras_signal, axis=1)
-                
-                if 'Analyst_Consensus' not in df.columns:
-                    df['Analyst_Consensus'] = "N/A"
-                    df['Analyst_Upside_%'] = np.nan
-                
-                df = df.dropna(subset=['Close', 'RSI_14d', 'ADX_14d']).reset_index(drop=True)
-                
-                if not df.empty:
-                    all_combined_data.append(df)
-                    if is_new_ticker:
-                        tickers_added_count += 1
-                    else:
-                        tickers_updated_count += 1
-                else:
-                    tickers_failed_count += 1
-                
-                time.sleep(0.01)  
-                
-            except Exception as e:
-                print(f"Error processing {ticker}: {e}")
-                tickers_failed_count += 1
-            
-            processed_tickers.add(ticker)
-            if len(processed_tickers) % 20 == 0:
-                try:
-                    import pickle
-                    with open(checkpoint_path, 'wb') as f:
-                        pickle.dump({
-                            'all_combined_data': all_combined_data,
-                            'all_dl_data': all_dl_data,
-                            'processed_tickers': processed_tickers,
-                            'tickers_updated_count': tickers_updated_count,
-                            'tickers_added_count': tickers_added_count,
-                            'tickers_failed_count': tickers_failed_count
-                        }, f)
-                    print(f"  [CHECKPOINT] Saved progress at {len(processed_tickers)} tickers.")
-                except Exception as e:
-                    print(f"  [WARNING] Failed to save checkpoint: {e}")
+    
+    all_combined_data, all_dl_data, t_updated, t_added, t_failed, valid_tickers_in_dict = run_prefect_data_ingestion(
+        sectors_map, processed_tickers, max_dates_per_ticker, existing_df, existing_dl_df
+    )
+    tickers_updated_count += t_updated
+    tickers_added_count += t_added
+    tickers_failed_count += t_failed
 
     for ticker, last_date in max_dates_per_ticker.items():
+
         if ticker not in valid_tickers_in_dict:
             ticker_history = existing_df[existing_df['Ticker'] == ticker].copy()
             all_combined_data.append(ticker_history)
@@ -635,7 +705,7 @@ if __name__ == "__main__":
     if active_sectors_dict:
         # 2. Run the main pipeline
         download_sp500_full_analysis(active_sectors_dict, output_directory)
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
     else:
         print("[CRITICAL] Could not load or generate VIP tickers. Pipeline aborted.")
         os._exit(1)

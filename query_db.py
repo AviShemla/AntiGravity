@@ -22,4 +22,4 @@ try:
     print(df2.to_string())
 except Exception as e:
     print("Err2:", e)
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

@@ -107,4 +107,4 @@ def send_victorious_email():
 if __name__ == "__main__":
     send_victorious_email()
     import os
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

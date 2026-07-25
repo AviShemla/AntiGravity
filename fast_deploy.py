@@ -11,7 +11,14 @@ def deploy():
     
     files_to_upload = [
         ("server.py", "/opt/antigravity/server.py"),
-        ("frontend/app.js", "/opt/antigravity/frontend/app.js")
+        ("database_manager.py", "/opt/antigravity/database_manager.py"),
+        ("frontend/app.js", "/opt/antigravity/frontend/app.js"),
+        ("frontend/index.html", "/opt/antigravity/frontend/index.html"),
+        ("frontend/style_3d.css", "/opt/antigravity/frontend/style_3d.css"),
+        ("financial_data/Prod_vs_Shadow_Results_MASTER.csv", "/opt/antigravity/financial_data/Prod_vs_Shadow_Results_MASTER.csv"),
+        ("financial_data/Olympic_Shootout_Results_MASTER.csv", "/opt/antigravity/financial_data/Olympic_Shootout_Results_MASTER.csv"),
+        ("financial_data/Top5_Bayesian_Scorecard_Formatted.xlsx", "/opt/antigravity/financial_data/Top5_Bayesian_Scorecard_Formatted.xlsx"),
+        ("financial_data/All_ETFs_Scorecard.xlsx", "/opt/antigravity/financial_data/All_ETFs_Scorecard.xlsx")
     ]
     
     for local_path, remote_path in files_to_upload:

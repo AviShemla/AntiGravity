@@ -163,4 +163,4 @@ def run_qa():
 
 if __name__ == "__main__":
     run_qa()
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

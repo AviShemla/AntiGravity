@@ -86,9 +86,7 @@ def migrate_pending_orders():
 def set_initial_continuity():
     print("\n>>> Setting Initial Continuity Flags...")
     # Seed the pipeline logic to assume we successfully finished up to the latest ledger date
-    conn = database_manager.get_connection()
-    df = pd.read_sql_query("SELECT MAX(date) as max_date FROM capital_ledgers", conn)
-    conn.close()
+    df = database_manager.execute_query("SELECT MAX(date) as max_date FROM capital_ledgers")
     
     if not df.empty and df['max_date'].iloc[0]:
         max_date = df['max_date'].iloc[0]
@@ -104,3 +102,5 @@ if __name__ == "__main__":
     migrate_pending_orders()
     set_initial_continuity()
     print("\n[SUCCESS] Entire CSV/JSON database perfectly replicated into antigravity.db SSOT!")
+    import sys; sys.stdout.flush(); os._exit(0)
+

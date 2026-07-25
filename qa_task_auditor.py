@@ -171,7 +171,7 @@ if __name__ == "__main__":
                 subprocess.Popen([sys.executable, "intraday_tracker.py", "--target-date", last_completed_market_day], cwd=BASE_DIR, creationflags=0x08000000)
                 errors += 1
                 
-            # QA 6: Market Open Readiness
+            # QA 6: Market Open Readiness (Intraday Execution Blindspot Aware)
             df_pending = database_manager.execute_query('SELECT persona, date FROM pending_orders')
             expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
                                  'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']
@@ -185,7 +185,12 @@ if __name__ == "__main__":
                     stale = True
                     log_alert(f"[QA 6] Stale Pending Orders Detected! Pending date ({max_pending_date}) < expected ({next_market_day}).")
                 
-            if missing or stale:
+            # Intraday Execution Blindspot Patch:
+            # If ledger shows yesterday was successful, and pending_orders is empty, DO NOT panic.
+            # The Sniper consumed them. Expected state post-execution. Wait for pipeline to run.
+            if df_pending.empty and max_ledger_date == last_completed_market_day:
+                pass 
+            elif missing or stale:
                 if missing: log_alert(f"[QA 6] Missing Pending Orders for Personas: {missing}.")
                 is_running = any('laptop_catchup_controller.py' in " ".join(p.info.get('cmdline', []) or []) for p in psutil.process_iter(['cmdline']))
                 if is_running:
@@ -193,10 +198,7 @@ if __name__ == "__main__":
                 else:
                     log_alert("-> Auto-spawning Catch-Up Controller...")
                     subprocess.Popen([sys.executable, "laptop_catchup_controller.py"], cwd=BASE_DIR, creationflags=0x08000000)
-                    if datetime.now().hour >= 14:
-                        errors += 1
-                    else:
-                        log_alert("-> Note: Before 14:00, missing pending orders is expected. Not counting as a fatal error.")
+                    errors += 1
                     
         # QA 10: ETF/Stock Sequencing
         stock_last = database_manager.get_last_continuity_date('master_pipeline')

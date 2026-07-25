@@ -1,0 +1,9 @@
+persona
+Conservative
+ETF_Conservative
+ETF_Neutral
+ETF_BallsForBrains
+ETF_Dynamic
+Neutral
+BallsForBrains
+Dynamic

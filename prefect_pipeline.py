@@ -153,17 +153,18 @@ def antigravity_maintenance_flow():
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1] == "serve":
-            # Deploy all flows
-            antigravity_nightly_flow.serve(name="nightly-pipeline", cron="0 1 * * *")
-            antigravity_preflight_flow.serve(name="pre-market-health", cron="0 11 * * 1-5")
-            antigravity_weekend_flow.serve(name="weekend-trainers", cron="0 14 * * 6")
-            antigravity_git_backup_flow.serve(name="git-backup", cron="0 5 * * *")
-            antigravity_daily_migration_flow.serve(name="daily-migration", cron="30 23 * * *")
-            antigravity_api_health_flow.serve(name="api-health", cron="*/15 * * * *")
-            antigravity_maintenance_flow.serve(name="maintenance-qa", cron="0 * * * *")
-            
-            # Run daemon health-check every 15 minutes during market hours (13:00 to 20:00 UTC, Mon-Fri)
-            antigravity_market_daemons_flow.serve(name="market-daemons-health", cron="*/15 13-20 * * 1-5")
+            from prefect import serve
+            # Deploy all flows concurrently
+            serve(
+                antigravity_nightly_flow.to_deployment(name="nightly-pipeline", cron="0 1 * * *"),
+                antigravity_preflight_flow.to_deployment(name="pre-market-health", cron="0 11 * * 1-5"),
+                antigravity_weekend_flow.to_deployment(name="weekend-trainers", cron="0 14 * * 6"),
+                antigravity_git_backup_flow.to_deployment(name="git-backup", cron="0 5 * * *"),
+                antigravity_daily_migration_flow.to_deployment(name="daily-migration", cron="30 23 * * *"),
+                antigravity_api_health_flow.to_deployment(name="api-health", cron="*/15 * * * *"),
+                antigravity_maintenance_flow.to_deployment(name="maintenance-qa", cron="0 * * * *"),
+                antigravity_market_daemons_flow.to_deployment(name="market-daemons-health", cron="*/15 13-20 * * 1-5")
+            )
         elif sys.argv[1] == "qa":
             on_demand_qa_flow()
         else:

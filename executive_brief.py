@@ -213,4 +213,4 @@ if __name__ == "__main__":
     print("Generating Executive Assistant Brief...")
     send_executive_brief()
     import os
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

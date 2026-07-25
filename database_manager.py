@@ -9,80 +9,26 @@ load_dotenv()
 TURSO_URL = os.environ.get("TURSO_DATABASE_URL")
 TURSO_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
-_global_client = None
-
-import threading
-_db_lock = threading.Lock()
-
-_local_client = None
-
-def get_local_connection():
-    global _local_client
-    if _local_client is None:
-        db_dir = os.path.join(os.path.dirname(__file__), "financial_data")
-        os.makedirs(db_dir, exist_ok=True)
-        local_db_path = os.path.join(db_dir, "ag_pipeline_fallback.db")
-        _local_client = libsql_client.create_client_sync(url=f"file:{local_db_path}")
-        _init_db_schema(_local_client)
-    return _local_client
-
 def get_connection():
-    """Returns a connected libsql_client sync client from a global pool."""
-    global _global_client
-    if _global_client is None:
-        if not TURSO_URL or not TURSO_TOKEN:
-            raise ValueError("Missing TURSO credentials in .env file!")
-        client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
-        
-        original_execute = client.execute
-        from concurrent.futures import ThreadPoolExecutor, TimeoutError
-        import concurrent.futures
-        
-        # Create a single executor pool for this client
-        _executor = ThreadPoolExecutor(max_workers=5)
-        
-        def locked_execute(stmt, args=None):
-            with _db_lock:
-                try:
-                    # Submit the network call to the executor and wait with timeout
-                    future = _executor.submit(original_execute, stmt, args or [])
-                    return future.result(timeout=10)
-                except TimeoutError:
-                    print(f"  [TURSO DEADLOCK DETECTED] Network call timed out after 10s. Falling back to local SQLite database.")
-                    local_client = get_local_connection()
-                    return local_client.execute(stmt, args or [])
-                except Exception as e:
-                    err_msg = str(e).lower()
-                    if 'result' in err_msg or '503' in err_msg or '429' in err_msg or 'timeout' in err_msg or 'failed to fetch' in err_msg:
-                        print(f"  [TURSO DEADLOCK DETECTED] {e}. Falling back to local SQLite database.")
-                        local_client = get_local_connection()
-                        return local_client.execute(stmt, args or [])
-                    raise e
-        client.execute = locked_execute
-        
-        _global_client = client
-    return _global_client
-
-import atexit
-@atexit.register
-def close_global_client():
-    global _global_client
-    if _global_client is not None:
-        try:
-            _global_client.close()
-        except:
-            pass
+    """Returns a connected libsql_client sync client."""
+    if not TURSO_URL or not TURSO_TOKEN:
+        raise ValueError("Missing TURSO credentials in .env file!")
+    return libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
 
 def execute_query(query, args=None):
     """Generic helper to execute SELECT queries and return a DataFrame."""
     client = get_connection()
-    res = client.execute(query, args or [])
-    if not res.rows:
-        return pd.DataFrame(columns=res.columns)
-    return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
+    try:
+        res = client.execute(query, args or [])
+        if not res.rows:
+            return pd.DataFrame(columns=res.columns)
+        return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
+    finally:
+        client.close()
 
-def _init_db_schema(client):
-    """Initializes the database schema for the given client."""
+def init_db():
+    """Initializes the database schema if it doesn't exist."""
+    client = get_connection()
     try:
         # 1. Capital Ledgers Table
         client.execute('''
@@ -142,12 +88,7 @@ def _init_db_schema(client):
             )
         ''')
     finally:
-        pass
-
-def init_db():
-    """Initializes the database schema if it doesn't exist."""
-    client = get_connection()
-    _init_db_schema(client)
+        client.close()
 
 def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
     """
@@ -189,7 +130,7 @@ def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_
         ''', [persona, date, float(cash), float(total_equity), json.dumps(holdings_json) if isinstance(holdings_json, dict) else holdings_json, 
               json.dumps(daily_pnl_json) if isinstance(daily_pnl_json, dict) else daily_pnl_json, intraday_status, engine_version])
     finally:
-        pass
+        client.close()
 
 def get_ledger(persona):
     client = get_connection()
@@ -207,7 +148,7 @@ def get_ledger(persona):
         df = pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
         return df
     finally:
-        pass
+        client.close()
 
 def save_pending_order(persona, date, target_cash, target_equity, target_holdings, daily_pnl, executed_trades):
     target_cash = _enforce_double_entry_accounting(target_cash, target_equity, target_holdings)
@@ -228,7 +169,7 @@ def save_pending_order(persona, date, target_cash, target_equity, target_holding
               json.dumps(daily_pnl) if isinstance(daily_pnl, dict) else daily_pnl,
               json.dumps(executed_trades) if isinstance(executed_trades, dict) else executed_trades])
     finally:
-        pass
+        client.close()
 
 def get_pending_order(persona):
     client = get_connection()
@@ -238,7 +179,7 @@ def get_pending_order(persona):
             return dict(zip(res.columns, res.rows[0]))
         return None
     finally:
-        pass
+        client.close()
 
 def update_continuity(pipeline_name, date_str):
     client = get_connection()
@@ -250,7 +191,7 @@ def update_continuity(pipeline_name, date_str):
                 last_completed_date=excluded.last_completed_date
         ''', [pipeline_name, date_str])
     finally:
-        pass
+        client.close()
 
 def get_last_continuity_date(pipeline_name):
     client = get_connection()
@@ -260,7 +201,7 @@ def get_last_continuity_date(pipeline_name):
             return res.rows[0][0]
         return None
     finally:
-        pass
+        client.close()
 
 if __name__ == "__main__":
     init_db()

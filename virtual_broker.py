@@ -7,7 +7,7 @@ from blacklist_engine import get_blacklisted_tickers
 import database_manager
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
-EXCEL_PATH = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted_MOCK.xlsx')
+EXCEL_PATH = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 
 PERSONAS = {
     "Conservative": {
@@ -413,10 +413,32 @@ def run_virtual_broker():
                             units = 0
                             latest_price = 0
                             alloc_dollars = 0.0
-                    except:
-                        units = 0
-                        latest_price = 0
-                        alloc_dollars = 0.0
+                    except Exception as e:
+                        import logging
+                        logging.error(f"FATAL API DROP for {sheet} on {target_date_for_ledger}. Error: {e}. Retrying aggressively...")
+                        import time
+                        try:
+                            time.sleep(2)
+                            ticker_data = download_ticker_with_failover(sheet, start=(pd.to_datetime(target_date_for_ledger) - pd.Timedelta(days=10)).strftime('%Y-%m-%d'))
+                            ticker_data = ticker_data[ticker_data.index <= pd.to_datetime(target_date_for_ledger)]
+                            if not ticker_data.empty:
+                                latest_price = ticker_data['Close'].dropna().iloc[-1]
+                                units = int(raw_alloc_dollars // latest_price)
+                                alloc_dollars = units * latest_price
+                                
+                                # STRICT FAILSAFE: Enforce absolute maximum cap
+                                max_allowed_dollars = settled_equity * config['max_alloc']
+                                if alloc_dollars > max_allowed_dollars:
+                                    alloc_dollars = max_allowed_dollars
+                                    units = int(alloc_dollars // latest_price)
+                                    alloc_dollars = units * latest_price
+                            else:
+                                raise ValueError("Retry yielded empty dataframe")
+                        except Exception as e2:
+                            logging.error(f"Aggressive retry completely failed for {sheet}. Failsafe dropping to cash. {e2}")
+                            units = 0
+                            latest_price = 0
+                            alloc_dollars = 0.0
                         
                     if alloc_dollars > 0:
                         # Save complex struct to JSON for the exporter to read

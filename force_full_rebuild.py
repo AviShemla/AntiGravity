@@ -62,4 +62,4 @@ if __name__ == "__main__":
     run_cmd([python_exe, "export_etf_broker_excel.py"])
     
     print("\n=== FULL PIPELINE REBUILD SUCCESSFUL ===")
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

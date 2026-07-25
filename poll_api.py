@@ -8,7 +8,7 @@ for i in range(10):
     try:
         data = urllib.request.urlopen('http://66.42.118.26/api/stats', timeout=3).read().decode()
         print(f"SUCCESS! API Response preview: {data[:150]}")
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
     except Exception as e:
         print(f"Attempt {i+1} failed: {e}")
         time.sleep(1)

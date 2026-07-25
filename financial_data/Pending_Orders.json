@@ -1,37 +1,62 @@
 {
     "ETF_Conservative": {
-        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\ETF_Capital_Ledger_Conservative.csv",
         "Persona": "ETF_Conservative",
-        "Date": "2026-06-12",
-        "Target_Cash": 10000.0,
-        "Target_Total_Equity": 10000.0,
-        "Target_Holdings": {},
+        "Date": "2026-07-23",
+        "Target_Cash": 9638.44,
+        "Target_Total_Equity": 0.0,
+        "Target_Holdings": {
+            "RGTZ": {
+                "dollars": 361.56,
+                "units": 69,
+                "price": 5.239999771118164
+            }
+        },
         "Daily_PnL_JSON": {},
         "Executed_Intraday_Trades": {}
     },
     "ETF_Neutral": {
-        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\ETF_Capital_Ledger_Neutral.csv",
         "Persona": "ETF_Neutral",
-        "Date": "2026-06-12",
-        "Target_Cash": 9983.62,
-        "Target_Total_Equity": 9983.62,
-        "Target_Holdings": {},
+        "Date": "2026-07-23",
+        "Target_Cash": 8879.29,
+        "Target_Total_Equity": 0.0,
+        "Target_Holdings": {
+            "RGTZ": {
+                "dollars": 728.36,
+                "units": 139,
+                "price": 5.239999771118164
+            },
+            "XLF": {
+                "dollars": 392.35,
+                "units": 7,
+                "price": 56.04999923706055
+            }
+        },
         "Daily_PnL_JSON": {},
         "Executed_Intraday_Trades": {}
     },
     "ETF_Dynamic": {
-        "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\ETF_Capital_Ledger_Dynamic.csv",
         "Persona": "ETF_Dynamic",
-        "Date": "2026-06-12",
-        "Target_Cash": 9983.62,
-        "Target_Total_Equity": 9983.62,
-        "Target_Holdings": {},
+        "Date": "2026-07-23",
+        "Target_Cash": 8879.29,
+        "Target_Total_Equity": 0.0,
+        "Target_Holdings": {
+            "RGTZ": {
+                "dollars": 728.36,
+                "units": 139,
+                "price": 5.239999771118164
+            },
+            "XLF": {
+                "dollars": 392.35,
+                "units": 7,
+                "price": 56.04999923706055
+            }
+        },
         "Daily_PnL_JSON": {},
         "Executed_Intraday_Trades": {}
     },
     "Conservative": {
         "Persona": "Conservative",
-        "Date": "2026-06-11",
+        "Date": "2026-07-23",
         "Target_Cash": 9905.46,
         "Target_Total_Equity": 9905.46,
         "Target_Holdings": {},
@@ -41,7 +66,7 @@
     },
     "Neutral": {
         "Persona": "Neutral",
-        "Date": "2026-06-11",
+        "Date": "2026-07-23",
         "Target_Cash": 9582.86,
         "Target_Total_Equity": 9582.86,
         "Target_Holdings": {},
@@ -51,7 +76,7 @@
     },
     "BallsForBrains": {
         "Persona": "BallsForBrains",
-        "Date": "2026-06-11",
+        "Date": "2026-07-23",
         "Target_Cash": 9551.4,
         "Target_Total_Equity": 9551.4,
         "Target_Holdings": {},
@@ -61,12 +86,47 @@
     },
     "Dynamic": {
         "Persona": "Dynamic",
-        "Date": "2026-06-11",
+        "Date": "2026-07-23",
         "Target_Cash": 9503.06,
         "Target_Total_Equity": 9503.06,
         "Target_Holdings": {},
         "Daily_PnL_JSON": {},
         "Executed_Intraday_Trades": {},
         "Ledger_Path": "C:\\Users\\AviShemla\\AntiGravity\\financial_data\\Capital_Ledger_Dynamic.csv"
+    },
+    "ETF_BallsForBrains": {
+        "Persona": "ETF_BallsForBrains",
+        "Date": "2026-07-23",
+        "Target_Cash": 7135.9,
+        "Target_Total_Equity": 0.0,
+        "Target_Holdings": {
+            "RGTZ": {
+                "dollars": 995.6,
+                "units": 190,
+                "price": 5.239999771118164
+            },
+            "MSTZ": {
+                "dollars": 448.54,
+                "units": 41,
+                "price": 10.9399995803833
+            },
+            "UDOW": {
+                "dollars": 277.56,
+                "units": 4,
+                "price": 69.38999938964844
+            },
+            "XLF": {
+                "dollars": 784.7,
+                "units": 14,
+                "price": 56.04999923706055
+            },
+            "XLI": {
+                "dollars": 357.7,
+                "units": 2,
+                "price": 178.85000610351562
+            }
+        },
+        "Daily_PnL_JSON": {},
+        "Executed_Intraday_Trades": {}
     }
 }

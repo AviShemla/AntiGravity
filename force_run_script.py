@@ -14,4 +14,4 @@ except Exception as e:
     print(f"FATAL ERROR: {e}")
     import traceback
     traceback.print_exc()
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

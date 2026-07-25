@@ -474,5 +474,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     export_etf_scorecard(args.target, target_date=args.target_date)
     import os
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)
 

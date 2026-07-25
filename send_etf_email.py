@@ -253,4 +253,4 @@ except Exception as e:
     print(f"Failed to send email. Error: {e}")
 finally:
     import os
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

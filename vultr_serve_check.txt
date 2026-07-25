@@ -1,0 +1,4 @@
+root      309485  0.0  0.0   7536  2384 ?        S    19:29   0:00 bash -c source /opt/antigravity/venv/bin/activate && nohup python /opt/antigravity/prefect_pipeline.py serve > /opt/antigravity/prefect_serve_daemon.log 2>&1 &
+root      309487 43.0  3.3 617140 253280 ?       Sl   19:29   0:04 python /opt/antigravity/prefect_pipeline.py serve
+root      309569  0.0  0.0   7536  3968 ?        Ss   19:29   0:00 bash -c ps aux | grep prefect_pipeline
+root      309571  0.0  0.0   6716  2716 ?        S    19:29   0:00 grep prefect_pipeline

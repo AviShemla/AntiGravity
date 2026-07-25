@@ -155,5 +155,5 @@ if __name__ == '__main__':
     import os
     target = sys.argv[1] if len(sys.argv) > 1 else 'XLK'
     build_hybrid_matrix(target)
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)
 

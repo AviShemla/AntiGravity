@@ -13,4 +13,4 @@ try:
     print(df0.to_string())
 except Exception as e:
     print("Err0:", e)
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

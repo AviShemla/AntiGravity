@@ -299,4 +299,4 @@ if __name__ == "__main__":
         catchup_master_pipeline()
     else:
         catchup_everything_and_email()
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

@@ -43,7 +43,7 @@ def update_streak(force_send=False):
             
     today_str = datetime.now().strftime('%Y-%m-%d')
     if state.get("last_run_date") == today_str and not force_send:
-        print(f"[{today_str}] Monitor already ran today. Current Streak: {state['streak']}/5")
+        print(f"[{today_str}] Monitor already ran today. Current Streak: {state['streak']}/10")
         return
 
     is_perfect, reason = evaluate_health()
@@ -54,7 +54,7 @@ def update_streak(force_send=False):
     if is_perfect:
         state["streak"] += 1
         state["status"] = f"SUCCESS - {reason}"
-        print(f"[{today_str}] SUCCESS. Streak increased to: {state['streak']}/5")
+        print(f"[{today_str}] SUCCESS. Streak increased to: {state['streak']}/10")
         
         # --- DISPATCH MORNING EMAILS ONLY ON 100% PERFECT RUN ---
         print("--> Dispatching Clean Morning Dashboards...")
@@ -68,7 +68,7 @@ def update_streak(force_send=False):
     else:
         state["streak"] = 0
         state["status"] = f"FAILED - {reason}"
-        print(f"[{today_str}] FAILURE DETECTED: {reason}. Streak reset to 0/5. EMAILS ABORTED.")
+        print(f"[{today_str}] FAILURE DETECTED: {reason}. Streak reset to 0/10. EMAILS ABORTED.")
 
     state["last_run_date"] = today_str
 
@@ -78,3 +78,5 @@ def update_streak(force_send=False):
 if __name__ == "__main__":
     print("--- Running System Health Monitor ---")
     update_streak()
+
+import sys; sys.stdout.flush(); os._exit(0)

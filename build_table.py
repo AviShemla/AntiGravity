@@ -50,4 +50,4 @@ for p in personas:
         md_table += f"| {p} ({a}) | {recs} | {status} | {trend} |\n"
 
 print(md_table)
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)

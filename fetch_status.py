@@ -27,7 +27,7 @@ def run():
     except Exception as e:
         print("DB Error:", e)
     finally:
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
 
 if __name__ == '__main__':
     run()

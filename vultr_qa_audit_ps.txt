@@ -1,0 +1,5 @@
+root      287033  0.0  1.9 1048824 148216 ?      Ssl  Jul24   0:22 /opt/antigravity/venv/bin/python intraday_tracker.py
+root      287044  0.0  1.7 298896 132368 ?       S    Jul24   0:14 /opt/antigravity/venv/bin/python -c import sys; from multiprocessing.forkserver import main; main(10, 12, ['__main__'], sys_argv=sys.argv[1:], **{'sys_path': ['/opt/antigravity', '/usr/lib/python314.zip', '/usr/lib/python3.14', '/usr/lib/python3.14/lib-dynload', '/opt/antigravity/venv/lib/python3.14/site-packages'], 'main_path': '/opt/antigravity/intraday_tracker.py', 'authkey_r': 14}) intraday_tracker.py
+root      309796  1.3  3.8 1380680 291500 ?      Sl   Jul24   9:12 /opt/antigravity/venv/bin/python -m uvicorn --app-dir /opt/antigravity/venv/lib/python3.14/site-packages --factory prefect.server.api.server:create_app --host 127.0.0.1 --port 8404 --log-level error --lifespan on
+root      343296  0.0  0.0   7536  3956 ?        Ss   06:30   0:00 bash -c ps aux | grep -E 'intraday_tracker|uvicorn'
+root      343298  0.0  0.0   6848  2736 ?        S    06:30   0:00 grep -E intraday_tracker|uvicorn

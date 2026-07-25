@@ -1,0 +1,11 @@
+=== EXECUTED TRADES ===
+NO EXECUTED TRADES FOUND
+
+=== INTRADAY STATUS ===
+persona,intraday_status
+BallsForBrains,Tracker Executed: BUY
+Dynamic,Tracker Executed: TP/SL
+ETF_BallsForBrains,Tracker Executed: BUY & TP/SL
+ETF_Dynamic,Tracker Executed: BUY & TP/SL
+ETF_Neutral,Tracker Executed: BUY & TP/SL
+Neutral,Tracker Executed: TP/SL

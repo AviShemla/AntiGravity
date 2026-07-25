@@ -12,7 +12,7 @@ try:
     print(df.to_string())
 except Exception as e:
     print(e)
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)
 """
 stdin, stdout, stderr = ssh.exec_command(f'cd /opt/antigravity && source venv/bin/activate && python -u -c "{script}"')
 print("STDOUT:\n", stdout.read().decode('utf-8'))

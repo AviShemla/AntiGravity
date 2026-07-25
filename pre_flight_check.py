@@ -22,7 +22,7 @@ def run_qa_suite():
             os._exit(1)
             
         log_msg("SUCCESS: All assertions passed. System is 100% Green and ready for deployment.")
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
         
     except FileNotFoundError:
         log_msg("ERROR: pytest is not installed or not found in PATH.")

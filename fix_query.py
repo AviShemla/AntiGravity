@@ -21,7 +21,7 @@ try:
     print(df2.to_string())
 except Exception as e:
     print("Err2:", e)
-os._exit(0)
+import sys; sys.stdout.flush(); os._exit(0)
 """
 stdin, stdout, stderr = ssh.exec_command(f'cd /opt/antigravity && source venv/bin/activate && python -c "{script}"')
 print(stdout.read().decode("utf-8"))

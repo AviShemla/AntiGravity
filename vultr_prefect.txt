@@ -1,0 +1,4 @@
+root      306306  0.0  0.0   7536  2404 ?        S    19:06   0:00 bash -c source /opt/antigravity/venv/bin/activate && nohup prefect server start > /opt/antigravity/prefect_server_daemon.log 2>&1 &
+root      306308  3.0  2.9 1462836 226752 ?      Rl   19:06   0:42 /opt/antigravity/venv/bin/python3 /opt/antigravity/venv/bin/prefect server start
+root      309413  0.0  0.0   7536  4020 ?        Ss   19:29   0:00 bash -c ps aux | grep prefect
+root      309415  0.0  0.0   6716  2748 ?        S    19:29   0:00 grep prefect

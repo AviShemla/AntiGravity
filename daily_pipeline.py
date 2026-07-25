@@ -33,7 +33,7 @@ try:
     past_sessions = schedule[schedule['market_close'] < now]
     if past_sessions.empty:
         print("No completed market sessions found in the last 7 days. Skipping.")
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
         
     last_completed_session = past_sessions.iloc[-1]
     
@@ -87,3 +87,6 @@ if __name__ == '__main__':
     laptop_catchup_controller.catchup_etf_pipeline()
     
     print("\nAll AntiGravity Nightly Single-Stock Protocols Completed Successfully.")
+    import sys; sys.stdout.flush(); os._exit(0)
+
+

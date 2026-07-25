@@ -30,7 +30,7 @@ try:
     past_sessions = schedule[schedule['market_close'] < now]
     if past_sessions.empty:
         print("No completed market sessions found in the last 7 days. Skipping.")
-        os._exit(0)
+        import sys; sys.stdout.flush(); os._exit(0)
         
     last_completed_session = past_sessions.iloc[-1]
     
@@ -81,4 +81,8 @@ def send_outlook_email(subject, html_body, attachment_path=None, logo_path=None)
 if __name__ == '__main__':
     import laptop_catchup_controller
     laptop_catchup_controller.catchup_etf_pipeline()
+    
+    import sys; sys.stdout.flush(); os._exit(0)
+
+
 

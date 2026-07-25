@@ -285,17 +285,30 @@ def download_ticker_with_failover(ticker, period=None, start=None):
             nyse = mcal.get_calendar('NYSE')
             today = datetime.datetime.now().strftime('%Y-%m-%d')
             valid_days = nyse.valid_days(start_date=(datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'), end_date=today)
+            current_time = datetime.datetime.now()
+            if current_time.weekday() >= 5: # Weekend
+                last_closed_market_day = valid_days[-1]
+            else:
+                last_closed_market_day = valid_days[-2] if current_time.hour < 16 else valid_days[-1]
             
-            last_closed_market_day = valid_days[-2] if datetime.datetime.now().hour < 16 else valid_days[-1]
             last_closed_market_day = pd.to_datetime(last_closed_market_day).tz_localize(None).date()
-            
             df.index = pd.to_datetime(df.index).tz_localize(None)
             
             # Find the row corresponding to last_closed_market_day
-            # Since df.index is a datetime, we can check if it exists by matching dates
             matching_rows = df[df.index.date == last_closed_market_day]
             
             if not start and (matching_rows.empty or pd.isna(matching_rows['Close'].iloc[-1])):
+                # ZERO-TRUST REPAIR: If yf.download dropped the close, aggressively extract it from fast_info
+                try:
+                    fast_close = yf.Ticker(ticker_api).fast_info.last_price
+                    import math
+                    if fast_close and not math.isnan(fast_close):
+                        safe_print(f"  [FAST_INFO SURGERY] Yfinance dropped historical close for {last_closed_market_day}. Injecting fast_info price: {fast_close}")
+                        df.loc[pd.to_datetime(last_closed_market_day)] = fast_close
+                        time.sleep(0.5)
+                        return df
+                except Exception as ex:
+                    safe_print(f"  [FAST_INFO FAILED] {ex}")
                 raise ValueError(f"Yahoo Finance returned missing/NaN data for {last_closed_market_day}. Forcing Tiingo failover.")
                 
             time.sleep(0.5) # Prevent rate limiting (Reduced from 5s to 0.5s)

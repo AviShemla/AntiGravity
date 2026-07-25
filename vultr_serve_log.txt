@@ -1,0 +1,152 @@
+19:30:58.206 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8404
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+Your deployments are being served and polling for scheduled runs!
+
+Deployments
+┌──────────────────────────────────────────────────┐
+│ AntiGravity Nightly Protocol/nightly-pipeline    │
+│ AntiGravity Pre-Market Health/pre-market-health  │
+│ AntiGravity Weekend Protocol/weekend-trainers    │
+│ AntiGravity Git Backup/git-backup                │
+│ AntiGravity Daily Migration/daily-migration      │
+│ AntiGravity API Health QA/api-health             │
+│ AntiGravity Maintenance/maintenance-qa           │
+│ AntiGravity Market Daemons/market-daemons-health │
+└──────────────────────────────────────────────────┘
+
+To trigger any of these deployments, use the following command:
+
+        $ prefect deployment run [DEPLOYMENT_NAME]
+
+19:44:54.811 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8547
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+19:44:54.868 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8832
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+19:44:59.391 | INFO    | Flow run 'vigilant-mamba' - Downloading flow code from storage at '.'
+19:44:59.655 | INFO    | Flow run 'dexterous-cougar' - Downloading flow code from storage at '.'
+19:44:59.911 | INFO    | Flow run 'vigilant-mamba' - Beginning flow run 'vigilant-mamba' for flow 'AntiGravity API Health QA'
+19:44:59.957 | INFO    | Task run 'Run API Health Check-8a9' - Running API Health Check...
+19:45:00.062 | INFO    | Task run 'Run API Health Check-8a9' - Finished in state Completed()
+19:45:00.158 | INFO    | Flow run 'dexterous-cougar' - Beginning flow run 'dexterous-cougar' for flow 'AntiGravity Market Daemons'
+19:45:00.162 | INFO    | Flow run 'dexterous-cougar' - Ensuring Market Daemons are active...
+19:45:00.201 | INFO    | Task run 'Ensure Intraday Sniper-6bc' - Checking Intraday Sniper status...
+19:45:00.226 | INFO    | Task run 'Ensure Intraday Sniper-6bc' - Intraday Sniper is already running. OK.
+19:45:00.229 | INFO    | Task run 'Ensure Intraday Sniper-6bc' - Finished in state Completed()
+19:45:00.233 | INFO    | Task run 'Ensure VIX Watchdog-03e' - Checking VIX Watchdog status...
+19:45:00.244 | INFO    | Task run 'Ensure VIX Watchdog-03e' - VIX Watchdog is already running. OK.
+19:45:00.247 | INFO    | Task run 'Ensure VIX Watchdog-03e' - Finished in state Completed()
+19:45:01.040 | INFO    | Flow run 'vigilant-mamba' - Finished in state Completed()
+19:45:01.062 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8832
+19:45:01.286 | INFO    | Flow run 'dexterous-cougar' - Finished in state Completed()
+19:45:01.307 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8547
+19:59:59.378 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8562
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+19:59:59.469 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8255
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+19:59:59.591 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8953
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+20:00:04.593 | INFO    | Flow run 'ordinary-sloth' - Downloading flow code from storage at '.'
+20:00:05.000 | INFO    | Flow run 'incredible-pheasant' - Downloading flow code from storage at '.'
+20:00:05.086 | INFO    | Flow run 'fierce-hyrax' - Downloading flow code from storage at '.'
+20:00:05.259 | INFO    | Flow run 'ordinary-sloth' - Beginning flow run 'ordinary-sloth' for flow 'AntiGravity Market Daemons'
+20:00:05.265 | INFO    | Flow run 'ordinary-sloth' - Ensuring Market Daemons are active...
+20:00:05.309 | INFO    | Task run 'Ensure Intraday Sniper-835' - Checking Intraday Sniper status...
+20:00:05.330 | INFO    | Task run 'Ensure Intraday Sniper-835' - Intraday Sniper is already running. OK.
+20:00:05.336 | INFO    | Task run 'Ensure Intraday Sniper-835' - Finished in state Completed()
+20:00:05.347 | INFO    | Task run 'Ensure VIX Watchdog-c56' - Checking VIX Watchdog status...
+20:00:05.365 | INFO    | Task run 'Ensure VIX Watchdog-c56' - VIX Watchdog is already running. OK.
+20:00:05.369 | INFO    | Task run 'Ensure VIX Watchdog-c56' - Finished in state Completed()
+20:00:05.697 | INFO    | Flow run 'incredible-pheasant' - Beginning flow run 'incredible-pheasant' for flow 'AntiGravity Maintenance'
+20:00:05.737 | INFO    | Flow run 'fierce-hyrax' - Beginning flow run 'fierce-hyrax' for flow 'AntiGravity API Health QA'
+20:00:05.741 | INFO    | Task run 'Unified QA Manager Audit-9c6' - Running Unified QA Manager...
+20:00:05.779 | INFO    | Task run 'Run API Health Check-438' - Running API Health Check...
+20:00:05.910 | INFO    | Task run 'Run API Health Check-438' - Finished in state Completed()
+CRITICAL: Database verification failed: file is not a database
+20:00:06.375 | INFO    | Flow run 'ordinary-sloth' - Finished in state Completed()
+20:00:06.406 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8562
+20:00:06.834 | INFO    | Flow run 'fierce-hyrax' - Finished in state Completed()
+20:00:06.860 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8953
+=== QA AUDIT: PRE-FLIGHT DATA ALIGNMENT ===
+SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+========================================
+   QA: FINANCIAL LEDGER & MATH AUDIT    
+========================================
+
+[TEST 1] Kelly Criterion Bounds & Edge Cases
+  => PASSED: Kelly calculations are mathematically sound and perfectly clamped.
+
+[TEST 2] Portfolio PnL Accounting & Precision
+  => PASSED: Portfolio PnL math accurately reflects exact fractional dollar returns.
+
+[TEST 3] Floating-Point Ledger Persistence
+  => PASSED: Ledger precisely maintains floating-point history to 7 decimal places.
+
+[TEST 4] Zero-Unit Aborted Buy Simulation
+  => PASSED: Zero-unit API failures safely refund cash and zero-out allocations.
+
+[TEST 5] Division-By-Zero / NaN Prevention
+  => PASSED: PnL calculations safely trap $0 purchase prices without throwing Div/Zero or NaN errors.
+
+========================================
+LEDGER AUDIT RESULTS: 5 PASSED | 0 FAILED
+========================================
+========================================
+    QA: LOGICAL FLOWS & MATRIX AUDIT    
+========================================
+
+[TEST 1] Global Engine Configuration Integrity
+  => PASSED: Engine Config correctly forces PyTensor compile speeds and Rust sampling.
+
+[TEST 2] Historical Array Logic & Padding
+  => PASSED: Array padding logic strictly blocks duplicate rows and handles future dates perfectly.
+
+[TEST 3] Institutional Failover (Tiingo) Logic
+  [INSTITUTIONAL FAILOVER] Pinged Tiingo API for AAPL...
+  => PASSED: Tiingo Failover downloads and flawlessly normalizes data into Yahoo format.
+
+[TEST 4] Unicode Terminal Encoding Safety
+  => PASSED: Terminal encoding natively supports complex emojis.
+
+[TEST 5] Genesis Timeline Synchronization
+  => PASSED: Genesis ledgers are perfectly synchronized with the true April 2026 machine learning timeline.
+
+[TEST 6] Deep Learning Train/Test Scaling Leakage
+  => PASSED: Deep Learning feature scaling strictly isolates training data from test data.
+
+[TEST 7] Python Scope Isolation (UnboundLocalError)
+  => PASSED: Global module imports are strictly isolated from local function scoping.
+
+[TEST 8] Intraday Phantom Ledger Payload Sync
+  => PASSED: Intraday sell authorizations physically mutate the payload arrays.
+
+========================================
+FLOWS AUDIT RESULTS: 8 PASSED | 0 FAILED
+========================================
+~^^
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/tasks.py", line 1227, in __call__
+    return run_task(
+        task=self,
+    ...<2 lines>...
+        return_type=return_type,
+    )
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/task_engine.py", line 1916, in run_task
+    return run_task_sync(**kwargs)
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/task_engine.py", line 1686, in run_task_sync
+    return engine.state if return_type == "state" else engine.result()
+                                                       ~~~~~~~~~~~~~^^
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/task_engine.py", line 617, in result
+    raise self._raised
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/task_engine.py", line 1021, in run_context
+    yield self
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/task_engine.py", line 1683, in run_task_sync
+    engine.call_task_fn(txn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/task_engine.py", line 1038, in call_task_fn
+    result = call_with_parameters(self.task.fn, parameters)
+  File "/opt/antigravity/venv/lib/python3.14/site-packages/prefect/utilities/callables/__init__.py", line 348, in call_with_parameters
+    return fn(*args, **kwargs)
+  File "/opt/antigravity/prefect_pipeline.py", line 22, in run_master_pipeline
+    raise Exception(f"Master Pipeline failed with code {result.returncode}")
+Exception: Master Pipeline failed with code 1
+19:31:56.893 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8536
+19:32:00.228 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8978
