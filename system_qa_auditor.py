@@ -208,17 +208,22 @@ def phase_e_pre_market_validation():
         schedule = nyse.schedule(start_date=(now - pd.Timedelta(days=7)).strftime('%Y-%m-%d'), end_date=(now + pd.Timedelta(days=7)).strftime('%Y-%m-%d'))
         past_sessions = schedule[schedule['market_close'] < now]
         
-        # If market hasn't closed yet today, AND today is a trading day, today IS the target date.
+        # Determine expected target date
+        # Rule: If today is a trading day AND market hasn't closed yet → today is the target.
+        # Otherwise → the LAST completed trading session is the valid reference
+        # (covers weekends, holidays, and pre-market morning runs).
         today_str = now.strftime('%Y-%m-%d')
-        if now.hour < 16 and today_str in schedule.index:
-             expected_target = today_str
+        market_open_today = today_str in schedule.index and now.hour < 16
+
+        if market_open_today:
+            expected_target = today_str
         else:
-             next_sessions = schedule[schedule.index > today_str]
-             if next_sessions.empty:
-                 expected_target = (now + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
-             else:
-                 expected_target = next_sessions.iloc[0].name.strftime('%Y-%m-%d')
-             
+            # Use the most recent completed session as the valid reference
+            if not past_sessions.empty:
+                expected_target = past_sessions.iloc[-1].name.strftime('%Y-%m-%d')
+            else:
+                next_sessions = schedule[schedule.index > today_str]
+                expected_target = next_sessions.iloc[0].name.strftime('%Y-%m-%d') if not next_sessions.empty else today_str
         query = "SELECT persona FROM pending_orders WHERE date = ?"
         expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
                              'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']
