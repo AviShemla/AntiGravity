@@ -1,8 +1,13 @@
+import warnings
+import asyncio
+warnings.filterwarnings("ignore", message="Unclosed client session")
+warnings.filterwarnings("ignore", message="Unclosed connector")
 import os
 import json
 import pandas as pd
 from dotenv import load_dotenv
 import libsql_client
+
 
 load_dotenv()
 
