@@ -225,3 +225,26 @@ If qa_vultr.py detects that the Prefect Orchestrator is NOT serving (e.g., due t
 2. Restarting prefect server start as a detached daemon.
 3. Restarting prefect_pipeline.py serve as a detached daemon.
 This guarantees the 1:00 AM nightly run is protected even if the cloud server temporarily exhausts its memory.
+
+## Prefect Local Teardown Crash Resiliency
+When running data ingestion pipelines locally, the Prefect ephemeral daemon frequently crashes during teardown with `PrefectHTTPStatusError`, bringing down the entire pipeline right at the end. To bypass this, NEVER use `@flow` or `@task` in the core ingestion scripts (like `SPY.py`) when running locally. Instead, use pure native Python `concurrent.futures.ThreadPoolExecutor` to handle parallel chunking.
+
+## Outlook COM Deadlock Eradication
+When dispatching emails via `win32com.client.Dispatch('outlook.application')`, the script can endlessly hang and throw a `Server execution failed` (-2146959355) COM error. This is caused by corrupted or zombie Outlook child processes hiding in the background. Before running ANY email dispatch scripts, you MUST violently clear the COM lock by explicitly running `taskkill /F /IM outlook.exe /T` and `taskkill /F /IM OfficeClickToRun.exe /T` to shatter the zombie process tree. 
+
+## Zero Polling Loop Enforcement (AI Credit Conservation)
+Under no circumstances should you ever use `manage_task` in a tight loop to check the status of a long-running background process. Doing so wastes AI credits on prompt context tokens. ALWAYS use `schedule` or simply yield and rely on the system's reactive wakeup architecture to notify you when a task completes.
+
+## SQL Query Fetch Argument Fallacy
+When executing queries using `database_manager.execute_query()`, NEVER pass `fetch=True` as a kwarg. The custom wrapper does not accept it and will crash with a `TypeError`. Standard `SELECT` statements automatically fetch and return data.
+
+## EXTREME AI CREDIT CONSENT PROTOCOL (MANDATORY)
+Even if the user explicitly asks for a task (e.g., "morning status please" or "can I downgrade"), if fulfilling that request requires executing scripts, reading large files (like AGENTS.md), or running recursive directory scans, the AI is STRICTLY FORBIDDEN from immediately executing the request.
+The AI MUST FIRST reply to the user with a "Credit Warning Pause" that states: 
+1. What actions the AI intends to take.
+2. An acknowledgment that these actions will burn Pro tokens.
+3. An explicit request for the user's permission to proceed with the burn.
+You may only execute the scripts AFTER the user says "Yes, proceed."
+
+## First Contact Initialization Protocol
+Every morning on first contact (the very first user message of a new daily session), the ABSOLUTE FIRST THING the AI must do before answering the user's specific query is to internally parse, "/learn", and acknowledge all Prime Directives and core rules present in this document. The AI MUST begin its very first response by explicitly reporting to the user that the Prime Directives have been successfully loaded and acknowledged, and only then proceed to address the user's actual prompt.

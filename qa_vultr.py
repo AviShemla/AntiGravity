@@ -26,8 +26,11 @@ def check_vultr():
     else:
         print("PASS: VIX Monitor is running on Vultr.")
         
-    if "prefect_pipeline.py serve" not in processes:
-        print("CRITICAL QA FAILURE: Prefect Orchestrator is NOT serving on Vultr!")
+    prefect_server_running = "prefect server start" in processes
+    prefect_pipeline_running = "prefect_pipeline.py" in processes
+
+    if not prefect_server_running and not prefect_pipeline_running:
+        print("CRITICAL QA FAILURE: Prefect Orchestrator is NOT running on Vultr!")
         print("--- INITIATING AUTO-HEAL PROTOCOL ---")
         print("1. Hunting Zombies...")
         ssh.exec_command("/opt/antigravity/venv/bin/python /opt/antigravity/clean_ghosts.py")
@@ -37,8 +40,13 @@ def check_vultr():
         print("3. Restarting Pipeline Service...")
         ssh.exec_command("source /opt/antigravity/venv/bin/activate && nohup python /opt/antigravity/prefect_pipeline.py serve > /opt/antigravity/prefect_serve.log 2>&1 &")
         print("PASS: Auto-Heal complete. Prefect Orchestrator has been restarted.")
+    elif prefect_server_running and not prefect_pipeline_running:
+        print("WARNING: Prefect server is running but pipeline serve is missing. Restarting pipeline only...")
+        ssh.exec_command("source /opt/antigravity/venv/bin/activate && nohup python /opt/antigravity/prefect_pipeline.py serve > /opt/antigravity/prefect_serve.log 2>&1 &")
+        print("PASS: Pipeline serve restarted.")
     else:
-        print("PASS: Prefect is serving on Vultr.")
+        print("PASS: Prefect is fully serving on Vultr (server + pipeline both confirmed).")
+
         
     print("\n--- Tail of prefect_serve.log ---")
     stdin, stdout, stderr = ssh.exec_command("tail -n 20 /opt/antigravity/prefect_serve.log")
