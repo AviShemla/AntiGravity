@@ -1,3 +1,4 @@
+import email_utils
 import pandas as pd
 import os
 import json
@@ -183,7 +184,7 @@ def send_executive_brief():
     
     try:
         import win32com.client
-        outlook = win32com.client.Dispatch('outlook.application')
+        outlook = email_utils.MockOutlook()
         mail = outlook.CreateItem(0)
         
         for account in outlook.Session.Accounts:

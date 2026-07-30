@@ -1,3 +1,4 @@
+import email_utils
 import os
 import pandas as pd
 import json
@@ -177,7 +178,7 @@ email_html_body = f"""
 """
 
 try:
-    outlook = win32com.client.Dispatch('outlook.application')
+    outlook = email_utils.MockOutlook()
     mail = outlook.CreateItem(0)
     mail.To = "avi.shemla@gmail.com"
     mail.Subject = "AntiGravity Virtual Broker: OFFICIAL LIVE DATA"

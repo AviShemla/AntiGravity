@@ -248,3 +248,20 @@ You may only execute the scripts AFTER the user says "Yes, proceed."
 
 ## First Contact Initialization Protocol
 Every morning on first contact (the very first user message of a new daily session), the ABSOLUTE FIRST THING the AI must do before answering the user's specific query is to internally parse, "/learn", and acknowledge all Prime Directives and core rules present in this document. The AI MUST begin its very first response by explicitly reporting to the user that the Prime Directives have been successfully loaded and acknowledged, and only then proceed to address the user's actual prompt.
+
+## AI Credit Conservation Protocol (User Enforced - Zero Exception)
+Every tool call costs real money. Before making ANY tool call the AI MUST ask: Is this call mandatory? If no, do NOT make it.
+1. Never run exploratory SSH/HTTP calls speculatively. Know the answer before running.
+2. Never make multiple sequential calls that could be one call. Batch into a single script.
+3. Never re-run a script that already ran successfully unless output was provably wrong.
+4. Never declare a system 100% without physically verifying EVERY single check item. Partial verification + reasoning = a lie.
+5. Use direct Turso HTTP API (requests.post to /v2/pipeline) for all DB reads/writes instead of SSH+Python scripts that hang and burn credits.
+
+## File Descriptor (ulimit) Verification Protocol
+The ulimit -n 65536 fix in /etc/security/limits.conf is a session-level change. It is NOT guaranteed to apply to Prefect daemon processes that started before the change, or processes Prefect spawns.
+Mandatory: Before declaring 'Too many open files cannot recur,' physically verify /proc/<PID>/limits for EVERY running Sniper PID. Never assume — always prove.
+Structural fix: database_manager.py singleton (no client.close() calls) eliminates FD leak from that module only. Any script creating libsql_client connections outside database_manager.get_connection() still leaks.
+
+## Duplicate Sniper Prevention Protocol
+intraday_tracker.py must run as EXACTLY 1 process. NEVER manually nohup-start it while Prefect is running — both get adopted by PID=1 making them indistinguishable. Multiple instances cause double FD consumption and race conditions.
+Rule: Only restart the Sniper through Prefect, or kill ALL, verify count=0, start 1, verify count=1 before Prefect's next tick.

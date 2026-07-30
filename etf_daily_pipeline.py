@@ -1,3 +1,4 @@
+import email_utils
 import subprocess
 import sys
 import os
@@ -53,7 +54,7 @@ except ImportError:
 def send_outlook_email(subject, html_body, attachment_path=None, logo_path=None):
     try:
         import win32com.client
-        outlook = win32com.client.Dispatch('outlook.application')
+        outlook = email_utils.MockOutlook()
         mail = outlook.CreateItem(0)
         
         for account in outlook.Session.Accounts:

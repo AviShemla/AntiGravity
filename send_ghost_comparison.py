@@ -1,3 +1,4 @@
+import email_utils
 import win32com.client
 import os
 import sys
@@ -23,7 +24,7 @@ def send_ghost_comparison():
     attachment_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'TNX_Test_Scorecard.xlsx')
     
     try:
-        outlook = win32com.client.Dispatch('outlook.application')
+        outlook = email_utils.MockOutlook()
         mail = outlook.CreateItem(0)
         mail.To = email
         mail.Subject = subject

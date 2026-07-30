@@ -7,7 +7,7 @@ def zipdir(path, ziph):
         if '.venv' in root or '.git' in root or '__pycache__' in root or 'venv' in root:
             continue
         for file in files:
-            if file.endswith('.zip') or file.endswith('.db-journal'):
+            if file.endswith('.zip') or file.endswith('.db-journal') or file.endswith('.db') or file.endswith('.sqlite') or file.endswith('.bak'):
                 continue
             ziph.write(os.path.join(root, file), 
                        os.path.relpath(os.path.join(root, file), 

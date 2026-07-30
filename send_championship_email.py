@@ -1,3 +1,4 @@
+import email_utils
 import win32com.client
 import os
 import pandas as pd
@@ -79,7 +80,7 @@ def send_victorious_email():
     """
     
     try:
-        outlook = win32com.client.Dispatch('outlook.application')
+        outlook = email_utils.MockOutlook()
         mail = outlook.CreateItem(0)
         
         for account in outlook.Session.Accounts:

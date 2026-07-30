@@ -1,3 +1,4 @@
+import email_utils
 import win32com.client
 import os
 import markdown
@@ -23,7 +24,7 @@ html_body = f"""
 """
 
 try:
-    outlook = win32com.client.Dispatch('outlook.application')
+    outlook = email_utils.MockOutlook()
     mail = outlook.CreateItem(0)
     
     for account in outlook.Session.Accounts:
