@@ -119,9 +119,10 @@ if __name__ == '__main__':
             trading_days = past_days[-6:]
             sim_dates = trading_days[:-1] if trading_days[-1].date() == today.date() else trading_days
     else:
-        print(f"\n>>> No state found. Resuming manual override for June 25 and June 26.")
+        print(f"\n>>> No state found. Initializing full 30-Day Walk-Forward Simulation.")
         nyse = mcal.get_calendar('NYSE')
-        sim_dates = [pd.to_datetime('2026-06-25'), pd.to_datetime('2026-06-26')]
+        past_days = nyse.valid_days(start_date=today - pd.Timedelta(days=30), end_date=today).tz_localize(None)
+        sim_dates = past_days[:-1] if past_days[-1].date() == today.date() else past_days
         
     if len(sim_dates) == 0:
         print("\n>>> Marathon is already completely up to date! Nothing to simulate today.")

@@ -565,11 +565,11 @@ async function loadOlympic() {
         enableAutoYScale('chart-olympic-race');
         
         // 4. Data Table
-        const tbl = document.getElementById('tbl-olympic');
-        if (data.table_data.length > 0) {
+        const tblContainer = document.getElementById('tbl-olympic');
+        const tbl = tblContainer.tagName === 'TABLE' ? tblContainer : tblContainer.querySelector('table');
+        if (tbl && data.table_data && data.table_data.length > 0) {
             const keys = Object.keys(data.table_data[0]);
-            tbl.querySelector('thead').innerHTML = `<tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr>`;
-            tbl.querySelector('tbody').innerHTML = data.table_data.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('');
+            tbl.innerHTML = `<thead><tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody>${data.table_data.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
         }
     } catch (e) {
         console.error("Olympic load error:", e);
@@ -685,11 +685,11 @@ async function loadProdShadow() {
             title: { text: "Performance Race: Prod vs Shadows", font: { color: 'white' } }
         }));
         
-        const tbl = document.getElementById('tbl-prodshadow');
-        if (data.table.length > 0) {
+        const tblContainer = document.getElementById('tbl-prodshadow');
+        const tbl = tblContainer.tagName === 'TABLE' ? tblContainer : tblContainer.querySelector('table');
+        if (tbl && data.table && data.table.length > 0) {
             const keys = Object.keys(data.table[0]);
-            tbl.querySelector('thead').innerHTML = `<tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr>`;
-            tbl.querySelector('tbody').innerHTML = data.table.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('');
+            tbl.innerHTML = `<thead><tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody>${data.table.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
         }
     } catch (e) {
         console.error("Prod vs Shadow load error:", e);
