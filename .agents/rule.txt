@@ -35,3 +35,10 @@ NEVER answer questions about the system architecture, configuration, pipelines, 
 
 ## User Enforced Prime Directive: Routine Task Cleanup
 ALWAYS check background tasks routinely. If there are old, hung, or unnecessary tasks running locally, aggressively kill them so the laptop does not crash.
+
+## Visual Verification & Dashboard Hard Rules
+* **Headless Visual Inspection Protocol (MANDATORY):** NEVER tell the user "refresh your browser" or declare UI fixed without FIRST running Playwright (`sync_playwright()`) to take actual headless screenshots of all dashboard tabs and visually inspecting them using `view_file`.
+* **Chart Multi-Trend Line Verification:** Prove that charts render distinct, non-flatlined, multi-point performance curves (never single points or constant $10,000 flatlines).
+* **Table DOM HTML Guard:** Always verify that target table elements in `index.html` contain `<thead>` and `<tbody>` tags before assigning `querySelector('thead').innerHTML` in `app.js` to prevent `TypeError: Cannot set properties of null` exceptions.
+* **JSON NaN Serialization Guard:** In FastAPI endpoint responses, NEVER pass raw DataFrames containing `NaN` floats to JSON serialization. Always wrap output fields with `.fillna(0)` and `safe_float()` guards.
+
