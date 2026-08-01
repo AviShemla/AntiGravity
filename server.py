@@ -581,10 +581,10 @@ def get_olympic_data():
         table_data = format_df_for_display(df_merged.iloc[::-1]).fillna("").to_dict('records')
         
         chart_data = {
-            "dates": df_merged['Date'].tolist(),
-            "EL_CAP": df_merged['EL_CAP (70% Liquidity)'].tolist(),
-            "EL_VOLTI": df_merged['EL_VOLTI (70% Stability)'].tolist(),
-            "CHAMPION": df_merged['CHAMPION (Live VIP)'].tolist()
+            "dates": df_merged['Date'].fillna("").tolist(),
+            "EL_CAP": df_merged['EL_CAP (70% Liquidity)'].fillna(0).tolist(),
+            "EL_VOLTI": df_merged['EL_VOLTI (70% Stability)'].fillna(0).tolist(),
+            "CHAMPION": df_merged['CHAMPION (Live VIP)'].fillna(0).tolist()
         }
         
         now = datetime.datetime.now()
