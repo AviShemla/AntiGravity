@@ -74,6 +74,7 @@ def format_df_for_display(df_in):
     if isinstance(d.index, pd.DatetimeIndex):
         d.index = d.index.strftime('%Y-%m-%d')
         
+    d = d.fillna(0)
     for c in d.columns:
         if pd.api.types.is_datetime64_any_dtype(d[c]):
             d[c] = d[c].dt.strftime('%Y-%m-%d')
@@ -565,10 +566,16 @@ def get_olympic_data():
         except:
             pass
         
+        def safe_int_rank(val):
+            return int(val) if pd.notnull(val) and not np.isnan(val) else 0
+
+        def safe_float(val):
+            return float(val) if pd.notnull(val) and not np.isnan(val) else 0.0
+
         metrics = {
-            "EL_CAP": {"return": r_c, "dd": d_c, "rank": int(ranks['EL_CAP (70% Liquidity)'])},
-            "EL_VOLTI": {"return": r_v, "dd": d_v, "rank": int(ranks['EL_VOLTI (70% Stability)'])},
-            "CHAMPION": {"return": r_ch, "dd": d_ch, "rank": int(ranks['CHAMPION (Live VIP)'])}
+            "EL_CAP": {"return": safe_float(r_c), "dd": safe_float(d_c), "rank": safe_int_rank(ranks.get('EL_CAP (70% Liquidity)', 0))},
+            "EL_VOLTI": {"return": safe_float(r_v), "dd": safe_float(d_v), "rank": safe_int_rank(ranks.get('EL_VOLTI (70% Stability)', 0))},
+            "CHAMPION": {"return": safe_float(r_ch), "dd": safe_float(d_ch), "rank": safe_int_rank(ranks.get('CHAMPION (Live VIP)', 0))}
         }
         
         table_data = format_df_for_display(df_merged.iloc[::-1]).fillna("").to_dict('records')
