@@ -969,6 +969,13 @@ with tab2:
         etfs = [t for t in xls_etf.sheet_names if t != "Sheet1"]
         
         options_e = ["Portfolio Overview"] + etfs
+        
+        breakdown_df_e_temp = get_asset_breakdown(persona_e, "ETF")
+        if not breakdown_df_e_temp.empty:
+            for holding in breakdown_df_e_temp['Asset']:
+                if holding not in ['TOTAL PnL', 'AVAILABLE CASH', 'CURRENT EQUITY'] and holding not in options_e:
+                    options_e.append(holding)
+                    
         selected_etf = st.selectbox("Select View", options_e, key="etf_ticker")
         
         if selected_etf == "Portfolio Overview":
@@ -1062,7 +1069,12 @@ with tab2:
                 )
                 st.plotly_chart(fig_pnl_e, use_container_width=True, key="pnl_portfolio_etf")
         else:
-            df_etf = pd.read_excel(xls_etf, sheet_name=selected_etf, skiprows=2)
+            try:
+                df_etf = pd.read_excel(xls_etf, sheet_name=selected_etf, skiprows=2)
+            except:
+                df_etf = pd.DataFrame()
+                st.warning(f"⚠️ {selected_etf} is not in today's ETF Bayesian Scorecard. Live prediction data is unavailable, but you can still view its historical Realized PnL below.")
+                
             if not df_etf.empty:
                 latest_e = df_etf.iloc[-1]
                 rec_e = latest_e.get('Recommendation', 'N/A')
@@ -1373,11 +1385,11 @@ with tab3:
         name_champ = 'CHAMPION (VIP)' + get_medal(ranks['CHAMPION (Live VIP)'])
 
         # 1. EL_CAP
-        fig_oly.add_trace(go.Scatter(x=df_merged.index, y=df_merged['EL_CAP (70% Liquidity)'], mode='lines', line=dict(color='#FF851B', width=8, dash='dot'), name=name_cap))
+        fig_oly.add_trace(go.Scatter(x=df_merged.index, y=df_merged['EL_CAP (70% Liquidity)'], mode='lines', line=dict(color='#FF851B', width=4), name=name_cap))
         # 2. EL_VOLTI
-        fig_oly.add_trace(go.Scatter(x=df_merged.index, y=df_merged['EL_VOLTI (70% Stability)'], mode='lines', line=dict(color='#2ECC40', width=5, dash='dash'), name=name_vol))
+        fig_oly.add_trace(go.Scatter(x=df_merged.index, y=df_merged['EL_VOLTI (70% Stability)'], mode='lines', line=dict(color='#2ECC40', width=3), name=name_vol))
         # 3. CHAMPION
-        fig_oly.add_trace(go.Scatter(x=df_merged.index, y=df_merged['CHAMPION (Live VIP)'], mode='lines+markers', line=dict(color='#00E5FF', width=2), name=name_champ, marker=dict(size=6)))
+        fig_oly.add_trace(go.Scatter(x=df_merged.index, y=df_merged['CHAMPION (Live VIP)'], mode='lines+markers', line=dict(color='#00E5FF', width=2), name=name_champ, marker=dict(size=6, color='white', line=dict(color='#00E5FF', width=2))))
         
         if HAS_YF:
             try:

@@ -1,10 +1,15 @@
-🚨 Model crash for ADM: 'ADM'. Forcing quarantine and HOLD.
-🚨 Model crash for GPC: 'GPC'. Forcing quarantine and HOLD.
-
-🚨 Model crash for ELV: 'ELV'. Forcing quarantine and HOLD.
-🚨 Model crash for NDAQ: 'NDAQ'. Forcing quarantine and HOLD.
-🚨 Model crash for CB: 'CB'. Forcing quarantine and HOLD.
-🚨 Model crash for MCD: 'MCD'. Forcing quarantine and HOLD.
-🚨 Model crash for NKE: 'NKE'. Forcing quarantine and HOLD.
-🚨 Model crash for BLK: 'BLK'. Forcing quarantine and HOLD.
-🚨 Model crash for NEE: 'NEE'. Forcing quarantine and HOLD.
+🚨 DATA WIPEOUT DETECTED: Active_Portfolio.csv has only 10 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: Backtest_Ledger_CHAMPION.csv has only 4 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: Backtest_Ledger_EL_CAP.csv has only 4 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: Backtest_Ledger_EL_VOLTI.csv has only 4 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: CRDU_Hybrid_Screener_Results.csv has only 17 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: IYH_Hybrid_Screener_Results.csv has only 97 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: MRVU_Hybrid_Matrix.csv has only 70 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: Olympic_Shootout_Results_MASTER.csv has only 25 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: Prod_vs_Shadow_Results_MASTER.csv has only 28 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: Sandbox_V1_Classic_Scorecard.csv has only 1 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: SNXX_Hybrid_Matrix.csv has only 85 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: SNXX_Hybrid_Screener_Results.csv has only 34 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: SP500_Fundamentals_Score.csv has only 47 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 DATA WIPEOUT DETECTED: WDCX_Hybrid_Matrix.csv has only 82 rows! A downloader script (like SPY.py) failed to merge and wiped the history.
+🚨 SCHEMA MISMATCH DETECTED: Stock Bayesian Scorecard sheet 'GPC' is missing expected column types: ['trend_label']. This will cause a KeyError in downstream models.

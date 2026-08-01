@@ -259,12 +259,27 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         summary = az.summary(trace)
         max_r_hat = summary['r_hat'].max()
         
-        if max_r_hat > 1.05:
-            raise ValueError(f"PyMC Convergence Failure (R-hat = {max_r_hat:.3f} > 1.05). Hallucination blocked.")
+        if float(max_r_hat) > 1.05:
+            raise ValueError(f"PyMC Convergence Failure (R-hat = {float(max_r_hat):.3f} > 1.05). Hallucination blocked.")
             
         # E-BFMI (Energy Bayesian Fraction of Missing Information) Check
         energy = az.bfmi(trace)
-        low_energy_chains = [chain_idx for chain_idx, e_val in enumerate(energy) if e_val < 0.2]
+        
+        # Robustly extract numerical values from xarray.DataTree or Dataset
+        if hasattr(energy, 'energy'):
+            energy_vals = energy.energy.values
+        elif hasattr(energy, 'values'):
+            energy_vals = energy.values
+        else:
+            energy_vals = np.array(energy)
+            
+        # Ensure it's a 1D iterable array of floats
+        if energy_vals.ndim == 0:
+            energy_vals = [float(energy_vals)]
+        else:
+            energy_vals = energy_vals.flatten()
+            
+        low_energy_chains = [chain_idx for chain_idx, e_val in enumerate(energy_vals) if float(e_val) < 0.2]
         
         if low_energy_chains:
             raise ValueError(f"PyMC Convergence Failure (E-BFMI < 0.2 in chains {low_energy_chains}). Severe energy divergence blocked.")
@@ -413,7 +428,6 @@ if __name__ == '__main__':
     from prefect import task, flow
     from prefect.task_runners import ThreadPoolTaskRunner
 
-    @task(retries=2, retry_delay_seconds=30)
     def process_row(idx, row):
         ticker = row['Ticker']
         depth = int(row.get('Depth', 3))
@@ -445,21 +459,20 @@ if __name__ == '__main__':
             return ticker, sc, feat_cols
         except Exception as e:
             print(f"!!! Error evaluating {ticker} for scorecard: {e}")
+            import traceback
+            traceback.print_exc()
             log_warning(f"🚨 Model crash for {ticker}: {e}. Forcing quarantine and HOLD.")
             sc = make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, f"Model Crash: {e}")
             return ticker, sc, []
 
-    print("\n--- Spawning PyMC Models via Prefect Mapping ---")
-    @flow(name="PyMC_Bayesian_Flow", task_runner=ThreadPoolTaskRunner(max_workers=3))
-    def run_pymc_flow(top_10):
-        return process_row.map([idx for idx in top_10.index], [row for _, row in top_10.iterrows()])
-        
-    results = run_pymc_flow(top_10)
-    
-    for res_future in results:
-        ticker, sc, feat_cols = res_future.result()
-        if sc is not None:
-            scorecards[ticker] = sc
+    print("\n--- Spawning PyMC Models via ThreadPoolExecutor ---")
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [executor.submit(process_row, idx, row) for idx, row in top_10.iterrows()]
+        for future in concurrent.futures.as_completed(futures):
+            ticker, sc, feat_cols = future.result()
+            if sc is not None:
+                scorecards[ticker] = sc
             feat_cols_dict[ticker] = feat_cols
 
     print("\nWriting formatted Test Excel Scorecard...")

@@ -1,9 +1,4 @@
-import resource
-# SELF-HEALING ULIMIT: Force 65536 FDs regardless of launch context (Prefect, nohup, cron)
-try:
-    resource.setrlimit(resource.RLIMIT_NOFILE, (65536, 65536))
-except Exception:
-    resource.setrlimit(resource.RLIMIT_NOFILE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+# Removed Unix-only resource.setrlimit
 
 import yfinance as yf
 import pandas as pd

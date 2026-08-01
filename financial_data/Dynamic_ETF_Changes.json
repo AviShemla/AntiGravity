@@ -1,20 +1,16 @@
 {
     "Kept": [
+        "IGV",
         "IYH",
         "MSTZ",
         "RGTZ",
         "SRTY",
+        "UDOW",
         "XLE",
         "XLF",
-        "XLRE",
+        "XLP",
         "XLV"
     ],
-    "Added": [
-        "IGV",
-        "XLP"
-    ],
-    "Dropped": [
-        "ITB",
-        "UDOW"
-    ]
+    "Added": [],
+    "Dropped": []
 }

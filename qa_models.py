@@ -9,6 +9,56 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_d
 STOCK_EXCEL = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 ETF_EXCEL = os.path.join(BASE_DIR, 'All_ETFs_Scorecard.xlsx')
 
+def check_historical_data_integrity():
+    print("[QA CHECK] Running historical data integrity checks to prevent SPY.py wipeout bugs...")
+    for filename in os.listdir(BASE_DIR):
+        if filename.endswith(".csv"):
+            file_path = os.path.join(BASE_DIR, filename)
+            # Only check ticker data files (all caps, no underscores, e.g. AAPL.csv)
+            name_part = filename.replace('.csv', '')
+            if not name_part.isupper() or '_' in name_part:
+                continue
+                
+            try:
+                # Read only the first 250 rows to be fast, but enough to know it's not wiped out
+                df = pd.read_csv(file_path, nrows=250)
+                if len(df) < 100:
+                    err_msg = f"🚨 DATA WIPEOUT DETECTED: {filename} has only {len(df)} rows! A downloader script (like SPY.py) failed to merge and wiped the history."
+                    print(f"  [QA FATAL] {err_msg}")
+                    log_warning(err_msg)
+                    raise ValueError(err_msg)
+            except Exception as e:
+                # If it's a completely invalid CSV
+                pass
+    print("[QA SUMMARY] Historical CSV integrity passed (No wipeouts detected).")
+
+def check_scorecard_schema(file_path, prefix="Scorecard"):
+    print(f"[QA CHECK] Running schema validation on {prefix} at {file_path} to prevent KeyError crashes...")
+    if not os.path.exists(file_path):
+        return
+
+    xls = pd.ExcelFile(file_path)
+    for sheet in xls.sheet_names:
+        df = pd.read_excel(xls, sheet_name=sheet, skiprows=2)
+        if df.empty:
+            continue
+        
+        # We must have expected columns to prevent the "KeyError: 'result'" and arviz failure
+        expected_substrings = ['probability', 'expected return', 'recommendation', 'trend_label']
+        columns_lower = [str(c).lower() for c in df.columns]
+        
+        missing = []
+        for req in expected_substrings:
+            if not any(req in c for c in columns_lower):
+                missing.append(req)
+                
+        if missing:
+            err_msg = f"🚨 SCHEMA MISMATCH DETECTED: {prefix} sheet '{sheet}' is missing expected column types: {missing}. This will cause a KeyError in downstream models."
+            print(f"  [QA FATAL] {err_msg}")
+            log_warning(err_msg)
+            raise ValueError(err_msg)
+    print(f"[QA SUMMARY] {prefix} schema validation passed (No KeyErrors).")
+
 def check_scorecard_bounds(file_path, prefix="Scorecard"):
     print(f"[QA CHECK] Running bounds checking on {prefix} at {file_path}...")
     
@@ -109,9 +159,16 @@ def check_scorecard_bounds(file_path, prefix="Scorecard"):
         print(f"[QA SUMMARY] {prefix} bounds validation passed.")
 
 def run_qa_checks():
-    # 1. Check stock scorecard
+    # 0. Check historical CSV wipeouts
+    check_historical_data_integrity()
+    
+    # 0.5. Check Scorecard Schemas
+    check_scorecard_schema(STOCK_EXCEL, "Stock Bayesian Scorecard")
+    check_scorecard_schema(ETF_EXCEL, "Compiled ETF Bayesian Scorecard")
+    
+    # 1. Check stock scorecard bounds
     check_scorecard_bounds(STOCK_EXCEL, "Stock Bayesian Scorecard")
-    # 2. Check compiled ETF scorecard
+    # 2. Check compiled ETF scorecard bounds
     check_scorecard_bounds(ETF_EXCEL, "Compiled ETF Bayesian Scorecard")
     # 3. Check individual ETF scorecards
     for etf in ["XLK", "XLV", "XLY", "XLF", "XLC", "XLI", "XLE", "XLP", "XLU", "XLRE", "XLB"]:

@@ -80,7 +80,7 @@ def run_tracker(target_date):
     print(f"--- Running Prod vs Shadow Tracker for {target_date} ---")
     state = load_state()
     
-    if target_date <= state["last_date"]:
+    if target_date <= state["last_date"] and os.path.exists(MASTER_CSV) and os.path.getsize(MASTER_CSV) > 0:
         print(f"Date {target_date} already processed. Skipping.")
         return
         
@@ -108,7 +108,7 @@ def run_tracker(target_date):
     }
     
     df = pd.DataFrame([row])
-    if os.path.exists(MASTER_CSV):
+    if os.path.exists(MASTER_CSV) and os.path.getsize(MASTER_CSV) > 0:
         existing_df = pd.read_csv(MASTER_CSV)
         merged = pd.concat([existing_df, df], ignore_index=True)
         merged = merged.drop_duplicates(subset=['Date'], keep='last')
@@ -140,13 +140,14 @@ def run_tracker(target_date):
     save_state(state)
     print(f"Saved stats: Prod=${prod_equity}, Trans=${state['Transformer']:.2f}, V1=${state['V1_Classic']:.2f}, LSTM=${state['LSTM_Shadow']:.2f}")
     
-    # --- Sync Dashboard CSVs to Vultr ---
-    print("\n--- Deploying Updated CSV to Vultr Dashboard ---")
-    try:
-        import subprocess, sys
-        subprocess.run([sys.executable, "fast_deploy.py"])
-    except Exception as e:
-        print(f"Deploy failed: {e}")
+    # --- Sync Dashboard CSVs to Vultr (Laptop Only) ---
+    if os.name == 'nt':
+        print("\n--- Deploying Updated CSV to Vultr Dashboard ---")
+        try:
+            import subprocess, sys
+            subprocess.run([sys.executable, "fast_deploy.py"])
+        except Exception as e:
+            print(f"Deploy failed: {e}")
 
 if __name__ == "__main__":
     import sys

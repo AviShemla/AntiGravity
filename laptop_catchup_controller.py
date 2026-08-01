@@ -16,12 +16,13 @@ import database_manager
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 python_exe = sys.executable
 
+# Inject Unbuffered Mode to prevent swallowed logs on exit
+import os
+env = os.environ.copy()
+env['PYTHONUNBUFFERED'] = '1'
+
+
 def get_missed_dates(pipeline_name):
-    if mcal is None:
-        print("pandas_market_calendars missing. Falling back to today.")
-        return [pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')]
-        
-    last_completed = database_manager.get_last_continuity_date(pipeline_name)
     
     nyse = mcal.get_calendar('NYSE')
     now = pd.Timestamp.now(tz='America/New_York')
@@ -36,6 +37,7 @@ def get_missed_dates(pipeline_name):
     last_closed_session = past_sessions.iloc[-1].name.strftime('%Y-%m-%d')
     
     # 2. Calculate historical missed sessions
+    last_completed = database_manager.get_last_continuity_date(pipeline_name)
     if not last_completed:
         missed_dates = [last_closed_session]
     else:
@@ -91,7 +93,7 @@ def catchup_master_pipeline():
         print(f"Warning: Could not clear warnings: {e}")
         
     print("\nStep 1: Running SPY.py to fetch latest master data...")
-    res = subprocess.run([python_exe, os.path.join(BASE_DIR, "SPY.py")], cwd=BASE_DIR)
+    res = subprocess.run([python_exe, os.path.join(BASE_DIR, "SPY.py")], cwd=BASE_DIR, env=env)
     if res.returncode != 0:
         error_msg = f"Pipeline Aborted. SPY.py failed with Exit Code: {res.returncode}"
         print(error_msg)
@@ -107,20 +109,20 @@ def catchup_master_pipeline():
         # 0.5 Weekly Fundamentals Extraction
         if pd.to_datetime(target_date).weekday() == 5: # Saturday
             print("\n--> Running Weekend Fundamentals Extraction (Saturday)...")
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "extract_fundamentals.py")], cwd=BASE_DIR)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "extract_fundamentals.py")], cwd=BASE_DIR, env=env)
 
         # 1. Meta Predictor Tracker (Alpha Recalibration)
         if pd.to_datetime(target_date).weekday() == 6: # Sunday
             print("\n--> Running Meta-Predictor Tracker (Sunday Alpha Recalibration)...")
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "meta_predictor_tracker.py")], cwd=BASE_DIR)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "meta_predictor_tracker.py")], cwd=BASE_DIR, env=env)
             
         # 1.5 Deep Learning Inference Engine
         print("\n--> Running Deep Learning AI Inference Engine (V2 Upgrade)...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "daily_dl_inference.py"), "--target-date", target_date], cwd=BASE_DIR, check=True)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "daily_dl_inference.py"), "--target-date", target_date], cwd=BASE_DIR, check=True, env=env)
             
         # 2. Bayesian Scorecard Formatted
         print("\n--> Running export_bayesian_scorecard_formatted.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_bayesian_scorecard_formatted.py"), "--target-date", target_date], cwd=BASE_DIR, check=True)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_bayesian_scorecard_formatted.py"), "--target-date", target_date], cwd=BASE_DIR, check=True, env=env)
         
         # 3. QA Models Bounds
         print("\n--> Running qa_models.py...")
@@ -133,23 +135,23 @@ def catchup_master_pipeline():
 
         # 4. Virtual Broker
         print("\n--> Running virtual_broker.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "virtual_broker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "virtual_broker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True, env=env)
         
         # 5. Intraday Tracker (Executes EOD)
         today_ny = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
         if prediction_date < today_ny or (prediction_date == today_ny and pd.Timestamp.now(tz='America/New_York').hour >= 16):
             print("\n--> Running intraday_tracker.py (EOD execution)...")
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "intraday_tracker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "intraday_tracker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True, env=env)
         else:
             print(f"\n--> Skipping intraday_tracker.py (Prediction Date {prediction_date} is Today and Market hasn't closed yet)...")
         
         # 6. Export Excel Reports
         print("\n--> Running export_broker_excel_report.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_broker_excel_report.py")], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_broker_excel_report.py")], cwd=BASE_DIR, env=env)
         
         # 6.5 Financial QA Audit
         print("\n--> Running Financial QA Audit...")
-        fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR)
+        fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR, env=env)
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting Catchup!")
             os._exit(1)
@@ -158,21 +160,21 @@ def catchup_master_pipeline():
         qa_script = os.path.join(BASE_DIR, "qa_blacklist.py")
         if os.path.exists(qa_script):
             print("\n--> Running QA Blacklist Audit...")
-            subprocess.run([python_exe, qa_script], cwd=BASE_DIR)
+            subprocess.run([python_exe, qa_script], cwd=BASE_DIR, env=env)
             
         # 8. Mark Complete
         mark_completed('master_pipeline', target_date)
         
         print("\n--> Running Olympic Shootout Backtests (Generating New Chart Dots)...\n")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], cwd=BASE_DIR, env=env)
 
         # 9. Shadow Sandboxes
         print("\n--> Running V1 Classic Shadow Sandbox synchronously for historical backfill...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py"), "--target-date", target_date], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py"), "--target-date", target_date], cwd=BASE_DIR, env=env)
         
         # 10. Update Shadow Tracker
         print(f"\n--> Updating Prod vs Shadow Tracker for {target_date}...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py"), target_date], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py"), target_date], cwd=BASE_DIR, env=env)
 
 
     print("\nMaster Pipeline Catch-Up Complete!")
@@ -196,7 +198,7 @@ def catchup_etf_pipeline():
         # 0. Generate Dynamic ETFs (Run Screener)
         print("\n--> [PRE-FLIGHT] Running Dynamic ETF Screener...")
         try:
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "generate_dynamic_etfs.py")], cwd=BASE_DIR, timeout=300)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "generate_dynamic_etfs.py")], cwd=BASE_DIR, timeout=300, env=env)
         except Exception as e:
             print(f"ETF Screener failed: {e}")
 
@@ -214,9 +216,9 @@ def catchup_etf_pipeline():
         def process_etf_pipeline(etf):
             print(f"\n--> [PARALLEL THREAD] Processing ETF Pipeline for {etf}...")
             try:
-                subprocess.run([python_exe, os.path.join(BASE_DIR, "build_etf_hybrid_matrix.py"), etf], cwd=BASE_DIR, check=True)
-                subprocess.run([python_exe, os.path.join(BASE_DIR, "run_etf_hybrid_screener.py"), etf], cwd=BASE_DIR, check=True)
-                subprocess.run([python_exe, os.path.join(BASE_DIR, "export_etf_scorecard.py"), etf, "--target-date", target_date], cwd=BASE_DIR, check=True)
+                subprocess.run([python_exe, os.path.join(BASE_DIR, "build_etf_hybrid_matrix.py"), etf], cwd=BASE_DIR, check=True, env=env)
+                subprocess.run([python_exe, os.path.join(BASE_DIR, "run_etf_hybrid_screener.py"), etf], cwd=BASE_DIR, check=True, env=env)
+                subprocess.run([python_exe, os.path.join(BASE_DIR, "export_etf_scorecard.py"), etf, "--target-date", target_date], cwd=BASE_DIR, check=True, env=env)
                 return True
             except subprocess.CalledProcessError as e:
                 print(f"!!! ETF Pipeline Failed for {etf}: {e}")
@@ -231,7 +233,7 @@ def catchup_etf_pipeline():
             
         # 2. Compile Scorecards
         print("\n--> Compiling All ETF Scorecards...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "compile_etf_scorecards.py")], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "compile_etf_scorecards.py")], cwd=BASE_DIR, env=env)
         
         # 3. ETF Virtual Broker
         print("\n--> Running etf_virtual_broker.py...")
@@ -240,26 +242,26 @@ def catchup_etf_pipeline():
         schedule = nyse.schedule(start_date=target_date, end_date=(pd.to_datetime(target_date) + pd.Timedelta(days=7)).strftime('%Y-%m-%d'))
         prediction_date = schedule.iloc[1].name.strftime('%Y-%m-%d') if len(schedule) > 1 else (pd.to_datetime(target_date) + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
         
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "etf_virtual_broker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "etf_virtual_broker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True, env=env)
         
         # 4. Intraday Tracker (Executes EOD)
         today_ny = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
         if prediction_date < today_ny or (prediction_date == today_ny and pd.Timestamp.now(tz='America/New_York').hour >= 16):
             print("\n--> Running intraday_tracker.py (EOD execution)...")
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "intraday_tracker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "intraday_tracker.py"), "--target-date", prediction_date], cwd=BASE_DIR, check=True, env=env)
         else:
             print(f"\n--> Skipping intraday_tracker.py (Prediction Date {prediction_date} is Today and Market hasn't closed yet)...")
         
         # 5. Export ETF Broker Excel
         print("\n--> Running export_etf_broker_excel.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_etf_broker_excel.py")], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_etf_broker_excel.py")], cwd=BASE_DIR, env=env)
         
         # 5.5 Financial QA Audit
         print("\n--> Running ETF Financial QA Audit...")
-        fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR)
+        fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR, env=env)
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting ETF Catchup!")
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: ETF QA Audit Failed", "The Financial QA Auditor caught a mathematical discrepancy and aborted the ETF pipeline. Check server logs immediately."], cwd=BASE_DIR)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: ETF QA Audit Failed", "The Financial QA Auditor caught a mathematical discrepancy and aborted the ETF pipeline. Check server logs immediately."], cwd=BASE_DIR, env=env)
             os._exit(1)
             
         # 6. Mark Complete
@@ -277,19 +279,19 @@ def catchup_everything_and_email():
     print("\n==============================================")
     print("=== FINAL QA GATE (100% GREEN REQUIREMENT) ===")
     print("==============================================\n")
-    fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "system_qa_auditor.py")], cwd=BASE_DIR)
+    fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "system_qa_auditor.py")], cwd=BASE_DIR, env=env)
     if fin_qa.returncode != 0:
         print("FATAL: Final QA Audit Failed! The system is NOT 100% green.")
         print("Emails will NOT be dispatched to prevent broken reporting.")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: Master QA Audit Failed", "The Final QA Auditor caught a mathematical discrepancy and aborted the master pipeline. Check server logs immediately."], cwd=BASE_DIR)
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: Master QA Audit Failed", "The Final QA Auditor caught a mathematical discrepancy and aborted the master pipeline. Check server logs immediately."], cwd=BASE_DIR, env=env)
         os._exit(1)
         
     print("\nQA Audit Passed: 100% Green! Dispatching perfectly synchronized emails...")
     print("\n--> Sending Executive Brief...\n")
-    subprocess.run([python_exe, os.path.join(BASE_DIR, "executive_brief.py")], cwd=BASE_DIR)
-    subprocess.run([python_exe, os.path.join(BASE_DIR, "send_master_email.py")], cwd=BASE_DIR)
-    subprocess.run([python_exe, os.path.join(BASE_DIR, "send_etf_email.py")], cwd=BASE_DIR)
-    subprocess.run([python_exe, os.path.join(BASE_DIR, "send_championship_email.py")], cwd=BASE_DIR)
+    subprocess.run([python_exe, os.path.join(BASE_DIR, "executive_brief.py")], cwd=BASE_DIR, env=env)
+    subprocess.run([python_exe, os.path.join(BASE_DIR, "send_master_email.py")], cwd=BASE_DIR, env=env)
+    subprocess.run([python_exe, os.path.join(BASE_DIR, "send_etf_email.py")], cwd=BASE_DIR, env=env)
+    subprocess.run([python_exe, os.path.join(BASE_DIR, "send_championship_email.py")], cwd=BASE_DIR, env=env)
     print("All emails dispatched successfully!")
 
 if __name__ == "__main__":

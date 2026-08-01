@@ -34,6 +34,15 @@ def process_single_ticker(ticker, sector_name, is_new_ticker, max_dates_per_tick
             new_raw_df = download_ticker_with_failover(ticker, start=start_date)
             new_raw_df = fix_yfinance_dataframe(new_raw_df)
             
+            # If no new data, safely return the ENTIRE existing history so we don't wipe out indicators
+            if new_raw_df.empty or 'Close' not in new_raw_df.columns:
+                full_ticker_history = existing_df[existing_df['Ticker'] == ticker].copy() if not existing_df.empty else pd.DataFrame()
+                if not full_ticker_history.empty:
+                    dl_hist = existing_dl_df[existing_dl_df['Ticker'] == ticker] if not existing_dl_df.empty else pd.DataFrame()
+                    return full_ticker_history, dl_hist, "UPDATED_EMPTY"
+                else:
+                    return pd.DataFrame(), pd.DataFrame(), "FAILED"
+            
             ticker_history = existing_df[existing_df['Ticker'] == ticker].copy() if not existing_df.empty else pd.DataFrame()
             cols_to_keep = ['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume', 'Ticker', 'Sector', 'Daily_STDEV', 'Analyst_Consensus', 'Analyst_Upside_%']
             ticker_history = ticker_history[[c for c in cols_to_keep if c in ticker_history.columns]]
@@ -46,12 +55,8 @@ def process_single_ticker(ticker, sector_name, is_new_ticker, max_dates_per_tick
             new_raw_df = download_ticker_with_failover(ticker, period="5y")
             new_raw_df = fix_yfinance_dataframe(new_raw_df)
             ticker_history = pd.DataFrame()
-
-        if new_raw_df.empty or 'Close' not in new_raw_df.columns:
-            if not ticker_history.empty:
-                dl_hist = existing_dl_df[existing_dl_df['Ticker'] == ticker] if not existing_dl_df.empty else pd.DataFrame()
-                return ticker_history, dl_hist, "UPDATED_EMPTY"
-            else:
+            
+            if new_raw_df.empty or 'Close' not in new_raw_df.columns:
                 return pd.DataFrame(), pd.DataFrame(), "FAILED"
         
         new_raw_df['Date'] = pd.to_datetime(new_raw_df['Date']).dt.tz_localize(None)
@@ -201,21 +206,21 @@ def run_prefect_data_ingestion(sectors_map, processed_tickers, max_dates_per_tic
             
         for future in concurrent.futures.as_completed(futures):
             df, dl_df, status = future.result()
-        if status == "SUCCESS_NEW":
-            all_combined_data.append(df)
-            all_dl_data.append(dl_df)
-            tickers_added_count += 1
-        elif status == "SUCCESS_UPDATE":
-            all_combined_data.append(df)
-            all_dl_data.append(dl_df)
-            tickers_updated_count += 1
-        elif status == "UPDATED_EMPTY":
-            all_combined_data.append(df)
-            if not dl_df.empty:
+            if status == "SUCCESS_NEW":
+                all_combined_data.append(df)
                 all_dl_data.append(dl_df)
-            tickers_updated_count += 1
-        else:
-            tickers_failed_count += 1
+                tickers_added_count += 1
+            elif status == "SUCCESS_UPDATE":
+                all_combined_data.append(df)
+                all_dl_data.append(dl_df)
+                tickers_updated_count += 1
+            elif status == "UPDATED_EMPTY":
+                all_combined_data.append(df)
+                if not dl_df.empty:
+                    all_dl_data.append(dl_df)
+                tickers_updated_count += 1
+            else:
+                tickers_failed_count += 1
 
     return all_combined_data, all_dl_data, tickers_updated_count, tickers_added_count, tickers_failed_count, valid_tickers_in_dict
 
@@ -638,6 +643,20 @@ def download_sp500_full_analysis(sectors_map, folder_path):
     os.makedirs(folder_path, exist_ok=True)
     
     try:
+        # === ZERO-TRUST FILE INTEGRITY LOCK ===
+        if os.path.exists(full_path):
+            try:
+                # Fast row count check without loading pandas
+                existing_rows = sum(1 for _ in open(full_path, 'r', encoding='utf-8', errors='ignore')) - 1
+                if len(final_df) < (existing_rows * 0.8):
+                    print(f"\n[FATAL ZERO-TRUST LOCK] ABORTING SAVE! The new dataset has {len(final_df)} rows, but the existing database has {existing_rows} rows.")
+                    print("This indicates a massive data truncation (likely a pipeline bug). Saving would destroy the database.")
+                    import sys
+                    sys.exit(1)
+            except Exception as e:
+                print(f"[ZERO-TRUST LOCK] Warning: Could not verify existing row count: {e}")
+        # ======================================
+        
         final_df.to_csv(full_path, index=False)
         print(f"\n[SUCCESS] Saved updated stock analysis to: {full_path}")
         print(f"Total processed database rows: {len(final_df)}")

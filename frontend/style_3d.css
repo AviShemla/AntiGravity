@@ -54,12 +54,14 @@ header p {
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 2rem;
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
+    overflow-x: auto;
 }
 .nav-links {
     list-style: none;
     display: flex;
-    gap: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 .nav-links li {
     padding: 0.5rem 1rem;

@@ -50,7 +50,7 @@ exec_cmd("systemctl restart ag-sniper")
 exec_cmd("systemctl restart ag-vix")
 
 print("Deploying Prefect Flows natively on Vultr...")
-exec_cmd("cd /opt/antigravity && source venv/bin/activate && python prefect_pipeline.py serve &")
+exec_cmd("cd /opt/antigravity && source venv/bin/activate && nohup python prefect_pipeline.py serve > /dev/null 2>&1 &")
 
 ssh.close()
 print("FULL VULTR MIGRATION COMPLETE!")

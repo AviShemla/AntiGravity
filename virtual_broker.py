@@ -494,4 +494,4 @@ def run_virtual_broker():
         
 if __name__ == '__main__':
     run_virtual_broker()
-    os._exit(0)
+    import sys; sys.stdout.flush(); os._exit(0)

@@ -1,3 +1,37 @@
 
 ## Zero-Hallucination Policy
 NEVER answer questions about the system architecture, configuration, pipelines, or logic based on memory or assumptions. YOU MUST ALWAYS use `grep_search` and `view_file` to physically verify the exact code in the current codebase BEFORE answering. If you assume or guess, you are failing the user.
+# MASTER PRIME DIRECTIVES
+
+## The Core Verification Promises
+* **Zero-Hallucination Policy:** NEVER answer questions about system architecture, configuration, pipelines, or logic based on memory or assumptions. YOU MUST ALWAYS use physical tools (`grep_search`, `view_file`, DB queries) to verify the exact code/state BEFORE answering. 
+* **The Ironclad Physical Verification Promise:** Give answers based ONLY on explicit, physical verification. Deductive reasoning without physical proof is defined as a hallucination, which is strictly forbidden.
+* **Dashboard X-Axis Verification Rule:** Whenever verifying the Dashboard UI for correctness, you MUST mathematically prove that the latest date in the database perfectly matches the latest date rendered on the chart's X-axis.
+
+## Financial & AI Credit Conservation
+* **EXTREME AI CREDIT CONSENT PROTOCOL (MANDATORY):** Before fulfilling requests that require executing scripts, reading large files, or running heavy scans, you MUST FIRST reply with a "Credit Warning Pause" stating your intentions, acknowledging the token burn, and explicitly requesting permission. Execute ONLY AFTER the user says "Yes, proceed."
+* **AI Credit Conservation Protocol (User Enforced):**
+    1. Never run exploratory SSH/HTTP calls speculatively. Know the answer before running.
+    2. Batch multiple sequential calls into a single script.
+    3. Never re-run a script that already ran successfully unless output was provably wrong.
+    4. Never declare a system 100% without physically verifying EVERY single check item. 
+    5. Use direct Turso HTTP API for all DB reads/writes instead of Python scripts that hang and burn credits.
+* **Zero Polling Loop Enforcement:** ALWAYS use the `schedule` tool or system reactive wakeups instead of using `manage_task` in a tight loop to wait for long background processes.
+* **First Contact Initialization Protocol:** On the very first user message of a new daily session, internally parse, acknowledge, and report that all Prime Directives have been loaded before addressing the specific prompt.
+
+## Infrastructure & Server Protocols
+* **Distributed Architecture Constraint:** Before declaring a remote service "deadlocked" or abandoning it, manually execute a raw HTTP request or check the exact schema to mathematically prove whether the failure is a syntax error or a true infrastructure failure.
+* **The 60-Second Post-Execution Verification Protocol:** After executing any pipeline or background task on Vultr, set a 60-second timer and query the live CPU/logs to prove it survived the initial 60 seconds before reporting "Success".
+* **The Silent Daemon Assumption:** Strictly forbidden from assuming a background daemon is healthy just because its parent orchestrator ran successfully. Explicitly SSH into Vultr and run `ps aux` to prove the child daemon is actively consuming data.
+* **The Deadlocked Local Task Cleanup:** If a local background task querying Turso via `libsql_client` hangs without returning an error, explicitly kill it using `manage_task(Action='kill')` to prevent memory leaks.
+* **Duplicate Sniper Prevention Protocol:** `intraday_tracker.py` must run as EXACTLY 1 process. NEVER manually nohup-start it while Prefect is running. Kill ALL, verify count=0, start 1, and verify count=1 before Prefect's next tick.
+* **File Descriptor (ulimit) Verification Protocol:** Before declaring 'Too many open files cannot recur,' physically verify `/proc/<PID>/limits` for EVERY running Sniper PID. Never assume - always prove.
+
+## Code-Level Hard Rules
+* **Outlook COM Deadlock Eradication:** Before running ANY email dispatch scripts, explicitly run `taskkill /F /IM outlook.exe /T` and `taskkill /F /IM OfficeClickToRun.exe /T` to shatter zombie process trees.
+* **SQL Query Fetch Argument Fallacy:** When executing queries using `database_manager.execute_query()`, NEVER pass `fetch=True` as a kwarg.
+* **Prefect Local Teardown Crash Resiliency:** NEVER use `@flow` or `@task` in the core ingestion scripts (like `SPY.py`) when running locally. Use pure native Python `ThreadPoolExecutor` instead.
+
+
+## User Enforced Prime Directive: Routine Task Cleanup
+ALWAYS check background tasks routinely. If there are old, hung, or unnecessary tasks running locally, aggressively kill them so the laptop does not crash.

@@ -86,7 +86,7 @@ if __name__ == '__main__':
     today = pd.to_datetime('today').normalize()
     start_cash_dict = {"EL_CAP": 10000.0, "EL_VOLTI": 10000.0, "CHAMPION": 10000.0}
 
-    if os.path.exists(olympic_csv_path):
+    if os.path.exists(olympic_csv_path) and os.path.getsize(olympic_csv_path) > 0:
         print(f"\n>>> Loading marathon state from {olympic_csv_path}")
         try:
             df_marathon = pd.read_csv(olympic_csv_path)
@@ -235,7 +235,7 @@ if __name__ == '__main__':
                 def run_single_ticker(ticker):
                     t_out = f"tmp_pred_{test_name}_{ticker}.json"
                     if os.path.exists(t_out): return t_out
-                    cmd = ["py", "backtest_worker.py", "--date", date_str, "--tickers", ticker, "--out", t_out]
+                    cmd = [sys.executable, os.path.join(BASE_DIR, "backtest_worker.py"), "--date", date_str, "--tickers", ticker, "--out", t_out]
                     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     return t_out
                     
@@ -371,14 +371,12 @@ if __name__ == '__main__':
         print(f">>> Saved Marathon Update: {out_file}")
         
         # --- Sync Dashboard CSVs to Vultr ---
-        print("\n--- Deploying Updated CSV to Vultr Dashboard ---")
-        try:
-            import sys
-            import subprocess
-            subprocess.run([sys.executable, os.path.join(BASE_DIR, "fast_deploy.py")], cwd=BASE_DIR)
-            print("Deploy complete.")
-        except Exception as e:
-            print(f"Deploy failed: {e}")
+        if os.name == 'nt':
+            print("\n--- Deploying Updated CSV to Vultr Dashboard ---")
+            try:
+                subprocess.run([sys.executable, os.path.join(BASE_DIR, "fast_deploy.py")], cwd=BASE_DIR)
+            except Exception as e:
+                print(f"Deploy failed: {e}")
             
     except Exception as e:
         print(f"Failed to generate final CSV: {e}")

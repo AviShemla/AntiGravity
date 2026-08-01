@@ -121,15 +121,19 @@ if __name__ == "__main__":
             file_shadow = os.path.join(BASE_DIR, "financial_data", "Prod_vs_Shadow_Results_MASTER.csv")
             if not validate_csv_freshness(file_shadow, last_completed_market_day, "[QA 3] Prod vs Shadow Dashboard CSV"):
                 errors += 1
-                log_alert(f"-> Auto-spawning prod_vs_shadow_tracker.py for {last_completed_market_day}...")
-                subprocess.Popen([sys.executable, "prod_vs_shadow_tracker.py", last_completed_market_day], cwd=BASE_DIR, creationflags=0x08000000)
+                if os.name == 'nt':
+                    subprocess.Popen([sys.executable, "prod_vs_shadow_tracker.py", last_completed_market_day], cwd=BASE_DIR, creationflags=0x08000000)
+                else:
+                    subprocess.Popen([sys.executable, "prod_vs_shadow_tracker.py", last_completed_market_day], cwd=BASE_DIR)
                 
         if not is_backtester_running:
             file_olympic = os.path.join(BASE_DIR, "financial_data", "Olympic_Shootout_Results_MASTER.csv")
             if not validate_csv_freshness(file_olympic, last_completed_market_day, "[QA 3] Population PnL Race Dashboard CSV"):
                 errors += 1
-                log_alert("-> Auto-spawning run_backtests.py...")
-                subprocess.Popen([sys.executable, "run_backtests.py"], cwd=BASE_DIR, creationflags=0x08000000)
+                if os.name == 'nt':
+                    subprocess.Popen([sys.executable, "run_backtests.py"], cwd=BASE_DIR, creationflags=0x08000000)
+                else:
+                    subprocess.Popen([sys.executable, "run_backtests.py"], cwd=BASE_DIR)
             
     # QA 4: Weekend Trainers
     file2 = os.path.join(BASE_DIR, "models", "transformer_weights.pt")
@@ -167,8 +171,10 @@ if __name__ == "__main__":
             
             if max_ledger_date is None or max_ledger_date < last_completed_market_day:
                 log_alert(f"[QA 5] Dashboard Data Gap Detected! Ledger max date ({max_ledger_date}) < ({last_completed_market_day}).")
-                log_alert(f"-> Auto-spawning Intraday Tracker to force EOD write for {last_completed_market_day}...")
-                subprocess.Popen([sys.executable, "intraday_tracker.py", "--target-date", last_completed_market_day], cwd=BASE_DIR, creationflags=0x08000000)
+                if os.name == 'nt':
+                    subprocess.Popen([sys.executable, "intraday_tracker.py", "--target-date", last_completed_market_day], cwd=BASE_DIR, creationflags=0x08000000)
+                else:
+                    subprocess.Popen([sys.executable, "intraday_tracker.py", "--target-date", last_completed_market_day], cwd=BASE_DIR)
                 errors += 1
                 
             # QA 6: Market Open Readiness (Intraday Execution Blindspot Aware)
@@ -196,8 +202,10 @@ if __name__ == "__main__":
                 if is_running:
                     log_alert("-> Pipeline is actively running. Skipping auto-spawn.")
                 else:
-                    log_alert("-> Auto-spawning Catch-Up Controller...")
-                    subprocess.Popen([sys.executable, "laptop_catchup_controller.py"], cwd=BASE_DIR, creationflags=0x08000000)
+                    if os.name == 'nt':
+                        subprocess.Popen([sys.executable, "laptop_catchup_controller.py"], cwd=BASE_DIR, creationflags=0x08000000)
+                    else:
+                        subprocess.Popen([sys.executable, "laptop_catchup_controller.py"], cwd=BASE_DIR)
                     errors += 1
                     
         # QA 10: ETF/Stock Sequencing

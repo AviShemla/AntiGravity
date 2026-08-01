@@ -34,7 +34,7 @@ try:
     
     nyse = mcal.get_calendar('NYSE')
     now = pd.Timestamp.now(tz='America/New_York')
-    schedule = nyse.schedule(start_date=(now - pd.Timedelta(days=7)).strftime('%Y-%m-%d'), end_date=(now + pd.Timedelta(days=1)).strftime('%Y-%m-%d'))
+    schedule = nyse.schedule(start_date=(now - pd.Timedelta(days=7)).strftime('%Y-%m-%d'), end_date=(now + pd.Timedelta(days=7)).strftime('%Y-%m-%d'))
     past_sessions = schedule[schedule['market_close'] < now]
     
     if now.hour < 16 and not past_sessions[past_sessions.index == now.strftime('%Y-%m-%d')].empty:

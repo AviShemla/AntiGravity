@@ -4,25 +4,13 @@ import json
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 
-try:
-    with open(os.path.join(BASE_DIR, 'Dynamic_Target_ETFs.json'), 'r') as f:
-        TARGET_ETFS = json.load(f)
-except Exception:
-    TARGET_ETFS = ['XLK', 'XLV', 'XLY', 'XLF', 'XLC', 'XLI', 'XLE', 'XLP', 'XLU', 'XLRE', 'XLB']
-
-try:
-    import database_manager
-    df_held = database_manager.execute_query("SELECT holdings_json FROM capital_ledgers WHERE persona LIKE 'ETF_%'")
-    for idx, row in df_held.iterrows():
-        try:
-            holdings = json.loads(row['holdings_json']) if isinstance(row['holdings_json'], str) else row['holdings_json']
-            for t in holdings.keys():
-                if t != 'Cash' and t not in TARGET_ETFS:
-                    TARGET_ETFS.append(t)
-        except Exception as e:
-            pass
-except Exception as e:
-    print(f"Warning: Could not fetch active ETF holdings for scorecard compilation. Error: {e}")
+TARGET_ETFS = []
+for f in os.listdir(BASE_DIR):
+    if f.endswith('_Bayesian_Scorecard.xlsx') and f != 'Top5_Bayesian_Scorecard_Formatted.xlsx' and f != 'Top5_Bayesian_Scorecard_Formatted_MOCK.xlsx':
+        ticker = f.split('_Bayesian_Scorecard')[0]
+        if ticker not in ['NEBX', 'SNXX', 'ARMG', 'WDCX', 'MUU', 'CRDU', 'JPM_SGP']:  # Exclude single stocks that got mixed in
+            if len(ticker) <= 4: # Crude filter for ETFs/Stocks
+                TARGET_ETFS.append(ticker)
 
 
 def merge_scorecards():
