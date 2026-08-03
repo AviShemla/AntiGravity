@@ -336,9 +336,10 @@ def get_race_data(mode: str = "Single"):
         p_name = p if mode == "Single" else f"ETF_{p}"
         df_p = database_manager.get_ledger(p_name)
         if not df_p.empty:
-            eq_col = 'Total_Equity' if 'Total_Equity' in df_p.columns else f'{p}_Total_Equity'
-            if 'Date' in df_p.columns and eq_col in df_p.columns:
-                df_p['Date'] = pd.to_datetime(df_p['Date'])
+            date_col = 'date' if 'date' in df_p.columns else 'Date'
+            eq_col = 'total_equity' if 'total_equity' in df_p.columns else ('Total_Equity' if 'Total_Equity' in df_p.columns else f'{p}_Total_Equity')
+            if date_col in df_p.columns and eq_col in df_p.columns:
+                df_p['Date'] = pd.to_datetime(df_p[date_col])
                 df_p = df_p[['Date', eq_col]].rename(columns={eq_col: p})
                 all_ledgers.append(df_p.set_index('Date'))
                 
@@ -347,10 +348,8 @@ def get_race_data(mode: str = "Single"):
         
     plot_df = pd.concat(all_ledgers, axis=1).sort_index().ffill()
     plot_df.index = pd.to_datetime(plot_df.index)
-    plot_df = plot_df.reindex(pd.date_range(start=plot_df.index.min(), end=max(plot_df.index.max(), pd.Timestamp.now().normalize() - pd.offsets.BDay(1)), freq='B')).ffill()
-    
-    # Filter to last 35 days for performance
-    plot_df = plot_df[plot_df.index >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
+    cutoff = pd.Timestamp.now() - pd.Timedelta(days=35)
+    plot_df = plot_df[plot_df.index >= cutoff]
     
     series_data = {}
     for col in plot_df.columns:
