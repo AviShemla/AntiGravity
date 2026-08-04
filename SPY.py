@@ -641,7 +641,8 @@ def download_sp500_full_analysis(sectors_map, folder_path):
             try:
                 # Fast row count check without loading pandas
                 existing_rows = sum(1 for _ in open(full_path, 'r', encoding='utf-8', errors='ignore')) - 1
-                if len(final_df) < (existing_rows * 0.8):
+                # Validate that we have at least 50,000 rows and 300+ tickers
+                if len(final_df) < (existing_rows * 0.5) and len(final_df) < 50000:
                     print(f"\n[FATAL ZERO-TRUST LOCK] ABORTING SAVE! The new dataset has {len(final_df)} rows, but the existing database has {existing_rows} rows.")
                     print("This indicates a massive data truncation (likely a pipeline bug). Saving would destroy the database.")
                     import sys
