@@ -259,42 +259,35 @@ def rebalance_tickers(folder_path):
         sectors = sp500_df['GICS Sector'].tolist()
         ticker_sector_map = dict(zip(tickers, sectors))
         
-        print(f">>> Bulk downloading 1-year data for {len(tickers)} tickers to calculate Liquidity & Volatility...")
-        # Using un-adjusted close to avoid yfinance multi-index errors on some columns in recent updates, 
-        # but auto_adjust=True is fine. For speed we use threads=True implicitly.
-        data = yf.download(tickers, period="1y", group_by="ticker", auto_adjust=False, progress=False)
-        
+        print(f">>> Downloading 1-year data for {len(tickers)} tickers via Failover Downloader (Yahoo + Tiingo)...")
         results = []
-        for t in tickers:
+        
+        def fetch_ticker_metrics(t):
             try:
-                if len(tickers) == 1:
-                    df = data
-                else:
-                    df = data[t]
-                    
+                df = download_ticker_with_failover(t, period="1y")
                 if df.empty or 'Close' not in df.columns or 'Volume' not in df.columns:
-                    continue
-                    
+                    return None
                 df = df.dropna(subset=['Close', 'Volume'])
                 if len(df) < 50:
-                    continue
-                
+                    return None
                 recent_df = df.tail(30)
                 avg_liquidity = (recent_df['Close'] * recent_df['Volume']).mean()
-                
                 returns = df['Close'].pct_change().dropna()
                 volatility = returns.std()
-                
                 sector = ticker_sector_map.get(t, "Unknown")
                 score = avg_liquidity / volatility if volatility > 0 else 0
-                
-                results.append({
+                return {
                     'Ticker': t.replace('-', '.'), 
                     'Sector': sector.replace(' ', '_'),
                     'Score': score
-                })
+                }
             except Exception:
-                pass
+                return None
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            res_list = list(executor.map(fetch_ticker_metrics, tickers))
+            
+        results = [r for r in res_list if r is not None]
                 
         ranking_df = pd.DataFrame(results)
         
