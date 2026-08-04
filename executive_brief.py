@@ -183,29 +183,20 @@ def send_executive_brief():
     """
     
     try:
-        import win32com.client
-        outlook = email_utils.MockOutlook()
-        mail = outlook.CreateItem(0)
-        
-        for account in outlook.Session.Accounts:
-            if "gmail.com" in account.SmtpAddress.lower():
-                mail.SendUsingAccount = account
-                break
-                
-        mail.To = RECIPIENT_EMAIL
-        mail.Subject = f"The ORACLE Executive Brief: {sign}${total_pnl:,.2f} Daily PnL"
-        
         logo_path = os.path.join(BASE_DIR, "oracle_logo_fixed.png")
-        if os.path.exists(logo_path):
-            attachment = mail.Attachments.Add(logo_path)
-            attachment.PropertyAccessor.SetProperty("http://schemas.microsoft.com/mapi/proptag/0x3712001E", "oracle_logo")
-            
+        attachments = []
         tnx_path = os.path.join(BASE_DIR, "TNX_Test_Scorecard.xlsx")
         if os.path.exists(tnx_path):
-            mail.Attachments.Add(tnx_path)
+            attachments.append(tnx_path)
             
-        mail.HTMLBody = html
-        mail.Send()
+        subject = f"The ORACLE Executive Brief: {sign}${total_pnl:,.2f} Daily PnL"
+        email_utils.send_native_email(
+            to_address=RECIPIENT_EMAIL,
+            subject=subject,
+            html_body=html,
+            attachments=attachments,
+            logo_path=logo_path if os.path.exists(logo_path) else None
+        )
         print("Executive Brief email successfully sent!")
     except Exception as e:
         print(f"Failed to send Executive Brief email: {e}")
