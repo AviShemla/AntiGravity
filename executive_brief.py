@@ -182,24 +182,27 @@ def send_executive_brief():
     </html>
     """
     
-    try:
-        logo_path = os.path.join(BASE_DIR, "oracle_logo_fixed.png")
-        attachments = []
-        tnx_path = os.path.join(BASE_DIR, "TNX_Test_Scorecard.xlsx")
-        if os.path.exists(tnx_path):
-            attachments.append(tnx_path)
-            
-        subject = f"The ORACLE Executive Brief: {sign}${total_pnl:,.2f} Daily PnL"
-        email_utils.send_native_email(
-            to_address=RECIPIENT_EMAIL,
-            subject=subject,
-            html_body=html,
-            attachments=attachments,
-            logo_path=logo_path if os.path.exists(logo_path) else None
-        )
-        print("Executive Brief email successfully sent!")
-    except Exception as e:
-        print(f"Failed to send Executive Brief email: {e}")
+    if "--force-email" in sys.argv:
+        try:
+            logo_path = os.path.join(BASE_DIR, "oracle_logo_fixed.png")
+            attachments = []
+            tnx_path = os.path.join(BASE_DIR, "TNX_Test_Scorecard.xlsx")
+            if os.path.exists(tnx_path):
+                attachments.append(tnx_path)
+                
+            subject = f"The ORACLE Executive Brief: {sign}${total_pnl:,.2f} Daily PnL"
+            email_utils.send_native_email(
+                to_address=RECIPIENT_EMAIL,
+                subject=subject,
+                html_body=html,
+                attachments=attachments,
+                logo_path=logo_path if os.path.exists(logo_path) else None
+            )
+            print("Executive Brief email successfully sent!")
+        except Exception as e:
+            print(f"Failed to send Executive Brief email: {e}")
+    else:
+        print("[SINGLE-EMAIL POLICY] Executive Brief email dispatch delegated exclusively to daily_dashboard_qa_watchdog.py.")
 
 if __name__ == "__main__":
     print("Generating Executive Assistant Brief...")
