@@ -210,6 +210,39 @@ def audit_stage4_end_to_end_sweep(target_date):
     return issues
 
 
+def audit_holding_sanity_and_spikes():
+    issues = []
+    print("\n[STAGE 5] Auditing Holding-Level Sanity & Return Spike Guards...")
+    personas = ['BallsForBrains', 'Conservative', 'Neutral', 'Dynamic', 'ETF_BallsForBrains', 'ETF_Conservative', 'ETF_Neutral', 'ETF_Dynamic']
+    
+    for p in personas:
+        try:
+            df = database_manager.get_ledger(p)
+            if df.empty: continue
+            
+            for idx, r in df.iterrows():
+                h_raw = r['Holdings_JSON']
+                holdings = json.loads(h_raw) if isinstance(h_raw, str) else (h_raw or {})
+                for ticker, h_info in holdings.items():
+                    dollars = float(h_info.get('dollars', 0.0))
+                    price = float(h_info.get('price', 0.0))
+                    if dollars < 0 or price < 0:
+                        issues.append(f"HOLDING SANITY FAILURE ({p} on {r['Date']}): Negative holding value detected for {ticker} (dollars=${dollars}, price=${price})!")
+                        
+            if len(df) >= 2:
+                last_two = df.tail(2)
+                eq1 = float(last_two.iloc[-2]['Total_Equity'])
+                eq2 = float(last_two.iloc[-1]['Total_Equity'])
+                if eq1 > 0:
+                    pct_change = abs((eq2 - eq1) / eq1 * 100.0)
+                    if pct_change > 15.0:
+                        issues.append(f"UNREALISTIC RETURN SPIKE DETECTED ({p}): Day-over-day return delta of {pct_change:.1f}% exceeds 15.0% sanity limit!")
+        except Exception as e:
+            issues.append(f"Holding sanity audit error for {p}: {e}")
+            
+    return issues
+
+
 # =========================================================================
 # AUTONOMOUS SELF-HEALING CONTROLLER
 # =========================================================================
@@ -276,22 +309,24 @@ def run_full_qa_and_heal():
     issues.extend(audit_stage2_intermediate_files(target_date))
     issues.extend(audit_stage3_pymc_bayesian(target_date))
     issues.extend(audit_stage4_end_to_end_sweep(target_date))
+    issues.extend(audit_holding_sanity_and_spikes())
     
     healed = []
     if issues:
-        print(f"\n⚠️ DETECTED {len(issues)} DISCREPANCIES IN 4-STAGE PIPELINE:")
+        print(f"\n⚠️ DETECTED {len(issues)} DISCREPANCIES IN PIPELINE:")
         for idx, i in enumerate(issues, 1):
             print(f"  {idx}. {i}")
             
         healed = auto_heal_issues(issues)
         
         # Re-audit post healing
-        print("\n[POST-HEALING RE-AUDIT] Re-verifying 4-stage pipeline lineage after self-healing actions...")
+        print("\n[POST-HEALING RE-AUDIT] Re-verifying pipeline lineage after self-healing actions...")
         remaining_issues = []
         remaining_issues.extend(audit_stage1_price_extract(target_date))
         remaining_issues.extend(audit_stage2_intermediate_files(target_date))
         remaining_issues.extend(audit_stage3_pymc_bayesian(target_date))
         remaining_issues.extend(audit_stage4_end_to_end_sweep(target_date))
+        remaining_issues.extend(audit_holding_sanity_and_spikes())
         issues = remaining_issues
     else:
         print("\n✅ ZERO ISSUES DETECTED! All 4 stages of the pipeline are 100% healthy, synchronized, and based on real data!")
