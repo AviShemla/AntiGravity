@@ -100,6 +100,11 @@ def catchup_master_pipeline():
         send_error_email("AntiGravity Error: SPY.py Failed", error_msg)
         os._exit(1)
         
+    # Prevent multi-date PyMC sampling timeouts by pruning to the latest missed date
+    if len(missed_dates) > 1:
+        print(f"[CATCH-UP OPTIMIZER] Pruning {len(missed_dates)} missed dates down to latest date: {missed_dates[-1]}")
+        missed_dates = missed_dates[-1:]
+
     for idx, target_date in enumerate(missed_dates):
         is_last = (idx == len(missed_dates) - 1)
         print(f"\n==============================================")
