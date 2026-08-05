@@ -143,6 +143,34 @@ def audit_master_csvs(target_date):
     return issues
 
 
+def audit_equity_delta_flatness():
+    issues = []
+    print("\n[QA CHECK 4] Auditing Equity Delta & Flatness across all 8 personas...")
+    personas = ['BallsForBrains', 'Conservative', 'Neutral', 'Dynamic', 'ETF_BallsForBrains', 'ETF_Conservative', 'ETF_Neutral', 'ETF_Dynamic']
+    
+    for p in personas:
+        try:
+            df = database_manager.get_ledger(p)
+            if df.empty or len(df) < 2:
+                continue
+            
+            last_two = df.tail(2)
+            eq1 = float(last_two.iloc[-2]['Total_Equity'])
+            eq2 = float(last_two.iloc[-1]['Total_Equity'])
+            date1 = str(last_two.iloc[-2]['Date'])[:10]
+            date2 = str(last_two.iloc[-1]['Date'])[:10]
+            
+            cash = float(last_two.iloc[-1]['Cash'])
+            is_active_portfolio = abs(eq2 - cash) > 10.0
+            
+            if abs(eq1 - eq2) < 0.0001 and is_active_portfolio:
+                issues.append(f"FLAT EQUITY DETECTED ({p}): Identical equity (${eq2:,.2f}) on {date1} and {date2} despite active positions!")
+        except Exception as e:
+            issues.append(f"Equity Delta Audit error for {p}: {e}")
+            
+    return issues
+
+
 def auto_heal_issues(issues):
     healed = []
     print("\n[SELF-HEALING CONTROLLER] Evaluating detected issues for autonomous remediation...")
@@ -150,26 +178,30 @@ def auto_heal_issues(issues):
     stale_data = any("Stale Turso DB Ledgers" in i or "Turso DB" in i for i in issues)
     api_down = any("API" in i for i in issues)
     stale_csv = any("Stale Olympic" in i or "Stale Prod vs Shadow" in i for i in issues)
+    flat_equity = any("FLAT EQUITY DETECTED" in i for i in issues)
     
     if api_down:
-        print("  [HEAL ACTION 1] Restarting antigravity-dashboard.service...")
+        print("  [HEAL ACTION 1] Restarting uvicorn web server on port 80...")
         try:
-            subprocess.run(["systemctl", "restart", "antigravity-dashboard.service"], check=True)
+            subprocess.run(["pkill", "-f", "uvicorn"], check=False)
+            time.sleep(1)
+            subprocess.Popen([python_exe, "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "80"], cwd=BASE_DIR)
             time.sleep(3)
-            healed.append("Restarted antigravity-dashboard.service (Web server restored)")
+            healed.append("Restarted uvicorn web server on Port 80 (API endpoints restored)")
         except Exception as e:
-            print(f"Failed to restart dashboard service: {e}")
+            print(f"Failed to restart uvicorn server: {e}")
             
-    if stale_data:
-        print("  [HEAL ACTION 2] Triggering Master Catchup Controller...")
+    if stale_data or flat_equity:
+        print("  [HEAL ACTION 2] Triggering Master Catchup, Scorecard Export & Virtual Broker...")
         try:
-            subprocess.run([python_exe, os.path.join(BASE_DIR, "laptop_catchup_controller.py"), "master"], check=True)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "export_bayesian_scorecard_formatted.py")], check=True)
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "virtual_broker.py")], check=True)
             subprocess.run([python_exe, os.path.join(BASE_DIR, "etf_daily_pipeline.py")], check=True)
-            healed.append("Executed Master Catchup & ETF Daily Pipeline (Data refreshed)")
+            healed.append("Executed Bayesian Scorecard Export, Virtual Broker & ETF Pipeline (Flat equity resolved)")
         except Exception as e:
             print(f"Failed to execute master catchup: {e}")
 
-    if stale_csv or stale_data:
+    if stale_csv or stale_data or flat_equity:
         print("  [HEAL ACTION 3] Rebuilding Master CSV Scorecards...")
         try:
             subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], check=True)
@@ -192,6 +224,7 @@ def run_full_qa_and_heal():
     issues.extend(audit_data_freshness(target_date))
     issues.extend(audit_api_endpoints())
     issues.extend(audit_master_csvs(target_date))
+    issues.extend(audit_equity_delta_flatness())
     
     healed = []
     if issues:
@@ -207,6 +240,7 @@ def run_full_qa_and_heal():
         remaining_issues.extend(audit_data_freshness(target_date))
         remaining_issues.extend(audit_api_endpoints())
         remaining_issues.extend(audit_master_csvs(target_date))
+        remaining_issues.extend(audit_equity_delta_flatness())
         issues = remaining_issues
     else:
         print("\n✅ ZERO ISSUES DETECTED! Dashboard data, API endpoints, and ledgers are 100% healthy!")
