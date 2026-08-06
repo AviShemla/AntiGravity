@@ -236,9 +236,9 @@ def audit_holding_sanity_and_spikes():
     return issues
 
 
-def audit_cross_persona_date_synchronization():
+def audit_cross_persona_date_synchronization(target_date):
     issues = []
-    print("\n[STAGE 6] Auditing Cross-Persona Date Synchronization Guard (Check 9)...")
+    print(f"\n[STAGE 6] Auditing Cross-Persona Date Synchronization & Target Session Freshness ({target_date}) (Check 9)...")
     personas = ['BallsForBrains', 'Conservative', 'Neutral', 'Dynamic', 'ETF_BallsForBrains', 'ETF_Conservative', 'ETF_Neutral', 'ETF_Dynamic']
     dates_map = {}
     for p in personas:
@@ -253,6 +253,10 @@ def audit_cross_persona_date_synchronization():
         unique_dates = set(dates_map.values())
         if len(unique_dates) > 1:
             issues.append(f"CROSS-PERSONA DATE MISMATCH DETECTED: Ledgers have divergent max dates across personas! Details: {dates_map}")
+            
+        for p, d in dates_map.items():
+            if d != str(target_date):
+                issues.append(f"STALE PERSONA LEDGER DATE ({p}): Latest date ({d}) does NOT match target closed NYSE session ({target_date})!")
             
     return issues
 
@@ -324,7 +328,7 @@ def run_full_qa_and_heal():
     issues.extend(audit_stage3_pymc_bayesian(target_date))
     issues.extend(audit_stage4_end_to_end_sweep(target_date))
     issues.extend(audit_holding_sanity_and_spikes())
-    issues.extend(audit_cross_persona_date_synchronization())
+    issues.extend(audit_cross_persona_date_synchronization(target_date))
     
     healed = []
     if issues:
