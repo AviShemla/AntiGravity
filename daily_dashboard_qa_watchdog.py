@@ -236,6 +236,27 @@ def audit_holding_sanity_and_spikes():
     return issues
 
 
+def audit_cross_persona_date_synchronization():
+    issues = []
+    print("\n[STAGE 6] Auditing Cross-Persona Date Synchronization Guard (Check 9)...")
+    personas = ['BallsForBrains', 'Conservative', 'Neutral', 'Dynamic', 'ETF_BallsForBrains', 'ETF_Conservative', 'ETF_Neutral', 'ETF_Dynamic']
+    dates_map = {}
+    for p in personas:
+        try:
+            df = database_manager.get_ledger(p)
+            if not df.empty:
+                dates_map[p] = str(df['Date'].iloc[-1])[:10]
+        except Exception as e:
+            issues.append(f"Date sync audit error for {p}: {e}")
+            
+    if dates_map:
+        unique_dates = set(dates_map.values())
+        if len(unique_dates) > 1:
+            issues.append(f"CROSS-PERSONA DATE MISMATCH DETECTED: Ledgers have divergent max dates across personas! Details: {dates_map}")
+            
+    return issues
+
+
 # =========================================================================
 # AUTONOMOUS SELF-HEALING CONTROLLER
 # =========================================================================
@@ -303,6 +324,7 @@ def run_full_qa_and_heal():
     issues.extend(audit_stage3_pymc_bayesian(target_date))
     issues.extend(audit_stage4_end_to_end_sweep(target_date))
     issues.extend(audit_holding_sanity_and_spikes())
+    issues.extend(audit_cross_persona_date_synchronization())
     
     healed = []
     if issues:
