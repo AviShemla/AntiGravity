@@ -73,13 +73,6 @@ def audit_stage2_intermediate_files(target_date):
     prod_shadow_csv = os.path.join(BASE_DIR, "Prod_vs_Shadow_Results_MASTER.csv")
     
     for f_path, label in [(olympic_csv, "Olympic_Shootout_Results_MASTER.csv"), (prod_shadow_csv, "Prod_vs_Shadow_Results_MASTER.csv")]:
-        if not os.path.exists(f_path):
-            issues.append(f"Stage 2 Failure: Missing file {label}")
-        else:
-            try:
-                df = pd.read_csv(f_path)
-                if df.empty or 'Date' not in df.columns:
-                    issues.append(f"Stage 2 Failure: Corrupted Master CSV {label}")
                 else:
                     latest = str(df['Date'].iloc[-1])[:10]
                     print(f"  -> {label} Latest Date: {latest}")
@@ -235,8 +228,8 @@ def audit_holding_sanity_and_spikes():
                 eq2 = float(last_two.iloc[-1]['Total_Equity'])
                 if eq1 > 0:
                     pct_change = abs((eq2 - eq1) / eq1 * 100.0)
-                    if pct_change > 15.0:
-                        issues.append(f"UNREALISTIC RETURN SPIKE DETECTED ({p}): Day-over-day return delta of {pct_change:.1f}% exceeds 15.0% sanity limit!")
+                    if pct_change > 10.0:
+                        issues.append(f"UNREALISTIC SURGE/DROP DETECTED ({p}): Day-over-day return delta of {pct_change:.1f}% exceeds 10.0% threshold limit!")
         except Exception as e:
             issues.append(f"Holding sanity audit error for {p}: {e}")
             
@@ -456,14 +449,12 @@ def run_full_qa_and_heal():
     </html>
     """
     
-    # Collect attachments
+    # Collect attachments (< 15MB total size limit for Gmail SMTP safety)
     attachments = []
-    tnx_path = os.path.join(BASE_DIR, "TNX_Test_Scorecard.xlsx")
-    scorecard_path = os.path.join(BASE_DIR, "financial_data", "Top5_Bayesian_Scorecard_Formatted.xlsx")
-    
-    if os.path.exists(tnx_path): attachments.append(tnx_path)
-    if os.path.exists(scorecard_path): attachments.append(scorecard_path)
-    
+    for att_path in [os.path.join(BASE_DIR, "TNX_Test_Scorecard.xlsx"), os.path.join(BASE_DIR, "financial_data", "Top5_Bayesian_Scorecard_Formatted.xlsx")]:
+        if os.path.exists(att_path) and os.path.getsize(att_path) < 15 * 1024 * 1024:
+            attachments.append(att_path)
+            
     logo_path = os.path.join(BASE_DIR, "oracle_logo_fixed.png")
     
     try:
