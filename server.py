@@ -224,7 +224,20 @@ def get_asset_breakdown(df, active_holdings):
 
 @app.get("/api/holdings")
 def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
-    p_name = persona if mode == "Single" else f"ETF_{persona}"
+    clean_p = persona.replace(" ", "").replace("_", "")
+    if clean_p.lower().startswith("etf"):
+        clean_p = clean_p[3:]
+        
+    if clean_p.lower() in ["ballsforbrain", "ballsforbrains"]:
+        base_persona = "BallsForBrains"
+    else:
+        base_persona = clean_p.capitalize()
+        
+    if mode == "Single":
+        p_name = base_persona
+    else:
+        p_name = f"ETF_{base_persona}"
+            
     df = database_manager.get_ledger(p_name)
     if df.empty:
         raise HTTPException(status_code=404, detail="Ledger not found")

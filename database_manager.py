@@ -193,10 +193,21 @@ def update_continuity(pipeline_name, date_str):
 
 
 def get_last_continuity_date(pipeline_name):
-    client = get_connection()
-    res = client.execute("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = ?", [pipeline_name])
-    if res.rows:
-        return res.rows[0][0]
+    try:
+        client = get_connection()
+        res = client.execute("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = ?", [pipeline_name])
+        if res.rows and res.rows[0][0]:
+            return res.rows[0][0]
+    except Exception:
+        pass
+    # Fallback to actual latest date in capital_ledgers so we never falsely trigger multi-day catchups
+    try:
+        client = get_connection()
+        res_df = execute_query("SELECT MAX(date) FROM capital_ledgers")
+        if not res_df.empty and res_df.iloc[0][0]:
+            return str(res_df.iloc[0][0])
+    except Exception:
+        pass
     return None
 
 
