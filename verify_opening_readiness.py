@@ -25,7 +25,7 @@ def verify_preflight_readiness():
     # 1. Check Staged Pending Orders
     print("\n[CHECK 1] Auditing Staged Pending Orders in Turso DB...")
     try:
-        df = database_manager.execute_query("SELECT persona, date, target_cash, target_equity FROM pending_orders")
+        df = database_manager.execute_query("SELECT persona, date FROM pending_orders")
         if not df.empty:
             print(df.to_string(index=False))
             staged_count = len(df)
