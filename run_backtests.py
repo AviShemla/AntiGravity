@@ -368,6 +368,17 @@ if __name__ == '__main__':
             df_merged = pd.concat([df_history, df_merged], ignore_index=True)
             df_merged = df_merged.drop_duplicates(subset=['Date'], keep='last').sort_values('Date').reset_index(drop=True)
             
+        try:
+            import database_manager
+            df_bfb = database_manager.execute_query("SELECT date as Date, total_equity as bfb_eq FROM capital_ledgers WHERE persona = 'BallsForBrains'")
+            if not df_bfb.empty:
+                df_merged = df_merged.merge(df_bfb, on='Date', how='left')
+                if 'bfb_eq' in df_merged.columns:
+                    df_merged['CHAMPION (Live VIP)'] = df_merged['CHAMPION (Live VIP)'].fillna(df_merged['bfb_eq'])
+                    df_merged = df_merged.drop(columns=['bfb_eq'], errors='ignore')
+        except Exception as e:
+            print(f"Warning: Failed to auto-sync CHAMPION from Turso DB: {e}")
+
         df_merged.to_csv(out_file, index=False)
         print(f">>> Saved Marathon Update: {out_file}")
         
