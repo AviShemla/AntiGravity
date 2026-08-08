@@ -7,19 +7,30 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RECIPIENT_EMAIL = "avi.shemla@gmail.com"
 
 def send_victorious_email():
-    csv_path = os.path.join(BASE_DIR, "financial_data", "Olympic_Shootout_Results_MASTER.csv")
-    
     el_cap = 10000.0
     el_volti = 10000.0
     champion = 10000.0
     
-    if os.path.exists(csv_path):
-        df = pd.read_csv(csv_path)
-        if not df.empty:
-            last_row = df.iloc[-1]
-            el_cap = float(last_row['EL_CAP (70% Liquidity)'])
-            el_volti = float(last_row['EL_VOLTI (70% Stability)'])
-            champion = float(last_row['CHAMPION (Live VIP)'])
+    try:
+        import database_manager
+        df_db = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
+        if not df_db.empty:
+            df_merged = df_db.pivot(index='Date', columns='model_name', values='total_equity').reset_index()
+            last_row = df_merged.iloc[-1]
+            if 'EL_CAP (70% Liquidity)' in last_row: el_cap = float(last_row['EL_CAP (70% Liquidity)'])
+            if 'EL_VOLTI (70% Stability)' in last_row: el_volti = float(last_row['EL_VOLTI (70% Stability)'])
+            if 'CHAMPION (Live VIP)' in last_row: champion = float(last_row['CHAMPION (Live VIP)'])
+        else:
+            csv_path = os.path.join(BASE_DIR, "financial_data", "Olympic_Shootout_Results_MASTER.csv")
+            if os.path.exists(csv_path):
+                df = pd.read_csv(csv_path)
+                if not df.empty:
+                    last_row = df.iloc[-1]
+                    el_cap = float(last_row['EL_CAP (70% Liquidity)'])
+                    el_volti = float(last_row['EL_VOLTI (70% Stability)'])
+                    champion = float(last_row['CHAMPION (Live VIP)'])
+    except Exception as e:
+        print(f"Warning: Failed to fetch Olympic data from Turso DB for email: {e}")
             
     el_cap_pct = ((el_cap - 10000.0) / 10000.0) * 100
     el_volti_pct = ((el_volti - 10000.0) / 10000.0) * 100

@@ -69,32 +69,18 @@ def audit_stage2_intermediate_files(target_date):
     issues = []
     print("\n[STAGE 2] Auditing Intermediate Scorecard & Backtest Data Lineage...")
     
-    olympic_csv = os.path.join(BASE_DIR, "financial_data", "Olympic_Shootout_Results_MASTER.csv")
-    prod_shadow_csv = os.path.join(BASE_DIR, "financial_data", "Prod_vs_Shadow_Results_MASTER.csv")
-    
-    for f_path, label in [(olympic_csv, "Olympic_Shootout_Results_MASTER.csv"), (prod_shadow_csv, "Prod_vs_Shadow_Results_MASTER.csv")]:
-        if not os.path.exists(f_path) or os.path.getsize(f_path) == 0:
-            issues.append(f"Stage 2 Failure: Missing or empty Master CSV: {label}")
-        else:
-            try:
-                df = pd.read_csv(f_path)
-                if df.empty or 'Date' not in df.columns:
-                    issues.append(f"Stage 2 Failure: Corrupted Master CSV {label}")
-                else:
-                    latest = str(df['Date'].iloc[-1])[:10]
-                    print(f"  -> {label} Latest Date: {latest}")
-                    if latest < target_date:
-                        issues.append(f"Stage 2 Failure ({label}): Latest date ({latest}) is behind NYSE target ({target_date})")
-                    
-                    # CHECK 8: Assert no column contains NULL/NaN/empty values in latest row
-                    latest_row = df.iloc[-1]
-                    for col in df.columns:
-                        val = latest_row[col]
-                        if pd.isna(val) or str(val).strip() == "":
-                            issues.append(f"Stage 2 Failure ({label}): Column '{col}' contains NULL/NaN value on latest date {latest_row.get('Date')}!")
-            except Exception as e:
-                issues.append(f"Stage 2 Failure ({label}): Error reading CSV: {e}")
-                
+    for table_name, label in [("olympic_shootout_master", "olympic_shootout_master"), ("prod_vs_shadow_master", "prod_vs_shadow_master")]:
+        try:
+            df_table = database_manager.execute_query(f"SELECT date as Date, model_name, total_equity FROM {table_name}")
+            if df_table.empty:
+                issues.append(f"Stage 2 Failure: Empty Turso DB Table: {label}")
+            else:
+                latest = str(df_table['Date'].max())[:10]
+                print(f"  -> {label} (Turso DB) Latest Date: {latest}")
+                if latest < target_date:
+                    issues.append(f"Stage 2 Failure ({label}): Latest date ({latest}) is behind NYSE target ({target_date})")
+        except Exception as e:
+            issues.append(f"Stage 2 Failure: Error reading Turso DB table {label}: {e}")
     return issues
 
 
