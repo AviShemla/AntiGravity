@@ -516,13 +516,16 @@ def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = 
 
 @app.get("/api/olympic")
 def get_olympic_data():
-    merged_path = os.path.join(BASE_DIR, 'Olympic_Shootout_Results_MASTER.csv')
-    
-    if not os.path.exists(merged_path):
-        raise HTTPException(status_code=404, detail="Olympic backtest results not found")
-        
     try:
-        df_merged = pd.read_csv(merged_path)
+        df_db = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
+        if not df_db.empty:
+            df_merged = df_db.pivot(index='Date', columns='model_name', values='total_equity').reset_index()
+        else:
+            merged_path = os.path.join(BASE_DIR, 'financial_data', 'Olympic_Shootout_Results_MASTER.csv')
+            if not os.path.exists(merged_path):
+                merged_path = os.path.join(BASE_DIR, 'Olympic_Shootout_Results_MASTER.csv')
+            df_merged = pd.read_csv(merged_path)
+
         df_merged['Date'] = pd.to_datetime(df_merged['Date']).dt.strftime('%Y-%m-%d')
         
         final_eq = df_merged.iloc[-1][['EL_CAP (70% Liquidity)', 'EL_VOLTI (70% Stability)', 'CHAMPION (Live VIP)']]

@@ -98,6 +98,38 @@ def init_db():
         )
     ''')
 
+    # 5. Olympic Shootout Master Table (Normalized Long Schema)
+    client.execute('''
+        CREATE TABLE IF NOT EXISTS olympic_shootout_master (
+            date TEXT NOT NULL,
+            model_name TEXT NOT NULL,
+            total_equity REAL NOT NULL,
+            PRIMARY KEY (date, model_name)
+        )
+    ''')
+
+    # 6. Prod vs Shadow Master Table (Normalized Long Schema)
+    client.execute('''
+        CREATE TABLE IF NOT EXISTS prod_vs_shadow_master (
+            date TEXT NOT NULL,
+            model_name TEXT NOT NULL,
+            total_equity REAL NOT NULL,
+            PRIMARY KEY (date, model_name)
+        )
+    ''')
+
+    # 7. ETF & Stock Scorecards Master Table
+    client.execute('''
+        CREATE TABLE IF NOT EXISTS etf_scorecards_master (
+            ticker TEXT NOT NULL,
+            persona TEXT NOT NULL,
+            date TEXT NOT NULL,
+            score REAL,
+            prob REAL,
+            PRIMARY KEY (ticker, persona, date)
+        )
+    ''')
+
 
 def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
     """

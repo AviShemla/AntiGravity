@@ -516,6 +516,22 @@ if __name__ == '__main__':
         sc = sc.drop(columns=['date_ts'])
             
         sc.to_excel(writer, sheet_name=sheet_name, startrow=2, index=False)
+
+        try:
+            import database_manager
+            client_db = database_manager.get_connection()
+            for _, r_db in sc.iterrows():
+                d_val = str(r_db['date'])
+                prob_val = float(r_db['Bayesian Probability P(UP)']) if 'Bayesian Probability P(UP)' in r_db and pd.notna(r_db['Bayesian Probability P(UP)']) else None
+                ret_val = float(r_db['Expected Return %']) if 'Expected Return %' in r_db and pd.notna(r_db['Expected Return %']) else None
+                client_db.execute('''
+                    INSERT INTO etf_scorecards_master (ticker, persona, date, score, prob)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(ticker, persona, date) DO UPDATE SET score=excluded.score, prob=excluded.prob
+                ''', [str(ticker), str(sheet_name), d_val, ret_val, prob_val])
+        except Exception as e_db:
+            pass
+
         worksheet = writer.sheets[sheet_name]
         
         worksheet.merge_range('A1:N1', f'Ticker Predicted: {ticker}', meta_format)
