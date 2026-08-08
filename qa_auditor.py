@@ -94,22 +94,16 @@ def check_data_continuity(db_path, json_path):
             expected_types[key] = 'TEXT'
 
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [r[0] for r in cursor.fetchall()]
-        
-        if not tables:
-            conn.close()
+        import database_manager
+        tables_df = database_manager.execute_query("SELECT name FROM sqlite_master WHERE type='table';")
+        if tables_df.empty:
             return
-            
+        tables = tables_df['name'].tolist()
         for table in tables:
-            cursor.execute(f"PRAGMA table_info({table});")
-            columns = cursor.fetchall()
-            
-            db_schema = {col[1]: col[2].upper() for col in columns}
-            
+            cols_df = database_manager.execute_query(f"PRAGMA table_info({table});")
+            if cols_df.empty:
+                continue
+            db_schema = {row['name']: str(row['type']).upper() for _, row in cols_df.iterrows()}
             mismatches = []
             checked_columns = 0
             for key, expected_type in expected_types.items():
@@ -120,11 +114,8 @@ def check_data_continuity(db_path, json_path):
                         mismatches.append(f"Silent truncation risk: JSON '{key}' is float, but DB schema is {actual_type}.")
                     elif expected_type == 'TEXT' and actual_type in ('INTEGER', 'REAL'):
                         mismatches.append(f"Type mismatch: JSON '{key}' is string, but DB schema is {actual_type}.")
-
             if mismatches and checked_columns > 0:
                 log_critical(f"DATA CONTINUITY MISMATCH in table '{table}': " + " | ".join(mismatches))
-                
-        conn.close()
     except Exception as e:
         log_critical(f"Database verification failed: {e}")
 
