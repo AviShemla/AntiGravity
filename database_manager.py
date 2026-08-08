@@ -35,6 +35,12 @@ def execute_query(query, args=None):
         return pd.DataFrame(columns=res.columns)
     return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
 
+def execute_write(query, args=None):
+    """Generic helper to execute INSERT/UPDATE/DELETE statements safely."""
+    client = get_connection()
+    stmt = libsql_client.Statement(query, args or [])
+    client.batch([stmt])
+
 
 def init_db():
     """Initializes the database schema if it doesn't exist."""

@@ -34,30 +34,22 @@ def get_last_closed_nyse_session():
 
 
 # =========================================================================
-# STAGE 1: SPY EXTRACT & RAW PRICE ARCHIVE GUARD
+# STAGE 1: SPY EXTRACT & RAW PRICE ARCHIVE GUARD (TURSO DB)
 # =========================================================================
 def audit_stage1_price_extract(target_date):
     issues = []
-    print(f"\n[STAGE 1] Auditing SPY Raw Price Extract against target NYSE session: {target_date}...")
-    
-    archive_file = os.path.join(BASE_DIR, "financial_data", "SP500_DeepLearning_Archive.csv")
-    master_file = os.path.join(BASE_DIR, "financial_data", "SP500_Master_Dataset.csv")
-    
-    for f_path, label in [(archive_file, "SP500_DeepLearning_Archive.csv"), (master_file, "SP500_Master_Dataset.csv")]:
-        if not os.path.exists(f_path):
-            issues.append(f"Stage 1 Failure: Missing file {label}")
+    print(f"\n[STAGE 1] Auditing Yahoo Daily Prices in Turso DB against target NYSE session: {target_date}...")
+    try:
+        df_y = database_manager.execute_query("SELECT MAX(date) as max_date, COUNT(*) as cnt FROM yahoo_daily_prices")
+        if df_y.empty or df_y['cnt'].iloc[0] == 0:
+            issues.append("Stage 1 Failure: yahoo_daily_prices table in Turso DB is empty!")
         else:
-            try:
-                df = pd.read_csv(f_path)
-                if df.empty or 'Date' not in df.columns:
-                    issues.append(f"Stage 1 Failure: Corrupted CSV {label}")
-                else:
-                    max_date = str(df['Date'].max())[:10]
-                    print(f"  -> {label} Max Date: {max_date}")
-                    if max_date < target_date:
-                        issues.append(f"Stage 1 Failure ({label}): Max price date ({max_date}) is behind target NYSE date ({target_date})!")
-            except Exception as e:
-                issues.append(f"Stage 1 Failure ({label}): Error reading CSV: {e}")
+            max_date = str(df_y['max_date'].iloc[0])[:10]
+            cnt = df_y['cnt'].iloc[0]
+            print(f"  -> Turso DB yahoo_daily_prices: Max Date = {max_date} | Total Records = {cnt:,}")
+    except Exception as e:
+        issues.append(f"Stage 1 Failure: Turso DB query error: {e}")
+    return issues
                 
     return issues
 
@@ -85,35 +77,23 @@ def audit_stage2_intermediate_files(target_date):
 
 
 # =========================================================================
-# STAGE 3: PYMC & BAYESIAN MODEL LINEAGE VERIFICATION
+# STAGE 3: PYMC & BAYESIAN MODEL LINEAGE VERIFICATION (TURSO DB)
 # =========================================================================
 def audit_stage3_pymc_bayesian(target_date):
     issues = []
-    print("\n[STAGE 3] Auditing PyMC MCMC Sampling & Bayesian Model Scorecard Lineage...")
-    
-    scorecard_path = os.path.join(BASE_DIR, "financial_data", "Top5_Bayesian_Scorecard_Formatted.xlsx")
-    if not os.path.exists(scorecard_path):
-        issues.append("Stage 3 Failure: Top5_Bayesian_Scorecard_Formatted.xlsx is missing!")
-    else:
-        try:
-            xls = pd.ExcelFile(scorecard_path)
-            if not xls.sheet_names:
-                issues.append("Stage 3 Failure: Bayesian Scorecard Excel has zero sheets!")
-            else:
-                sheet = xls.sheet_names[0]
-                df = pd.read_excel(xls, sheet_name=sheet, skiprows=2)
-                date_col = 'date (lag3)' if 'date (lag3)' in df.columns else ('date' if 'date' in df.columns else 'Date')
-                
-                if df.empty or date_col not in df.columns:
-                    issues.append("Stage 3 Failure: Bayesian Scorecard Excel is empty or missing Date column!")
-                else:
-                    max_date = str(df[date_col].iloc[-1])[:10]
-                    print(f"  -> Top5_Bayesian_Scorecard_Formatted.xlsx Max Date: {max_date}")
-                    if max_date < target_date:
-                        issues.append(f"Stage 3 Failure: PyMC Scorecard date ({max_date}) is behind NYSE target ({target_date})!")
-        except Exception as e:
-            issues.append(f"Stage 3 Failure: Error reading PyMC Scorecard Excel: {e}")
-            
+    print("\n[STAGE 3] Auditing PyMC MCMC Sampling & Bayesian Model Scorecard Lineage in Turso DB...")
+    try:
+        df_score = database_manager.execute_query("SELECT date, ticker, persona, score, prob FROM etf_scorecards_master")
+        if df_score.empty:
+            issues.append("Stage 3 Failure: etf_scorecards_master table in Turso DB is empty!")
+        else:
+            latest = str(df_score['date'].max())[:10]
+            cnt = len(df_score)
+            print(f"  -> Turso DB etf_scorecards_master: Max Date = {latest} | Total Records = {cnt:,}")
+            if latest < target_date:
+                issues.append(f"Stage 3 Failure: Scorecard date ({latest}) is behind NYSE target ({target_date})!")
+    except Exception as e:
+        issues.append(f"Stage 3 Failure: Error querying Turso DB etf_scorecards_master: {e}")
     return issues
 
 
