@@ -42,79 +42,72 @@ def run_etf_virtual_broker():
     except:
         pass
     
-    scorecards = {}
-    for etf in TARGET_ETFS:
-        path = os.path.join(BASE_DIR, f'{etf}_Bayesian_Scorecard.xlsx')
-        if os.path.exists(path):
-            try:
-                xls = pd.ExcelFile(path)
-                df = pd.read_excel(xls, sheet_name=etf, skiprows=2)
-                if len(df) >= 2:
-                    scorecards[etf] = df
-            except:
-                pass
-                
-    if not scorecards:
-        print("No valid ETF scorecards found!")
-        return
-
-    first_df = list(scorecards.values())[0]
-    if first_df.empty:
-        print("  [SAFETY STOP] ETF Scorecard is completely empty. Rolling over ledger with 0 PnL.")
-        last_scorecard_date = pd.Timestamp.now(tz='America/New_York')
-    else:
-        last_scorecard_date = pd.to_datetime(first_df.iloc[-1]['Date'])
-    
+    # SOURCE OF TRUTH: Turso DB etf_scorecards_master
     try:
         import sys
         if len(sys.argv) > 2 and "Capital" not in sys.argv[2]:
             target_date_for_ledger = sys.argv[2]
-            
-            date_col = 'date' if 'date' in first_df.columns else 'Date'
-            if not first_df.empty and not (pd.to_datetime(first_df[date_col]) == pd.to_datetime(target_date_for_ledger)).any():
-                print(f"[WARNING] Target date {target_date_for_ledger} not found in first scorecard ({list(scorecards.keys())[0]}). Skipping date validation lock to allow fresh scorecards to process.")
+            scorecard_date = target_date_for_ledger
         else:
             import pandas_market_calendars as mcal
             nyse = mcal.get_calendar('NYSE')
             now = pd.Timestamp.now(tz='America/New_York')
+            date_res = database_manager.execute_query(
+                "SELECT MAX(date) as d FROM etf_scorecards_master WHERE persona='ETF_BallsForBrains'"
+            )
+            scorecard_date = date_res.iloc[0][0] if not date_res.empty else now.strftime('%Y-%m-%d')
             past = now - pd.Timedelta(days=7)
             future = now + pd.Timedelta(days=7)
             schedule = nyse.schedule(start_date=past.strftime('%Y-%m-%d'), end_date=future.strftime('%Y-%m-%d'))
-            next_sessions = schedule[schedule.index > last_scorecard_date]
+            last_scorecard_ts = pd.Timestamp(scorecard_date)
+            next_sessions = schedule[schedule.index > last_scorecard_ts]
             if not next_sessions.empty:
                 target_date_for_ledger = next_sessions.iloc[0].name.strftime('%Y-%m-%d')
             else:
-                target_date_for_ledger = (last_scorecard_date + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+                target_date_for_ledger = (last_scorecard_ts + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
     except Exception as e:
-        print(f"Calendar error: {e}, falling back to +1 day")
-        target_date_for_ledger = (last_scorecard_date + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+        print(f"Date calculation error: {e}")
+        target_date_for_ledger = pd.Timestamp.now().strftime('%Y-%m-%d')
+        scorecard_date = target_date_for_ledger
 
-    # --- CRITICAL FIX: Filter Scorecards by Target Date ---
-    filtered_scorecards = {}
-    for etf, df in scorecards.items():
-        date_col = 'date' if 'date' in df.columns else 'Date'
-        filtered_df = df[pd.to_datetime(df[date_col]) <= pd.to_datetime(target_date_for_ledger)]
-        if len(filtered_df) >= 2:
-            filtered_scorecards[etf] = filtered_df
-    scorecards = filtered_scorecards
-    # ------------------------------------------------------
+    # Load all ETF scorecard rows from DB up to target date
+    df_scorecard_all = database_manager.execute_query(
+        "SELECT ticker, persona, date, prob, expected_return, expected_risk, kelly_allocation, "
+        "recommendation, broker_override_note, retraining_status, actual_return "
+        "FROM etf_scorecards_master WHERE persona LIKE 'ETF_%' AND date <= ? ORDER BY date DESC",
+        [scorecard_date]
+    )
+    if df_scorecard_all.empty:
+        print(f"[ABORT] No ETF scorecard data in DB for date <= {scorecard_date}")
+        return
+
+    ticker_universe = df_scorecard_all[df_scorecard_all['date'] == df_scorecard_all['date'].max()]['ticker'].unique().tolist()
+    print(f"ETF Ticker universe from DB ({scorecard_date}): {ticker_universe}")
+
+    def get_etf_scorecard_row(ticker, target_date, persona):
+        sub = df_scorecard_all[
+            (df_scorecard_all['ticker'] == ticker) &
+            (df_scorecard_all['persona'] == persona) &
+            (df_scorecard_all['date'] <= target_date)
+        ]
+        if sub.empty:
+            return None
+        return sub.sort_values('date').iloc[-1]
 
     final_equities = {}
     
-    # --- DYNAMIC ALLOCATOR (SHARPE RATIO) ---
+    # --- DYNAMIC ALLOCATOR (SHARPE RATIO) — reads from Turso DB ---
     dynamic_winner = "Neutral"
     try:
         sharpe_scores = {}
         for p in ["Conservative", "Neutral", "BallsForBrains"]:
-            p_ledger = os.path.join(BASE_DIR, f'ETF_Capital_Ledger_{p}.csv')
-            if os.path.exists(p_ledger):
-                df_p = pd.read_csv(p_ledger)
-                if len(df_p) >= 10:
-                    df_p['Return'] = df_p['Total_Equity'].pct_change()
-                    recent = df_p['Return'].tail(30).dropna()
-                    if recent.std() > 0:
-                        sharpe = (recent.mean() / recent.std()) * np.sqrt(252)
-                        sharpe_scores[p] = sharpe
+            df_p = database_manager.get_ledger(f"ETF_{p}")
+            if not df_p.empty and len(df_p) >= 10:
+                df_p['Return'] = df_p['Total_Equity'].pct_change()
+                recent = df_p['Return'].tail(30).dropna()
+                if recent.std() > 0:
+                    sharpe = (recent.mean() / recent.std()) * np.sqrt(252)
+                    sharpe_scores[p] = sharpe
         if sharpe_scores:
             dynamic_winner = max(sharpe_scores, key=sharpe_scores.get)
             print(f"--- DYNAMIC ALLOCATOR ---")
@@ -127,9 +120,11 @@ def run_etf_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
-        print(f"--- Persona: {persona_name.upper()} ---")
-        
-        ledger = database_manager.get_ledger(f"ETF_{persona_name}")
+        full_persona = f"ETF_{persona_name}"
+        print(f"--- Persona: {full_persona.upper()} ---")
+
+        ledger = database_manager.get_ledger(full_persona)
+
         if ledger.empty:
             ledger = pd.DataFrame([{
                 'Date': '2026-04-22',
@@ -140,14 +135,17 @@ def run_etf_virtual_broker():
             }])
         
         if not ledger.empty and str(target_date_for_ledger) == str(ledger['Date'].iloc[-1]):
-            print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}. Checking Scorecard Integrity...")
-            missing_count = len(TARGET_ETFS) - len(scorecards)
-            if missing_count > len(TARGET_ETFS) * 0.35:
-                print(f"  [INTEGRITY FAILURE] Scorecards are highly corrupted ({missing_count} missing/empty ETFs). Aborting overwrite to protect ledger.")
+            print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}.")
+            tickers_today = df_scorecard_all[
+                (df_scorecard_all['date'] == scorecard_date) &
+                (df_scorecard_all['persona'] == full_persona)
+            ]['ticker'].tolist()
+            if len(tickers_today) == 0:
+                print(f"  [INTEGRITY FAILURE] No scorecard rows in DB for {scorecard_date}/{full_persona}. Aborting.")
                 final_equities[persona_name] = float(ledger['Total_Equity'].iloc[-1])
                 continue
             else:
-                print("  [INTEGRITY PASSED] Proceeding with ledger overwrite.")
+                print(f"  [INTEGRITY PASSED] {len(tickers_today)} ETF tickers in DB for today. Proceeding.")
             
             last_state = ledger.iloc[-2] if len(ledger) >= 2 else pd.Series({
                 'Date': '2026-04-22', 'Cash': 10000.0, 'Total_Equity': 10000.0, 
@@ -162,13 +160,13 @@ def run_etf_virtual_broker():
         settled_equity = current_cash
         daily_pnl = {}
         
-        # 1.5 Settle Orphaned Trades (ETFs dropped from the Dynamic Top 10)
+        # 1.5 Settle Orphaned Trades (ETFs dropped from the Dynamic Top list)
         for held_etf, item in list(holdings.items()):
-            if held_etf not in scorecards:
+            if held_etf not in ticker_universe:
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                 purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
-                print(f"  [ORPHAN LIQUIDATION] {held_etf} dropped from Top 10 rankings! Liquidating position to free capital...")
-                
+                print(f"  [ORPHAN LIQUIDATION] {held_etf} dropped from Top rankings! Liquidating position to free capital...")
+
                 actual_return_pct = 0.0
                 if purchase_price > 0:
                     try:
@@ -179,23 +177,33 @@ def run_etf_virtual_broker():
                             actual_return_pct = (close_price - purchase_price) / purchase_price if purchase_price > 0 else 0.0
                     except:
                         pass
-                
+
                 pnl = allocated_dollars * actual_return_pct
                 daily_pnl[held_etf] = pnl
                 settled_equity += (allocated_dollars + pnl)
                 print(f"  [ORPHAN LIQUIDATED] {held_etf} returned ${allocated_dollars + pnl:.2f} to cash pile (PnL: ${pnl:+.2f}).")
-                
-                # Remove from holdings so the standard loop ignores it
                 del holdings[held_etf]
 
-        # 2. Settle yesterday's active trades
-        for etf, df in scorecards.items():
-            settlement_row = df.iloc[-2]
-            
+        # 2. Settle yesterday's active trades from Turso DB
+        for etf in ticker_universe:
+            sc_row = get_etf_scorecard_row(etf, target_date_for_ledger, full_persona)
+            if sc_row is None or len(df_scorecard_all[
+                (df_scorecard_all['ticker'] == etf) &
+                (df_scorecard_all['persona'] == full_persona) &
+                (df_scorecard_all['date'] <= target_date_for_ledger)
+            ]) < 2:
+                continue
+            sub = df_scorecard_all[
+                (df_scorecard_all['ticker'] == etf) &
+                (df_scorecard_all['persona'] == full_persona) &
+                (df_scorecard_all['date'] <= target_date_for_ledger)
+            ].sort_values('date')
+            settlement_row = sub.iloc[-2]
+
             if etf in holdings:
                 item = holdings[etf]
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
-                actual_return_pct = settlement_row['Actual Daily Return %']
+                actual_return_pct = settlement_row.get('actual_return', None)
                 
                 if pd.notna(actual_return_pct):
                     # --- INTRA-DAY STOP-LOSS LOGIC & EXACT PNL RECALCULATION ---
@@ -251,7 +259,7 @@ def run_etf_virtual_broker():
                     
         # --- ZOMBIE FAILSAFE LOGIC ---
         for held_ticker, item in holdings.items():
-            if held_ticker not in scorecards.keys() and held_ticker not in daily_pnl:
+            if held_ticker not in ticker_universe and held_ticker not in daily_pnl:
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                 purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
                 
@@ -308,22 +316,18 @@ def run_etf_virtual_broker():
         new_cash = settled_equity
         available_capital = settled_equity
         
-        # --- ETF HOLDING PROTECTION: FREEZE QUARANTINED POSITIONS ---
+        # --- ETF HOLDING PROTECTION: FREEZE QUARANTINED POSITIONS — from Turso DB ---
         for held_etf, item in holdings.items():
-            if held_etf in scorecards and held_etf not in new_holdings:
+            if held_etf in ticker_universe and held_etf not in new_holdings:
                 try:
-                    df_t = scorecards[held_etf]
-                    if not df_t.empty:
-                        last_r = df_t.iloc[-1]
-                        status = str(last_r.get('Retraining_Status', ''))
-                        
+                    sc_row = get_etf_scorecard_row(held_etf, target_date_for_ledger, full_persona)
+                    if sc_row is not None:
+                        status = str(sc_row.get('retraining_status', '') or '')
                         is_frozen = ("QUARANTINED" in status)
-                        
                         if is_frozen:
                             allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                             purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
                             held_units = int(item.get("units", 0)) if isinstance(item, dict) else 0
-                            
                             current_value = allocated_dollars + daily_pnl.get(held_etf, 0.0)
                             print(f"  [ETF HOLDING PROTECTION] Freezing existing position in {held_etf} due to PyMC Engine Crash fallback.")
                             new_holdings[held_etf] = {"dollars": current_value, "price": purchase_price, "units": held_units}
@@ -333,11 +337,18 @@ def run_etf_virtual_broker():
                     print(f"  Error checking ETF holding protection for {held_etf}: {e}")
         
         import yfinance as yf
-        for etf, df in scorecards.items():
-            pending_row = df.iloc[-1]
-            prob = pending_row['Bayesian Probability P(UP)']
-            exp_ret = pending_row['Expected Return %']
-            exp_vol = pending_row['Expected Risk (Volatility) %']
+        for etf in ticker_universe:
+            if etf in new_holdings:
+                continue
+            sc_row = get_etf_scorecard_row(etf, target_date_for_ledger, full_persona)
+            if sc_row is None:
+                continue
+            prob = float(sc_row.get('prob', 0) or 0)
+            exp_ret = float(sc_row.get('expected_return', 0) or 0)
+            exp_vol = float(sc_row.get('expected_risk', 0) or 0)
+            status = str(sc_row.get('retraining_status', 'Stable') or 'Stable')
+            if 'SUSPENDED' in status:
+                continue
             
             if prob > config['threshold']:
                 if vix_multiplier == 0.0:

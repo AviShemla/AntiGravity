@@ -71,34 +71,39 @@ def build_scorecard_html(scorecard_path):
         <tbody>
     """
     try:
-        if os.path.exists(scorecard_path):
-            xls = pd.ExcelFile(scorecard_path)
-            for sheet in xls.sheet_names:
-                df = pd.read_excel(xls, sheet_name=sheet, skiprows=2)
-                if not df.empty:
-                    last_row = df.iloc[-1]
-                    
-                    prob = float(last_row.get('Bayesian Probability P(UP)', 0))
-                    ret = float(last_row.get('Expected Return %', 0))
-                    vol = float(last_row.get('Expected Risk (Volatility) %', 0))
-                    kelly = float(last_row.get('Kelly Optimal Allocation %', 0))
-                    
-                    prob_color = "green" if prob >= 0.50 else "red"
-                    
-                    html += f'''
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">{sheet}</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center; color: {prob_color}; font-weight: bold;">{prob*100:.1f}%</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{ret*100:.2f}%</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{vol*100:.2f}%</td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;">{kelly*100:.1f}%</td>
-                    </tr>
-                    '''
+        # SOURCE OF TRUTH: Turso DB etf_scorecards_master
+        import database_manager
+        df_db = database_manager.execute_query("""
+            SELECT ticker, prob, expected_return, expected_risk, kelly_allocation
+            FROM etf_scorecards_master
+            WHERE persona='ETF_BallsForBrains'
+            AND date = (SELECT MAX(date) FROM etf_scorecards_master WHERE persona='ETF_BallsForBrains')
+            ORDER BY ticker
+        """)
+        if not df_db.empty:
+            for _, row in df_db.iterrows():
+                prob = float(row.get('prob', 0) or 0)
+                ret = float(row.get('expected_return', 0) or 0)
+                vol = float(row.get('expected_risk', 0) or 0)
+                kelly = float(row.get('kelly_allocation', 0) or 0)
+                prob_color = "green" if prob >= 0.50 else "red"
+                html += f'''
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">{row["ticker"]}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; color: {prob_color}; font-weight: bold;">{prob*100:.1f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{ret*100:.2f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{vol*100:.2f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;">{kelly*100:.1f}%</td>
+                </tr>
+                '''
+        else:
+            html += "<tr><td colspan='5'>No scorecard data in DB for today.</td></tr>"
     except Exception as e:
-         html += f"<tr><td colspan='5'>Error loading scorecard: {e}</td></tr>"
-         
+         html += f"<tr><td colspan='5'>Error loading scorecard from DB: {e}</td></tr>"
+
     html += "</tbody></table>"
     return html
+
 
 def build_dynamic_changes_html(base_dir):
     html = """

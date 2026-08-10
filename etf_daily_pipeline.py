@@ -42,11 +42,19 @@ try:
     else:
         prediction_date_str = next_sessions.iloc[0].name.strftime('%Y-%m-%d')
     
-    # Check Ledger State
-    if os.path.exists(ledger_path):
-        ledger = pd.read_csv(ledger_path)
-        if not ledger.empty and str(ledger['Date'].iloc[-1]) == prediction_date_str:
+    # Check Ledger State — SOURCE OF TRUTH: Turso DB
+    try:
+        import database_manager
+        df_led = database_manager.get_ledger("ETF_Dynamic")
+        if not df_led.empty and str(df_led['Date'].iloc[-1]) == prediction_date_str:
             print(f"[IDEMPOTENT RUN] ETF Pipeline already executed for {prediction_date_str}. Proceeding to recalculate and overwrite if Integrity Check passes.")
+    except Exception:
+        # Fallback to CSV if DB unavailable
+        if os.path.exists(ledger_path):
+            ledger = pd.read_csv(ledger_path)
+            if not ledger.empty and str(ledger['Date'].iloc[-1]) == prediction_date_str:
+                print(f"[IDEMPOTENT RUN] ETF Pipeline already executed for {prediction_date_str}. Proceeding to recalculate and overwrite if Integrity Check passes.")
+
             
 except ImportError:
     pass

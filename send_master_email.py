@@ -70,24 +70,39 @@ def build_scorecard_html(scorecard_path):
         <tbody>
     """
     try:
-        if os.path.exists(scorecard_path):
-            df = pd.read_excel(scorecard_path)
-            for _, row in df.iterrows():
-                pup_color = "green" if row['P(UP)'] > 0.5 else "red"
+        # SOURCE OF TRUTH: Turso DB etf_scorecards_master
+        import database_manager
+        df_db = database_manager.execute_query("""
+            SELECT ticker, prob, expected_return, expected_risk, kelly_allocation
+            FROM etf_scorecards_master
+            WHERE persona='BallsForBrains'
+            AND date = (SELECT MAX(date) FROM etf_scorecards_master WHERE persona='BallsForBrains')
+            ORDER BY ticker
+        """)
+        if not df_db.empty:
+            for _, row in df_db.iterrows():
+                prob = float(row.get('prob', 0) or 0)
+                ret = float(row.get('expected_return', 0) or 0)
+                vol = float(row.get('expected_risk', 0) or 0)
+                kelly = float(row.get('kelly_allocation', 0) or 0)
+                pup_color = "green" if prob > 0.5 else "red"
                 html += f'''
                 <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">{row.get('Ticker', '')}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; color: {pup_color}; font-weight: bold;">{row.get('P(UP)', 0)*100:.1f}%</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{row.get('Expected Return %', 0)*100:.2f}%</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{row.get('Volatility %', 0)*100:.2f}%</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;">{row.get('Kelly Sizing', 0)*100:.1f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">{row["ticker"]}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; color: {pup_color}; font-weight: bold;">{prob*100:.1f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{ret*100:.2f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{vol*100:.2f}%</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;">{kelly*100:.1f}%</td>
                 </tr>
                 '''
+        else:
+            html += "<tr><td colspan='5'>No scorecard data in DB for today.</td></tr>"
     except Exception as e:
-         html += f"<tr><td colspan='5'>Error loading scorecard: {e}</td></tr>"
-         
+         html += f"<tr><td colspan='5'>Error loading scorecard from DB: {e}</td></tr>"
+
     html += "</tbody></table>"
     return html
+
 
 html_dashboard = """
 <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; margin-bottom: 20px; font-size: 14px;">

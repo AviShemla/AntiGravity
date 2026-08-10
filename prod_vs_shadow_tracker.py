@@ -115,6 +115,29 @@ def run_tracker(target_date):
         merged.to_csv(MASTER_CSV, index=False)
     else:
         df.to_csv(MASTER_CSV, index=False)
+
+    # SOURCE OF TRUTH: Also write to Turso DB prod_vs_shadow_master
+    try:
+        import database_manager
+        col_map = {
+            "Prod": "PROD_Bayesian_SV",
+            "Shadow_Transformer": "Shadow_Transformer",
+            "Sandbox_V1": "Sandbox_V1",
+            "Shadow_LSTM": "Shadow_LSTM"
+        }
+        for csv_col, model_name in col_map.items():
+            val = row.get(csv_col)
+            if val is not None:
+                database_manager.execute_write("""
+                    INSERT INTO prod_vs_shadow_master (date, model_name, total_equity)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(date, model_name) DO UPDATE SET total_equity=excluded.total_equity
+                """, [target_date, model_name, float(val)])
+        print(f"  [DB] Prod vs Shadow row for {target_date} written to Turso DB")
+    except Exception as e_db:
+        print(f"  [DB WARNING] Failed to write Prod vs Shadow to Turso DB: {e_db}")
+
+
         
     trans_csv = os.path.join(BASE_DIR, "Shadow_Transformer_Scorecard.csv")
     v1_csv = os.path.join(DATA_DIR, "Sandbox_V1_Classic_Scorecard.csv")

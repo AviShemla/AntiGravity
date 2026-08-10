@@ -76,6 +76,51 @@ def write_etf_excel(target_etf, sc, features):
     writer.close()
     print(f"\nSUCCESS: Generated Scorecard -> {out_excel}")
 
+    # SOURCE OF TRUTH: Write full scorecard to Turso DB for all ETF personas
+    try:
+        import database_manager
+        ETF_PERSONAS = ["ETF_Conservative", "ETF_Neutral", "ETF_BallsForBrains", "ETF_Dynamic"]
+        for _, r_db in sc.iterrows():
+            d_val = str(r_db.get('Date', ''))[:10]
+            if not d_val or d_val == 'nan':
+                continue
+            prob_val = float(r_db['Bayesian Probability P(UP)']) if pd.notna(r_db.get('Bayesian Probability P(UP)')) else None
+            ret_val = float(r_db['Expected Return %']) if pd.notna(r_db.get('Expected Return %')) else None
+            risk_val = float(r_db['Expected Risk (Volatility) %']) if pd.notna(r_db.get('Expected Risk (Volatility) %')) else None
+            kelly_val = float(r_db['Kelly Optimal Allocation %']) if pd.notna(r_db.get('Kelly Optimal Allocation %')) else None
+            actual_ret = float(r_db['Actual Daily Return %']) if pd.notna(r_db.get('Actual Daily Return %')) else None
+            rec_val = str(r_db.get('Recommendation', '') or '')
+            note_val = str(r_db.get('Broker Override Note', '') or '')
+            status_val = str(r_db.get('Retraining_Status', 'Stable') or 'Stable')
+            sv_val = str(r_db.get('SV Engine Used', '') or '')
+            pred_dir = str(r_db.get('Predicted Direction', '') or '')
+            act_dir = str(r_db.get('Actual Direction', '') or '')
+            hit_val = str(r_db.get('Model Hit', '') or '')
+            for persona in ETF_PERSONAS:
+                database_manager.execute_write("""
+                    INSERT INTO etf_scorecards_master
+                        (ticker, persona, date, score, prob, expected_return, expected_risk,
+                         kelly_allocation, actual_return, recommendation, broker_override_note,
+                         retraining_status, sv_engine_used, predicted_direction, actual_direction, model_hit)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    ON CONFLICT(ticker, persona, date) DO UPDATE SET
+                        prob=excluded.prob, expected_return=excluded.expected_return,
+                        expected_risk=excluded.expected_risk, kelly_allocation=excluded.kelly_allocation,
+                        actual_return=excluded.actual_return, recommendation=excluded.recommendation,
+                        broker_override_note=excluded.broker_override_note,
+                        retraining_status=excluded.retraining_status,
+                        sv_engine_used=excluded.sv_engine_used,
+                        predicted_direction=excluded.predicted_direction,
+                        actual_direction=excluded.actual_direction, model_hit=excluded.model_hit
+                """, [str(target_etf), persona, d_val, ret_val, prob_val,
+                      ret_val, risk_val, kelly_val, actual_ret, rec_val,
+                      note_val, status_val, sv_val, pred_dir, act_dir, hit_val])
+        print(f"  [DB] Wrote {len(sc)} rows for {target_etf} (all ETF personas) to Turso etf_scorecards_master")
+    except Exception as e_db:
+        print(f"  [DB WARNING] Failed to write {target_etf} to Turso DB: {e_db}")
+
+
+
 def export_etf_scorecard(target_etf, target_date=None):
     print(f"\n--- Generating Bayesian ETF Scorecard for {target_etf} ---")
     

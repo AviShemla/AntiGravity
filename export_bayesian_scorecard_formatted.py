@@ -519,18 +519,48 @@ if __name__ == '__main__':
 
         try:
             import database_manager
-            client_db = database_manager.get_connection()
+            STOCK_PERSONAS = ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]
+            rec_col = [c for c in sc.columns if 'recommendation' in c.lower()]
+            rec_col = rec_col[0] if rec_col else None
             for _, r_db in sc.iterrows():
-                d_val = str(r_db['date'])
-                prob_val = float(r_db['Bayesian Probability P(UP)']) if 'Bayesian Probability P(UP)' in r_db and pd.notna(r_db['Bayesian Probability P(UP)']) else None
-                ret_val = float(r_db['Expected Return %']) if 'Expected Return %' in r_db and pd.notna(r_db['Expected Return %']) else None
-                client_db.execute('''
-                    INSERT INTO etf_scorecards_master (ticker, persona, date, score, prob)
-                    VALUES (?, ?, ?, ?, ?)
-                    ON CONFLICT(ticker, persona, date) DO UPDATE SET score=excluded.score, prob=excluded.prob
-                ''', [str(ticker), str(sheet_name), d_val, ret_val, prob_val])
+                d_val = str(r_db.get('date', ''))[:10]
+                if not d_val or d_val == 'nan':
+                    continue
+                prob_val = float(r_db['Bayesian Probability P(UP)']) if pd.notna(r_db.get('Bayesian Probability P(UP)')) else None
+                ret_val = float(r_db['Expected Return %']) if pd.notna(r_db.get('Expected Return %')) else None
+                risk_val = float(r_db['Expected Risk (Volatility) %']) if pd.notna(r_db.get('Expected Risk (Volatility) %')) else None
+                kelly_val = float(r_db['Kelly Optimal Allocation %']) if pd.notna(r_db.get('Kelly Optimal Allocation %')) else None
+                actual_ret = float(r_db['actual value daily return %']) if pd.notna(r_db.get('actual value daily return %')) else None
+                rec_val = str(r_db[rec_col]) if rec_col and pd.notna(r_db.get(rec_col)) else ''
+                note_val = str(r_db.get('Broker Override Note', '') or '')
+                status_val = 'Stable'
+                sv_val = str(r_db.get('SV Engine Used', '') or '')
+                pred_dir = str(r_db.get('model predicted direction daily return', '') or '')
+                act_dir = str(r_db.get('actual Direction daily return', '') or '')
+                hit_val = str(r_db.get('model hit IND integrated model', '') or '')
+                for persona in STOCK_PERSONAS:
+                    database_manager.execute_write("""
+                        INSERT INTO etf_scorecards_master
+                            (ticker, persona, date, score, prob, expected_return, expected_risk,
+                             kelly_allocation, actual_return, recommendation, broker_override_note,
+                             retraining_status, sv_engine_used, predicted_direction, actual_direction, model_hit)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        ON CONFLICT(ticker, persona, date) DO UPDATE SET
+                            prob=excluded.prob, expected_return=excluded.expected_return,
+                            expected_risk=excluded.expected_risk, kelly_allocation=excluded.kelly_allocation,
+                            actual_return=excluded.actual_return, recommendation=excluded.recommendation,
+                            broker_override_note=excluded.broker_override_note,
+                            retraining_status=excluded.retraining_status,
+                            sv_engine_used=excluded.sv_engine_used,
+                            predicted_direction=excluded.predicted_direction,
+                            actual_direction=excluded.actual_direction, model_hit=excluded.model_hit
+                    """, [str(ticker), persona, d_val, ret_val, prob_val,
+                          ret_val, risk_val, kelly_val, actual_ret, rec_val,
+                          note_val, status_val, sv_val, pred_dir, act_dir, hit_val])
+            print(f"  [DB] Wrote {len(sc)} rows for {ticker} (all personas) to Turso etf_scorecards_master")
         except Exception as e_db:
-            pass
+            print(f"  [DB WARNING] Failed to write {ticker} to Turso DB: {e_db}")
+
 
         worksheet = writer.sheets[sheet_name]
         

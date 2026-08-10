@@ -394,14 +394,17 @@ def get_race_data(mode: str = "Single"):
 @app.get("/api/dropdown")
 def get_dropdown_options(persona: str = "BallsForBrains", mode: str = "Single"):
     options = ["Portfolio Overview"]
-    scorecard_path = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx' if mode == 'Single' else 'All_ETFs_Scorecard.xlsx')
-    if os.path.exists(scorecard_path):
-        try:
-            xls = pd.ExcelFile(scorecard_path)
-            tickers = [t for t in xls.sheet_names if t != "Sheet1"]
-            options.extend(tickers)
-        except:
-            pass
+    # SOURCE OF TRUTH: Turso DB etf_scorecards_master
+    try:
+        p_name = persona if mode == "Single" else f"ETF_{persona}"
+        df_tickers = database_manager.execute_query(
+            "SELECT DISTINCT ticker FROM etf_scorecards_master WHERE persona=? ORDER BY ticker",
+            [p_name]
+        )
+        if not df_tickers.empty:
+            options.extend(df_tickers['ticker'].tolist())
+    except:
+        pass
             
     p_name = persona if mode == "Single" else f"ETF_{persona}"
     try:
@@ -419,100 +422,101 @@ def get_dropdown_options(persona: str = "BallsForBrains", mode: str = "Single"):
 
 @app.get("/api/bayesian")
 def get_bayesian_data(ticker: str, persona: str = "BallsForBrains", mode: str = "Single"):
-    scorecard_path = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx' if mode == 'Single' else 'All_ETFs_Scorecard.xlsx')
-    
-    if not os.path.exists(scorecard_path):
-        raise HTTPException(status_code=404, detail="Scorecard not found")
-        
+    # SOURCE OF TRUTH: Turso DB etf_scorecards_master
     try:
-        xls = pd.ExcelFile(scorecard_path)
-        if ticker not in xls.sheet_names:
-            raise HTTPException(status_code=404, detail="Ticker not found in scorecard")
-            
-        df = pd.read_excel(xls, sheet_name=ticker, skiprows=2)
+        p_name = persona if mode == "Single" else f"ETF_{persona}"
+
+        # Get all rows for this ticker/persona from DB
+        df = database_manager.execute_query("""
+            SELECT date, prob, expected_return, expected_risk, kelly_allocation,
+                   actual_return, recommendation, broker_override_note, retraining_status,
+                   sv_engine_used, predicted_direction, actual_direction, model_hit
+            FROM etf_scorecards_master
+            WHERE ticker=? AND persona=?
+            ORDER BY date ASC
+        """, [ticker, p_name])
+
         if df.empty:
-            raise HTTPException(status_code=404, detail="Ticker scorecard is empty")
-            
-        latest = df.iloc[-1].fillna("")
-        
-        mu = float(latest.get('Expected Return %', 0))
-        sigma = float(latest.get('Expected Risk (Volatility) %', 1))
+            raise HTTPException(status_code=404, detail=f"No scorecard data in DB for {ticker}/{p_name}")
+
+        latest = df.iloc[-1]
+
+        mu = float(latest.get('expected_return', 0) or 0)
+        sigma = float(latest.get('expected_risk', 1) or 1)
         exp_sharpe = (mu / sigma) if sigma and sigma != 0 else 0
-        
-        # Historical Predictions vs Actual Returns
+
+        # Historical Predictions vs Actual Returns from DB
         history = []
-        if 'date' in df.columns and 'Expected Return %' in df.columns and 'actual value daily return %' in df.columns:
-            df_hist = df[['date', 'Expected Return %', 'actual value daily return %']].copy().dropna()
-            df_hist['date'] = pd.to_datetime(df_hist['date']).dt.strftime('%Y-%m-%d')
-            df_hist = df_hist.rename(columns={'date': 'Date', 'actual value daily return %': 'Actual Daily Return %'})
-            history = df_hist.to_dict('records')
-            
-        # Get AI Ledger
-        df_ai = format_df_for_display(df.tail(30).iloc[::-1]).reset_index()
-        df_ai = df_ai.rename(columns={'index': ''})
-        ai_ledger = df_ai.fillna("").to_dict('records')
-        
-        # Get Broker Trial Ledger and Logs from SQL DB
+        df_hist = df[['date', 'expected_return', 'actual_return']].copy().dropna(subset=['actual_return'])
+        df_hist = df_hist.rename(columns={'expected_return': 'Expected Return %', 'actual_return': 'Actual Daily Return %', 'date': 'Date'})
+        history = df_hist.to_dict('records')
+
+        # AI Ledger from DB rows
+        ai_cols = ['date', 'prob', 'expected_return', 'expected_risk', 'kelly_allocation',
+                   'recommendation', 'broker_override_note', 'retraining_status']
+        df_ai = df[ai_cols].tail(30).iloc[::-1].fillna("").rename(columns={
+            'date': 'Date', 'prob': 'P(UP)', 'expected_return': 'Exp. Return',
+            'expected_risk': 'Exp. Risk', 'kelly_allocation': 'Kelly',
+            'recommendation': 'Rec', 'broker_override_note': 'Override Note',
+            'retraining_status': 'Status'
+        })
+        ai_ledger = df_ai.to_dict('records')
+
+        # Broker Trial Ledger from capital_ledgers
         broker_ledger = []
         recent_log = []
-        
-        p_name = persona if mode == "Single" else f"ETF_{persona}"
-        
         try:
             df_trial = database_manager.get_ledger(p_name)
             if not df_trial.empty:
                 p_cols = ['Date', 'Total_Equity', 'Cash', 'Daily_PnL_JSON', 'Holdings_JSON', 'Intraday_Status']
                 avail_cols = [c for c in p_cols if c in df_trial.columns]
                 broker_ledger = format_df_for_display(df_trial[avail_cols].iloc[::-1]).fillna("").to_dict('records')
-                
                 recent_trades = get_recent_trades(df_trial, p_name)
                 if recent_trades:
                     recent_log = recent_trades
         except:
             pass
 
-        # Race PnL for single ticker
+        # Race PnL from capital_ledgers
         race_pnl = {"Conservative": {"dates": [], "values": []}, "Neutral": {"dates": [], "values": []}, "BallsForBrains": {"dates": [], "values": []}}
         for p in ["Conservative", "Neutral", "BallsForBrains"]:
-            p_name = p if mode == "Single" else f"ETF_{p}"
-            df_p = database_manager.get_ledger(p_name)
-            if not df_p.empty:
-                if 'Date' in df_p.columns and 'Daily_PnL_JSON' in df_p.columns:
-                    df_p['Date'] = pd.to_datetime(df_p['Date'])
-                    df_p = df_p[df_p['Date'] >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
-                    
-                    vals = []
-                    for _, row in df_p.iterrows():
-                        v = 0.0
-                        try:
-                            j = json.loads(row['Daily_PnL_JSON'])
-                            v = float(j.get(ticker, 0.0))
-                        except: pass
-                        vals.append(v)
-                        
-                    cum_vals = pd.Series(vals).cumsum()
-                    race_pnl[p]["dates"] = df_p['Date'].dt.strftime('%Y-%m-%d').tolist()
-                    race_pnl[p]["values"] = cum_vals.tolist()
-
-        rec_col = 'recommendation based on integrated model\n(e.g. "Buy", "Sell", "Hold")'
-        rec_val = latest.get(rec_col, latest.get('Recommendation', 'N/A'))
+            p_ledger_name = p if mode == "Single" else f"ETF_{p}"
+            df_p = database_manager.get_ledger(p_ledger_name)
+            if not df_p.empty and 'Date' in df_p.columns and 'Daily_PnL_JSON' in df_p.columns:
+                df_p['Date'] = pd.to_datetime(df_p['Date'])
+                df_p = df_p[df_p['Date'] >= (pd.Timestamp.now() - pd.Timedelta(days=35))]
+                vals = []
+                for _, row in df_p.iterrows():
+                    v = 0.0
+                    try:
+                        j = json.loads(row['Daily_PnL_JSON'])
+                        v = float(j.get(ticker, 0.0))
+                    except: pass
+                    vals.append(v)
+                cum_vals = pd.Series(vals).cumsum()
+                race_pnl[p]["dates"] = df_p['Date'].dt.strftime('%Y-%m-%d').tolist()
+                race_pnl[p]["values"] = cum_vals.tolist()
 
         return {
-            "recommendation": str(rec_val),
-            "probability_up": float(latest.get('Bayesian Probability P(UP)', 0)),
+            "recommendation": str(latest.get('recommendation', 'N/A') or 'N/A'),
+            "probability_up": float(latest.get('prob', 0) or 0),
             "expected_return": mu,
             "expected_risk": sigma,
             "expected_sharpe": exp_sharpe,
-            "kelly_allocation": float(latest.get('Kelly Optimal Allocation %', 0)),
-            "broker_note": str(latest.get('Broker Override Note', '')),
+            "kelly_allocation": float(latest.get('kelly_allocation', 0) or 0),
+            "broker_note": str(latest.get('broker_override_note', '') or ''),
             "history": history,
             "ai_ledger": ai_ledger,
             "broker_ledger": broker_ledger,
             "recent_log": recent_log,
             "race_pnl": race_pnl
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @app.get("/api/olympic")
 def get_olympic_data():
@@ -676,18 +680,23 @@ def get_autopsy_data():
 
 @app.get('/api/prod_shadow')
 def get_prod_shadow():
-    csv_path = os.path.join(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data'), 'Prod_vs_Shadow_Results_MASTER.csv')
-    if not os.path.exists(csv_path): return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'table': []}
-    df = pd.read_csv(csv_path)
-    if 'Date' in df.columns:
+    # SOURCE OF TRUTH: Turso DB prod_vs_shadow_master
+    try:
+        df_db = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
+        if df_db.empty:
+            return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'table': [], 'is_pending': False}
+        df = df_db.pivot(index='Date', columns='model_name', values='total_equity').reset_index()
+        df = df.rename(columns={'PROD_Bayesian_SV': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1'})
+        for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1']:
+            if col not in df.columns:
+                df[col] = 10000.0
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.sort_values('Date')
-        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-    df = df.ffill().fillna(10000.0)
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date'])
         df = df.set_index('Date').reindex(pd.date_range(start=df['Date'].min(), end=df['Date'].max(), freq='B')).ffill().reset_index().rename(columns={'index': 'Date'})
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+        df = df.ffill().fillna(10000.0)
+    except Exception as e:
+        return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'table': [], 'is_pending': False, 'error': str(e)}
     
     is_pending = False
     try:

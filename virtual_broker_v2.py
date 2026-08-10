@@ -54,29 +54,67 @@ def run_virtual_broker():
         global_vix_hist = yf.Ticker('^VIX').history(period='30d')
     except:
         pass
-    target_excel = os.path.join(BASE_DIR, 'All_ETFs_Scorecard.xlsx') if len(sys.argv) > 1 and sys.argv[1] == "ETF" else EXCEL_PATH
+    # SOURCE OF TRUTH: Turso DB etf_scorecards_master
+    is_etf_mode = len(sys.argv) > 1 and sys.argv[1] == "ETF"
+    persona_prefix = "ETF_" if is_etf_mode else ""
+
+    if len(sys.argv) > 2 and "Capital" not in sys.argv[2]:
+        target_date_global = sys.argv[2]
+    else:
+        target_date_global = None
+
     try:
-        xls = pd.ExcelFile(target_excel)
+        ref_persona = f"{persona_prefix}BallsForBrains"
+        if target_date_global:
+            scorecard_date = target_date_global
+        else:
+            date_res = database_manager.execute_query(
+                "SELECT MAX(date) as d FROM etf_scorecards_master WHERE persona=?",
+                [ref_persona]
+            )
+            scorecard_date = date_res.iloc[0][0] if not date_res.empty else pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
+
+        df_scorecard_all = database_manager.execute_query(
+            "SELECT ticker, persona, date, prob, expected_return, expected_risk, kelly_allocation, "
+            "recommendation, broker_override_note, retraining_status, actual_return "
+            "FROM etf_scorecards_master WHERE date <= ? ORDER BY date DESC",
+            [scorecard_date]
+        )
+        if df_scorecard_all.empty:
+            print(f"[ABORT] No scorecard data in DB for date <= {scorecard_date}. Cannot run broker.")
+            return
+
+        ticker_universe = df_scorecard_all[df_scorecard_all['date'] == df_scorecard_all['date'].max()]['ticker'].unique().tolist()
+        print(f"V2 Ticker universe from DB ({scorecard_date}): {ticker_universe}")
     except Exception as e:
-        print(f"Could not load scorecard: {e}")
+        print(f"[ABORT] Failed to load scorecard from Turso DB: {e}")
         return
+
+    def get_scorecard_row(ticker, target_date, persona):
+        sub = df_scorecard_all[
+            (df_scorecard_all['ticker'] == ticker) &
+            (df_scorecard_all['persona'] == persona) &
+            (df_scorecard_all['date'] <= target_date)
+        ]
+        if sub.empty:
+            return None
+        return sub.sort_values('date').iloc[-1]
 
     final_equities = {}
     
-    # --- DYNAMIC ALLOCATOR (SHARPE RATIO) ---
+    # --- DYNAMIC ALLOCATOR (SHARPE RATIO) — reads from Turso DB ---
     dynamic_winner = "Neutral"
     try:
         sharpe_scores = {}
         for p in ["Conservative", "Neutral", "BallsForBrains"]:
-            p_ledger = os.path.join(BASE_DIR, f'Capital_Ledger_{p}.csv')
-            if os.path.exists(p_ledger):
-                df_p = pd.read_csv(p_ledger)
-                if len(df_p) >= 10:
-                    df_p['Return'] = df_p['Total_Equity'].pct_change()
-                    recent = df_p['Return'].tail(30).dropna()
-                    if recent.std() > 0:
-                        sharpe = (recent.mean() / recent.std()) * np.sqrt(252)
-                        sharpe_scores[p] = sharpe
+            p_name = f"{persona_prefix}{p}"
+            df_p = database_manager.get_ledger(p_name)
+            if not df_p.empty and len(df_p) >= 10:
+                df_p['Return'] = df_p['Total_Equity'].pct_change()
+                recent = df_p['Return'].tail(30).dropna()
+                if recent.std() > 0:
+                    sharpe = (recent.mean() / recent.std()) * np.sqrt(252)
+                    sharpe_scores[p] = sharpe
         if sharpe_scores:
             dynamic_winner = max(sharpe_scores, key=sharpe_scores.get)
             print(f"--- DYNAMIC ALLOCATOR ---")
@@ -89,11 +127,12 @@ def run_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
-        print(f"--- Persona: {persona_name.upper()} ---")
+        full_persona = f"{persona_prefix}{persona_name}"
+        print(f"--- Persona: {full_persona.upper()} ---")
         print(f"Rules: Buy if P > {config['threshold']:.2f} | {config['kelly_multiplier']}x Kelly | Max {config['max_alloc']*100}% per stock")
-        
-        # 1. Initialize or load ledger
-        ledger = database_manager.get_ledger(persona_name)
+
+        # 1. Initialize or load ledger from Turso DB
+        ledger = database_manager.get_ledger(full_persona)
         if ledger.empty:
             ledger = pd.DataFrame([{
                 'Date': '2026-04-22',
@@ -102,37 +141,21 @@ def run_virtual_broker():
                 'Holdings_JSON': '{}',
                 'Daily_PnL_JSON': '{}'
             }])
-        
-        # Extract target date to check for double-runs
-        first_sheet = xls.sheet_names[0]
-        df_first = pd.read_excel(xls, sheet_name=first_sheet, skiprows=2)
-        
-        date_col = 'date' if 'date' in df_first.columns else 'Date'
-        
-        if df_first.empty:
-            print("  [SAFETY STOP] Scorecard is completely empty. Rolling over ledger with 0 PnL.")
-            target_date_for_ledger = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
-        elif len(sys.argv) > 2 and "Capital" not in sys.argv[2]:
-            target_date_for_ledger = sys.argv[2]
-            # Verify the date exists in the scorecard
-            if not (pd.to_datetime(df_first[date_col]) == pd.to_datetime(target_date_for_ledger)).any():
-                print(f"  [WARNING] Target date {target_date_for_ledger} not found in first sheet (likely quarantined). Proceeding cautiously...")
-        else:
-            target_date_for_ledger = df_first.iloc[-1][date_col].strftime('%Y-%m-%d')
-        
+
+        target_date_for_ledger = scorecard_date
+
         if not ledger.empty and target_date_for_ledger == str(ledger['Date'].iloc[-1]):
-            print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}. Checking Scorecard Integrity...")
-            empty_count = 0
-            for test_sheet in xls.sheet_names:
-                df_test = pd.read_excel(xls, sheet_name=test_sheet, skiprows=2)
-                if df_test.empty or len(df_test) < 2:
-                    empty_count += 1
-            if empty_count > len(xls.sheet_names) * 0.1:
-                print(f"  [INTEGRITY FAILURE] Scorecard is highly corrupted ({empty_count} empty sheets). Aborting overwrite to protect ledger.")
-                final_equities[persona_name] = float(ledger['Total_Equity'].iloc[-1])
+            print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}.")
+            tickers_today = df_scorecard_all[
+                (df_scorecard_all['date'] == scorecard_date) &
+                (df_scorecard_all['persona'] == full_persona)
+            ]['ticker'].tolist()
+            if len(tickers_today) == 0:
+                print(f"  [INTEGRITY FAILURE] No scorecard rows in DB for {scorecard_date}/{full_persona}. Aborting overwrite.")
+                final_equities[full_persona] = float(ledger['Total_Equity'].iloc[-1])
                 continue
             else:
-                print("  [INTEGRITY PASSED] Proceeding with ledger overwrite.")
+                print(f"  [INTEGRITY PASSED] {len(tickers_today)} tickers in DB for today. Proceeding.")
             
             last_state = ledger.iloc[-2] if len(ledger) >= 2 else pd.Series({
                 'Date': '2026-04-22', 'Cash': 10000.0, 'Total_Equity': 10000.0, 

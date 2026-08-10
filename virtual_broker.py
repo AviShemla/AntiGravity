@@ -51,29 +51,82 @@ def run_virtual_broker():
         global_vix_hist = yf.Ticker('^VIX').history(period='30d')
     except:
         pass
-    target_excel = os.path.join(BASE_DIR, 'All_ETFs_Scorecard.xlsx') if len(sys.argv) > 1 and sys.argv[1] == "ETF" else EXCEL_PATH
+    # SOURCE OF TRUTH: Turso DB etf_scorecards_master
+    is_etf_mode = len(sys.argv) > 1 and sys.argv[1] == "ETF"
+    persona_prefix = "ETF_" if is_etf_mode else ""
+
+    # Derive target date
+    if len(sys.argv) > 2 and "Capital" not in sys.argv[2]:
+        target_date_global = sys.argv[2]
+    else:
+        target_date_global = None  # will be resolved per-persona from DB
+
+    # Load full scorecard from DB for today (or latest available date)
     try:
-        xls = pd.ExcelFile(target_excel)
+        ref_persona = f"{persona_prefix}BallsForBrains"
+        if target_date_global:
+            scorecard_date = target_date_global
+        else:
+            date_res = database_manager.execute_query(
+                "SELECT MAX(date) as d FROM etf_scorecards_master WHERE persona=?",
+                [ref_persona]
+            )
+            scorecard_date = date_res.iloc[0][0] if not date_res.empty else pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
+
+        df_scorecard_all = database_manager.execute_query(
+            "SELECT ticker, persona, date, prob, expected_return, expected_risk, kelly_allocation, "
+            "recommendation, broker_override_note, retraining_status, actual_return "
+            "FROM etf_scorecards_master WHERE date <= ? ORDER BY date DESC",
+            [scorecard_date]
+        )
+        if df_scorecard_all.empty:
+            print(f"[ABORT] No scorecard data in DB for date <= {scorecard_date}. Cannot run broker.")
+            return
+
+        # Get ticker universe from latest date
+        ticker_universe = df_scorecard_all[df_scorecard_all['date'] == df_scorecard_all['date'].max()]['ticker'].unique().tolist()
+        print(f"Ticker universe from DB ({scorecard_date}): {ticker_universe}")
     except Exception as e:
-        print(f"Could not load scorecard: {e}")
+        print(f"[ABORT] Failed to load scorecard from Turso DB: {e}")
         return
 
+    def get_scorecard_row(ticker, target_date, persona):
+        """Get the latest scorecard row for a ticker/persona up to target_date from pre-loaded DF."""
+        sub = df_scorecard_all[
+            (df_scorecard_all['ticker'] == ticker) &
+            (df_scorecard_all['persona'] == persona) &
+            (df_scorecard_all['date'] <= target_date)
+        ]
+        if sub.empty:
+            return None
+        return sub.sort_values('date').iloc[-1]
+
+    def get_settlement_row(ticker, settlement_date, persona):
+        """Get scorecard row for a specific settlement date (T-1)."""
+        sub = df_scorecard_all[
+            (df_scorecard_all['ticker'] == ticker) &
+            (df_scorecard_all['persona'] == persona) &
+            (df_scorecard_all['date'] == settlement_date)
+        ]
+        if sub.empty:
+            return None
+        return sub.iloc[-1]
+
     final_equities = {}
-    
-    # --- DYNAMIC ALLOCATOR (SHARPE RATIO) ---
+
+    # --- DYNAMIC ALLOCATOR (SHARPE RATIO) — reads from Turso DB ---
     dynamic_winner = "Neutral"
     try:
         sharpe_scores = {}
         for p in ["Conservative", "Neutral", "BallsForBrains"]:
-            p_ledger = os.path.join(BASE_DIR, f'Capital_Ledger_{p}.csv')
-            if os.path.exists(p_ledger):
-                df_p = pd.read_csv(p_ledger)
-                if len(df_p) >= 10:
-                    df_p['Return'] = df_p['Total_Equity'].pct_change()
-                    recent = df_p['Return'].tail(30).dropna()
-                    if recent.std() > 0:
-                        sharpe = (recent.mean() / recent.std()) * np.sqrt(252)
-                        sharpe_scores[p] = sharpe
+            p_name = f"{persona_prefix}{p}"
+            df_p = database_manager.get_ledger(p_name)
+            if not df_p.empty and len(df_p) >= 10:
+                df_p['Return'] = df_p['Total_Equity'].pct_change()
+                recent = df_p['Return'].tail(30).dropna()
+                if recent.std() > 0:
+                    sharpe = (recent.mean() / recent.std()) * np.sqrt(252)
+                    sharpe_scores[p] = sharpe
         if sharpe_scores:
             dynamic_winner = max(sharpe_scores, key=sharpe_scores.get)
             print(f"--- DYNAMIC ALLOCATOR ---")
@@ -86,11 +139,12 @@ def run_virtual_broker():
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
     
     for persona_name, config in runtime_personas.items():
-        print(f"--- Persona: {persona_name.upper()} ---")
+        full_persona = f"{persona_prefix}{persona_name}"
+        print(f"--- Persona: {full_persona.upper()} ---")
         print(f"Rules: Buy if P > {config['threshold']:.2f} | {config['kelly_multiplier']}x Kelly | Max {config['max_alloc']*100}% per stock")
-        
-        # 1. Initialize or load ledger
-        ledger = database_manager.get_ledger(persona_name)
+
+        # 1. Initialize or load ledger from Turso DB
+        ledger = database_manager.get_ledger(full_persona)
         if ledger.empty:
             ledger = pd.DataFrame([{
                 'Date': '2026-04-22',
@@ -99,37 +153,22 @@ def run_virtual_broker():
                 'Holdings_JSON': '{}',
                 'Daily_PnL_JSON': '{}'
             }])
-        
-        # Extract target date to check for double-runs
-        first_sheet = xls.sheet_names[0]
-        df_first = pd.read_excel(xls, sheet_name=first_sheet, skiprows=2)
-        
-        date_col = 'date' if 'date' in df_first.columns else 'Date'
-        
-        if df_first.empty:
-            print("  [SAFETY STOP] Scorecard is completely empty. Rolling over ledger with 0 PnL.")
-            target_date_for_ledger = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
-        elif len(sys.argv) > 2 and "Capital" not in sys.argv[2]:
-            target_date_for_ledger = sys.argv[2]
-            # Verify the date exists in the scorecard
-            if not (pd.to_datetime(df_first[date_col]) == pd.to_datetime(target_date_for_ledger)).any():
-                print(f"  [WARNING] Target date {target_date_for_ledger} not found in first sheet (likely quarantined). Proceeding cautiously...")
-        else:
-            target_date_for_ledger = df_first.iloc[-1][date_col].strftime('%Y-%m-%d')
-        
+
+        target_date_for_ledger = scorecard_date
+
         if not ledger.empty and target_date_for_ledger == str(ledger['Date'].iloc[-1]):
-            print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}. Checking Scorecard Integrity...")
-            empty_count = 0
-            for test_sheet in xls.sheet_names:
-                df_test = pd.read_excel(xls, sheet_name=test_sheet, skiprows=2)
-                if df_test.empty or len(df_test) < 2:
-                    empty_count += 1
-            if empty_count > len(xls.sheet_names) * 0.1:
-                print(f"  [INTEGRITY FAILURE] Scorecard is highly corrupted ({empty_count} empty sheets). Aborting overwrite to protect ledger.")
-                final_equities[persona_name] = float(ledger['Total_Equity'].iloc[-1])
+            print(f"  [IDEMPOTENT OVERWRITE] Re-executing for date {target_date_for_ledger}.")
+            # Integrity: ensure we have at least some tickers in DB for this date
+            tickers_today = df_scorecard_all[
+                (df_scorecard_all['date'] == scorecard_date) &
+                (df_scorecard_all['persona'] == full_persona)
+            ]['ticker'].tolist()
+            if len(tickers_today) == 0:
+                print(f"  [INTEGRITY FAILURE] No scorecard rows in DB for {scorecard_date}/{full_persona}. Aborting overwrite.")
+                final_equities[full_persona] = float(ledger['Total_Equity'].iloc[-1])
                 continue
             else:
-                print("  [INTEGRITY PASSED] Proceeding with ledger overwrite.")
+                print(f"  [INTEGRITY PASSED] {len(tickers_today)} tickers in DB for today. Proceeding.")
             
             last_state = ledger.iloc[-2] if len(ledger) >= 2 else pd.Series({
                 'Date': '2026-04-22', 'Cash': 10000.0, 'Total_Equity': 10000.0, 
@@ -147,26 +186,28 @@ def run_virtual_broker():
         daily_pnl = {}
         
         skip_sheets = set()
-        for sheet in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=sheet, skiprows=2)
-            sheet_date_col = 'date' if 'date' in df.columns else 'Date'
-            df = df[pd.to_datetime(df[sheet_date_col]) <= pd.to_datetime(target_date_for_ledger)]
-            if len(df) < 2:
-                skip_sheets.add(sheet)
+        for ticker in ticker_universe:
+            # Get last 2 rows from DB up to target date for settlement
+            sub = df_scorecard_all[
+                (df_scorecard_all['ticker'] == ticker) &
+                (df_scorecard_all['persona'] == full_persona) &
+                (df_scorecard_all['date'] <= target_date_for_ledger)
+            ].sort_values('date')
+            sheet = ticker  # alias for compatibility with rest of code
+            if len(sub) < 2:
+                skip_sheets.add(ticker)
                 continue
+            settlement_row = sub.iloc[-2]
+            pending_row = sub.iloc[-1]
             
-            settlement_row = df.iloc[-2]
-            pending_row = df.iloc[-1]
-            
-            if sheet in holdings:
-                item = holdings[sheet]
+            if ticker in holdings:
+                item = holdings[ticker]
                 if isinstance(item, dict):
                     allocated_dollars = item.get("dollars", 0.0)
                 else:
                     allocated_dollars = float(item)
-                    
-                ret_col = 'actual value daily return %' if 'actual value daily return %' in settlement_row else 'Actual Daily Return %'
-                actual_return_pct = settlement_row[ret_col]
+
+                actual_return_pct = settlement_row.get('actual_return', None)
                 
                 if pd.notna(actual_return_pct):
                     # --- INTRA-DAY STOP-LOSS ONLY (scorecard return is the source of truth for PnL) ---
@@ -217,7 +258,7 @@ def run_virtual_broker():
                     
         # --- ZOMBIE FAILSAFE LOGIC ---
         for held_ticker, item in holdings.items():
-            if held_ticker not in xls.sheet_names or held_ticker in skip_sheets:
+            if held_ticker not in ticker_universe or held_ticker in skip_sheets:
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                 purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
                 
@@ -310,18 +351,17 @@ def run_virtual_broker():
                     new_cash -= current_value
                     available_capital -= current_value
                     
-        # --- HOLDING PROTECTION: FREEZE QUARANTINED OR V1-DEGRADED POSITIONS ---
+        # --- HOLDING PROTECTION: FREEZE QUARANTINED OR V1-DEGRADED POSITIONS — reads from Turso DB ---
         for held_ticker, item in holdings.items():
-            if held_ticker in xls.sheet_names and held_ticker not in new_holdings:
+            if held_ticker in ticker_universe and held_ticker not in new_holdings:
                 try:
-                    df_t = pd.read_excel(xls, sheet_name=held_ticker, skiprows=2)
-                    if not df_t.empty:
-                        last_r = df_t.iloc[-1]
-                        override_note = str(last_r.get('Broker Override Note', ''))
-                        status = str(last_r.get('Retraining_Status', ''))
-                        
+                    sc_row = get_scorecard_row(held_ticker, target_date_for_ledger, full_persona)
+                    if sc_row is not None:
+                        override_note = str(sc_row.get('broker_override_note', '') or '')
+                        status = str(sc_row.get('retraining_status', '') or '')
+
                         is_frozen = ("QUARANTINED" in status) or ("QUARANTINED" in override_note) or ("Held Position Frozen" in override_note)
-                        
+
                         if is_frozen:
                             allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                             purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
@@ -340,32 +380,25 @@ def run_virtual_broker():
         gravity_map = sector_gravity.build_gravity_map()
         stock_to_etf = sector_gravity.load_stock_to_etf_map()
         
-        for sheet in xls.sheet_names:
-            if sheet in new_holdings:
+        for ticker in ticker_universe:
+            sheet = ticker  # alias
+            if ticker in new_holdings:
                 continue
-            if sheet in blacklisted:
-                if sheet not in new_holdings:
-                    print(f"  [BLACKLIST] Broker refused to allocate capital for {sheet} due to 3 autopsy strikes.")
+            if ticker in blacklisted:
+                print(f"  [BLACKLIST] Broker refused to allocate capital for {ticker} due to 3 autopsy strikes.")
                 continue
-                
-            # --- SECTOR GRAVITY FILTER (DISABLED) ---
-            # parent_etf = stock_to_etf.get(sheet)
-            # if parent_etf and gravity_map.get(parent_etf) is False:
-            #     print(f"  [SECTOR GRAVITY] Broker blocked {sheet} because its parent sector ({parent_etf}) is bleeding momentum.")
-            #     continue
-                
-            df = pd.read_excel(xls, sheet_name=sheet, skiprows=2)
-            sheet_date_col = 'date' if 'date' in df.columns else 'Date'
-            df = df[pd.to_datetime(df[sheet_date_col]) <= pd.to_datetime(target_date_for_ledger)]
-            if df.empty: continue
-            pending_row = df.iloc[-1]
-            
-            prob = pending_row['Bayesian Probability P(UP)']
-            exp_ret = pending_row['Expected Return %']
-            exp_vol = pending_row['Expected Risk (Volatility) %']
-            status = pending_row.get('Retraining_Status', 'Stable')
-            
-            if "SUSPENDED" in str(status): continue
+
+            # Get latest scorecard row from Turso DB
+            sc_row = get_scorecard_row(ticker, target_date_for_ledger, full_persona)
+            if sc_row is None:
+                continue
+
+            prob = float(sc_row.get('prob', 0) or 0)
+            exp_ret = float(sc_row.get('expected_return', 0) or 0)
+            exp_vol = float(sc_row.get('expected_risk', 0) or 0)
+            status = str(sc_row.get('retraining_status', 'Stable') or 'Stable')
+
+            if "SUSPENDED" in status: continue
                 
             if prob > config['threshold']:
                 if vix_multiplier == 0.0:
@@ -457,10 +490,10 @@ def run_virtual_broker():
             print("  [HOLD] Sitting safely in Cash.")
             
         print(f"  End of Day Equity: ${settled_equity:.2f} (Cash: ${new_cash:.2f})\n")
-        
-        # 4. Save intended state to Pending Orders
+
+        # 4. Save intended state to Pending Orders — to Turso DB
         intended_state = {
-            "Persona": persona_name,
+            "Persona": full_persona,
             "Date": target_date_for_ledger,
             "Target_Cash": round(new_cash, 2),
             "Target_Total_Equity": round(settled_equity, 2),
@@ -468,9 +501,9 @@ def run_virtual_broker():
             "Daily_PnL_JSON": {k: round(v, 2) for k, v in daily_pnl.items()},
             "Executed_Intraday_Trades": {}
         }
-        
+
         database_manager.save_pending_order(
-            persona=persona_name,
+            persona=full_persona,
             date=intended_state["Date"],
             target_cash=intended_state["Target_Cash"],
             target_equity=intended_state["Target_Total_Equity"],
@@ -478,10 +511,10 @@ def run_virtual_broker():
             daily_pnl=intended_state["Daily_PnL_JSON"],
             executed_trades=intended_state["Executed_Intraday_Trades"]
         )
-            
-        print(f"  [STAGING MODE] Delegated execution for {persona_name} to Intraday Tracker. Saved to Pending_Orders.json")
-        
-        final_equities[persona_name] = settled_equity
+
+        print(f"  [STAGING MODE] Delegated execution for {full_persona} to Intraday Tracker. Saved to Pending_Orders.")
+
+        final_equities[full_persona] = settled_equity
 
     # LEADERBOARD
     print("=== LIVE LEADERBOARD ===")
