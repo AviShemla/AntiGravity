@@ -169,54 +169,53 @@ if __name__ == '__main__':
                 print(f"  Settling {len(holdings)} open positions on {date_str}...")
                 # We fetch price data for the CURRENT day to prevent lookahead bias
                 held_tickers = list(holdings.keys())
-                try:
-                    # download data for the settlement day
-                    hist = yf.download(held_tickers, start=date_str, end=date_obj + pd.Timedelta(days=1), progress=False)
-                    for t in held_tickers:
-                        alloc = holdings[t]['dollars']
-                        entry_price = holdings[t]['price']
+                from failover_downloader import download_ticker_with_failover
+                for t in held_tickers:
+                    alloc = holdings[t]['dollars']
+                    entry_price = holdings[t]['price']
+                    
+                    try:
+                        df_hist = download_ticker_with_failover(t, start=date_str)
+                        if df_hist.empty:
+                            raise ValueError(f"No price data returned for {t}")
+                            
+                        df_day = df_hist[df_hist.index.strftime('%Y-%m-%d') == date_str]
+                        if df_day.empty:
+                            df_day = df_hist.tail(1)
+                            
+                        settle_price = df_day['Close'].iloc[0]
+                        low_price = df_day['Low'].iloc[0]
                         
-                        try:
-                            if len(held_tickers) > 1:
-                                closes = hist['Close'][t]
-                                lows = hist['Low'][t]
-                            else:
-                                closes = hist['Close']
-                                lows = hist['Low']
+                        if pd.isna(settle_price) or pd.isna(low_price) or pd.isna(entry_price) or settle_price <= 0:
+                            raise ValueError("Invalid or NaN price returned from failover downloader")
                             
-                            settle_price = closes.loc[date_str] if date_str in closes.index else closes.iloc[-1]
-                            low_price = lows.loc[date_str] if date_str in lows.index else lows.iloc[-1]
+                        ret = (settle_price - entry_price) / entry_price
+                        
+                        # --- DYNAMIC VIX STOP-LOSS LOGIC (Championship Standard) ---
+                        dynamic_stop_loss = -0.060 # Default BallsForBrains
+                        vix_high = 0.0
+                        if not global_vix_hist_bt.empty:
+                            try:
+                                if date_str in global_vix_hist_bt.index.strftime('%Y-%m-%d'):
+                                    vix_high = global_vix_hist_bt[global_vix_hist_bt.index.strftime('%Y-%m-%d') == date_str]['High'].iloc[0]
+                                else:
+                                    vix_high = global_vix_hist_bt['High'].iloc[-1]
+                                    
+                                dynamic_stop_loss = -0.030 if vix_high > 35.0 else (-0.045 if vix_high > 25.0 else -0.060)
+                            except: pass
                             
-                            ret = (settle_price - entry_price) / entry_price
+                        intraday_drop = (low_price - entry_price) / entry_price
+                        if intraday_drop <= dynamic_stop_loss:
+                            panic_str = f"(VIX {vix_high:.1f})" if vix_high > 0 else ""
+                            print(f"    [STOP-LOSS] {t} dropped {intraday_drop*100:.1f}% intraday! Intercepting loss at {dynamic_stop_loss*100:.1f}% {panic_str}")
+                            ret = dynamic_stop_loss
                             
-                            # --- DYNAMIC VIX STOP-LOSS LOGIC (Championship Standard) ---
-                            dynamic_stop_loss = -0.060 # Default BallsForBrains
-                            vix_high = 0.0
-                            if not global_vix_hist_bt.empty:
-                                try:
-                                    if next_bday_str in global_vix_hist_bt.index.strftime('%Y-%m-%d'):
-                                        vix_high = global_vix_hist_bt[global_vix_hist_bt.index.strftime('%Y-%m-%d') == next_bday_str]['High'].iloc[0]
-                                    else:
-                                        vix_high = global_vix_hist_bt['High'].iloc[-1]
-                                        
-                                    dynamic_stop_loss = -0.030 if vix_high > 35.0 else (-0.045 if vix_high > 25.0 else -0.060)
-                                except: pass
-                                
-                            intraday_drop = (low_price - entry_price) / entry_price
-                            if intraday_drop <= dynamic_stop_loss:
-                                panic_str = f"(VIX {vix_high:.1f})" if vix_high > 0 else ""
-                                print(f"    [STOP-LOSS] {t} dropped {intraday_drop*100:.1f}% intraday! Intercepting loss at {dynamic_stop_loss*100:.1f}% {panic_str}")
-                                ret = dynamic_stop_loss
-                                
-                            pnl = alloc * ret
-                            cash += (alloc + pnl)
-                            print(f"    {t} Return: {ret*100:.2f}% -> PnL: ${pnl:.2f}")
-                        except Exception as e:
-                            print(f"    {t} failed to settle ({e}). Assuming 0% return.")
-                            cash += alloc
-                except Exception as e:
-                    print(f"  Warning: Failed to fetch settlement prices: {e}")
-                    for t in held_tickers: cash += holdings[t]['dollars']
+                        pnl = alloc * ret
+                        cash += (alloc + pnl)
+                        print(f"    {t} Return: {ret*100:.2f}% -> PnL: ${pnl:.2f}")
+                    except Exception as e:
+                        print(f"    {t} failed to settle ({e}). Assuming 0% return.")
+                        cash += alloc
             
             holdings.clear()
             
@@ -270,43 +269,46 @@ if __name__ == '__main__':
                 # Fetch today's close prices for entry
                 buy_tickers = list(buys.keys())
                 if buy_tickers:
-                    try:
-                        hist = yf.download(buy_tickers, start=date_str, end=date_obj + pd.Timedelta(days=1), progress=False)
-                        for t in buy_tickers:
-                            prob = buys[t]['prob']
-                            ret = buys[t]['exp_ret']
-                            vol = buys[t]['exp_vol'] if buys[t]['exp_vol'] > 0 else 0.01
+                    from failover_downloader import download_ticker_with_failover
+                    for t in buy_tickers:
+                        prob = buys[t]['prob']
+                        ret = buys[t]['exp_ret']
+                        vol = buys[t]['exp_vol'] if buys[t]['exp_vol'] > 0 else 0.01
+                        
+                        # Kelly
+                        if ret <= 0.0001 or vol <= 0.0001:
+                            kelly = 0.0
+                        else:
+                            R = 1.0
+                            calculated_R = ret / vol
+                            if calculated_R > 0.1:
+                                R = calculated_R
+                            kelly = prob - ((1 - prob) / R)
+                        kelly = max(0.0, min(1.0, kelly))
+                        alloc_pct = min(kelly, 0.20) # Max 20%
+                        
+                        if alloc_pct > 0:
+                            alloc_dollars = equity * alloc_pct
+                            if alloc_dollars > cash: alloc_dollars = cash
                             
-                            # Kelly
-                            if ret <= 0.0001 or vol <= 0.0001:
-                                kelly = 0.0
-                            else:
-                                R = 1.0
-                                calculated_R = ret / vol
-                                if calculated_R > 0.1:
-                                    R = calculated_R
-                                kelly = prob - ((1 - prob) / R)
-                            kelly = max(0.0, min(1.0, kelly))
-                            alloc_pct = min(kelly, 0.20) # Max 20%
-                            
-                            if alloc_pct > 0:
-                                alloc_dollars = equity * alloc_pct
-                                if alloc_dollars > cash: alloc_dollars = cash
-                                
-                                if alloc_dollars > 0:
-                                    try:
-                                        if len(buy_tickers) > 1:
-                                            entry_price = hist['Close'][t].iloc[0]
-                                        else:
-                                            entry_price = hist['Close'].iloc[0]
-                                            
-                                        holdings[t] = {'dollars': alloc_dollars, 'price': entry_price}
-                                        cash -= alloc_dollars
-                                        print(f"    Bought {t} | Alloc: ${alloc_dollars:.2f} (Kelly: {alloc_pct*100:.1f}%)")
-                                    except:
-                                        pass
-                    except:
-                        pass
+                            if alloc_dollars > 0:
+                                try:
+                                    df_hist = download_ticker_with_failover(t, start=date_str)
+                                    if df_hist.empty:
+                                        raise ValueError(f"No price data returned for {t}")
+                                    df_day = df_hist[df_hist.index.strftime('%Y-%m-%d') == date_str]
+                                    if df_day.empty:
+                                        df_day = df_hist.tail(1)
+                                        
+                                    entry_price = df_day['Close'].iloc[0]
+                                    if pd.isna(entry_price) or entry_price <= 0:
+                                        raise ValueError("Invalid entry price")
+                                        
+                                    holdings[t] = {'dollars': alloc_dollars, 'price': entry_price}
+                                    cash -= alloc_dollars
+                                    print(f"    Bought {t} | Alloc: ${alloc_dollars:.2f} (Kelly: {alloc_pct*100:.1f}%)")
+                                except Exception as e_buy:
+                                    print(f"    Failed to execute buy for {t}: {e_buy}")
                         
                 # os.remove(out_json) # KEEP JSON FOR CRASH RECOVERY
             
