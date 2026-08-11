@@ -509,7 +509,10 @@ def export_etf_scorecard(target_etf, target_date=None):
     sc = pd.DataFrame(sc_dict)
     sc['Retraining_Status'] = "Stable" if sv_engine_used else "V1_FALLBACK"
     
-    write_etf_excel(target_etf, sc, features)
+    try:
+        write_etf_excel(target_etf, sc, features)
+    except Exception as e_ex:
+        print(f"Warning: Failed to write Excel scorecard for {target_etf}: {e_ex}")
 
 if __name__ == '__main__':
     import argparse

@@ -7,7 +7,7 @@ from blacklist_engine import get_blacklisted_tickers
 import database_manager
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
-EXCEL_PATH = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted.xlsx')
+EXCEL_PATH = os.path.join(BASE_DIR, 'Top5_Bayesian_Scorecard_Formatted_MOCK.xlsx')
 
 PERSONAS = {
     "Conservative": {

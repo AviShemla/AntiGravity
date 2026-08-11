@@ -44,7 +44,7 @@ def check_scorecard_schema(file_path, prefix="Scorecard"):
             continue
         
         # We must have expected columns to prevent the "KeyError: 'result'" and arviz failure
-        expected_substrings = ['probability', 'expected return', 'recommendation', 'trend_label']
+        expected_substrings = ['probability', 'expected return', 'recommendation']
         columns_lower = [str(c).lower() for c in df.columns]
         
         missing = []

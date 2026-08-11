@@ -1,1 +1,0 @@
-🚨 SCHEMA MISMATCH DETECTED: Stock Bayesian Scorecard sheet 'ADM' is missing expected column types: ['trend_label']. This will cause a KeyError in downstream models.

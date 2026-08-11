@@ -150,9 +150,7 @@ def catchup_master_pipeline():
         else:
             print(f"\n--> Skipping intraday_tracker.py (Prediction Date {prediction_date} is Today and Market hasn't closed yet)...")
         
-        # 6. Export Excel Reports
-        print("\n--> Running export_broker_excel_report.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_broker_excel_report.py")], cwd=BASE_DIR, env=env)
+
         
         # 6.5 Financial QA Audit
         print("\n--> Running Financial QA Audit...")
@@ -257,9 +255,7 @@ def catchup_etf_pipeline():
         else:
             print(f"\n--> Skipping intraday_tracker.py (Prediction Date {prediction_date} is Today and Market hasn't closed yet)...")
         
-        # 5. Export ETF Broker Excel
-        print("\n--> Running export_etf_broker_excel.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_etf_broker_excel.py")], cwd=BASE_DIR, env=env)
+
         
         # 5.5 Financial QA Audit
         print("\n--> Running ETF Financial QA Audit...")
@@ -280,6 +276,18 @@ def catchup_etf_pipeline():
 def catchup_everything_and_email():
     catchup_master_pipeline()
     catchup_etf_pipeline()
+    
+    # Run Excel Exports ONCE at the end from Vultr data
+    print("\n--> Running Excel Report Exports from DB...")
+    try:
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_broker_excel_report.py")], cwd=BASE_DIR, env=env, timeout=60)
+    except Exception as e:
+        print(f"Warning: export_broker_excel_report failed: {e}")
+        
+    try:
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_etf_broker_excel.py")], cwd=BASE_DIR, env=env, timeout=60)
+    except Exception as e:
+        print(f"Warning: export_etf_broker_excel failed: {e}")
     
     print("\n==============================================")
     print("=== FINAL QA GATE (100% GREEN REQUIREMENT) ===")

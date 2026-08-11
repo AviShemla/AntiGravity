@@ -595,3 +595,4 @@ if __name__ == '__main__':
 
     writer.close()
     print(f"\nSaved Formatted Scorecard to: {excel_path}")
+    import os; os._exit(0)
