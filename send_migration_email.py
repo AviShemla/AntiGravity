@@ -7,7 +7,7 @@ recipient = "avi.shemla@gmail.com"
 subject = "AntiGravity: New Laptop Migration Protocol & Instructions"
 
 # Read the Walkthrough artifact
-walkthrough_path = r"C:\Users\AviShemla\.gemini\antigravity\brain\b409853a-2b0b-46f6-a175-a22b0cfe3421\walkthrough.md"
+walkthrough_path = r"C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f\walkthrough.md"
 with open(walkthrough_path, "r", encoding="utf-8") as f:
     md_content = f.read()
 
