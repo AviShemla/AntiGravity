@@ -1,3 +1,9 @@
+import multiprocessing
+try:
+    multiprocessing.set_start_method('spawn', force=True)
+except RuntimeError:
+    pass
+
 import pandas as pd
 import numpy as np
 import pymc as pm

@@ -13,6 +13,7 @@ def deploy():
         ("server.py", "/opt/antigravity/server.py"),
         ("database_manager.py", "/opt/antigravity/database_manager.py"),
         ("data_loader.py", "/opt/antigravity/data_loader.py"),
+        ("export_bayesian_scorecard_formatted.py", "/opt/antigravity/export_bayesian_scorecard_formatted.py"),
         ("laptop_catchup_controller.py", "/opt/antigravity/laptop_catchup_controller.py"),
         ("frontend/app.js", "/opt/antigravity/frontend/app.js"),
         ("frontend/index.html", "/opt/antigravity/frontend/index.html"),
