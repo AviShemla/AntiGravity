@@ -18,8 +18,24 @@ python_exe = sys.executable
 
 # Inject Unbuffered Mode to prevent swallowed logs on exit
 import os
+import atexit
 env = os.environ.copy()
 env['PYTHONUNBUFFERED'] = '1'
+
+LOCK_FILE = os.path.join(BASE_DIR, 'master_pipeline.lock')
+try:
+    lock_fd = os.open(LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    def release_lock():
+        try:
+            os.close(lock_fd)
+        except:
+            pass
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
+    atexit.register(release_lock)
+except FileExistsError:
+    print("FATAL: Master Pipeline or Catch-Up Controller is already running. Lockfile prevents duplicate execution.")
+    os._exit(1)
 
 
 def get_missed_dates(pipeline_name):

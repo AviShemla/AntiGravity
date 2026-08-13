@@ -28,7 +28,8 @@ def load_predictors(ticker=None):
     """
     print("Reading data...")
     df = pd.read_csv(DATA_PATH, low_memory=False)
-    df['Date'] = pd.to_datetime(df['Date'])
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df = df.dropna(subset=['Date'])
     df = df.drop_duplicates(subset=['Date', 'Ticker']).sort_values(['Ticker', 'Date'])
     print(f"  {len(df):,} rows | {df['Ticker'].nunique()} tickers | "
           f"{df['Date'].min().date()} to {df['Date'].max().date()}")
