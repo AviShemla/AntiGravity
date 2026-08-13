@@ -194,6 +194,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         sv_engine_used = False
         sv_vol_test = np.zeros(len(test_data)) # Dummy array
         
+        is_held = False
         try:
             import sys
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -204,9 +205,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
                 if not df_l.empty and 'Holdings_JSON' in df_l.columns:
                     holdings_str = df_l.iloc[-1]['Holdings_JSON']
                     holdings = json.loads(holdings_str)
-                    if ticker in holdings and holdings[ticker] > 0:
-                        is_held = True
-                        break
+                    if ticker in holdings:
+                        qty = holdings[ticker]
+                        if isinstance(qty, dict):
+                            qty = qty.get('quantity', 0)
+                        if qty > 0:
+                            is_held = True
+                            break
         except Exception as ex:
             print(f"  Error checking stock holdings: {ex}")
             
