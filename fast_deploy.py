@@ -16,6 +16,7 @@ def deploy():
         ("frontend/index.html", "/opt/antigravity/frontend/index.html"),
         ("frontend/style_3d.css", "/opt/antigravity/frontend/style_3d.css"),
         ("frontend/Architecture_Map.html", "/opt/antigravity/frontend/Architecture_Map.html"),
+        ("clean_ghosts.py", "/opt/antigravity/clean_ghosts.py"),
         ("financial_data/Prod_vs_Shadow_Results_MASTER.csv", "/opt/antigravity/financial_data/Prod_vs_Shadow_Results_MASTER.csv"),
         ("financial_data/Olympic_Shootout_Results_MASTER.csv", "/opt/antigravity/financial_data/Olympic_Shootout_Results_MASTER.csv"),
         ("financial_data/Top5_Bayesian_Scorecard_Formatted.xlsx", "/opt/antigravity/financial_data/Top5_Bayesian_Scorecard_Formatted.xlsx"),

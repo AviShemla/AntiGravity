@@ -32,11 +32,30 @@ def hunt_zombies():
             cmd_str = " ".join(cmdline).lower()
             
             # Protect Uvicorn, and long-running pipelines
-            if any(w in cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests", "intraday_tracker", "vix_monitor"]):
+            if any(w in cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests", "intraday_tracker", "vix_monitor", "export_bayesian_scorecard", "master_pipeline"]):
                 continue
                 
             # Target Python processes
             if "python" in p.info.get('name', '').lower() or "py.exe" in p.info.get('name', '').lower():
+                # Ancestor-based protection: check if process or any of its parents are whitelisted
+                is_protected = False
+                curr = p
+                for _ in range(5):  # limit parent tree traversal
+                    try:
+                        curr_cmdline = curr.cmdline()
+                        if curr_cmdline:
+                            curr_cmd_str = " ".join(curr_cmdline).lower()
+                            if any(w in curr_cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests", "intraday_tracker", "vix_monitor", "export_bayesian_scorecard", "master_pipeline"]):
+                                is_protected = True
+                                break
+                        curr = curr.parent()
+                        if not curr: break
+                    except Exception:
+                        break
+                
+                if is_protected:
+                    continue
+
                 # If running for more than 1200 seconds (20 mins)
                 if now - p.info['create_time'] > 1200:
                     msg = f"Purged Ghost Process (Running > 20min): PID {p.info['pid']} -> {cmd_str}"
