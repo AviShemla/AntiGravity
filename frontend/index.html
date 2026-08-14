@@ -11,9 +11,13 @@
 <body>
     <header>
         <img src="/oracle_logo_fixed.png?v=5" alt="The ORACLE" class="hero-logo">
-        <div>
+        <div style="flex-grow: 1;">
             <h1>The ORACLE</h1>
             <p>Read-Only Bayesian Live Web Dashboard</p>
+        </div>
+        <div id="global-sync-status" style="margin-left: auto; text-align: right; font-family: 'Source Code Pro', monospace; font-size: 0.85em; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.2); min-width: 250px;">
+            <div style="color: #94a3b8;">📅 TARGET SYNC DATE: <span id="target-sync-date" style="color: #00E5FF; font-weight: bold;">Calculating...</span></div>
+            <div id="tab-sync-indicators" style="font-size: 0.8em; margin-top: 6px; line-height: 1.4; text-align: left;"></div>
         </div>
     </header>
 

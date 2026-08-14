@@ -144,7 +144,7 @@ if __name__ == "__main__":
     # QA 7: Uvicorn Server & Port 80 Deadlock Audit
     import urllib.request
     try:
-        if urllib.request.urlopen("http://66.42.118.26/", timeout=5).getcode() != 200:
+        if urllib.request.urlopen("http://127.0.0.1/", timeout=5).getcode() != 200:
             log_alert("[QA 7] Remote VPS Uvicorn Deadlock Detected!")
             errors += 1
     except Exception as e:

@@ -384,6 +384,25 @@ if __name__ == '__main__':
         df_merged.to_csv(out_file, index=False)
         print(f">>> Saved Marathon Update: {out_file}")
         
+        # SOURCE OF TRUTH: Sync to Turso DB olympic_shootout_master
+        try:
+            import database_manager
+            inserted_cnt = 0
+            for _, row in df_merged.iterrows():
+                date_str = str(row['Date'])
+                for col in ['EL_CAP (70% Liquidity)', 'EL_VOLTI (70% Stability)', 'CHAMPION (Live VIP)']:
+                    val = row.get(col)
+                    if pd.notna(val):
+                        database_manager.execute_write("""
+                            INSERT INTO olympic_shootout_master (date, model_name, total_equity)
+                            VALUES (?, ?, ?)
+                            ON CONFLICT(date, model_name) DO UPDATE SET total_equity=excluded.total_equity
+                        """, [date_str, str(col), float(val)])
+                        inserted_cnt += 1
+            print(f"  [DB] Olympic Shootout synced to Turso: {inserted_cnt} records updated")
+        except Exception as e_db:
+            print(f"  [DB WARNING] Failed to sync Olympic Shootout to Turso: {e_db}")
+        
         # --- Sync Dashboard CSVs to Vultr ---
         if os.name == 'nt':
             print("\n--- Deploying Updated CSV to Vultr Dashboard ---")

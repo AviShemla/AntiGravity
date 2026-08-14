@@ -2,6 +2,71 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
     ? 'http://localhost:80/api' 
     : '/api';
 
+async function fetchWithRetry(url, options = {}, retries = 3, delayMs = 600) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url, options);
+            if (res.ok) return res;
+        } catch (e) {
+            if (i === retries - 1) throw e;
+        }
+        await new Promise(r => setTimeout(r, delayMs));
+    }
+    return fetch(url, options);
+}
+
+const tabLatestDates = { stocks: null, etfs: null, olympic: null, prodshadow: null };
+
+function getExpectedBusinessDay() {
+    const now = new Date();
+    const nyStr = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+    const nyDate = new Date(nyStr);
+    const day = nyDate.getDay();
+    const hour = nyDate.getHours();
+    
+    let target = new Date(nyDate);
+    if (day === 0) { // Sunday
+        target.setDate(target.getDate() - 2);
+    } else if (day === 6) { // Saturday
+        target.setDate(target.getDate() - 1);
+    } else if (day === 1 && hour < 16) { // Monday before 4 PM
+        target.setDate(target.getDate() - 3);
+    } else if (hour < 16) { // Weekday before 4 PM
+        target.setDate(target.getDate() - 1);
+    }
+    
+    const yyyy = target.getFullYear();
+    const mm = String(target.getMonth() + 1).padStart(2, '0');
+    const dd = String(target.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function renderSyncStatus() {
+    const targetDate = getExpectedBusinessDay();
+    document.getElementById("target-sync-date").innerText = targetDate;
+    
+    const indicatorsContainer = document.getElementById("tab-sync-indicators");
+    if (!indicatorsContainer) return;
+    
+    const formatIndicator = (name, date) => {
+        if (!date) return `<div style="display:flex; justify-content:space-between; margin-bottom:2px; opacity:0.6;"><span style="color:#94a3b8;">${name}</span><span style="color:#94a3b8;">Loading...</span></div>`;
+        const isSynced = date >= targetDate;
+        const color = isSynced ? "#32CD32" : "#FF4136";
+        const icon = isSynced ? "🟢" : "🔴";
+        return `<div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+            <span style="color:#e2e8f0; font-weight:600; margin-right: 15px;">${name}</span>
+            <span style="color:${color}; font-weight:bold;">${icon} ${date}</span>
+        </div>`;
+    };
+    
+    indicatorsContainer.innerHTML = `
+        ${formatIndicator("Stocks", tabLatestDates.stocks)}
+        ${formatIndicator("ETFs", tabLatestDates.etfs)}
+        ${formatIndicator("Olympic", tabLatestDates.olympic)}
+        ${formatIndicator("Prod/Shadow", tabLatestDates.prodshadow)}
+    `;
+}
+
 function initApp() {
     // Tab Switching Logic
     const navLinks = document.querySelectorAll('.nav-links li');
@@ -43,8 +108,11 @@ function initApp() {
         loadHoldings('ETF', 'persona-etfs', 'etfs');
     });
 
-    // Initial Load
+    // Initial Load & Background Prefetch of all tabs to sync global indicators
     loadHoldings('Single', 'persona-stocks', 'stocks');
+    loadHoldings('ETF', 'persona-etfs', 'etfs');
+    loadOlympic();
+    loadProdShadow();
 
     // Live Auto-Polling Loop (Every 60,000ms = 1 minute)
     setInterval(() => {
@@ -125,11 +193,13 @@ const STD_LAYOUT = {
 };
 
 async function loadHoldings(mode, selectId, prefix) {
-    const persona = document.getElementById(selectId).value;
+    const personaEl = document.getElementById(selectId);
+    if (!personaEl) return;
+    const persona = personaEl.value;
     
     // Fetch and populate Select View Dropdown Options
     try {
-        const ddRes = await fetch(`${API_BASE}/dropdown?persona=${persona}&mode=${mode}`, { cache: 'no-store' });
+        const ddRes = await fetchWithRetry(`${API_BASE}/dropdown?persona=${persona}&mode=${mode}`, { cache: 'no-store' });
         if (ddRes.ok) {
             const options = await ddRes.json();
             const sel = document.getElementById(`view-${prefix}`);
@@ -150,10 +220,14 @@ async function loadHoldings(mode, selectId, prefix) {
     }
     
     try {
-        const response = await fetch(`${API_BASE}/holdings?persona=${persona}&mode=${mode}`, { cache: 'no-store' });
+        const response = await fetchWithRetry(`${API_BASE}/holdings?persona=${persona}&mode=${mode}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Data not found');
         
         const data = await response.json();
+        if (data.equity_curve && data.equity_curve.dates && data.equity_curve.dates.length > 0) {
+            tabLatestDates[prefix] = data.equity_curve.dates[data.equity_curve.dates.length - 1];
+            renderSyncStatus();
+        }
         
         const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
         
@@ -188,9 +262,9 @@ async function loadHoldings(mode, selectId, prefix) {
             legend: { orientation: "v", x: 0.85, y: 0.5, font: { size: 14 } }
         }));
 
-        // Line Chart
+        const shortDatesLine = data.equity_curve.dates.map(d => d.slice(5));
         const traceLine = {
-            x: data.equity_curve.dates,
+            x: shortDatesLine,
             y: data.equity_curve.equity,
             type: 'scatter',
             mode: 'lines',
@@ -205,7 +279,7 @@ async function loadHoldings(mode, selectId, prefix) {
             let yPad = Math.max((yMax - yMin) * 0.20, Math.abs(yMax) * 0.02);
             
             const anchorTrace = {
-                x: [data.equity_curve.dates[0], data.equity_curve.dates[0]],
+                x: [shortDatesLine[0], shortDatesLine[0]],
                 y: [yMin - yPad, yMax + yPad],
                 mode: 'markers',
                 marker: { color: 'rgba(0,0,0,0)' },
@@ -215,7 +289,7 @@ async function loadHoldings(mode, selectId, prefix) {
             
             const layoutLine = Object.assign({}, STD_LAYOUT, {
                 title: { text: 'Historical Total Equity', font: { color: 'white' } },
-                xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', 
+                xaxis: { type: 'category', tickangle: -45, color: 'white', 
                     gridcolor: 'rgba(255,255,255,0.1)', 
                     rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } 
                 },
@@ -281,18 +355,13 @@ async function loadHoldings(mode, selectId, prefix) {
 
         // Fetch and Render 30-Day Multi-Broker Race
         try {
-            const raceRes = await fetch(`${API_BASE}/race?mode=${mode}`, { cache: 'no-store' });
+            const raceRes = await fetchWithRetry(`${API_BASE}/race?mode=${mode}`, { cache: 'no-store' });
             if (raceRes.ok) {
                 const raceData = await raceRes.json();
                 const raceTraces = [];
                 for (const [persona, series] of Object.entries(raceData)) {
-                    const t = {
-                        x: series.dates,
-                        y: series.values,
-                        type: 'scatter',
-                        mode: 'lines',
-                        name: persona
-                    };
+                    const shortDatesRace = series.dates.map(d => d.slice(5));
+                    const t = { x: shortDatesRace, y: series.values, mode: 'lines+markers', name: persona };
                     if (persona.includes('Conservative')) { t.line = { dash: 'dot', color: '#FF851B', width: 4 }; }
                     else if (persona.includes('Neutral')) { t.line = { dash: 'dash', color: '#2ECC40', width: 4 }; }
                     else if (persona.includes('Balls')) { t.line = { color: '#00E5FF', width: 2 }; }
@@ -312,9 +381,9 @@ async function loadHoldings(mode, selectId, prefix) {
                     }
                 }
                 let rPad = Math.max((rMax - rMin) * 0.20, Math.abs(rMax) * 0.02);
-                const firstDate = Object.values(raceData)[0].dates[0];
+                const firstShortDate = Object.values(raceData)[0].dates[0].slice(5);
                 const rAnchorTrace = {
-                    x: [firstDate, firstDate],
+                    x: [firstShortDate, firstShortDate],
                     y: [rMin - rPad, rMax + rPad],
                     mode: 'markers',
                     marker: { color: 'rgba(0,0,0,0)' },
@@ -324,7 +393,7 @@ async function loadHoldings(mode, selectId, prefix) {
                 raceTraces.push(rAnchorTrace);
                 
                 const raceLayout = Object.assign({}, STD_LAYOUT, {
-                    xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+                    xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
                     yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
                 });
                 Plotly.newPlot(`race-${prefix}`, raceTraces, raceLayout);
@@ -378,7 +447,7 @@ function plotNormalDist(mu, sigma, targetDiv) {
     Plotly.newPlot(targetDiv, [traceLoss, traceWin], Object.assign({}, STD_LAYOUT, {
         title: { text: 'Bayesian Probability Distribution', font: { color: 'white' }, y: 0.95 },
         margin: { t: 60, b: 40, l: 50, r: 10 },
-        xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+        xaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
         yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
     }));
 }
@@ -389,7 +458,7 @@ async function handleViewChange(prefix) {
     const mode = prefix === 'stocks' ? 'Single' : 'ETF';
     const persona = document.getElementById(`persona-${prefix}`).value;
     
-    if (ticker === 'Portfolio Overview') {
+    if (!ticker || ticker === 'Portfolio Overview') {
         document.getElementById(`portfolio-overview-${prefix}`).style.display = 'block';
         document.getElementById(`bayesian-${prefix}`).style.display = 'none';
         return;
@@ -399,7 +468,7 @@ async function handleViewChange(prefix) {
     document.getElementById(`bayesian-${prefix}`).style.display = 'block';
     
     try {
-        const res = await fetch(`${API_BASE}/bayesian?ticker=${ticker}&persona=${persona}&mode=${mode}`, { cache: 'no-store' });
+        const res = await fetchWithRetry(`${API_BASE}/bayesian?ticker=${ticker}&persona=${persona}&mode=${mode}`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Failed to load bayesian data");
         const data = await res.json();
         
@@ -436,7 +505,7 @@ async function handleViewChange(prefix) {
             
             Plotly.newPlot(`chart-pred-${prefix}`, [trExp, trAct, trAnchor], Object.assign({}, STD_LAYOUT, {
                 title: { text: 'Historical Predictions vs Actual Returns', font: { color: 'white' } },
-                xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+                xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
                 yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '.2%' }
             }));
             enableAutoYScale(`chart-pred-${prefix}`);
@@ -489,7 +558,7 @@ async function handleViewChange(prefix) {
             const rAnchor = { x: [rt[0].x[0], rt[0].x[0]], y: [rMin - rPad, rMax + rPad], mode: 'markers', marker: { color: 'rgba(0,0,0,0)' }, showlegend: false, hoverinfo: 'skip' };
             rt.push(rAnchor);
             Plotly.newPlot(`chart-single-race-${prefix}`, rt, Object.assign({}, STD_LAYOUT, {
-                xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+                xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
                 yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)' }
             }));
             enableAutoYScale(`chart-single-race-${prefix}`);
@@ -504,9 +573,13 @@ let olympicTimer = null;
 
 async function loadOlympic() {
     try {
-        const res = await fetch(`${API_BASE}/olympic`, { cache: 'no-store' });
+        const res = await fetchWithRetry(`${API_BASE}/olympic`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Olympic data not available");
         const data = await res.json();
+        if (data.chart_data && data.chart_data.dates && data.chart_data.dates.length > 0) {
+            tabLatestDates.olympic = data.chart_data.dates[data.chart_data.dates.length - 1];
+            renderSyncStatus();
+        }
         
         // 1. Countdown Timer
         const targetDate = new Date(data.eta_timestamp);
@@ -549,17 +622,18 @@ async function loadOlympic() {
         const nVol = `EL_VOLTI (Stability)${getMedal(data.metrics.EL_VOLTI.rank)}`;
         const nChamp = `CHAMPION (VIP)${getMedal(data.metrics.CHAMPION.rank)}`;
         
-        const trCap = { x: data.chart_data.dates, y: data.chart_data.EL_CAP, mode: 'lines', line: { dash: 'dot', color: '#FF851B', width: 8 }, name: nCap };
-        const trVol = { x: data.chart_data.dates, y: data.chart_data.EL_VOLTI, mode: 'lines', line: { dash: 'dash', color: '#2ECC40', width: 5 }, name: nVol };
-        const trChamp = { x: data.chart_data.dates, y: data.chart_data.CHAMPION, mode: 'lines+markers', marker: { size: 6 }, line: { color: '#00E5FF', width: 2 }, name: nChamp };
+        const shortDatesOly = data.chart_data.dates.map(d => d.slice(5));
+        const trCap = { x: shortDatesOly, y: data.chart_data.EL_CAP, mode: 'lines', line: { dash: 'dot', color: '#FF851B', width: 8 }, name: nCap };
+        const trVol = { x: shortDatesOly, y: data.chart_data.EL_VOLTI, mode: 'lines', line: { dash: 'dash', color: '#2ECC40', width: 5 }, name: nVol };
+        const trChamp = { x: shortDatesOly, y: data.chart_data.CHAMPION, mode: 'lines+markers', marker: { size: 6 }, line: { color: '#00E5FF', width: 2 }, name: nChamp };
         
         let rMin = Math.min(...data.chart_data.EL_CAP, ...data.chart_data.EL_VOLTI, ...data.chart_data.CHAMPION);
         let rMax = Math.max(...data.chart_data.EL_CAP, ...data.chart_data.EL_VOLTI, ...data.chart_data.CHAMPION);
         let rPad = Math.max((rMax - rMin) * 0.20, Math.abs(rMax) * 0.02);
-        const rAnchor = { x: [data.chart_data.dates[0], data.chart_data.dates[0]], y: [rMin - rPad, rMax + rPad], mode: 'markers', marker: { color: 'rgba(0,0,0,0)' }, showlegend: false, hoverinfo: 'skip' };
+        const rAnchor = { x: [shortDatesOly[0], shortDatesOly[0]], y: [rMin - rPad, rMax + rPad], mode: 'markers', marker: { color: 'rgba(0,0,0,0)' }, showlegend: false, hoverinfo: 'skip' };
         
         Plotly.newPlot('chart-olympic-race', [trCap, trVol, trChamp, rAnchor], Object.assign({}, STD_LAYOUT, {
-            xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
+            xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' }
         }));
         enableAutoYScale('chart-olympic-race');
@@ -578,7 +652,7 @@ async function loadOlympic() {
 
 async function loadAutopsy() {
     try {
-        const res = await fetch(`${API_BASE}/autopsy`, { cache: 'no-store' });
+        const res = await fetchWithRetry(`${API_BASE}/autopsy`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Autopsy data not available");
         const data = await res.json();
         
@@ -595,7 +669,7 @@ async function loadAutopsy() {
                 };
                 Plotly.newPlot(`chart-autopsy-serial-${prefix}`, [trOffenders], Object.assign({}, STD_LAYOUT, {
                     title: { text: 'Top 10 Serial Offenders (Total Loss $)', font: { color: 'white' } },
-                    xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+                    xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
                     yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
                     bargap: 0.8
                 }));
@@ -613,7 +687,7 @@ async function loadAutopsy() {
                 };
                 Plotly.newPlot(`chart-autopsy-day-${prefix}`, [trDays], Object.assign({}, STD_LAYOUT, {
                     title: { text: 'Vulnerability by Day of Week', font: { color: 'white' } },
-                    xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+                    xaxis: { type: 'category', tickangle: 0, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
                     yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
                     bargap: 0.8
                 }));
@@ -643,9 +717,13 @@ async function loadAutopsy() {
 
 async function loadProdShadow() {
     try {
-        const res = await fetch(`${API_BASE}/prod_shadow`, { cache: 'no-store' });
+        const res = await fetchWithRetry(`${API_BASE}/prod_shadow`, { cache: 'no-store' });
         if (!res.ok) throw new Error("Prod vs Shadow data not available");
         const data = await res.json();
+        if (data.dates && data.dates.length > 0) {
+            tabLatestDates.prodshadow = data.dates[data.dates.length - 1];
+            renderSyncStatus();
+        }
         
         if (data.dates.length === 0) return;
 
@@ -674,13 +752,14 @@ async function loadProdShadow() {
         if(document.getElementById('pnl-box-lstm')) document.getElementById('pnl-box-lstm').innerHTML = formatPnL(lastLstm, data.is_pending);
         // ----------------------------------
 
-        const trProd = { x: data.dates, y: data.prod, name: 'Prod (BallsForBrains)', mode: 'lines', line: { color: '#32CD32', width: 4 } };
-        const trTrans = { x: data.dates, y: data.trans, name: 'Shadow Transformer', mode: 'lines', line: { color: '#FF4136', width: 3, dash: 'dot' } };
-        const trV1 = { x: data.dates, y: data.v1, name: 'Sandbox V1 Classic', mode: 'lines', line: { color: '#87CEEB', width: 3, dash: 'dash' } };
-        const trLstm = { x: data.dates, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
+        const shortDatesPS = data.dates.map(d => d.slice(5));
+        const trProd = { x: shortDatesPS, y: data.prod, name: 'Prod (BallsForBrains)', mode: 'lines', line: { color: '#32CD32', width: 4 } };
+        const trTrans = { x: shortDatesPS, y: data.trans, name: 'Shadow Transformer', mode: 'lines', line: { color: '#FF4136', width: 3, dash: 'dot' } };
+        const trV1 = { x: shortDatesPS, y: data.v1, name: 'Sandbox V1 Classic', mode: 'lines', line: { color: '#87CEEB', width: 3, dash: 'dash' } };
+        const trLstm = { x: shortDatesPS, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
         
         Plotly.newPlot('chart-prod-shadow', [trProd, trTrans, trV1, trLstm], Object.assign({}, STD_LAYOUT, {
-            xaxis: { type: 'category', dtick: 1, tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)' },
+            xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
             title: { text: "Performance Race: Prod vs Shadows", font: { color: 'white' } }
         }));

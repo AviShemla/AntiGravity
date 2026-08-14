@@ -54,10 +54,8 @@ def get_latest_holdings(persona="BallsForBrains", mode="Single"):
     import sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import database_manager
-    if mode == "Single":
-        df = database_manager.get_ledger(persona)
-    else:
-        df = database_manager.get_ledger(f"ETF_{persona}")
+    target_p = persona if persona.startswith("ETF_") else (f"ETF_{persona}" if mode != "Single" else persona)
+    df = database_manager.get_ledger(target_p)
     if df.empty:
         return None, None
     if df.empty:
@@ -250,10 +248,8 @@ def get_asset_breakdown(persona, mode):
     import sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import database_manager
-    if mode == "Single":
-        df = database_manager.get_ledger(persona)
-    else:
-        df = database_manager.get_ledger(f"ETF_{persona}")
+    target_p = persona if persona.startswith("ETF_") else (f"ETF_{persona}" if mode != "Single" else persona)
+    df = database_manager.get_ledger(target_p)
     if df.empty:
         return pd.DataFrame()
     if df.empty:
@@ -756,7 +752,7 @@ with tab1:
                     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
                     import database_manager
                     import json
-                    df_p = database_manager.get_ledger(p)
+                    df_p = database_manager.get_ledger(f"ETF_{p}")
                     if not df_p.empty:
                         if 'Date' in df_p.columns:
                             df_p['Date'] = pd.to_datetime(df_p['Date'])

@@ -71,7 +71,7 @@ def main():
         
         # --- SYNC STOCKS TO CLOUD BEFORE ETF PIPELINE ---
         log_msg("--- Synchronizing Local Stock Data to Turso to satisfy ETF Interlock ---")
-        SYNC_SCRIPT = os.path.join(BASE_DIR, 'migrate_to_sqlite.py')
+        SYNC_SCRIPT = os.path.join(BASE_DIR, 'migrate_to_turso.py')
         subprocess.run([sys.executable, SYNC_SCRIPT], cwd=BASE_DIR)
         
         # 2. Cooldown
@@ -166,7 +166,7 @@ def main():
 
         # --- NEW: CLOUD DASHBOARD SYNCHRONIZATION ---
         log_msg("--- Synchronizing Local Data to Turso Cloud Database ---")
-        SYNC_SCRIPT = os.path.join(BASE_DIR, 'migrate_to_sqlite.py')
+        SYNC_SCRIPT = os.path.join(BASE_DIR, 'migrate_to_turso.py')
         subprocess.run([sys.executable, SYNC_SCRIPT], cwd=BASE_DIR)
 
         # --- NEW: SYSTEM HEALTH MONITOR ---

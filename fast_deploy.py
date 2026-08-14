@@ -24,7 +24,8 @@ def deploy():
         ("financial_data/Prod_vs_Shadow_Results_MASTER.csv", "/opt/antigravity/financial_data/Prod_vs_Shadow_Results_MASTER.csv"),
         ("financial_data/Olympic_Shootout_Results_MASTER.csv", "/opt/antigravity/financial_data/Olympic_Shootout_Results_MASTER.csv"),
         ("financial_data/Top5_Bayesian_Scorecard_Formatted.xlsx", "/opt/antigravity/financial_data/Top5_Bayesian_Scorecard_Formatted.xlsx"),
-        ("financial_data/All_ETFs_Scorecard.xlsx", "/opt/antigravity/financial_data/All_ETFs_Scorecard.xlsx")
+        ("financial_data/All_ETFs_Scorecard.xlsx", "/opt/antigravity/financial_data/All_ETFs_Scorecard.xlsx"),
+        ("qa_financial_audit.py", "/opt/antigravity/qa_financial_audit.py")
     ]
     
     for local_path, remote_path in files_to_upload:

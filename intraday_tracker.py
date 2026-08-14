@@ -269,6 +269,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         aborted_sells = {} # Map of ticker -> yest_close
         
         for ticker in new_buys:
+            if ticker == "Cash": continue
             print(f"\n  [EVALUATING] Pending BUY for {ticker} (Persona: {persona})")
             yest_close, yest_vwap = get_yesterday_metrics(ticker, target_date)
             live_price, live_volume = get_live_metrics(ticker, target_date)
@@ -332,6 +333,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         # PENDING SELL MOMENTUM SHIELD
         # ==========================================
         for ticker in pending_sells:
+            if ticker == "Cash": continue
             print(f"\n  [EVALUATING] Pending SELL for {ticker} (Persona: {persona})")
             yest_close, yest_vwap = get_yesterday_metrics(ticker, target_date)
             live_price, _ = get_live_metrics(ticker, target_date)
@@ -364,6 +366,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         # INTRADAY TAKE-PROFIT SURGE PROTOCOL
         # ==========================================
         for ticker in held_tickers:
+            if ticker == "Cash": continue
             print(f"\n  [MONITORING] Held Position: {ticker} (Persona: {persona})")
             yest_close, _ = get_yesterday_metrics(ticker, target_date)
             live_price, _ = get_live_metrics(ticker, target_date)
@@ -504,7 +507,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                     final_holdings[ticker]['dollars'] = live_units * live_price
                     
                 elif record["type"] == "SELL":
-                    if ticker in current_holdings and ticker not in final_holdings:
+                    if ticker != "Cash" and ticker in current_holdings and isinstance(current_holdings[ticker], dict) and ticker not in final_holdings:
                         # This was a pending overnight sell.
                         # Reverse the exact credit that the virtual broker added to Target_Cash
                         units = current_holdings[ticker]['units']
@@ -579,7 +582,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                 client.execute("UPDATE pending_orders SET executed_intraday_trades_json = ? WHERE persona = ?", [json.dumps(executed_memory), persona])
                 
             # Create the final committed row in SQLite
-            final_date = target_date if target_date else state['Date']
+            final_date = target_date if target_date else datetime.now(pytz.timezone('America/New_York')).strftime('%Y-%m-%d')
             database_manager.save_ledger_row(
                 persona=persona,
                 date=final_date,
