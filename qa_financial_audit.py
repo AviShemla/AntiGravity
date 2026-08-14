@@ -55,6 +55,18 @@ def audit_broker_ledger():
             if actual_equity < 0.05:
                 print(f"  !!! FATAL ZERO EQUITY: {persona} dropped to ${actual_equity:.2f}")
                 fatal_errors += 1
+                
+            # Check: Max allocation limit audit
+            max_allowed_pct = 0.15 if ("BallsForBrains" in persona or "Dynamic" in persona) else 0.10
+            for ticker, item in holdings.items():
+                if ticker == 'Cash':
+                    continue
+                alloc_val = float(item.get('dollars', item)) if isinstance(item, dict) else float(item)
+                alloc_pct = alloc_val / actual_equity if actual_equity > 0 else 0.0
+                if alloc_pct > (max_allowed_pct + 0.02): # 2% buffer for rounding
+                    print(f"  !!! FATAL CONSTRAINT VIOLATION: {persona} | {date} | "
+                          f"{ticker} allocation is {alloc_pct*100:.1f}% which exceeds limit of {max_allowed_pct*100:.1f}%!")
+                    fatal_errors += 1
 
             diff = abs(expected_equity - actual_equity)
             if diff > 0.05:
@@ -235,6 +247,51 @@ def audit_stock_scorecard():
     return errors
 
 
+def audit_pipeline_continuity():
+    print("\n[5/5] PIPELINE CONTINUITY AUDIT")
+    print("=" * 50)
+    
+    import pandas_market_calendars as mcal
+    from database_manager import execute_query
+    
+    try:
+        df = execute_query("SELECT * FROM process_continuity")
+    except Exception as e:
+        print(f"  Turso database error: {e}. Skipping.")
+        return 1
+
+    if df.empty:
+        print("  !!! FATAL: process_continuity table is empty!")
+        return 1
+
+    today = pd.Timestamp.now('America/New_York').normalize()
+    nyse = mcal.get_calendar('NYSE')
+    valid_days = nyse.valid_days(start_date=today - pd.Timedelta(days=7), end_date=today).tz_localize(None)
+    
+    is_today_bday = today in valid_days
+    now_hour = pd.Timestamp.now('America/New_York').hour
+    
+    if is_today_bday and now_hour < 16:
+        idx = list(valid_days).index(today)
+        expected_date = valid_days[idx - 1]
+    else:
+        expected_date = valid_days[-1]
+        
+    expected_str = expected_date.strftime('%Y-%m-%d')
+    print(f"  Expected Last Completed Date: {expected_str}")
+    
+    errors = 0
+    for _, row in df.iterrows():
+        pipeline = row['pipeline_name']
+        last_date = row['last_completed_date']
+        print(f"  Pipeline {pipeline}: Last Completed = {last_date}")
+        if last_date < expected_str:
+            print(f"  !!! FATAL PIPELINE LAG: {pipeline} is on {last_date}, but must be on at least {expected_str}!")
+            errors += 1
+            
+    return errors
+
+
 # ─────────────────────────────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────────────────────────────
@@ -247,14 +304,16 @@ def run_financial_audit():
     e2 = 0 # audit_required_files() - Disabled for Turso Cloud Migration
     e3 = 0 # audit_etf_scorecards() - Disabled for Turso Cloud Migration
     e4 = 0 # audit_stock_scorecard() - Disabled for Turso Cloud Migration
+    e5 = audit_pipeline_continuity()
 
-    total = e1 + e2 + e3 + e4
+    total = e1 + e2 + e3 + e4 + e5
 
     print("\n" + "=" * 50)
     print(f"  BROKER LEDGER:      {'PASS: OK' if e1 == 0 else f'FAIL: {e1} error(s)'}")
     print(f"  REQUIRED FILES:     {'PASS: OK' if e2 == 0 else f'FAIL: {e2} error(s)'}")
     print(f"  ETF SCORECARDS:     {'PASS: OK' if e3 == 0 else f'FAIL: {e3} error(s)'}")
     print(f"  STOCK SCORECARDS:   {'PASS: OK' if e4 == 0 else f'FAIL: {e4} error(s)'}")
+    print(f"  PIPELINE CONTINUITY: {'PASS: OK' if e5 == 0 else f'FAIL: {e5} error(s)'}")
     print("=" * 50)
 
     if total > 0:
