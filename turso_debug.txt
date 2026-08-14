@@ -1,1 +1,0 @@
-{'result': {'cols': [{'name': 'total_equity', 'decltype': 'REAL'}], 'rows': [[{'type': 'float', 'value': 9722.52}]], 'affected_row_count': 0, 'last_insert_rowid': None, 'replication_index': None, 'rows_read': 33, 'rows_written': 0, 'query_duration_ms': 183.341}}
