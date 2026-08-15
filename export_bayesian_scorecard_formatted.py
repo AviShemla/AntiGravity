@@ -54,6 +54,7 @@ def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="
     sc_dict['Broker Override Note'] = [f"QUARANTINED: {reason}"] * len(dates_t)
     sc_dict['model hit IND integrated model'] = ["Pending"] * len(dates_t)
     sc_dict['Causality Link Used'] = ["None"] * len(dates_t)
+    sc_dict['trend_label'] = ["Neutral"] * len(dates_t)
     
     return pd.DataFrame(sc_dict)
 
@@ -386,6 +387,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     sc_dict['Broker Override Note'] = override_notes
     sc_dict['model hit IND integrated model'] = hits
     sc_dict['Causality Link Used'] = [actual_chain_str] * len(dates_t)
+    sc_dict['trend_label'] = ["Bullish" if p > 0.55 else ("Bearish" if p < 0.45 else "Neutral") for p in p_pred]
     
     sc = pd.DataFrame(sc_dict)
     last_hit = hits[-2] if len(hits) >= 2 else "Pending"

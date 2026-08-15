@@ -116,7 +116,7 @@ function initApp() {
 
     // Live Auto-Polling Loop (Every 60,000ms = 1 minute)
     setInterval(() => {
-        const activeTab = document.querySelector('.tab-link.active');
+        const activeTab = document.querySelector('.nav-links li.active');
         if (!activeTab) return;
         const tabId = activeTab.getAttribute('data-tab');
         if (tabId === 'stocks') loadHoldings('Single', 'persona-stocks', 'stocks');
@@ -362,11 +362,11 @@ async function loadHoldings(mode, selectId, prefix) {
                 for (const [persona, series] of Object.entries(raceData)) {
                     const shortDatesRace = series.dates.map(d => d.slice(5));
                     const t = { x: shortDatesRace, y: series.values, mode: 'lines+markers', name: persona };
-                    if (persona.includes('Conservative')) { t.line = { dash: 'dot', color: '#FF851B', width: 4 }; }
-                    else if (persona.includes('Neutral')) { t.line = { dash: 'dash', color: '#2ECC40', width: 4 }; }
-                    else if (persona.includes('Balls')) { t.line = { color: '#00E5FF', width: 2 }; }
-                    else if (persona.includes('SPY')) { t.line = { color: 'white', width: 2 }; }
-                    else { t.line = { width: 2 }; } // Default Dynamic
+                    if (persona.includes('Conservative')) { t.line = { dash: 'dot', color: '#FF851B', width: 3 }; }
+                    else if (persona.includes('Neutral')) { t.line = { dash: 'dash', color: '#2ECC40', width: 3 }; }
+                    else if (persona.includes('Balls')) { t.line = { color: '#00E5FF', width: 3 }; }
+                    else if (persona.includes('SPY') || persona.includes('S&P 500')) { t.line = { dash: 'dot', color: '#FFFFFF', width: 4 }; }
+                    else { t.line = { width: 3 }; } // Default Dynamic
                     raceTraces.push(t);
                 }
                 
@@ -623,16 +623,17 @@ async function loadOlympic() {
         const nChamp = `CHAMPION (VIP)${getMedal(data.metrics.CHAMPION.rank)}`;
         
         const shortDatesOly = data.chart_data.dates.map(d => d.slice(5));
-        const trCap = { x: shortDatesOly, y: data.chart_data.EL_CAP, mode: 'lines', line: { dash: 'dot', color: '#FF851B', width: 8 }, name: nCap };
-        const trVol = { x: shortDatesOly, y: data.chart_data.EL_VOLTI, mode: 'lines', line: { dash: 'dash', color: '#2ECC40', width: 5 }, name: nVol };
-        const trChamp = { x: shortDatesOly, y: data.chart_data.CHAMPION, mode: 'lines+markers', marker: { size: 6 }, line: { color: '#00E5FF', width: 2 }, name: nChamp };
+        const trCap = { x: shortDatesOly, y: data.chart_data.EL_CAP, mode: 'lines', line: { dash: 'dot', color: '#FF851B', width: 4 }, name: nCap };
+        const trVol = { x: shortDatesOly, y: data.chart_data.EL_VOLTI, mode: 'lines', line: { dash: 'dash', color: '#2ECC40', width: 4 }, name: nVol };
+        const trChamp = { x: shortDatesOly, y: data.chart_data.CHAMPION, mode: 'lines+markers', marker: { size: 6 }, line: { color: '#00E5FF', width: 3 }, name: nChamp };
+        const trSpyOly = { x: shortDatesOly, y: data.chart_data.SPY || [], mode: 'lines', line: { dash: 'dot', color: '#FFFFFF', width: 4 }, name: 'S&P 500 (SPY)' };
         
         let rMin = Math.min(...data.chart_data.EL_CAP, ...data.chart_data.EL_VOLTI, ...data.chart_data.CHAMPION);
         let rMax = Math.max(...data.chart_data.EL_CAP, ...data.chart_data.EL_VOLTI, ...data.chart_data.CHAMPION);
         let rPad = Math.max((rMax - rMin) * 0.20, Math.abs(rMax) * 0.02);
         const rAnchor = { x: [shortDatesOly[0], shortDatesOly[0]], y: [rMin - rPad, rMax + rPad], mode: 'markers', marker: { color: 'rgba(0,0,0,0)' }, showlegend: false, hoverinfo: 'skip' };
         
-        Plotly.newPlot('chart-olympic-race', [trCap, trVol, trChamp, rAnchor], Object.assign({}, STD_LAYOUT, {
+        Plotly.newPlot('chart-olympic-race', [trCap, trVol, trChamp, trSpyOly, rAnchor], Object.assign({}, STD_LAYOUT, {
             xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' }
         }));
@@ -757,8 +758,9 @@ async function loadProdShadow() {
         const trTrans = { x: shortDatesPS, y: data.trans, name: 'Shadow Transformer', mode: 'lines', line: { color: '#FF4136', width: 3, dash: 'dot' } };
         const trV1 = { x: shortDatesPS, y: data.v1, name: 'Sandbox V1 Classic', mode: 'lines', line: { color: '#87CEEB', width: 3, dash: 'dash' } };
         const trLstm = { x: shortDatesPS, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
+        const trSpy = { x: shortDatesPS, y: data.spy, name: 'S&P 500 (SPY)', mode: 'lines', line: { color: '#FFFFFF', width: 4, dash: 'dot' } };
         
-        Plotly.newPlot('chart-prod-shadow', [trProd, trTrans, trV1, trLstm], Object.assign({}, STD_LAYOUT, {
+        Plotly.newPlot('chart-prod-shadow', [trProd, trTrans, trV1, trLstm, trSpy], Object.assign({}, STD_LAYOUT, {
             xaxis: { type: 'category', tickangle: -45, color: 'white', gridcolor: 'rgba(255,255,255,0.1)', rangeslider: { visible: true, thickness: 0.08, bgcolor: '#383838', bordercolor: '#1E90FF', borderwidth: 1 } },
             yaxis: { color: 'white', gridcolor: 'rgba(255,255,255,0.1)', tickformat: '$.2f' },
             title: { text: "Performance Race: Prod vs Shadows", font: { color: 'white' } }

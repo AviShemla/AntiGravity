@@ -55,7 +55,8 @@ header p {
     margin-bottom: 2rem;
     display: flex;
     gap: 1rem;
-    overflow-x: auto;
+    overflow: visible;
+    padding-top: 15px;
 }
 .nav-links {
     list-style: none;
@@ -92,41 +93,35 @@ header p {
     z-index: 10;
 }
 
-/* 1. The Physical Metallic Diamond */
+/* 1. The Physical Metallic Diamond Indicator */
 .nav-links li.active::before {
     content: '';
     position: absolute;
-    top: -11px; /* Straddle the top border */
+    top: -12px;
     left: 50%;
     transform: translateX(-50%) rotate(45deg);
-    width: 16px;
-    height: 16px;
-    background: linear-gradient(135deg, #00E5FF 0%, #001a55 70%); /* Crystal blue gradient */
-    border: 2px solid #e0e5ec; /* Bright silver frame */
-    box-shadow: 
-        0 0 0 1px #5a6575, /* Darker outer grey rim for metallic effect */
-        0 4px 8px rgba(0, 0, 0, 0.6), /* Drop shadow */
-        inset 0 0 4px rgba(0, 0, 0, 0.8); /* Inner depth */
-    z-index: 12;
+    width: 14px;
+    height: 14px;
+    background: #00E5FF;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 10px #00E5FF, 0 0 20px #00E5FF;
+    z-index: 100;
 }
 
-/* 2. The Glowing 4-Point Starburst inside the diamond */
+/* 2. Glow effect */
 .nav-links li.active::after {
     content: '';
     position: absolute;
-    top: -15px; /* Precisely centered over the diamond body */
+    top: -14px;
     left: 50%;
     transform: translateX(-50%);
-    width: 24px;
-    height: 24px;
-    /* Create a horizontal and vertical light beam crossing at the center */
-    background: 
-        radial-gradient(ellipse 1px 12px at center, #ffffff 0%, #00E5FF 40%, transparent 100%),
-        radial-gradient(ellipse 12px 1px at center, #ffffff 0%, #00E5FF 40%, transparent 100%);
+    width: 18px;
+    height: 18px;
+    background: radial-gradient(circle, #ffffff 0%, #00E5FF 60%, transparent 100%);
     border-radius: 50%;
-    filter: drop-shadow(0 0 2px #ffffff);
-    z-index: 13;
+    z-index: 101;
     pointer-events: none;
+    filter: drop-shadow(0 0 4px #00E5FF);
 }
 .nav-icon {
     width: 30px;

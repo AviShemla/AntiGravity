@@ -372,22 +372,22 @@ def get_race_data(mode: str = "Single"):
         }
         
     try:
-        # spy = yf.download('SPY', start=plot_df.index.min(), end=plot_df.index.max() + pd.Timedelta(days=1), progress=False)
-        spy = pd.DataFrame() # Disabled to prevent Uvicorn connection pool deadlocks
-        if not spy.empty and len(plot_df.columns) > 0:
-            start_eq = 10000.0
-            if isinstance(spy.columns, pd.MultiIndex):
-                spy_close = spy['Close']['SPY']
-            else:
-                spy_close = spy['Close']
-            norm_spy = spy_close / spy_close.iloc[0] * start_eq
-            norm_spy = norm_spy.reindex(plot_df.index).ffill().bfill()
-            series_data["SPY"] = {
-                "dates": norm_spy.index.strftime('%Y-%m-%d').tolist(),
-                "values": norm_spy.replace({np.nan: None}).tolist()
-            }
-    except:
-        pass
+        min_date_str = plot_df.index.min().strftime('%Y-%m-%d')
+        import yfinance as yf
+        yf_df = yf.download('SPY', start=min_date_str, progress=False)
+        if not yf_df.empty:
+            c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
+            spy_close = yf_df[c_col]
+            start_val = float(spy_close.dropna().iloc[0])
+            if start_val > 0:
+                norm_spy = (spy_close / start_val) * 10000.0
+                norm_spy = norm_spy.reindex(plot_df.index).ffill().bfill()
+                series_data["S&P 500 (SPY)"] = {
+                    "dates": norm_spy.index.strftime('%Y-%m-%d').tolist(),
+                    "values": [round(float(v), 2) if v is not None and not np.isnan(v) else None for v in norm_spy.tolist()]
+                }
+    except Exception as e:
+        print(f"[RACE] SPY Benchmark error: {e}")
         
     return series_data
 
@@ -627,11 +627,29 @@ def get_olympic_data():
         
         table_data = format_df_for_display(df_merged.iloc[::-1]).fillna("").to_dict('records')
         
+        # Fetch S&P 500 (SPY) benchmark starting at $10,000 for Olympic chart
+        spy_olympic = [10000.0] * len(df_merged)
+        try:
+            min_date_str = str(df_merged['Date'].min())[:10]
+            import yfinance as yf
+            yf_df = yf.download('SPY', start=min_date_str, progress=False)
+            if not yf_df.empty:
+                c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
+                yf_series = yf_df[c_col]
+                yf_map = dict(zip(yf_series.index.strftime('%Y-%m-%d'), yf_series.values))
+                spy_close = df_merged['Date'].str[:10].map(yf_map).ffill().bfill()
+                first_spy_val = float(spy_close.dropna().iloc[0])
+                if first_spy_val > 0:
+                    spy_olympic = [round(float((v / first_spy_val) * 10000.0), 2) if pd.notnull(v) else 10000.0 for v in spy_close]
+        except Exception as e_spy:
+            print(f"[OLYMPIC] SPY benchmark error: {e_spy}")
+
         chart_data = {
             "dates": df_merged['Date'].fillna("").tolist(),
             "EL_CAP": df_merged['EL_CAP (70% Liquidity)'].fillna(0).tolist(),
             "EL_VOLTI": df_merged['EL_VOLTI (70% Stability)'].fillna(0).tolist(),
-            "CHAMPION": df_merged['CHAMPION (Live VIP)'].fillna(0).tolist()
+            "CHAMPION": df_merged['CHAMPION (Live VIP)'].fillna(0).tolist(),
+            "SPY": spy_olympic
         }
         
         now = datetime.datetime.now()
@@ -708,33 +726,40 @@ def get_autopsy_data():
 
 @app.get('/api/prod_shadow')
 def get_prod_shadow():
-    # SOURCE OF TRUTH: Turso DB prod_vs_shadow_master (with CSV fallback)
     try:
-        df_db = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
-        if df_db.empty:
-            raise ValueError("prod_vs_shadow_master is empty — falling back to CSV")
-        df = df_db.pivot(index='Date', columns='model_name', values='total_equity').reset_index()
-        df = df.rename(columns={'PROD_Bayesian_SV': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1'})
-        for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1']:
+        csv_path = os.path.join(BASE_DIR, 'financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
+        if not os.path.exists(csv_path):
+            csv_path = os.path.join(BASE_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
+        df = pd.read_csv(csv_path)
+        
+        # Ensure all columns exist
+        for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1', 'Shadow_LSTM']:
             if col not in df.columns:
                 df[col] = 10000.0
-        df['Date'] = pd.to_datetime(df['Date'])
-        df = df.sort_values('Date')
-        df = df.set_index('Date').reindex(pd.date_range(start=df['Date'].min(), end=df['Date'].max(), freq='B')).ffill().reset_index().rename(columns={'index': 'Date'})
-        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-        df = df.ffill().fillna(10000.0)
-    except Exception as e_db:
-        # Fallback to CSV
+                
+        # Attach S&P 500 (SPY) Benchmark starting at $10,000
         try:
-            csv_path = os.path.join(BASE_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
-            df = pd.read_csv(csv_path)
-            for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1']:
-                if col not in df.columns:
-                    df[col] = 10000.0
-        except Exception as e_csv:
-            return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'table': [], 'is_pending': False, 'error': f'DB: {e_db}, CSV: {e_csv}'}
+            min_date_str = str(df['Date'].min())[:10]
+            import yfinance as yf
+            yf_df = yf.download('SPY', start=min_date_str, progress=False)
+            if not yf_df.empty:
+                c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
+                yf_series = yf_df[c_col]
+                yf_map = dict(zip(yf_series.index.strftime('%Y-%m-%d'), yf_series.values))
+                spy_close = df['Date'].astype(str).str[:10].map(yf_map).ffill().bfill()
+                first_spy_val = float(spy_close.dropna().iloc[0])
+                if first_spy_val > 0:
+                    df['SPY'] = (spy_close.astype(float) / first_spy_val) * 10000.0
+                else:
+                    df['SPY'] = 10000.0
+            else:
+                df['SPY'] = 10000.0
+        except Exception as e_spy:
+            print(f"[PROD_SHADOW] SPY fetch error: {e_spy}")
+            df['SPY'] = 10000.0
+    except Exception as e_csv:
+        return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'lstm': [], 'spy': [], 'table': [], 'is_pending': False, 'error': str(e_csv)}
 
-    
     is_pending = False
     try:
         df_trial = database_manager.get_ledger('BallsForBrains')
@@ -763,19 +788,27 @@ def get_prod_shadow():
         pass
         
     def safe_tolist(col_data):
-        if isinstance(col_data, pd.DataFrame):
-            return col_data.iloc[:, 0].tolist()
-        elif hasattr(col_data, 'tolist'):
-            return col_data.tolist()
-        return list(col_data)
+        res = []
+        for v in (col_data.tolist() if hasattr(col_data, 'tolist') else list(col_data)):
+            try:
+                fv = float(v)
+                res.append(round(fv, 2) if not np.isnan(fv) else None)
+            except:
+                res.append(str(v)[:10])
+        return res
+
+    # Ensure Date column formatted as ISO string before converting to dict
+    df_table = df.copy()
+    df_table['Date'] = df_table['Date'].astype(str).str[:10]
 
     return {
-        'dates': safe_tolist(df['Date']),
-        'prod': safe_tolist(df['Prod']),
-        'trans': safe_tolist(df['Shadow_Transformer']),
-        'v1': safe_tolist(df['Sandbox_V1']),
-        'lstm': safe_tolist(df.get('Shadow_LSTM', pd.Series([10000.0]*len(df)))),
-        'table': df.iloc[::-1].to_dict('records'),
+        'dates': [str(v)[:10] for v in df['Date'].tolist()],
+        'prod': safe_tolist(df['Prod']) if 'Prod' in df.columns else [10000.0]*len(df),
+        'trans': safe_tolist(df['Shadow_Transformer']) if 'Shadow_Transformer' in df.columns else [10000.0]*len(df),
+        'v1': safe_tolist(df['Sandbox_V1']) if 'Sandbox_V1' in df.columns else [10000.0]*len(df),
+        'lstm': safe_tolist(df['Shadow_LSTM']) if 'Shadow_LSTM' in df.columns else [10000.0]*len(df),
+        'spy': safe_tolist(df['SPY']) if 'SPY' in df.columns else [10000.0]*len(df),
+        'table': df_table.iloc[::-1].to_dict('records'),
         'is_pending': is_pending
     }
 
