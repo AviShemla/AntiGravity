@@ -811,7 +811,7 @@ function renderArenaChart(mode) {
     const trV1 = { x: shortDates, y: data.v1, name: 'Sandbox V1 Classic', mode: 'lines', line: { color: '#87CEEB', width: 3, dash: 'dash' } };
     const trLstm = { x: shortDates, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
     const trWhale = { x: shortDates, y: data.etf_whale, name: 'Shadow ETF Whale (Task #1)', mode: 'lines', line: { color: '#FFD700', width: 4 } };
-    const trSafety = { x: shortDates, y: data.neural_safety, name: 'Shadow Neural Safety (Task #2)', mode: 'lines', line: { color: '#00FFFF', width: 4, dash: 'dot' } };
+    const trSafety = { x: shortDates, y: data.neural_safety, name: 'Shadow Neural Safety (Task #2)', mode: 'lines', line: { color: '#00FF7F', width: 4, dash: 'dashdot' } };
     const trSpy = { x: shortDates, y: data.spy, name: 'S&P 500 (SPY)', mode: 'lines', line: { color: '#FFFFFF', width: 4, dash: 'dot' } };
 
     let traces = [];
