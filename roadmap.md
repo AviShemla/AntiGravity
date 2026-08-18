@@ -1,10 +1,12 @@
 # AntiGravity Project Roadmap & Status
 
-## 🎯 Current Active System Directives
+## 🎯 Current Active System Directives (Phase 1 Operations)
 
-- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Mandatory Playwright Visual Inspection QA:** Every UI update or fix must be visually verified via `capture_all_web_tabs.py` Playwright screenshots across all 5 live Web Dashboard tabs (`http://66.42.118.26`).
+- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Strict 100% Database SSOT (Turso DB):** ABSOLUTELY NO CSV or Excel files allowed as data sources or fallbacks! All ledgers, pending orders, Bayesian scores, model history, and competition shootouts must read directly and exclusively from Turso DB tables.
+- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Zero Local File Data Source:** No local processing or local CSV/Excel files are to be used as data sources. Database tables are the sole authoritative source of truth across all environments.
+- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Mandatory Playwright Visual Inspection QA:** Every dashboard status report or UI update must be visually confirmed using `capture_all_web_tabs.py` Playwright rendering across all live Web Dashboard tabs (`http://66.42.118.26`).
 - <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Intraday Sniper Daemon Guarding:** `ag-sniper.service` daemon actively evaluating, protecting, and executing staged pending orders across all 8 personas live on Vultr.
-- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **100% Database SSOT (Turso DB):** Zero file fallbacks. All ledgers, pending orders, scores, and Olympic/Prod-Shadow competition shootouts are 100% database-driven.
+
 ## ⏳ Future Directions (Phase 2 Architecture)
 
 1. <span style="color: #FF851B; font-weight: bold;">[PENDING]</span> **ETF Dynamic Whale Prior (Production Rollout):** The POC math proved that injecting live S&P500 fundamental aggregates into the ETF PyMC engine significantly stabilizes the NUTS sampler. This needs to be fully integrated into `export_etf_scorecard.py` to upgrade the live ETF pipeline.
