@@ -20,8 +20,8 @@ This document is the **Single Source of Truth (SSOT)** for all operational rules
    - NEVER answer questions about system architecture, configuration, pipelines, or logic based on memory or assumptions.
    - YOU MUST ALWAYS use physical tools (`grep_search`, `view_file`, raw DB queries) to verify the exact code/state BEFORE answering.
 
-3. **Dashboard X-Axis Verification Rule:**
-   - Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly verify the X-axis continuity!
+3. **Dashboard X-Axis & Visual Anomaly Verification Rule:**
+   - Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly inspect the chart lines for unnatural vertical drops, non-trading gap artifacts, or label truncation!
    - Mathematically prove that the latest date in the database perfectly matches the latest date rendered on the chart's X-axis (`capture_all_web_tabs.py`).
 
 4. **Zero Polling Loop & AI Credit Conservation:**
