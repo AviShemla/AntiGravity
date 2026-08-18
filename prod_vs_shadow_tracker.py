@@ -80,9 +80,7 @@ def run_tracker(target_date):
     print(f"--- Running Prod vs Shadow Tracker for {target_date} ---")
     state = load_state()
     
-    if target_date <= state["last_date"] and os.path.exists(MASTER_CSV) and os.path.getsize(MASTER_CSV) > 0:
-        print(f"Date {target_date} already processed. Skipping.")
-        return
+    # Always compute/update row for target_date
         
     dt_obj = datetime.strptime(target_date, "%Y-%m-%d")
     if dt_obj.weekday() >= 5:

@@ -29,7 +29,9 @@
             <li data-tab="etfs">
                 <img src="/etf_icon.png" class="nav-icon" alt="ETF"> Multi-Sector ETFs
             </li>
-            <li data-tab="arena"><img src="/oracle_logo_fixed.png" class="nav-icon" alt="Arena" style="width:20px;height:20px;"> ⚔️ Model & Universe Arena</li>
+            <li data-tab="olympic">🏆 Ticker Population Olympic</li>
+            <li data-tab="prodshadow"><img src="/oracle_logo_fixed.png" class="nav-icon" alt="ProdVsShadow" style="width:20px;height:20px;"> Prod vs Shadow</li>
+            <li data-tab="arena" style="border: 1px dashed #00F0FF;"><img src="/oracle_logo_fixed.png" class="nav-icon" alt="Arena" style="width:20px;height:20px;"> ⚔️ Unified Arena (TEMP)</li>
             <li data-tab="autopsy">
                 <img src="/autopsy_icon.png" class="nav-icon" alt="Autopsy"> Trade Autopsy
             </li>
@@ -42,12 +44,69 @@
     <!-- MAIN CONTENT -->
     <main>
         
+        <!-- PROD VS SHADOW TAB -->
+        <div id="prodshadow" class="tab-content">
+            <div class="controls" style="justify-content: center; margin-bottom: 20px;">
+                <h3 class="view-header" style="margin:0; text-align:center;">Prod (BallsForBrains) vs Shadow Models</h3>
+            </div>
+            
+            <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 30px;">
+                <div class="model-tooltip-card">
+                    <h4 style="color:#32CD32; margin-top:0; font-size:20px;">1. Prod (Bayesian + SV)</h4>
+                    <p style="font-size:15px; color:#A0A0B0; margin:0;"><strong>BallsForBrains</strong></p>
+                    <div id="pnl-box-prod" style="font-size:19px; font-weight:bold; margin-top:8px; color:white;">--</div>
+                    <div class="tooltip-text">
+                        <strong>The Incumbent Champion</strong><br><br>
+                        This is the live production model executing trades with real money. It is a hybrid system utilizing <strong>PyMC3 Bayesian Stochastic Volatility</strong> to calculate deeply probabilistic market structures.<br><br>
+                        Unlike the shadows, it is paired with an aggressive <strong>Intraday VWAP Sniper</strong> that dynamically manages positions during the trading day, aborting bad trades and protecting capital using live market data.
+                    </div>
+                </div>
+                <div class="model-tooltip-card">
+                    <h4 style="color:#FF4136; margin-top:0; font-size:20px;">2. Shadow Transformer</h4>
+                    <p style="font-size:15px; color:#A0A0B0; margin:0;"><strong>Deep Learning Attention</strong></p>
+                    <div id="pnl-box-trans" style="font-size:19px; font-weight:bold; margin-top:8px; color:white;">--</div>
+                    <div class="tooltip-text">
+                        <strong>The Modern Challenger</strong><br><br>
+                        This is a purely experimental Deep Learning model using a <strong>Multi-Head Attention Transformer</strong> (like an LLM for stocks).<br><br>
+                        It predicts sequential price action probabilities based on 60-day historical contexts. It trades strictly 'blind' during the day (buying at Open, selling at Close) and possesses absolutely zero intraday awareness.
+                    </div>
+                </div>
+                <div class="model-tooltip-card">
+                    <h4 style="color:#87CEEB; margin-top:0; font-size:20px;">3. Sandbox V1 Classic</h4>
+                    <p style="font-size:15px; color:#A0A0B0; margin:0;"><strong>Random Forest</strong></p>
+                    <div id="pnl-box-v1" style="font-size:19px; font-weight:bold; margin-top:8px; color:white;">--</div>
+                    <div class="tooltip-text">
+                        <strong>The Legacy Baseline</strong><br><br>
+                        This is the original AntiGravity engine before we upgraded to Bayesian math. It uses a standard <strong>Random Forest Regressor</strong>.<br><br>
+                        It is kept alive strictly as a benchmark to ensure that our newer, more complex models are actually outperforming the old baseline. It uses static, rigid stop-losses.
+                    </div>
+                </div>
+                <div class="model-tooltip-card">
+                    <h4 style="color:#FF00FF; margin-top:0; font-size:20px;">4. Shadow LSTM</h4>
+                    <p style="font-size:15px; color:#A0A0B0; margin:0;"><strong>Recurrent Network</strong></p>
+                    <div id="pnl-box-lstm" style="font-size:19px; font-weight:bold; margin-top:8px; color:white;">--</div>
+                    <div class="tooltip-text">
+                        <strong>The Sequential Predictor</strong><br><br>
+                        This is an experimental Deep Learning model using a <strong>Long Short-Term Memory (LSTM)</strong> neural network.<br><br>
+                        It predicts time-series momentum based on historical sequences. Like the Transformer, it trades strictly 'blind' during the day with zero intraday awareness.
+                    </div>
+                </div>
+            </div>
 
+            <div id="chart-prod-shadow" class="chart-container" style="height: 450px;"></div>
+            
+            <div class="table-container" style="margin-top: 30px;">
+                <table id="tbl-prodshadow" class="data-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
 
-        <!-- UNIFIED ARENA TAB -->
+        <!-- UNIFIED ARENA TAB (TEMP) -->
         <div id="arena" class="tab-content">
             <div class="controls" style="justify-content: center; margin-bottom: 20px; flex-direction: column; align-items: center; gap: 12px;">
-                <h3 class="view-header" style="margin:0; text-align:center;">⚔️ Unified Model & Universe Arena</h3>
+                <h3 class="view-header" style="margin:0; text-align:center;">⚔️ Unified Model & Universe Arena (TEMP)</h3>
                 <div class="table-tabs" style="margin-top: 5px;">
                     <button class="t-tab active" id="btn-arena-all" onclick="filterArenaChart('all', this)">🌐 Show All (6 Models + SPY)</button>
                     <button class="t-tab" id="btn-arena-models" onclick="filterArenaChart('models', this)">🤖 Model Architectures Only</button>
@@ -353,7 +412,54 @@
             </div>
         </div>
 
-
+        <!-- OLYMPIC TAB -->
+        <div id="olympic" class="tab-content">
+            <h2 style="text-align: center; color: #FFD700;">🏆 30-Day Walk-Forward Bayesian Olympics</h2>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">Comparing the actual simulated PnL performance of different S&P 500 feature extractions.</p>
+            
+            <div style="display: flex; justify-content: center; align-items: center; gap: 40px; padding: 10px;">
+                <!-- CARD 1: Finish Date -->
+                <div style="background: linear-gradient(145deg, #1e1e24 0%, #2a2a35 100%); border-top: 4px solid #9b59b6; border-radius: 12px; padding: 20px 30px; box-shadow: 0 8px 16px rgba(0,0,0,0.4); text-align: center;">
+                    <div style="font-size: 12px; color: #a0a0b0; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-family: sans-serif;">Next Scheduled Olympic Run</div>
+                    <div id="oly-date" style="color: white; font-family: sans-serif; font-size: 22px; font-weight: bold;">📅 Loading...</div>
+                </div>
+                
+                <!-- CARD 2: Live Countdown -->
+                <div style="background: linear-gradient(145deg, #1e1e24 0%, #2a2a35 100%); border-top: 4px solid #ff4b4b; border-radius: 12px; padding: 20px 30px; box-shadow: 0 8px 16px rgba(0,0,0,0.4); text-align: center; min-width: 250px;">
+                    <div style="font-size: 12px; color: #a0a0b0; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-family: sans-serif;">Time Remaining</div>
+                    <div style="color: #ff4b4b; font-family: sans-serif; font-size: 22px; font-weight: bold;">⏳ <span id="oly-timer">Loading...</span></div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            <h3 style="margin-bottom: 1rem; color: white;">🏎️ Population PnL Race</h3>
+            <div id="chart-olympic-race" class="chart-container" style="height: 600px; margin-bottom: 30px;"></div>
+            
+            <h3 style="margin-bottom: 1rem; color: white;">📊 Olympic Scoreboard</h3>
+            <div class="metrics-row" style="margin-bottom: 30px; display: flex; justify-content: space-around;">
+                <div class="metric-box">
+                    <h4>EL_CAP Return</h4>
+                    <p id="o-ret-cap" class="metric-value">0%</p>
+                    <p id="o-dd-cap" style="color: var(--text-secondary); margin-top: 5px;">Max DD: 0%</p>
+                </div>
+                <div class="metric-box">
+                    <h4>EL_VOLTI Return</h4>
+                    <p id="o-ret-vol" class="metric-value">0%</p>
+                    <p id="o-dd-vol" style="color: var(--text-secondary); margin-top: 5px;">Max DD: 0%</p>
+                </div>
+                <div class="metric-box">
+                    <h4>🏆 CHAMPION Return</h4>
+                    <p id="o-ret-champ" class="metric-value">0%</p>
+                    <p id="o-dd-champ" style="color: var(--text-secondary); margin-top: 5px;">Max DD: 0%</p>
+                </div>
+            </div>
+            
+            <div id="tbl-olympic" class="table-container">
+                <table class="data-table">
+                    <thead></thead><tbody></tbody>
+                </table>
+            </div>
+        </div>
 
 
 

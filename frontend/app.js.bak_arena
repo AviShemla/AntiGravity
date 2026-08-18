@@ -15,7 +15,7 @@ async function fetchWithRetry(url, options = {}, retries = 3, delayMs = 600) {
     return fetch(url, options);
 }
 
-const tabLatestDates = { stocks: null, etfs: null, arena: null };
+const tabLatestDates = { stocks: null, etfs: null, olympic: null, prodshadow: null };
 
 function getExpectedBusinessDay() {
     const now = new Date();
@@ -62,7 +62,8 @@ function renderSyncStatus() {
     indicatorsContainer.innerHTML = `
         ${formatIndicator("Stocks", tabLatestDates.stocks)}
         ${formatIndicator("ETFs", tabLatestDates.etfs)}
-        ${formatIndicator("Arena", tabLatestDates.arena)}
+        ${formatIndicator("Olympic", tabLatestDates.olympic)}
+        ${formatIndicator("Prod/Shadow", tabLatestDates.prodshadow)}
     `;
 }
 
@@ -82,6 +83,8 @@ function initApp() {
 
             if (tabId === 'stocks') loadHoldings('Single', 'persona-stocks', 'stocks');
             if (tabId === 'etfs') loadHoldings('ETF', 'persona-etfs', 'etfs');
+            if (tabId === 'olympic') loadOlympic();
+            if (tabId === 'prodshadow') loadProdShadow();
             if (tabId === 'arena') loadUnifiedArena();
             if (tabId === 'autopsy') loadAutopsy();
         });
@@ -109,6 +112,8 @@ function initApp() {
     // Initial Load & Background Prefetch of all tabs to sync global indicators
     loadHoldings('Single', 'persona-stocks', 'stocks');
     loadHoldings('ETF', 'persona-etfs', 'etfs');
+    loadOlympic();
+    loadProdShadow();
     loadUnifiedArena();
 
     // Live Auto-Polling Loop (Every 60,000ms = 1 minute)
@@ -118,6 +123,8 @@ function initApp() {
         const tabId = activeTab.getAttribute('data-tab');
         if (tabId === 'stocks') loadHoldings('Single', 'persona-stocks', 'stocks');
         else if (tabId === 'etfs') loadHoldings('ETF', 'persona-etfs', 'etfs');
+        else if (tabId === 'olympic') loadOlympic();
+        else if (tabId === 'prodshadow') loadProdShadow();
         else if (tabId === 'arena') loadUnifiedArena();
         else if (tabId === 'autopsy') loadAutopsy();
     }, 60000);
@@ -782,9 +789,6 @@ async function loadUnifiedArena() {
         const data = await res.json();
         if (data.dates.length === 0) return;
         cachedArenaData = data;
-        
-        tabLatestDates.arena = data.dates[data.dates.length - 1];
-        renderSyncStatus();
 
         renderArenaChart('all');
 

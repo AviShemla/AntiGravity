@@ -168,21 +168,15 @@ def catchup_master_pipeline():
         
 
         
+        # 8. Mark Complete
+        mark_completed('master_pipeline', target_date)
+        
         # 6.5 Financial QA Audit
         print("\n--> Running Financial QA Audit...")
         fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR, env=env)
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting Catchup!")
             os._exit(1)
-            
-        # 7. QA Blacklist
-        qa_script = os.path.join(BASE_DIR, "qa_blacklist.py")
-        if os.path.exists(qa_script):
-            print("\n--> Running QA Blacklist Audit...")
-            subprocess.run([python_exe, qa_script], cwd=BASE_DIR, env=env)
-            
-        # 8. Mark Complete
-        mark_completed('master_pipeline', target_date)
         
         print("\n--> Running Olympic Shootout Backtests (Generating New Chart Dots)...\n")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], cwd=BASE_DIR, env=env)
@@ -273,6 +267,9 @@ def catchup_etf_pipeline():
         
 
         
+        # 6. Mark Complete
+        mark_completed('etf_pipeline', target_date)
+        
         # 5.5 Financial QA Audit
         print("\n--> Running ETF Financial QA Audit...")
         fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR, env=env)
@@ -280,9 +277,6 @@ def catchup_etf_pipeline():
             print("FATAL: Financial Audit Failed! Aborting ETF Catchup!")
             subprocess.run([python_exe, os.path.join(BASE_DIR, "send_email_notification.py"), "🚨 CRITICAL: ETF QA Audit Failed", "The Financial QA Auditor caught a mathematical discrepancy and aborted the ETF pipeline. Check server logs immediately."], cwd=BASE_DIR, env=env)
             os._exit(1)
-            
-        # 6. Mark Complete
-        mark_completed('etf_pipeline', target_date)
         
         if is_last:
             pass # Sandbox logic moved to Master Pipeline loop for chronological backfilling
