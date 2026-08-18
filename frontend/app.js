@@ -788,18 +788,60 @@ async function loadUnifiedArena() {
 
         renderArenaChart('all');
 
-        // Populate Summary Card PnL Values
+        // Populate Summary Card PnL Values & Highlight Best Performing Champion Series
         const lastIdx = data.dates.length - 1;
         const fmtVal = (arr) => arr && arr[lastIdx] ? `$${arr[lastIdx].toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '--';
         
-        if (document.getElementById('arena-box-prod')) document.getElementById('arena-box-prod').innerText = fmtVal(data.prod);
-        if (document.getElementById('arena-box-cap')) document.getElementById('arena-box-cap').innerText = fmtVal(data.el_cap);
-        if (document.getElementById('arena-box-vol')) document.getElementById('arena-box-vol').innerText = fmtVal(data.el_volti);
-        if (document.getElementById('arena-box-trans')) document.getElementById('arena-box-trans').innerText = fmtVal(data.trans);
-        if (document.getElementById('arena-box-v1')) document.getElementById('arena-box-v1').innerText = fmtVal(data.v1);
-        if (document.getElementById('arena-box-lstm')) document.getElementById('arena-box-lstm').innerText = fmtVal(data.lstm);
-        if (document.getElementById('arena-box-whale')) document.getElementById('arena-box-whale').innerText = fmtVal(data.etf_whale);
-        if (document.getElementById('arena-box-safety')) document.getElementById('arena-box-safety').innerText = fmtVal(data.neural_safety);
+        const modelsMap = {
+            'prod': { val: data.prod ? data.prod[lastIdx] : 0, boxId: 'arena-box-prod' },
+            'cap': { val: data.el_cap ? data.el_cap[lastIdx] : 0, boxId: 'arena-box-cap' },
+            'vol': { val: data.el_volti ? data.el_volti[lastIdx] : 0, boxId: 'arena-box-vol' },
+            'trans': { val: data.trans ? data.trans[lastIdx] : 0, boxId: 'arena-box-trans' },
+            'v1': { val: data.v1 ? data.v1[lastIdx] : 0, boxId: 'arena-box-v1' },
+            'lstm': { val: data.lstm ? data.lstm[lastIdx] : 0, boxId: 'arena-box-lstm' },
+            'whale': { val: data.etf_whale ? data.etf_whale[lastIdx] : 0, boxId: 'arena-box-whale' },
+            'safety': { val: data.neural_safety ? data.neural_safety[lastIdx] : 0, boxId: 'arena-box-safety' }
+        };
+
+        // Find Maximum Equity Value
+        let bestKey = null;
+        let maxVal = -Infinity;
+        for (const [key, item] of Object.entries(modelsMap)) {
+            if (item.val > maxVal) {
+                maxVal = item.val;
+                bestKey = key;
+            }
+        }
+
+        // Reset all card highlights
+        document.querySelectorAll('#arena .model-tooltip-card').forEach(card => {
+            card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+            card.style.boxShadow = 'none';
+            card.style.transform = 'none';
+            const badge = card.querySelector('.champ-badge');
+            if (badge) badge.remove();
+        });
+
+        // Set values and apply Gold Champion Glow to the Best Performing Box
+        for (const [key, item] of Object.entries(modelsMap)) {
+            const el = document.getElementById(item.boxId);
+            if (el) {
+                el.innerText = item.val ? `$${Number(item.val).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '--';
+                if (key === bestKey) {
+                    const card = el.closest('.model-tooltip-card');
+                    if (card) {
+                        card.style.border = '2px solid #FFD700';
+                        card.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.6), inset 0 0 15px rgba(255, 215, 0, 0.2)';
+                        card.style.transform = 'scale(1.05)';
+                        const badge = document.createElement('div');
+                        badge.className = 'champ-badge';
+                        badge.innerHTML = '👑 BEST PERFORMER';
+                        badge.style.cssText = 'font-size: 10px; font-weight: bold; color: #FFD700; text-align: center; margin-top: 4px; letter-spacing: 1px; text-shadow: 0 0 5px rgba(255,215,0,0.8);';
+                        card.appendChild(badge);
+                    }
+                }
+            }
+        }
 
         const tblContainer = document.getElementById('tbl-arena');
         const tbl = tblContainer.tagName === 'TABLE' ? tblContainer : tblContainer.querySelector('table');
