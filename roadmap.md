@@ -2,7 +2,7 @@
 
 ## 🎯 Current Active System Directives (Phase 1 Operations)
 
-- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Strict 100% Database SSOT (Turso DB):** ABSOLUTELY NO CSV or Excel files allowed as data sources or fallbacks! All ledgers, pending orders, Bayesian scores, model history, and competition shootouts must read directly and exclusively from Turso DB tables.
+- <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Strict 100% Database SSOT & Query Backing (Turso DB):** ABSOLUTELY NO CSV or Excel files allowed as data sources or fallbacks! All status reports, pending orders, holdings, model history, and trade recommendations MUST be back-tested and queried directly from live Turso DB tables before answering. Never guess or rely on local array memory.
 - <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Zero Local File Data Source:** No local processing or local CSV/Excel files are to be used as data sources. Database tables are the sole authoritative source of truth across all environments.
 - <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Mandatory Playwright Visual Inspection QA:** Every dashboard status report or UI update must be visually confirmed using `capture_all_web_tabs.py` Playwright rendering across all live Web Dashboard tabs (`http://66.42.118.26`).
 - <span style="color: #2ECC40; font-weight: bold;">[ACTIVE]</span> **Intraday Sniper Daemon Guarding:** `ag-sniper.service` daemon actively evaluating, protecting, and executing staged pending orders across all 8 personas live on Vultr.

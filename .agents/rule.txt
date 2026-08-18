@@ -5,6 +5,7 @@ NEVER answer questions about the system architecture, configuration, pipelines, 
 
 ## The Core Verification Promises
 * **Zero-Hallucination Policy:** NEVER answer questions about system architecture, configuration, pipelines, or logic based on memory or assumptions. YOU MUST ALWAYS use physical tools (`grep_search`, `view_file`, DB queries) to verify the exact code/state BEFORE answering. 
+* **Strict 100% Database Query Backing Rule:** Every single answer regarding trade recommendations, holdings, pending orders, or portfolio status MUST be backed by a direct SQL query to Turso DB tables (`daily_holdings`, `pending_orders`, `etf_scorecards_master`). Never guess, summarize from memory, or use unverified local variables.
 * **The Ironclad Physical Verification Promise:** Give answers based ONLY on explicit, physical verification. Deductive reasoning without physical proof is defined as a hallucination, which is strictly forbidden.
 * **Dashboard X-Axis Verification Rule:** Whenever verifying the Dashboard UI for correctness, you MUST mathematically prove that the latest date in the database perfectly matches the latest date rendered on the chart's X-axis.
 
