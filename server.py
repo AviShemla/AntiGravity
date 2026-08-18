@@ -851,8 +851,12 @@ def get_unified_arena():
         df_all['Date'] = pd.to_datetime(df_all['Date']).dt.strftime('%Y-%m-%d')
         df_all = df_all.drop_duplicates(subset=['Date', 'model_name'], keep='last')
         
-        # Pivot table
+        # Pivot table and forward fill missing dates to prevent non-trading gap dips
         df_pivot = df_all.pivot(index='Date', columns='model_name', values='total_equity').reset_index().sort_values('Date').reset_index(drop=True)
+        
+        # Forward fill model columns across missing dates
+        model_cols = [c for c in df_pivot.columns if c != 'Date']
+        df_pivot[model_cols] = df_pivot[model_cols].ffill()
         
         # Deduplicate Prod vs Champion if present
         if 'Prod' in df_pivot.columns and 'CHAMPION' in df_pivot.columns:
