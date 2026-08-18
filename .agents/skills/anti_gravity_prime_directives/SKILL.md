@@ -46,6 +46,10 @@ This document is the **Single Source of Truth (SSOT)** for all operational rules
 3. **Single Process Enforcement:**
    - `intraday_tracker.py` must run as EXACTLY 1 process on Vultr to prevent double FD leaks and race conditions.
 
+4. **Sole Email Channel (Native Gmail SMTP SSL):**
+   - ABSOLUTELY NO Windows Outlook COM / win32com automation!
+   - 100% of email notifications and daily reports MUST use `email_utils.send_native_email()` via Gmail SMTP (`smtp.gmail.com:465`).
+
 ---
 
 ## 3. 🛠️ REUSABLE EXECUTABLE AUDIT TOOLS
