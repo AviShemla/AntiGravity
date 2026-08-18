@@ -788,6 +788,19 @@ async function loadUnifiedArena() {
 
         renderArenaChart('all');
 
+        // Populate Summary Card PnL Values
+        const lastIdx = data.dates.length - 1;
+        const fmtVal = (arr) => arr && arr[lastIdx] ? `$${arr[lastIdx].toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '--';
+        
+        if (document.getElementById('arena-box-prod')) document.getElementById('arena-box-prod').innerText = fmtVal(data.prod);
+        if (document.getElementById('arena-box-cap')) document.getElementById('arena-box-cap').innerText = fmtVal(data.el_cap);
+        if (document.getElementById('arena-box-vol')) document.getElementById('arena-box-vol').innerText = fmtVal(data.el_volti);
+        if (document.getElementById('arena-box-trans')) document.getElementById('arena-box-trans').innerText = fmtVal(data.trans);
+        if (document.getElementById('arena-box-v1')) document.getElementById('arena-box-v1').innerText = fmtVal(data.v1);
+        if (document.getElementById('arena-box-lstm')) document.getElementById('arena-box-lstm').innerText = fmtVal(data.lstm);
+        if (document.getElementById('arena-box-whale')) document.getElementById('arena-box-whale').innerText = fmtVal(data.etf_whale);
+        if (document.getElementById('arena-box-safety')) document.getElementById('arena-box-safety').innerText = fmtVal(data.neural_safety);
+
         const tblContainer = document.getElementById('tbl-arena');
         const tbl = tblContainer.tagName === 'TABLE' ? tblContainer : tblContainer.querySelector('table');
         if (tbl && data.table && data.table.length > 0) {
