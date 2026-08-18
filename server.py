@@ -901,6 +901,8 @@ def get_unified_arena():
             'trans': safe_tolist('Shadow_Transformer'),
             'v1': safe_tolist('Sandbox_V1'),
             'lstm': safe_tolist('Shadow_LSTM'),
+            'etf_whale': safe_tolist('Shadow_ETF_Whale'),
+            'neural_safety': safe_tolist('Shadow_Neural_Safety'),
             'spy': safe_tolist('SPY'),
             'table': table_records
         }

@@ -810,20 +810,22 @@ function renderArenaChart(mode) {
     const trTrans = { x: shortDates, y: data.trans, name: 'Shadow Transformer', mode: 'lines', line: { color: '#FF4136', width: 3, dash: 'dot' } };
     const trV1 = { x: shortDates, y: data.v1, name: 'Sandbox V1 Classic', mode: 'lines', line: { color: '#87CEEB', width: 3, dash: 'dash' } };
     const trLstm = { x: shortDates, y: data.lstm, name: 'Shadow LSTM', mode: 'lines', line: { color: '#FF00FF', width: 3, dash: 'dashdot' } };
+    const trWhale = { x: shortDates, y: data.etf_whale, name: 'Shadow ETF Whale (Task #1)', mode: 'lines', line: { color: '#FFD700', width: 4 } };
+    const trSafety = { x: shortDates, y: data.neural_safety, name: 'Shadow Neural Safety (Task #2)', mode: 'lines', line: { color: '#00FFFF', width: 4, dash: 'dot' } };
     const trSpy = { x: shortDates, y: data.spy, name: 'S&P 500 (SPY)', mode: 'lines', line: { color: '#FFFFFF', width: 4, dash: 'dot' } };
 
     let traces = [];
     let titleText = "";
 
     if (mode === 'models') {
-        traces = [trProd, trTrans, trV1, trLstm, trSpy];
-        titleText = "🤖 Model Architectures Arena: Bayesian vs Deep Learning vs RF vs LSTM";
+        traces = [trProd, trTrans, trV1, trLstm, trSafety, trSpy];
+        titleText = "🤖 Model Architectures Arena: Bayesian vs Transformer vs RF vs LSTM vs Neural Safety";
     } else if (mode === 'universes') {
-        traces = [trProd, trCap, trVol, trSpy];
-        titleText = "🏆 Ticker Universes Arena: EL_CAP vs EL_VOLTI vs Live VIP";
+        traces = [trProd, trCap, trVol, trWhale, trSpy];
+        titleText = "🏆 Ticker Universes Arena: EL_CAP vs EL_VOLTI vs Live VIP vs ETF Whale";
     } else {
-        traces = [trProd, trCap, trVol, trTrans, trV1, trLstm, trSpy];
-        titleText = "⚔️ Unified Performance Arena: All Models & Universes";
+        traces = [trProd, trCap, trVol, trTrans, trV1, trLstm, trWhale, trSafety, trSpy];
+        titleText = "⚔️ Unified Performance Arena: All 8 Models & Universes";
     }
 
     Plotly.newPlot('chart-unified-arena', traces, Object.assign({}, STD_LAYOUT, {
