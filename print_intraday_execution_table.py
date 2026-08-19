@@ -60,12 +60,25 @@ def generate_db_execution_table():
         for _, r in df_pending.iterrows():
             pending_dict[r['persona']] = r
 
+    # 3. Query capital_ledgers for live holdings as fallback if pending_orders row is missing
+    df_ledgers = query_turso("SELECT persona, date, cash, total_equity, holdings_json FROM capital_ledgers WHERE date = (SELECT MAX(date) FROM capital_ledgers)")
+    ledger_dict = {}
+    if not df_ledgers.empty:
+        for _, r in df_ledgers.iterrows():
+            ledger_dict[r['persona']] = r
+
     for universe_type, p_key in all_personas:
         row = pending_dict.get(p_key)
+        if row is None or pd.isna(row['target_holdings_json']) or not row['target_holdings_json']:
+            row = ledger_dict.get(p_key)
+
         persona_display = p_key.replace("ETF_", "")
         
-        if row is None or pd.isna(row['target_holdings_json']) or not row['target_holdings_json'] or row['target_holdings_json'] == '{}':
-            cash_val = float(row['target_cash']) if row is not None and not pd.isna(row['target_cash']) else 10000.0
+        holdings_raw = row['target_holdings_json'] if (row is not None and 'target_holdings_json' in row and not pd.isna(row['target_holdings_json'])) else (row['holdings_json'] if (row is not None and 'holdings_json' in row and not pd.isna(row['holdings_json'])) else '{}')
+        holdings = json.loads(holdings_raw) if holdings_raw and holdings_raw != '{}' else {}
+
+        if not holdings:
+            cash_val = float(row['target_cash']) if (row is not None and 'target_cash' in row and not pd.isna(row['target_cash'])) else (float(row['cash']) if (row is not None and 'cash' in row and not pd.isna(row['cash'])) else 10000.0)
             records.append({
                 "Universe": universe_type,
                 "Persona": persona_display,
