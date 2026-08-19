@@ -56,15 +56,7 @@ def run_etf_virtual_broker():
                 "SELECT MAX(date) as d FROM etf_scorecards_master WHERE persona='ETF_BallsForBrains'"
             )
             scorecard_date = date_res.iloc[0][0] if not date_res.empty else now.strftime('%Y-%m-%d')
-            past = now - pd.Timedelta(days=7)
-            future = now + pd.Timedelta(days=7)
-            schedule = nyse.schedule(start_date=past.strftime('%Y-%m-%d'), end_date=future.strftime('%Y-%m-%d'))
-            last_scorecard_ts = pd.Timestamp(scorecard_date)
-            next_sessions = schedule[schedule.index > last_scorecard_ts]
-            if not next_sessions.empty:
-                target_date_for_ledger = next_sessions.iloc[0].name.strftime('%Y-%m-%d')
-            else:
-                target_date_for_ledger = (last_scorecard_ts + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+            target_date_for_ledger = scorecard_date
     except Exception as e:
         print(f"Date calculation error: {e}")
         target_date_for_ledger = pd.Timestamp.now().strftime('%Y-%m-%d')
