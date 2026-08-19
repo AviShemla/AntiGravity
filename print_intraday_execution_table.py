@@ -99,7 +99,5 @@ def generate_db_execution_table():
     print(df_out.to_string(index=False))
     print("==========================================================================================================================")
 
-    os._exit(0)
-
 if __name__ == "__main__":
     generate_db_execution_table()
