@@ -74,7 +74,13 @@ def generate_db_execution_table():
 
         persona_display = p_key.replace("ETF_", "")
         
-        holdings_raw = row['target_holdings_json'] if (row is not None and 'target_holdings_json' in row and not pd.isna(row['target_holdings_json'])) else (row['holdings_json'] if (row is not None and 'holdings_json' in row and not pd.isna(row['holdings_json'])) else '{}')
+        holdings_raw = '{}'
+        if row is not None:
+            if hasattr(row, '__getitem__') and 'target_holdings_json' in row and not pd.isna(row['target_holdings_json']):
+                holdings_raw = row['target_holdings_json']
+            elif hasattr(row, '__getitem__') and 'holdings_json' in row and not pd.isna(row['holdings_json']):
+                holdings_raw = row['holdings_json']
+
         holdings = json.loads(holdings_raw) if holdings_raw and holdings_raw != '{}' else {}
 
         if not holdings:
@@ -89,7 +95,6 @@ def generate_db_execution_table():
                 "Action": "HOLD CASH (NO TRADES)"
             })
         else:
-            holdings = json.loads(row['target_holdings_json'])
             for asset, details in holdings.items():
                 val = float(details.get('dollars', 0.0)) if isinstance(details, dict) else float(details)
                 units = details.get('units', 0) if isinstance(details, dict) else 0
