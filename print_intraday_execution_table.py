@@ -33,19 +33,26 @@ def query_turso(sql):
             rows.append(row_vals)
         return pd.DataFrame(rows, columns=cols)
 
-def generate_db_execution_table():
+import argparse
+
+def generate_db_execution_table(target_date=None):
     print("==========================================================================================================================")
-    print("=== TURSO DB 100% BACKED PREDICTION & ALLOCATION BREAKDOWN (ALL 8 PERSONAS: STOCKS & ETFs) ===")
+    date_str_hdr = f"FOR DATE: {target_date}" if target_date else "LATEST STAGED & LIVE SESSION"
+    print(f"=== TURSO DB 100% BACKED PREDICTION & ALLOCATION BREAKDOWN ({date_str_hdr}) ===")
     print("==========================================================================================================================")
 
-    # 1. Query pending_orders for Staged Holdings across all 8 personas
-    df_pending = query_turso("SELECT persona, date, target_cash, target_holdings_json FROM pending_orders")
-    
-    # 2. Query etf_scorecards_master for latest Model Recommendations & Win Probabilities
-    try:
-        df_scorecards = query_turso("SELECT ticker, persona, date, prob, expected_return, recommendation, kelly_allocation FROM etf_scorecards_master WHERE date >= (SELECT MAX(date) FROM etf_scorecards_master) ORDER BY persona, prob DESC")
-    except:
-        df_scorecards = pd.DataFrame()
+    # 1. Dynamically query pending_orders for Staged Holdings across all 8 personas
+    if target_date:
+        df_pending = query_turso(f"SELECT persona, date, target_cash, target_holdings_json FROM pending_orders WHERE date LIKE '{target_date}%'")
+        df_scorecards = query_turso(f"SELECT ticker, persona, date, prob, expected_return, recommendation, kelly_allocation FROM etf_scorecards_master WHERE date LIKE '{target_date}%' ORDER BY persona, prob DESC")
+        df_ledgers = query_turso(f"SELECT persona, date, cash, total_equity, holdings_json FROM capital_ledgers WHERE date LIKE '{target_date}%'")
+    else:
+        df_pending = query_turso("SELECT persona, date, target_cash, target_holdings_json FROM pending_orders")
+        try:
+            df_scorecards = query_turso("SELECT ticker, persona, date, prob, expected_return, recommendation, kelly_allocation FROM etf_scorecards_master WHERE date = (SELECT MAX(date) FROM etf_scorecards_master) ORDER BY persona, prob DESC")
+        except:
+            df_scorecards = pd.DataFrame()
+        df_ledgers = query_turso("SELECT persona, date, cash, total_equity, holdings_json FROM capital_ledgers WHERE date = (SELECT MAX(date) FROM capital_ledgers)")
 
     records = []
     
@@ -60,8 +67,6 @@ def generate_db_execution_table():
         for _, r in df_pending.iterrows():
             pending_dict[r['persona']] = r
 
-    # 3. Query capital_ledgers for live holdings as fallback if pending_orders row is missing
-    df_ledgers = query_turso("SELECT persona, date, cash, total_equity, holdings_json FROM capital_ledgers WHERE date = (SELECT MAX(date) FROM capital_ledgers)")
     ledger_dict = {}
     if not df_ledgers.empty:
         for _, r in df_ledgers.iterrows():
@@ -125,4 +130,7 @@ def generate_db_execution_table():
     print("==========================================================================================================================")
 
 if __name__ == "__main__":
-    generate_db_execution_table()
+    parser = argparse.ArgumentParser(description="100% Turso DB Backed Intraday Execution & Prediction Audit Table")
+    parser.add_argument("--date", type=str, help="Optional target date (YYYY-MM-DD). If omitted, queries MAX(date) dynamically.")
+    args = parser.parse_args()
+    generate_db_execution_table(target_date=args.date)
