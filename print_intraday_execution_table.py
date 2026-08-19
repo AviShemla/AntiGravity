@@ -35,11 +35,18 @@ def query_turso(sql):
 
 def generate_db_execution_table():
     print("==========================================================================================================================")
-    print("=== TURSO DB 100% BACKED INTRADAY EXECUTION AUDIT TABLE (PENDING & STAGED ORDERS FOR TODAY) ===")
+    print("=== TURSO DB 100% BACKED PREDICTION & ALLOCATION BREAKDOWN (STOCKS & ETFs BY PERSONA) ===")
     print("==========================================================================================================================")
 
+    # 1. Query pending_orders for Staged Holdings
     df_pending = query_turso("SELECT persona, date, target_cash, target_holdings_json FROM pending_orders")
     
+    # 2. Query etf_scorecards_master for latest Model Recommendations (Buy/Sell/Hold signals)
+    try:
+        df_scorecards = query_turso("SELECT ticker, persona, date, prob, expected_return, recommendation, kelly_allocation FROM etf_scorecards_master WHERE date >= (SELECT MAX(date) FROM etf_scorecards_master) ORDER BY persona, prob DESC")
+    except:
+        df_scorecards = pd.DataFrame()
+
     records = []
     
     for idx, row in df_pending.iterrows():
@@ -55,27 +62,37 @@ def generate_db_execution_table():
             records.append({
                 "Universe": mode,
                 "Persona": persona_name,
-                "Asset": "CASH ONLY",
-                "Staged Target Allocation": f"${cash:,.2f}",
-                "Model Recommendation": "100% CASH / CAPITAL PROTECTION",
-                "Market Condition": "VOLATILITY STABLE (NORMAL VWAP)",
-                "Sniper Action": "HOLD CASH (NO BUY TRADES)"
+                "Asset / Ticker": "ALL TICKERS",
+                "Model Prediction Signal": "HOLD / PROTECT CAPITAL",
+                "Win Prob P(UP)": "N/A",
+                "Staged Target Allocation": f"${cash:,.2f} (100% Cash)",
+                "Action": "HOLD CASH (NO BUY TRADES)"
             })
         else:
             for asset, details in holdings.items():
                 val = float(details.get('dollars', 0.0)) if isinstance(details, dict) else float(details)
                 units = details.get('units', 0) if isinstance(details, dict) else 0
                 
+                # Fetch matching scorecard prediction if available
+                prob_str = "N/A"
+                rec_str = "BUY / ALLOCATE"
+                if not df_scorecards.empty:
+                    sc_match = df_scorecards[(df_scorecards['ticker'] == asset) & (df_scorecards['persona'] == persona_name)]
+                    if not sc_match.empty:
+                        prob_val = float(sc_match.iloc[0]['prob'])
+                        prob_str = f"{prob_val:.1%}"
+                        rec_str = str(sc_match.iloc[0]['recommendation']).upper()
+
                 records.append({
                     "Universe": mode,
                     "Persona": persona_name,
-                    "Asset": asset,
+                    "Asset / Ticker": asset,
+                    "Model Prediction Signal": rec_str,
+                    "Win Prob P(UP)": prob_str,
                     "Staged Target Allocation": f"${val:,.2f} ({units} shares)",
-                    "Model Recommendation": "HIGH CONVICTION BUY / ALLOCATE",
-                    "Market Condition": "VOLATILITY STABLE (NORMAL VWAP)",
-                    "Sniper Action": f"STAGED PRE-MARKET (${val:,.2f})"
+                    "Action": f"STAGED BUY (${val:,.2f})"
                 })
-                
+
     df_out = pd.DataFrame(records)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', 1000)
