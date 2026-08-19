@@ -29,7 +29,11 @@ This document is the **Single Source of Truth (SSOT)** for all operational rules
    - ALWAYS use `schedule` or system reactive wakeups.
    - Batch multiple sequential calls into a single execution script to save AI credit tokens.
 
-5. **First Contact / Morning Initialization Protocol:**
+5. **Spike / Drop Double-Validation Rule (>5% Delta):**
+   - Any model or portfolio equity spike or drop greater than 5% on a single date **MUST BE DOUBLE-VALIDATED** by pulling a fresh, direct Yahoo Finance price extract (`yfinance` / `download_ticker_with_failover`) for the target holding on that exact date.
+   - NEVER assume or report an unverified market surge/crash without physically cross-referencing the underlying asset's real-world price data.
+
+6. **First Contact / Morning Initialization Protocol:**
    - On the very first user prompt of a new session/day, the agent MUST read this SKILL document, run `/learn`, and explicitly report to the user that all Prime Directives have been loaded before answering any prompt.
 
 ---
