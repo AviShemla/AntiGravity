@@ -58,5 +58,5 @@ This document is the **Single Source of Truth (SSOT)** for all operational rules
 
 ## 3. 🛠️ REUSABLE EXECUTABLE AUDIT TOOLS
 
-- **Pre-Market & Holdings Execution Audit:** `py C:\Users\AviShemla\AntiGravity\print_intraday_execution_table.py`
+- **Pre-Market & Holdings Execution Audit (All 8 Personas):** `py C:\Users\AviShemla\AntiGravity\print_intraday_execution_table.py` *(Supports optional `--date YYYY-MM-DD` parameter. If omitted, dynamically queries `MAX(date)` from Turso DB with ZERO hardcoded dates).*
 - **Full Dashboard Screenshot QA:** `py C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f\scratch\capture_arena_full.py`
