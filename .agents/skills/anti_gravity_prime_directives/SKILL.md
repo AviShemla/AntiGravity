@@ -71,7 +71,30 @@ Every single morning before market open, the agent MUST verify and achieve 100% 
 
 ---
 
-## 3. 🛠️ REUSABLE EXECUTABLE AUDIT TOOLS
+## 3. 🛡️ SPECIALIZED MULTI-AGENT QA ARCHITECTURE (ZERO-TOLERANCE PROTOCOL)
+
+To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy, the morning audit is divided into 3 specialized subagents led by a Master QA Orchestrator:
+
+1. **`qa_master_orchestrator` (Lead Coordinator):**
+   - Coordinates all specialized QA auditors, aggregates proofs, and generates the unified Morning Clearance Report.
+   - Forbids issuing GREEN status until all 3 sub-auditors physically confirm zero defects with raw SQL and visual proofs.
+
+2. **`qa_visual_auditor` (Visual & UI Inspector):**
+   - Conducts Playwright screenshot QA across all 5 dashboard tabs.
+   - Inspects for chart spikes/drops (>5% delta), non-trading gap artifacts, label truncation, and iframe Mermaid syntax errors.
+
+3. **`qa_data_continuity_auditor` (Mathematical Continuity & Balance Auditor):**
+   - Independently calculates NYSE market business day continuity (via `pandas_market_calendars`) vs Israel IDT / EST time.
+   - Mathematically verifies `starting_cash + sum(PnL) == total_equity` across all 8 personas in Turso DB and backend endpoints.
+
+4. **`qa_pipeline_model_auditor` (Pipeline Extraction & Model Integrity Auditor):**
+   - Audits Yahoo Finance / Tiingo data extraction logs to verify zero missing OHLCV bars or corrupt zeroes.
+   - Scans 100% of scorecards, prediction arrays, and staged `pending_orders` to ensure ZERO NaN, Null, Inf, or degenerate probabilities (P(UP) out of [0, 1]).
+
+---
+
+## 4. 🛠️ REUSABLE EXECUTABLE AUDIT TOOLS
 
 - **Pre-Market & Holdings Execution Audit (All 8 Personas):** `py C:\Users\AviShemla\AntiGravity\print_intraday_execution_table.py` *(Supports optional `--date YYYY-MM-DD` parameter. If omitted, dynamically queries `MAX(date)` from Turso DB with ZERO hardcoded dates).*
-- **Full Dashboard Screenshot QA:** `py C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f\scratch\capture_arena_full.py`
+- **Full Dashboard Screenshot QA:** `py C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f\scratch\capture_all_5_tabs.py`
+
