@@ -84,6 +84,10 @@ function initApp() {
             if (tabId === 'etfs') loadHoldings('ETF', 'persona-etfs', 'etfs');
             if (tabId === 'arena') loadUnifiedArena();
             if (tabId === 'autopsy') loadAutopsy();
+            if (tabId === 'blueprint') {
+                const iframe = document.querySelector('#blueprint iframe');
+                if (iframe) iframe.src = '/Architecture_Map.html?v=' + Date.now();
+            }
         });
     });
 
