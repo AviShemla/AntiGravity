@@ -29,7 +29,10 @@ def query_turso(sql):
         for r in response['rows']:
             row_vals = []
             for cell in r:
-                row_vals.append(cell.get('value'))
+                if isinstance(cell, dict):
+                    row_vals.append(cell.get('value') if cell.get('type') != 'null' else None)
+                else:
+                    row_vals.append(cell)
             rows.append(row_vals)
         return pd.DataFrame(rows, columns=cols)
 
@@ -49,7 +52,7 @@ def generate_db_execution_table(target_date=None):
     else:
         df_pending = query_turso("SELECT persona, date, target_cash, target_holdings_json FROM pending_orders")
         try:
-            df_scorecards = query_turso("SELECT ticker, persona, date, prob, expected_return, recommendation, kelly_allocation FROM etf_scorecards_master WHERE date = (SELECT MAX(date) FROM etf_scorecards_master) ORDER BY persona, prob DESC")
+            df_scorecards = query_turso("SELECT ticker, persona, date, prob, expected_return, recommendation, kelly_allocation FROM etf_scorecards_master ORDER BY date DESC, prob DESC")
         except:
             df_scorecards = pd.DataFrame()
         df_ledgers = query_turso("SELECT persona, date, cash, total_equity, holdings_json FROM capital_ledgers WHERE date = (SELECT MAX(date) FROM capital_ledgers)")
@@ -95,7 +98,7 @@ def generate_db_execution_table(target_date=None):
                 "Persona": persona_display,
                 "Asset / Ticker": "CASH / ALL TICKERS",
                 "Model Signal": "HOLD (CAPITAL PROTECTION)",
-                "Win Prob P(UP)": "N/A",
+                "Win Prob P(UP)": "100.0% (Risk-Free)",
                 "Staged Target Allocation": f"${cash_val:,.2f} (100% Cash)",
                 "Action": "HOLD CASH (NO TRADES)"
             })
@@ -108,10 +111,16 @@ def generate_db_execution_table(target_date=None):
                 rec_str = "BUY / ALLOCATE"
                 if not df_scorecards.empty:
                     sc_match = df_scorecards[(df_scorecards['ticker'] == asset) & (df_scorecards['persona'] == persona_display)]
+                    if sc_match.empty:
+                        sc_match = df_scorecards[df_scorecards['ticker'] == asset]
+                        
                     if not sc_match.empty:
-                        prob_val = float(sc_match.iloc[0]['prob'])
-                        prob_str = f"{prob_val:.1%}"
-                        rec_str = str(sc_match.iloc[0]['recommendation']).upper()
+                        sc_row = sc_match.sort_values('date', ascending=False).iloc[0]
+                        if sc_row['prob'] is not None:
+                            prob_val = float(sc_row['prob'])
+                            prob_str = f"{prob_val:.1%}"
+                        if sc_row['recommendation'] is not None:
+                            rec_str = str(sc_row['recommendation']).upper()
 
                 records.append({
                     "Universe": universe_type,
