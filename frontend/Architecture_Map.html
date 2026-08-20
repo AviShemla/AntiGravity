@@ -118,7 +118,6 @@
         classDef broker fill:#0d1117,stroke:#a371f7,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef ui fill:#0d1117,stroke:#8b949e,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef database fill:#0d1117,stroke:#e34c26,stroke-width:4px,color:#c9d1d9,font-weight:bold;
-        classDef script fill:#0d1117,stroke:#79c0ff,stroke-width:3px,color:#c9d1d9,font-weight:bold;
 
         %% Data Sources
         YF[(Yahoo Finance<br>Price Data)]:::input
@@ -143,7 +142,7 @@
             STOCK_SCREEN[fast_screener.py<br>Top 15 Momentum]:::pipeline
             DATA_LOADER[data_loader.py<br>Matrix Array Validation]:::pipeline
             STOCK_PYMC[export_bayesian_scorecard.py<br>Apollo Causality Engine]:::model
-            YIELD_CURVE[TNX Yield Curve<br>Risk Sensor]:::model
+            YIELD_CURVE["^TNX Yield Curve<br>Risk Sensor"]:::model
             QA_MODELS[qa_models.py<br>Bounds Validator]:::model
             SECTOR_GRAVITY[sector_gravity.py<br>Macro Momentum Filter]:::pipeline
             STOCK_BROKER[virtual_broker.py<br>3-Persona Staging]:::broker
@@ -157,7 +156,7 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
         subgraph The Weekend Bridge
             FUNDAMENTALS[extract_fundamentals.py<br>S&P 500 Fundamentals]:::model
             STOCK_DB[(S&P 500<br>Fundamental Database)]:::input
-            SUNDAY_SCREENER["SUNDAY_SCREENER<br>Nasdaq FTP + 50M Liquidity Scan"]:::pipeline
+            SUNDAY_SCREENER[ETF_Universe_Screener.py<br>Nasdaq FTP + $50M Liquidity Scan]:::pipeline
             MASTER_ETF_JSON[(Master_ETF_Universe.json<br>Top 35 Menu)]:::input
         end
 
