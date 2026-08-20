@@ -12,10 +12,7 @@ if (Test-Path $destinationFile) {
     Remove-Item -Force $destinationFile
 }
 
-Write-Host "Compressing the AntiGravity ecosystem into a single package. This may take a moment..." -ForegroundColor Yellow
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-# Optimize compression to avoid breaking on large .git objects
-[System.IO.Compression.ZipFile]::CreateFromDirectory($source, $destinationFile, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+Write-Host "Compressing the AntiGravity ecosystem into a single package..." -ForegroundColor Yellow
+tar -a -c -f $destinationFile --exclude=".pytest_cache" --exclude="__pycache__" --exclude=".git" *
 
 Write-Host "Migration Backup Complete! Package successfully exported to Google Drive: $destinationFile" -ForegroundColor Green
