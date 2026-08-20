@@ -31,9 +31,13 @@ Every single morning before market open, the agent MUST verify and achieve 100% 
    - NEVER answer questions about system architecture, configuration, pipelines, or logic based on memory or assumptions.
    - YOU MUST ALWAYS use physical tools (`grep_search`, `view_file`, raw DB queries) to verify the exact code/state BEFORE answering.
 
-3. **Dashboard X-Axis & Visual Anomaly Verification Rule:**
-   - Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly inspect the chart lines for unnatural vertical drops, non-trading gap artifacts, or label truncation!
-   - Mathematically prove that the latest date in the database perfectly matches the latest date rendered on the chart's X-axis (`capture_all_web_tabs.py`).
+3. **Dashboard X-Axis, Visual Anomaly & NYSE Market Hours Max Date Verification Rule:**
+   - Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly inspect the chart lines for unnatural vertical drops, non-trading gap artifacts, label truncation, or syntax error banners (e.g. Mermaid)!
+   - **CRITICAL EXPECTED MAX DATE RULE:** NEVER rely solely on Turso DB to check expected dates (the DB could be fed stale or corrupted data!). Expected max date MUST be calculated independently using real-world NYSE market hours (`pandas_market_calendars`) vs current local time:
+     * **Pre-Market (00:00 - 16:30 Israel IDT / 09:30 NYC EST):** Settled Max Date = Latest completed NYSE session date (e.g. `2026-08-19`). Pending Staged Date = Today's session (`2026-08-20`).
+     * **Regular Market Hours (16:30 - 23:00 Israel IDT / 09:30 - 16:00 NYC EST):** Settled Max Date = Yesterday's session. Staged Status = Live Intraday Execution in progress.
+     * **Post-Market (23:00 - 23:59 Israel IDT / 16:00 - 24:00 NYC EST):** Settled Max Date = Today's session.
+   - Mathematically prove that every dashboard tab matches this exact NYSE business logic max date.
 
 4. **Zero Polling Loop & AI Credit Conservation:**
    - NEVER run endless or polling loops (`manage_task` in a tight loop).
