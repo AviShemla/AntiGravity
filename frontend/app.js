@@ -766,7 +766,19 @@ async function loadProdShadow() {
         const tbl = tblContainer.tagName === 'TABLE' ? tblContainer : tblContainer.querySelector('table');
         if (tbl && data.table && data.table.length > 0) {
             const keys = Object.keys(data.table[0]);
-            tbl.innerHTML = `<thead><tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody>${data.table.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
+            const headerMap = {
+                'Date': 'Date',
+                'Prod': 'Prod (Live)',
+                'Shadow_Transformer': 'Shadow Transformer',
+                'Sandbox_V1': 'Sandbox V1 (RF)',
+                'Shadow_LSTM': 'Shadow LSTM',
+                'SPY': 'S&P 500 (SPY)'
+            };
+            tbl.innerHTML = `<thead><tr>${keys.map(k => `<th>${headerMap[k] || k}</th>`).join('')}</tr></thead><tbody>${data.table.map(r => `<tr>${keys.map(k => {
+                let val = r[k];
+                if (typeof val === 'number') val = val.toFixed(2);
+                return `<td>${val}</td>`;
+            }).join('')}</tr>`).join('')}</tbody>`;
         }
     } catch (e) {
         console.error("Prod vs Shadow load error:", e);
@@ -847,7 +859,23 @@ async function loadUnifiedArena() {
         const tbl = tblContainer.tagName === 'TABLE' ? tblContainer : tblContainer.querySelector('table');
         if (tbl && data.table && data.table.length > 0) {
             const keys = Object.keys(data.table[0]);
-            tbl.innerHTML = `<thead><tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody>${data.table.map(r => `<tr>${keys.map(k => `<td>${r[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
+            const headerMap = {
+                'Date': 'Date',
+                'Prod': 'Prod (Live)',
+                'EL_CAP': 'EL_CAP (70% Liq)',
+                'EL_VOLTI': 'EL_VOLTI (70% Stab)',
+                'Shadow_Transformer': 'Shadow Transformer',
+                'Sandbox_V1': 'Sandbox V1 (RF)',
+                'Shadow_LSTM': 'Shadow LSTM',
+                'Shadow_ETF_Whale': 'Shadow ETF Whale',
+                'Shadow_Neural_Safety': 'Shadow Neural Safety',
+                'SPY': 'S&P 500 (SPY)'
+            };
+            tbl.innerHTML = `<thead><tr>${keys.map(k => `<th>${headerMap[k] || k}</th>`).join('')}</tr></thead><tbody>${data.table.map(r => `<tr>${keys.map(k => {
+                let val = r[k];
+                if (typeof val === 'number') val = val.toFixed(2);
+                return `<td>${val}</td>`;
+            }).join('')}</tr>`).join('')}</tbody>`;
         }
     } catch (e) {
         console.error("Unified Arena load error:", e);

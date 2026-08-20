@@ -87,13 +87,16 @@ def run_tracker(target_date):
         print(f"Date {target_date} is a weekend. The market is closed. Skipping.")
         return
         
-    ret_trans = get_return(state["holdings_transformer"], target_date)
-    ret_v1 = get_return(state["holdings_v1"], target_date)
-    ret_lstm = get_return(state["holdings_lstm"], target_date)
-    
-    state["Transformer"] *= (1 + ret_trans)
-    state["V1_Classic"] *= (1 + ret_v1)
-    state["LSTM_Shadow"] *= (1 + ret_lstm)
+    if state.get("last_date") == target_date:
+        print(f"Idempotency Guard: State already calculated for {target_date}. Skipping multiplication.")
+    else:
+        ret_trans = get_return(state["holdings_transformer"], target_date)
+        ret_v1 = get_return(state["holdings_v1"], target_date)
+        ret_lstm = get_return(state["holdings_lstm"], target_date)
+        
+        state["Transformer"] *= (1 + ret_trans)
+        state["V1_Classic"] *= (1 + ret_v1)
+        state["LSTM_Shadow"] *= (1 + ret_lstm)
     
     prod_equity = get_prod_equity(target_date)
     
