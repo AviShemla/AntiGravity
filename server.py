@@ -709,18 +709,16 @@ def get_autopsy_data():
 @app.get('/api/prod_shadow')
 def get_prod_shadow():
     try:
-        # 100% Turso Cloud DB Table Backing
-        df = database_manager.execute_query("SELECT * FROM prod_vs_shadow_master ORDER BY date ASC")
-        if df.empty:
-            csv_path = os.path.join(BASE_DIR, 'financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
-            if not os.path.exists(csv_path):
-                csv_path = os.path.join(BASE_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
-            df = pd.read_csv(csv_path)
+        # STRICT 100% TURSO CLOUD DB TABLE BACKING (ZERO CSV FALLBACK)
+        df_raw = database_manager.execute_query("SELECT date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
+        if df_raw.empty:
+            return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'lstm': [], 'spy': [], 'table': [], 'is_pending': False, 'error': 'Database prod_vs_shadow_master is empty'}
             
-        # Normalize column names
-        df.columns = [c.capitalize() if c.lower() == 'date' else c for c in df.columns]
-        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-        df = df.sort_values('Date').reset_index(drop=True)
+        ps_map = {'PROD_Bayesian_SV': 'Prod', 'Prod': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1', 'Shadow_LSTM': 'Shadow_LSTM'}
+        df_raw['model_name'] = df_raw['model_name'].map(lambda x: ps_map.get(x, x))
+        df_raw['Date'] = pd.to_datetime(df_raw['date']).dt.strftime('%Y-%m-%d')
+        
+        df = df_raw.pivot(index='Date', columns='model_name', values='total_equity').reset_index().sort_values('Date').reset_index(drop=True)
         
         # Ensure all columns exist
         for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1', 'Shadow_LSTM']:
@@ -747,57 +745,32 @@ def get_prod_shadow():
         except Exception as e_spy:
             print(f"[PROD_SHADOW] SPY fetch error: {e_spy}")
             df['SPY'] = 10000.0
-    except Exception as e_csv:
-        return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'lstm': [], 'spy': [], 'table': [], 'is_pending': False, 'error': str(e_csv)}
+    except Exception as e_db:
+        return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'lstm': [], 'spy': [], 'table': [], 'is_pending': False, 'error': str(e_db)}
 
     is_pending = False
     try:
         df_trial = database_manager.get_ledger('BallsForBrains')
         pending = database_manager.get_pending_order('BallsForBrains')
-        if pending and not df_trial.empty and pending.get('date')[:10] >= str(df_trial.iloc[-1]['Date'])[:10]:
-            target_holdings = json.loads(pending['target_holdings_json'])
-            last_holdings = json.loads(df_trial.iloc[-1]['Holdings_JSON'])
-            
-            has_changes = False
-            if abs(float(pending['target_cash']) - float(df_trial.iloc[-1]['Cash'])) > 1.0:
-                has_changes = True
-            else:
-                for t, d in target_holdings.items():
-                    target_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
-                    last_val = last_holdings.get(t, 0.0)
-                    last_val = float(last_val.get('dollars', 0.0)) if isinstance(last_val, dict) else float(last_val)
-                    if abs(target_val - last_val) > 1.0:
-                        has_changes = True
-                        break
-                        
-            if has_changes:
-                is_pending = "PRE-MARKET (PENDING)"
-            else:
-                is_pending = "Only HOLD for today"
+        if not pending.empty and not df_trial.empty:
+            is_pending = True
     except:
         pass
-        
-    def safe_tolist(col_data):
-        res = []
-        for v in (col_data.tolist() if hasattr(col_data, 'tolist') else list(col_data)):
-            try:
-                fv = float(v)
-                res.append(round(fv, 2) if not np.isnan(fv) else None)
-            except:
-                res.append(str(v)[:10])
-        return res
 
-    # Ensure Date column formatted as ISO string before converting to dict
+    def safe_tolist(col):
+        if col not in df.columns: return [10000.0]*len(df)
+        return [round(float(x), 2) if not np.isnan(float(x)) else 10000.0 for x in df[col]]
+
     df_table = df.copy()
     df_table['Date'] = df_table['Date'].astype(str).str[:10]
 
     return {
         'dates': [str(v)[:10] for v in df['Date'].tolist()],
-        'prod': safe_tolist(df['Prod']) if 'Prod' in df.columns else [10000.0]*len(df),
-        'trans': safe_tolist(df['Shadow_Transformer']) if 'Shadow_Transformer' in df.columns else [10000.0]*len(df),
-        'v1': safe_tolist(df['Sandbox_V1']) if 'Sandbox_V1' in df.columns else [10000.0]*len(df),
-        'lstm': safe_tolist(df['Shadow_LSTM']) if 'Shadow_LSTM' in df.columns else [10000.0]*len(df),
-        'spy': safe_tolist(df['SPY']) if 'SPY' in df.columns else [10000.0]*len(df),
+        'prod': safe_tolist('Prod'),
+        'trans': safe_tolist('Shadow_Transformer'),
+        'v1': safe_tolist('Sandbox_V1'),
+        'lstm': safe_tolist('Shadow_LSTM'),
+        'spy': safe_tolist('SPY'),
         'table': df_table.iloc[::-1].to_dict('records'),
         'is_pending': is_pending
     }
@@ -805,33 +778,9 @@ def get_prod_shadow():
 @app.get('/api/unified_arena')
 def get_unified_arena():
     try:
-        # 1. Fetch Prod vs Shadow from DB
+        # STRICT 100% TURSO CLOUD DB TABLE BACKING (ZERO CSV FALLBACK)
         df_ps = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
-        if df_ps.empty:
-            csv_ps = os.path.join(BASE_DIR, 'financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
-            df_ps_raw = pd.read_csv(csv_ps)
-            records = []
-            for _, r in df_ps_raw.iterrows():
-                for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1', 'Shadow_LSTM']:
-                    if col in r: records.append({'Date': r['Date'], 'model_name': col, 'total_equity': r[col]})
-            df_ps = pd.DataFrame(records)
-            
-        # 2. Fetch Olympic Shootout from DB
         df_ol = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
-        if df_ol.empty:
-            csv_ol = os.path.join(BASE_DIR, 'financial_data', 'Olympic_Shootout_Results_MASTER.csv')
-            df_ol_raw = pd.read_csv(csv_ol)
-            records = []
-            for _, r in df_ol_raw.iterrows():
-                for col in ['EL_CAP (70% Liquidity)', 'EL_VOLTI (70% Stability)', 'CHAMPION (Live VIP)']:
-                    if col in r: records.append({'Date': r['Date'], 'model_name': col, 'total_equity': r[col]})
-            df_ol = pd.DataFrame(records)
-
-        # Map DB model names to UI keys
-        ps_map = {'PROD_Bayesian_SV': 'Prod', 'Prod': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1', 'Shadow_LSTM': 'Shadow_LSTM'}
-        ol_map = {'EL_CAP (70% Liquidity)': 'EL_CAP', 'EL_VOLTI (70% Stability)': 'EL_VOLTI', 'CHAMPION (Live VIP)': 'CHAMPION'}
-        
-        df_ps['model_name'] = df_ps['model_name'].map(lambda x: ps_map.get(x, x))
         df_ol['model_name'] = df_ol['model_name'].map(lambda x: ol_map.get(x, x))
         
         # Combine both datasets
