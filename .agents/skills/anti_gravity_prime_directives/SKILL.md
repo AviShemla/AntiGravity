@@ -73,11 +73,11 @@ Every single morning before market open, the agent MUST verify and achieve 100% 
 
 ## 3. 🛡️ SPECIALIZED MULTI-AGENT QA ARCHITECTURE (ZERO-TOLERANCE PROTOCOL)
 
-To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy, the morning audit is divided into 3 specialized subagents led by a Master QA Orchestrator:
+To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy, the morning audit is divided into 4 specialized subagents led by a Master QA Orchestrator:
 
 1. **`qa_master_orchestrator` (Lead Coordinator):**
    - Coordinates all specialized QA auditors, aggregates proofs, and generates the unified Morning Clearance Report.
-   - Forbids issuing GREEN status until all 3 sub-auditors physically confirm zero defects with raw SQL and visual proofs.
+   - Forbids issuing GREEN status until all 4 sub-auditors physically confirm zero defects with raw physical proofs.
 
 2. **`qa_visual_auditor` (Visual & UI Inspector):**
    - Conducts Playwright screenshot QA across all 5 dashboard tabs.
@@ -85,11 +85,16 @@ To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy
 
 3. **`qa_data_continuity_auditor` (Mathematical Continuity & Balance Auditor):**
    - Independently calculates NYSE market business day continuity (via `pandas_market_calendars`) vs Israel IDT / EST time.
+   - Mathematically recalculates missing trading sessions against real historical market prices (NEVER forward-filling flat lines!).
    - Mathematically verifies `starting_cash + sum(PnL) == total_equity` across all 8 personas in Turso DB and backend endpoints.
 
 4. **`qa_pipeline_model_auditor` (Pipeline Extraction & Model Integrity Auditor):**
    - Audits Yahoo Finance / Tiingo data extraction logs to verify zero missing OHLCV bars or corrupt zeroes.
    - Scans 100% of scorecards, prediction arrays, and staged `pending_orders` to ensure ZERO NaN, Null, Inf, or degenerate probabilities (P(UP) out of [0, 1]).
+
+5. **`qa_infrastructure_daemon_auditor` (Infrastructure, Daemon & Execution Sentinel):**
+   - Physically audits Vultr cloud daemons (`ag-sniper.service`), ensuring active price tick monitoring and zero duplicate PIDs.
+   - Audits server ports (port 80 Uvicorn/FastAPI), memory footprint, cron pipelines, and strictly enforces 100% Native Gmail SMTP SSL (smtp.gmail.com:465).
 
 ---
 
