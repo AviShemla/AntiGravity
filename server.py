@@ -259,34 +259,16 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
             # Compare target_holdings with last_row['Holdings_JSON'] to see if trades are actually pending
             last_holdings = json.loads(last_row['Holdings_JSON'])
             
-            has_changes = False
-            if abs(cash - float(last_row['Cash'])) > 1.0:
+            if pending.get('date')[:10] > str(last_row['Date'])[:10]:
                 has_changes = True
             else:
-                for t, d in target_holdings.items():
-                    target_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
-                    last_val = last_holdings.get(t, 0.0)
-                    last_val = float(last_val.get('dollars', 0.0)) if isinstance(last_val, dict) else float(last_val)
-                    if abs(target_val - last_val) > 1.0:
-                        has_changes = True
-                        break
-                        
-                if not has_changes:
-                    for t, d in last_holdings.items():
-                        if t == 'Cash': continue
-                        last_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
-                        target_val = target_holdings.get(t, 0.0)
-                        target_val = float(target_val.get('dollars', 0.0)) if isinstance(target_val, dict) else float(target_val)
-                        if abs(target_val - last_val) > 1.0:
-                            has_changes = True
-                            break
-                        
-                if not has_changes:
-                    for t, d in last_holdings.items():
-                        if t == 'Cash': continue
-                        last_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
-                        target_val = target_holdings.get(t, 0.0)
-                        target_val = float(target_val.get('dollars', 0.0)) if isinstance(target_val, dict) else float(target_val)
+                if abs(cash - float(last_row['Cash'])) > 1.0:
+                    has_changes = True
+                else:
+                    for t, d in target_holdings.items():
+                        target_val = float(d.get('dollars', 0.0)) if isinstance(d, dict) else float(d)
+                        last_val = last_holdings.get(t, 0.0)
+                        last_val = float(last_val.get('dollars', 0.0)) if isinstance(last_val, dict) else float(last_val)
                         if abs(target_val - last_val) > 1.0:
                             has_changes = True
                             break
@@ -410,7 +392,7 @@ def get_dropdown_options(persona: str = "BallsForBrains", mode: str = "Single"):
     try:
         df = database_manager.get_ledger(p_name)
         if not df.empty:
-            breakdown = get_asset_breakdown(df)
+            breakdown = get_asset_breakdown(df, {})
             for item in breakdown:
                 asset = item['Asset']
                 if asset not in ['TOTAL PnL', 'AVAILABLE CASH', 'CURRENT EQUITY'] and asset not in options:
@@ -727,10 +709,16 @@ def get_autopsy_data():
 @app.get('/api/prod_shadow')
 def get_prod_shadow():
     try:
-        csv_path = os.path.join(BASE_DIR, 'financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
-        if not os.path.exists(csv_path):
-            csv_path = os.path.join(BASE_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
-        df = pd.read_csv(csv_path)
+        # 100% Turso Cloud DB Table Backing
+        df = database_manager.execute_query("SELECT * FROM prod_vs_shadow_master ORDER BY date ASC")
+        if df.empty:
+            csv_path = os.path.join(BASE_DIR, 'financial_data', 'Prod_vs_Shadow_Results_MASTER.csv')
+            if not os.path.exists(csv_path):
+                csv_path = os.path.join(BASE_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
+            df = pd.read_csv(csv_path)
+            
+        # Normalize column names
+        df.columns = [c.capitalize() if c.lower() == 'date' else c for c in df.columns]
         df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
         df = df.sort_values('Date').reset_index(drop=True)
         
