@@ -9,6 +9,17 @@ This document is the **Single Source of Truth (SSOT)** for all operational rules
 
 ---
 
+## 0. 🏆 DAILY MORNING PRIME GOAL (VERIFICATION CRITERIA FOR PERFECT GREEN)
+
+Every single morning before market open, the agent MUST verify and achieve 100% GREEN status across all 4 mandatory victory conditions:
+
+1. **Intraday Sniper Execution:** Live trade day sniper (`ag-sniper.service` on Vultr) executed successfully, monitored price ticks, and guarded all active positions.
+2. **Nightly Pipeline & Staging Execution:** Night run executed cleanly—models re-trained/scored, Turso DB updated, and pending orders for today's market open successfully staged for all 8 personas in `pending_orders`.
+3. **Dashboard Visual QA & 100% Sync:** All 5 dashboard tabs visually inspected via Playwright screenshot QA (`capture_all_web_tabs.py`), fully in sync, and presenting data continuously without gap artifacts, chart crashes, or missing orange pending badges.
+4. **Email Report Sync:** Morning daily report emails sent exclusively via Native Gmail SMTP (`smtp.gmail.com:465`) with exact figures in 100% perfect sync with Turso DB and the live Web Dashboard.
+
+---
+
 ## 1. 🔒 MASTER PRIME DIRECTIVES & VERIFICATION RULES
 
 1. **Strict 100% Database Table Backing Rule:**
