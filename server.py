@@ -781,7 +781,15 @@ def get_unified_arena():
         # STRICT 100% TURSO CLOUD DB TABLE BACKING (ZERO CSV FALLBACK)
         df_ps = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
         df_ol = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
-        df_ol['model_name'] = df_ol['model_name'].map(lambda x: ol_map.get(x, x))
+        
+        # Map DB model names to UI keys
+        ps_map = {'PROD_Bayesian_SV': 'Prod', 'Prod': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1', 'Shadow_LSTM': 'Shadow_LSTM'}
+        ol_map = {'EL_CAP (70% Liquidity)': 'EL_CAP', 'EL_VOLTI (70% Stability)': 'EL_VOLTI', 'CHAMPION (Live VIP)': 'CHAMPION'}
+        
+        if not df_ps.empty:
+            df_ps['model_name'] = df_ps['model_name'].map(lambda x: ps_map.get(x, x))
+        if not df_ol.empty:
+            df_ol['model_name'] = df_ol['model_name'].map(lambda x: ol_map.get(x, x))
         
         # Combine both datasets
         df_all = pd.concat([df_ps, df_ol], ignore_index=True)
