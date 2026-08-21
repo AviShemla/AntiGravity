@@ -71,7 +71,11 @@ def get_return(ticker, date_str):
                     print(f"Zero-Trust Alert: Unrecoverable NaN for {ticker} on {date_str}. Enforcing flat return.")
                     return 0.0
                     
-                return (curr_close - prev_close) / prev_close
+                ret = (curr_close - prev_close) / prev_close
+                if ret > 0.2:
+                    print(f"Zero-Trust Alert: Unnatural spike of {ret*100}% for {ticker}. Capping return to 0.")
+                    return 0.0
+                return ret
     except Exception as e:
         print(f"Error fetching return for {ticker}: {e}")
     return 0.0
@@ -140,25 +144,27 @@ def run_tracker(target_date):
 
 
         
-    trans_csv = os.path.join(BASE_DIR, "Shadow_Transformer_Scorecard.csv")
-    v1_csv = os.path.join(DATA_DIR, "Sandbox_V1_Classic_Scorecard.csv")
-    
-    if os.path.exists(trans_csv):
-        tdf = pd.read_csv(trans_csv)
-        if not tdf.empty:
-            # FIX: Filter by engine type instead of just taking the first row
-            trans_rows = tdf[tdf['Engine'] == 'StockBrain']
-            if not trans_rows.empty:
-                state["holdings_transformer"] = trans_rows.iloc[0]["Ticker"]
-            
-            lstm_rows = tdf[tdf['Engine'] == 'LSTM_Shadow_V2']
-            if not lstm_rows.empty:
-                state["holdings_lstm"] = lstm_rows.iloc[0]["Ticker"]
-            
-    if os.path.exists(v1_csv):
-        v1df = pd.read_csv(v1_csv)
-        if not v1df.empty:
-            state["holdings_v1"] = v1df.iloc[0]["Ticker"]
+    # 100% TURSO DB BACKED: Determine active holdings strictly from Turso DB tables
+    try:
+        import database_manager
+        # Query top ticker from Turso DB for Transformer/LSTM
+        df_db_sc = database_manager.execute_query(f"SELECT ticker FROM etf_scorecards_master WHERE date LIKE '{target_date}%' ORDER BY prob DESC LIMIT 5")
+        if not df_db_sc.empty:
+            state["holdings_transformer"] = df_db_sc.iloc[0]["ticker"]
+            if len(df_db_sc) > 1:
+                state["holdings_lstm"] = df_db_sc.iloc[1]["ticker"]
+            else:
+                state["holdings_lstm"] = df_db_sc.iloc[0]["ticker"]
+                
+        # Query pending orders / top momentum for Sandbox V1
+        df_db_v1 = database_manager.execute_query(f"SELECT target_holdings_json FROM pending_orders WHERE persona = 'BallsForBrains' AND date LIKE '{target_date}%'")
+        if not df_db_v1.empty and df_db_v1.iloc[0]['target_holdings_json']:
+            h_v1 = json.loads(df_db_v1.iloc[0]['target_holdings_json'])
+            t_v1 = [k for k in h_v1.keys() if k != 'CASH']
+            if t_v1:
+                state["holdings_v1"] = t_v1[0]
+    except Exception as e_holdings:
+        print(f"  [DB HOLDINGS ERROR] Failed to fetch holdings from Turso DB: {e_holdings}")
             
     state["last_date"] = target_date
     save_state(state)
