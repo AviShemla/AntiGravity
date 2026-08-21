@@ -59,6 +59,8 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
                 vol = hist['Volume']
                 vol_ma = vol.rolling(window=30, min_periods=1).mean()
                 vol_ratio = vol / vol_ma
+                import numpy as np
+                vol_ratio = np.clip(vol_ratio, 0.0, 3.0)
                 
                 if vol_ratio.index.tz is not None:
                     vol_ratio.index = vol_ratio.index.tz_localize(None)

@@ -51,11 +51,12 @@ function renderSyncStatus() {
     const formatIndicator = (name, date) => {
         if (!date) return `<div style="display:flex; justify-content:space-between; margin-bottom:2px; opacity:0.6;"><span style="color:#94a3b8;">${name}</span><span style="color:#94a3b8;">Loading...</span></div>`;
         const isSynced = date >= targetDate;
-        const color = isSynced ? "#32CD32" : "#FF4136";
-        const icon = isSynced ? "🟢" : "🔴";
+        const color = isSynced ? "#32CD32" : "#FF8C00";
+        const icon = isSynced ? "🟢" : "🟠";
+        const statusText = isSynced ? date : "PENDING " + date;
         return `<div style="display:flex; justify-content:space-between; margin-bottom:2px;">
             <span style="color:#e2e8f0; font-weight:600; margin-right: 15px;">${name}</span>
-            <span style="color:${color}; font-weight:bold;">${icon} ${date}</span>
+            <span class="badge" style="color:${color}; font-weight:bold;">${icon} ${statusText}</span>
         </div>`;
     };
     

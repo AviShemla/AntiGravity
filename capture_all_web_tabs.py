@@ -2,7 +2,7 @@ import asyncio
 import os
 from playwright.async_api import async_playwright
 
-ARTIFACT_DIR = r"C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f"
+ARTIFACT_DIR = r"C:\Users\AviShemla\.gemini\antigravity\brain\7049fe1b-450e-4ac0-814c-3d73356c38fc"
 
 async def main():
     async with async_playwright() as p:

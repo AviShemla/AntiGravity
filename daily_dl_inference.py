@@ -104,7 +104,7 @@ def run_daily_inference(target_date=None):
                 last_date = recent_data['Date'].iloc[-1]
                 last_close = recent_data['Close'].iloc[-1]
                 
-                scaled_features = scaler.transform(recent_data[FEATURES])
+                scaled_features = np.clip(scaler.transform(recent_data[FEATURES]), -4.0, 4.0)
                 tensor_input = torch.FloatTensor(scaled_features).unsqueeze(0).to(device)
                 
                 prediction_prob = model(tensor_input).item()
@@ -157,7 +157,7 @@ def run_daily_inference(target_date=None):
                     last_date = recent_data['Date'].iloc[-1]
                     last_close = 0
                     
-                    scaled_features = etf_scaler.transform(recent_data[etf_feature_cols])
+                    scaled_features = np.clip(etf_scaler.transform(recent_data[etf_feature_cols]), -4.0, 4.0)
                     tensor_input = torch.FloatTensor(scaled_features).unsqueeze(0).to(device)
                     
                     prediction_prob = etf_model(tensor_input).item()
