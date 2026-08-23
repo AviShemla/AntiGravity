@@ -169,13 +169,17 @@ dry-run passed before the first recovery commit.
 The revision writer now proves the exact stored `(ticker, date)` keys and
 `source_value_sha256` values after every resumable `INSERT OR IGNORE` pass.
 A pre-existing run with the expected row count but different stored evidence
-fails closed instead of being accepted on count alone.
+fails closed instead of being accepted on count alone. The parent ingestion
+run is also created idempotently and then read back: reusing a `run_id` with a
+different provider, mode, source session, availability timestamp, code hash,
+ticker count, or status is rejected.
 
-- Cloud-focused provider/writer/migration suite: 19 tests passed.
+- Cloud-focused provider/writer/migration suite: 21 tests passed.
 - Python compilation and `git diff --check`: passed.
-- GitHub commit:
+- GitHub code commits:
   `40a650c77070db2c184a7f5c90f60efc4bd31a7d`.
-- GitHub remote readback matched that exact commit.
+  `6b6936de2c6849742e2f8f03d29b846efb303a55`.
+- GitHub remote readback matched the final code commit exactly.
 - No Turso schema was applied and no Turso row was written.
 - The Friday snapshot remains `STAGING`; no model, recommendation, order, or
   trading service was activated.
