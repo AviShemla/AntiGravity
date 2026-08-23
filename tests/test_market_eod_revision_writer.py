@@ -20,11 +20,17 @@ def evidence():
 
 
 class Reader:
-    def __init__(self, counts):
-        self.counts = iter(counts)
+    def __init__(self, responses):
+        self.responses = iter(responses)
 
     def execute(self, query, args):
-        return PipelineResult(["n"], [[next(self.counts)]])
+        response = next(self.responses)
+        if isinstance(response, int):
+            return PipelineResult(["n"], [[response]])
+        return PipelineResult(
+            ["ticker", "date", "source_value_sha256"],
+            response,
+        )
 
 
 class Response:
@@ -85,14 +91,30 @@ class MarketEodRevisionWriterTests(unittest.TestCase):
             observed_at_utc="2026-08-22T01:00:00+00:00",
         )
         session = Session()
+        stored = [[rows[0][2], rows[0][3], rows[0][16]]]
         count = stage_revision_rows(
-            session=session, reader=Reader([0, 1]),
+            session=session, reader=Reader([0, 1, stored]),
             endpoint="https://example.test/v2/pipeline", token="secret-token-value",
             run_id="alpaca-2026-08-21-run-001", rows=rows,
         )
         self.assertEqual(count, 1)
         self.assertEqual(len(session.calls), 1)
         self.assertNotIn("secret-token-value", str(session.calls[0][1]["json"]))
+
+    def test_rejects_same_count_with_conflicting_stored_hash(self):
+        rows = prepare_revision_rows(
+            evidence(), run_id="alpaca-2026-08-21-run-001",
+            provider="ALPACA_MARKET_DATA", source_session=date(2026, 8, 21),
+            observed_at_utc="2026-08-22T01:00:00+00:00",
+        )
+        conflicting = [[rows[0][2], rows[0][3], "0" * 64]]
+        with self.assertRaisesRegex(RuntimeError, "keys or source hashes"):
+            stage_revision_rows(
+                session=Session(), reader=Reader([1, 1, conflicting]),
+                endpoint="https://example.test/v2/pipeline",
+                token="secret-token-value",
+                run_id="alpaca-2026-08-21-run-001", rows=rows,
+            )
 
 
 if __name__ == "__main__":

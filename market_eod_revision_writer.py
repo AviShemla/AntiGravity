@@ -146,7 +146,7 @@ def stage_revision_rows(
     rows: list[list[object]],
     batch_size: int = 250,
 ) -> int:
-    """Resume INSERT OR IGNORE rows and prove the exact final count."""
+    """Resume INSERT OR IGNORE rows and prove exact final keys and values."""
     if not 1 <= batch_size <= 500:
         raise ValueError("batch_size must be between 1 and 500")
     if not rows or any(row[0] != run_id for row in rows):
@@ -176,4 +176,23 @@ def stage_revision_rows(
     ).rows[0][0])
     if final != expected:
         raise RuntimeError("Turso revision count does not match provider evidence")
+
+    expected_hashes = {
+        (str(row[2]), str(row[3])): str(row[16])
+        for row in rows
+    }
+    stored_rows = reader.execute(
+        "SELECT ticker,date,source_value_sha256 "
+        "FROM market_eod_bar_revisions WHERE run_id = ? "
+        "ORDER BY ticker,date",
+        [run_id],
+    ).rows
+    stored_hashes = {
+        (str(row[0]), str(row[1])): str(row[2])
+        for row in stored_rows
+    }
+    if len(stored_rows) != expected or stored_hashes != expected_hashes:
+        raise RuntimeError(
+            "Turso revision keys or source hashes do not match provider evidence"
+        )
     return final
