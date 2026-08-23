@@ -128,6 +128,21 @@ class MarketEodRevisionWriterTests(unittest.TestCase):
                 code_version_sha256=code_hash, expected_ticker_count=471,
             )
 
+    def test_accepts_identical_completed_parent_run(self):
+        code_hash = "a" * 64
+        stored = [[
+            "TIINGO_EOD", "DAILY_DELTA", "2026-08-21",
+            "2026-08-22T01:00:00+00:00", code_hash, 8, "COMPLETE",
+        ]]
+        stage_ingestion_run(
+            session=Session(), reader=Reader([stored]),
+            endpoint="https://example.test/v2/pipeline", token="secret-token-value",
+            run_id="tiingo-2026-08-21-run-001", provider="TIINGO_EOD",
+            ingestion_mode="DAILY_DELTA", source_session=date(2026, 8, 21),
+            available_at_utc="2026-08-22T01:00:00+00:00",
+            code_version_sha256=code_hash, expected_ticker_count=8,
+        )
+
     def test_prepares_deterministic_complete_evidence(self):
         args = dict(
             run_id="alpaca-2026-08-21-run-001",

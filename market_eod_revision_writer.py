@@ -189,7 +189,11 @@ def stage_ingestion_run(
         "FROM market_eod_ingestion_runs WHERE run_id = ?",
         [run_id],
     ).rows
-    if stored != [expected_row]:
+    if (
+        len(stored) != 1
+        or list(stored[0][:-1]) != expected_row[:-1]
+        or stored[0][-1] not in {"STAGING", "COMPLETE"}
+    ):
         raise RuntimeError("Turso ingestion run metadata does not match request")
 
 
