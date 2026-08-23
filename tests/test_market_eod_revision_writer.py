@@ -3,7 +3,11 @@ from datetime import date
 
 import pandas as pd
 
-from market_eod_revision_writer import prepare_revision_rows, stage_revision_rows
+from market_eod_revision_writer import (
+    prepare_revision_rows,
+    stage_ingestion_run,
+    stage_revision_rows,
+)
 from turso_read_pipeline import PipelineResult
 
 
@@ -53,6 +57,41 @@ class Session:
 
 
 class MarketEodRevisionWriterTests(unittest.TestCase):
+    def test_stages_exact_idempotent_parent_run_metadata(self):
+        session = Session()
+        code_hash = "a" * 64
+        stored = [[
+            "TIINGO_EOD", "DAILY_DELTA", "2026-08-21",
+            "2026-08-22T01:00:00+00:00", code_hash, 471, "STAGING",
+        ]]
+        stage_ingestion_run(
+            session=session, reader=Reader([stored]),
+            endpoint="https://example.test/v2/pipeline", token="secret-token-value",
+            run_id="tiingo-2026-08-21-run-001", provider="TIINGO_EOD",
+            ingestion_mode="DAILY_DELTA", source_session=date(2026, 8, 21),
+            available_at_utc="2026-08-22T01:00:00+00:00",
+            code_version_sha256=code_hash, expected_ticker_count=471,
+        )
+        self.assertEqual(len(session.calls), 1)
+        self.assertNotIn("secret-token-value", str(session.calls[0][1]["json"]))
+
+    def test_rejects_reused_parent_run_with_different_metadata(self):
+        code_hash = "a" * 64
+        conflicting = [[
+            "YAHOO_FINANCE", "DAILY_DELTA", "2026-08-21",
+            "2026-08-22T01:00:00+00:00", code_hash, 471, "STAGING",
+        ]]
+        with self.assertRaisesRegex(RuntimeError, "metadata does not match"):
+            stage_ingestion_run(
+                session=Session(), reader=Reader([conflicting]),
+                endpoint="https://example.test/v2/pipeline",
+                token="secret-token-value",
+                run_id="tiingo-2026-08-21-run-001", provider="TIINGO_EOD",
+                ingestion_mode="DAILY_DELTA", source_session=date(2026, 8, 21),
+                available_at_utc="2026-08-22T01:00:00+00:00",
+                code_version_sha256=code_hash, expected_ticker_count=471,
+            )
+
     def test_prepares_deterministic_complete_evidence(self):
         args = dict(
             run_id="alpaca-2026-08-21-run-001",

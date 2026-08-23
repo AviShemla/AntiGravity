@@ -18,6 +18,9 @@ from turso_read_pipeline import TursoReadPipeline, _encode_arg
 
 
 ALLOWED_PROVIDERS = {"ALPACA_MARKET_DATA", "TIINGO_EOD", "YAHOO_FINANCE"}
+INGESTION_MODES = {
+    "HISTORICAL_BASELINE", "DAILY_DELTA", "CORPORATE_ACTION_REFRESH",
+}
 REQUIRED_COLUMNS = (
     "Ticker", "Date", "Raw Open", "Raw High", "Raw Low", "Raw Close",
     "Raw Volume", "Adjusted Open", "Adjusted High", "Adjusted Low",
@@ -25,6 +28,7 @@ REQUIRED_COLUMNS = (
 )
 IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$")
 TICKER = re.compile(r"^[A-Z][A-Z0-9.-]{0,15}$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _finite_number(value: object, label: str) -> float:
@@ -134,6 +138,59 @@ def post_statements(session, endpoint: str, token: str, statements) -> None:
         item.get("type") != "ok" for item in results[:len(statements)]
     ):
         raise RuntimeError("Turso rejected an EOD revision statement")
+
+
+def stage_ingestion_run(
+    *,
+    session,
+    reader: TursoReadPipeline,
+    endpoint: str,
+    token: str,
+    run_id: str,
+    provider: str,
+    ingestion_mode: str,
+    source_session: date,
+    available_at_utc: str,
+    code_version_sha256: str,
+    expected_ticker_count: int,
+) -> None:
+    """Create or resume a STAGING parent run and prove its exact metadata."""
+    if not IDENTIFIER.fullmatch(run_id):
+        raise ValueError("run_id has an invalid format")
+    if provider not in ALLOWED_PROVIDERS:
+        raise ValueError("provider is not approved")
+    if ingestion_mode not in INGESTION_MODES:
+        raise ValueError("ingestion_mode is not approved")
+    try:
+        available = datetime.fromisoformat(available_at_utc.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("available_at_utc is invalid") from exc
+    if available.tzinfo is None or available.utcoffset() is None:
+        raise ValueError("available_at_utc must be timezone-aware")
+    if not SHA256.fullmatch(code_version_sha256):
+        raise ValueError("code_version_sha256 must be a lowercase SHA-256")
+    if not isinstance(expected_ticker_count, int) or expected_ticker_count <= 0:
+        raise ValueError("expected_ticker_count must be a positive integer")
+
+    expected_row = [
+        provider, ingestion_mode, source_session.isoformat(), available_at_utc,
+        code_version_sha256, expected_ticker_count, "STAGING",
+    ]
+    post_statements(session, endpoint, token, [(
+        "INSERT OR IGNORE INTO market_eod_ingestion_runs "
+        "(run_id,provider,ingestion_mode,requested_source_session_date,"
+        "available_at_utc,code_version_sha256,expected_ticker_count,status,"
+        "created_at_utc) VALUES (?,?,?,?,?,?,?,?,?)",
+        [run_id, *expected_row[:-1], "STAGING", available_at_utc],
+    )])
+    stored = reader.execute(
+        "SELECT provider,ingestion_mode,requested_source_session_date,"
+        "available_at_utc,code_version_sha256,expected_ticker_count,status "
+        "FROM market_eod_ingestion_runs WHERE run_id = ?",
+        [run_id],
+    ).rows
+    if stored != [expected_row]:
+        raise RuntimeError("Turso ingestion run metadata does not match request")
 
 
 def stage_revision_rows(
