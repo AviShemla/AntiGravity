@@ -185,3 +185,25 @@ ticker count, or status is rejected.
   trading service was activated.
 - `ag-sniper.service`, `antigravity-nightly.timer`, and
   `antigravity-qa-watchdog.timer` remained inactive and disabled.
+
+## Owner-approved EOD revision schema application
+
+The owner explicitly approved the reviewed CREATE-only migration with SHA-256
+`e12c17c87811c1ff39ab032d87a153877e8a89a05fd160d383b313c23f80f9ac`.
+The exact hash was rechecked on the clean Vultr Git worktree before applying
+`migrations/20260823_market_eod_revisions_additive.sql` to Turso.
+
+- Applied statements: four CREATE-only statements.
+- Created tables: `market_eod_ingestion_runs`,
+  `market_eod_bar_revisions`.
+- Created indexes: `idx_market_eod_ingestion_runs_lookup`,
+  `idx_market_eod_bar_revisions_lookup`.
+- Independent Turso readback found all four expected objects and both stored
+  table definitions with the required columns.
+- Both new tables contained exactly zero rows after creation.
+- Core before/after counts were identical: `pending_orders=4`,
+  `capital_ledgers=299`, `model_runs=0`, `model_scorecards=0`.
+- No market snapshot was promoted and no model, recommendation, pending order,
+  ledger entry, or trade was created or changed.
+- Temporary audit scripts were verified removed from Vultr.
+- Sniper, nightly, and QA services remained inactive and disabled.
