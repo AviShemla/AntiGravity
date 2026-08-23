@@ -207,3 +207,28 @@ The exact hash was rechecked on the clean Vultr Git worktree before applying
   ledger entry, or trade was created or changed.
 - Temporary audit scripts were verified removed from Vultr.
 - Sniper, nightly, and QA services remained inactive and disabled.
+
+## Bounded Tiingo revision-evidence run
+
+With owner authorization to continue, an evidence-only `DAILY_DELTA` run was
+executed for source session 2026-08-21. Before any Turso write, each provider
+bar was fetched twice independently and required to match exactly.
+
+- Run ID: `tiingo-delta-2026-08-21-audit-v1`.
+- Provider: `TIINGO_EOD`.
+- Tickers: AAPL, IWM, JPM, NVDA, SPY, WMT, XLK, and XOM.
+- Repeatability: all eight provider pairs matched exactly.
+- Stored evidence: exactly eight rows, eight distinct tickers, all dated
+  2026-08-21, with 64-character source-value hashes.
+- Final run status: `COMPLETE`.
+- Independent-process Turso readback matched the parent metadata, row count,
+  ticker set, session date, and hash lengths.
+- Core counts remained `pending_orders=4`, `capital_ledgers=299`,
+  `model_runs=0`, and `model_scorecards=0`.
+- Focused cloud suite after the final idempotency repair: 25 tests passed.
+- GitHub code commits: `f629a5b2e8dc1093ee7ba2cca357779da94464c1`
+  and `56cf58776482eb3a484a37826bfaea87fc95f68b`.
+- No market snapshot was promoted, no model ran, and no recommendation, order,
+  ledger entry, or trade was created or changed.
+- Temporary staging/audit scripts were verified removed; sniper, nightly, and
+  QA services remained inactive and disabled.
