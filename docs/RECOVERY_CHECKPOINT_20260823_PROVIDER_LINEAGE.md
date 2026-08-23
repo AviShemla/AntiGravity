@@ -232,3 +232,36 @@ bar was fetched twice independently and required to match exactly.
   ledger entry, or trade was created or changed.
 - Temporary staging/audit scripts were verified removed; sniper, nightly, and
   QA services remained inactive and disabled.
+
+## Full-universe Tiingo evidence staging launched
+
+The resumable full-universe runner was implemented and verified on Vultr
+before launch. It writes only provider-native EOD evidence to the additive
+revision tables; it cannot promote a model-input snapshot or invoke a model,
+broker, recommendation, order, ledger, or trading service.
+
+- No-write Turso preflight: passed.
+- Source session: 2026-08-21.
+- Universe source: latest validated market snapshot
+  `market_features_2026-08-20_3a0e9feffc5ab92f`, followed by lifecycle rules
+  and approved registry `etf_registry_20260822_v1`.
+- Exact controlled universe: 471 instruments.
+- Universe manifest SHA-256:
+  `9ee0e6bd3dd34776ea8d7bb79b6eb33c7ca6ed0eeacdaaba38720f58b39e9653`.
+- Runner code SHA-256:
+  `d6741d15920646533f02fadc874c4958eee7b6883fb431daa47a77453e1f8d93`.
+- Run ID:
+  `tiingo-delta-2026-08-21-9ee0e6bd3dd3-d6741d159206`.
+- Durable rate limit: one request every 76 seconds, with bounded retries.
+- Initial live evidence: tickers `A` and `AAPL` staged successfully as rows
+  1 and 2 of 471.
+- Focused cloud suite: 30 tests passed.
+- GitHub commit and remote readback:
+  `81ef69dd3b9cd1d43c10ac866b3fd5586a281af4`.
+- Execution unit: transient systemd service
+  `codex-tiingo-eod-20260821.service`, running with reduced CPU priority.
+- `ag-sniper.service`, `antigravity-nightly.timer`, and
+  `antigravity-qa-watchdog.timer` remained inactive and disabled at launch.
+- The run remains `STAGING` until all 471 exact-session rows are stored and
+  the completion gate passes. Snapshot promotion and all downstream model or
+  trading actions remain prohibited pending separate owner approval.
