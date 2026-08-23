@@ -15,3 +15,9 @@ scratch/
 qa_*.txt
 qa_*.log
 financial_data/*.json
+
+# Local credentials: never commit real values.
+.env
+.env.*
+!.env.example
+/.codex-secrets/

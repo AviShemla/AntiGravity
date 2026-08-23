@@ -1,0 +1,149 @@
+# Recovery checkpoint — provider lineage and Friday staging — 2026-08-23
+
+Mode: paper/virtual recovery. Trading, nightly, QA, model export, order
+generation, and the intraday sniper remain frozen. No broker action was
+attempted and no capital was at risk.
+
+## Applied owner-approved provider-lineage schema
+
+- Applied CREATE-only migration:
+  `migrations/20260822_market_provider_lineage_additive.sql`.
+- Reviewed migration SHA-256:
+  `4698f46a6dd7ae96e63e55ea50c5bbd82b55bcf456576b5d30d77bf1a5d6ae78`.
+- The migration created only:
+  - table `market_data_provider_lineage`;
+  - index `idx_market_provider_lineage_lookup`.
+- Existing market, model, order, ledger, and scorecard rows were not updated or
+  deleted.
+
+## First Friday staging attempt — retained as rejected evidence
+
+Snapshot `market_features_2026-08-21_e2f7b9073fedf04e` remains in `STAGING`
+and must not be promoted.
+
+- 582,797 feature rows across 471 controlled instruments.
+- Structural checks passed.
+- Exact recent-session audit found MNST missing NYSE session 2026-08-10.
+- Direct provider comparison proved Yahoo omitted that session while Tiingo
+  included it.
+
+## Fail-closed provider repair
+
+`scripts/rebuild_market_features_to_turso.py` now builds the exact recent NYSE
+session calendar before staging. When the primary source has a required-session
+gap, it replaces the entire ticker series with Tiingo. It never forward-fills a
+missing trading session and never mixes one replacement row into an otherwise
+primary-provider series. If the fallback is also incomplete, the rebuild fails
+closed.
+
+The focused rebuild suite contains 18 tests and passed in isolated VPS
+execution.
+
+## Corrected Friday staging evidence
+
+Snapshot `market_features_2026-08-21_eee28adc62cbed61` remains in `STAGING`.
+
+- Source session: 2026-08-21.
+- 582,798 feature rows across 471 controlled instruments.
+- Date range: 2021-09-08 through 2026-08-21.
+- Staged content checksum:
+  `eee28adc62cbed619bd66047925a0227e18a8f8057421a4282336bb7803ab4c2`.
+- Code version checksum:
+  `b3d29c826b815e65ad3af2e0d5953c2525b0741ab1ce63994fbdb0ec80cb1282`.
+- Provider lineage: 473 unique rows; 472 Yahoo and 1 Tiingo.
+- MNST is the Tiingo substitution; VIX and TNX remain Yahoo.
+- Structural integrity passed: no future rows, invalid OHLC/volume/indicator
+  values, missing latest instruments, or missing latest model fields.
+- Exact recent 130-session coverage passed with zero anomalies.
+
+## Promotion blocker — value-level repeatability
+
+Repeated no-write rebuilds produced identical row counts, ticker counts,
+provider assignments, and session coverage but different aggregate content
+checksums. Observed repeat checksums include:
+
+- `dc8ab4a840e938efb6bd9be0a7549790a28bd4c87697403df7ecd0db85ed0ccb`;
+- `60b75a5858abca0ae595bbbd870042aaeec7f55461e907cf446fc60523ad9e99`.
+
+This is a fail-closed blocker. No Friday snapshot may be promoted until the
+changing provider rows are isolated and the difference is proven to be either
+benign checksum canonicalization noise or a controlled, auditable source-data
+revision. Models, recommendations, pending orders, and the sniper must remain
+inactive meanwhile.
+
+## Operational state
+
+- `ag-sniper.service`: inactive and disabled.
+- `antigravity-nightly.timer`: inactive and disabled.
+- `antigravity-qa-watchdog.timer`: inactive and disabled.
+- Dashboard service remained available during the recovery checks.
+- No model, backtest, exporter, intraday tracker, or order-generation process
+  was intentionally activated.
+
+## Next evidence gate
+
+Run a bounded provider-lineage comparison that reports only the changed count
+and a small ticker sample, then compare raw values and dtypes for representative
+symbols. Promotion remains prohibited until two independent rebuilds are
+repeatable under the agreed canonicalization rule.
+
+## Provider repeatability investigation update
+
+The bounded full-universe comparison completed without writes:
+
+- 471/471 controlled instruments accepted; zero rejected.
+- MNST replaced completely by Tiingo; zero unresolved session gaps.
+- 473 provider-lineage rows present with no missing or unexpected ticker.
+- 386–387 stored Yahoo lineages changed across repeated runs.
+- The aggregate content hash and provider-lineage hash changed between both
+  parallel and sequential full-universe Yahoo pulls.
+- Each hash was stable when calculated twice on the same in-memory frame. This
+  excludes the checksum implementation as the source of between-run changes.
+
+Direct staged-versus-fresh sample comparison proved that Yahoo raw OHLC changes
+were floating-point noise around `1e-14`, while adjusted-close revisions were
+widespread and reached approximately `0.00018`. MNST's Tiingo replacement was
+exactly unchanged.
+
+Eight representative Tiingo symbols were fetched twice independently: AAPL,
+JPM, XOM, NVDA, WMT, XLK, SPY, and IWM. All eight pairs matched exactly in row
+count, dtype, value, and SHA-256.
+
+Tiingo's authenticated latest-market bulk endpoint was also tested. The free
+account returned HTTP 200 with an upgrade message rather than JSON; the
+historical bulk form returned HTTP 400 because Tiingo deprecated it. Therefore
+the free plan cannot provide a fast full-universe daily delta in one request.
+
+Provider decision evidence is recorded in
+`docs/MARKET_DATA_PROVIDER_DECISION_20260823.md`. A proposed revision-preserving
+Turso schema was prepared but not applied:
+
+- Migration: `migrations/20260823_market_eod_revisions_additive.sql`.
+- SHA-256:
+  `e12c17c87811c1ff39ab032d87a153877e8a89a05fd160d383b313c23f80f9ac`.
+- Review-only parser result: four CREATE-only statements; no changes.
+- Focused provider/rebuild/migration suite: 31 tests passed.
+
+The leading free third-provider candidate is Alpaca Market Data, pending account
+credentials and a complete-universe no-write bake-off. No provider switch,
+schema migration, snapshot promotion, model execution, or trading activation
+has occurred.
+
+## Alpaca candidate harness verification
+
+An audit-only Alpaca adapter and repeatability harness were added without any
+production integration:
+
+- `alpaca_candidate_provider.py` fetches bounded, paginated, fully adjusted
+  daily bars and reads credentials only from two one-line secret files.
+- `scripts/audit_alpaca_candidate.py` fetches each requested symbol twice and
+  reports row, dtype, value, and SHA-256 repeatability without printing
+  credentials or writing to Turso.
+- `tests/test_alpaca_candidate_provider.py` verifies credential-file handling,
+  bounded pagination, adjustment/feed parameters, and secret-safe URLs.
+- `tests/test_audit_alpaca_candidate.py` verifies deterministic checksums and
+  changed-value detection.
+
+The isolated Vultr recovery suite passed 43 tests. Alpaca remains a candidate,
+not a valid production source: no Alpaca credentials were used, no live Alpaca
+request was made, and the full-universe/corporate-action bake-off remains open.
