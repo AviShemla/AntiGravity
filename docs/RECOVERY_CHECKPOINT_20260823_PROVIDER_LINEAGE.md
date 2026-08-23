@@ -163,3 +163,21 @@ dry-run passed before the first recovery commit.
   not match the active Vultr Turso token. No secret value was printed.
 - The Vultr Git worktree was clean after push.
 - Sniper, nightly, and QA services remained inactive and disabled.
+
+## Resumable EOD writer integrity checkpoint
+
+The revision writer now proves the exact stored `(ticker, date)` keys and
+`source_value_sha256` values after every resumable `INSERT OR IGNORE` pass.
+A pre-existing run with the expected row count but different stored evidence
+fails closed instead of being accepted on count alone.
+
+- Cloud-focused provider/writer/migration suite: 19 tests passed.
+- Python compilation and `git diff --check`: passed.
+- GitHub commit:
+  `40a650c77070db2c184a7f5c90f60efc4bd31a7d`.
+- GitHub remote readback matched that exact commit.
+- No Turso schema was applied and no Turso row was written.
+- The Friday snapshot remains `STAGING`; no model, recommendation, order, or
+  trading service was activated.
+- `ag-sniper.service`, `antigravity-nightly.timer`, and
+  `antigravity-qa-watchdog.timer` remained inactive and disabled.
