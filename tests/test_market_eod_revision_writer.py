@@ -7,6 +7,7 @@ from market_eod_revision_writer import (
     complete_ingestion_run,
     prepare_revision_rows,
     stage_ingestion_run,
+    stage_revision_batch,
     stage_revision_rows,
 )
 from turso_read_pipeline import PipelineResult
@@ -58,6 +59,35 @@ class Session:
 
 
 class MarketEodRevisionWriterTests(unittest.TestCase):
+    def test_stages_and_verifies_resumable_subset(self):
+        rows = prepare_revision_rows(
+            evidence(), run_id="tiingo-2026-08-21-run-001",
+            provider="TIINGO_EOD", source_session=date(2026, 8, 21),
+            observed_at_utc="2026-08-23T09:00:00+00:00",
+        )
+        stored = [[rows[0][2], rows[0][3], rows[0][16]]]
+        count = stage_revision_batch(
+            session=Session(), reader=Reader([stored]),
+            endpoint="https://example.test/v2/pipeline", token="secret-token-value",
+            run_id="tiingo-2026-08-21-run-001", rows=rows,
+        )
+        self.assertEqual(count, 1)
+
+    def test_rejects_conflicting_resumable_subset(self):
+        rows = prepare_revision_rows(
+            evidence(), run_id="tiingo-2026-08-21-run-001",
+            provider="TIINGO_EOD", source_session=date(2026, 8, 21),
+            observed_at_utc="2026-08-23T09:00:00+00:00",
+        )
+        conflicting = [[rows[0][2], rows[0][3], "0" * 64]]
+        with self.assertRaisesRegex(RuntimeError, "batch does not match"):
+            stage_revision_batch(
+                session=Session(), reader=Reader([conflicting]),
+                endpoint="https://example.test/v2/pipeline",
+                token="secret-token-value",
+                run_id="tiingo-2026-08-21-run-001", rows=rows,
+            )
+
     def test_completes_only_exact_single_session_delta(self):
         session = Session()
         complete_ingestion_run(

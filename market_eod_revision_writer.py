@@ -259,6 +259,53 @@ def stage_revision_rows(
     return final
 
 
+def stage_revision_batch(
+    *,
+    session,
+    reader: TursoReadPipeline,
+    endpoint: str,
+    token: str,
+    run_id: str,
+    rows: list[list[object]],
+) -> int:
+    """Idempotently stage and verify one bounded subset of a larger run."""
+    if not rows or len(rows) > 100:
+        raise ValueError("revision batch must contain between 1 and 100 rows")
+    if any(row[0] != run_id for row in rows):
+        raise ValueError("rows do not belong to the requested run")
+    keys = [(str(row[2]), str(row[3])) for row in rows]
+    if len(set(keys)) != len(keys):
+        raise ValueError("revision batch contains duplicate ticker-date keys")
+    sql = (
+        "INSERT OR IGNORE INTO market_eod_bar_revisions "
+        "(run_id,provider,ticker,date,raw_open,raw_high,raw_low,raw_close,raw_volume,"
+        "adjusted_open,adjusted_high,adjusted_low,adjusted_close,adjusted_volume,"
+        "dividend_cash,split_factor,source_value_sha256,observed_at_utc) VALUES "
+        + "(" + ",".join("?" for _ in range(18)) + ")"
+    )
+    post_statements(session, endpoint, token, [(sql, row) for row in rows])
+    predicates = " OR ".join("(ticker = ? AND date = ?)" for _ in keys)
+    args: list[object] = [run_id]
+    for ticker, row_date in keys:
+        args.extend([ticker, row_date])
+    stored = reader.execute(
+        "SELECT ticker,date,source_value_sha256 FROM market_eod_bar_revisions "
+        f"WHERE run_id = ? AND ({predicates}) ORDER BY ticker,date",
+        args,
+    ).rows
+    expected_hashes = {
+        (str(row[2]), str(row[3])): str(row[16])
+        for row in rows
+    }
+    stored_hashes = {
+        (str(row[0]), str(row[1])): str(row[2])
+        for row in stored
+    }
+    if len(stored) != len(rows) or stored_hashes != expected_hashes:
+        raise RuntimeError("Turso revision batch does not match provider evidence")
+    return len(stored)
+
+
 def complete_ingestion_run(
     *,
     session,
