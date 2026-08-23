@@ -253,3 +253,67 @@ def stage_revision_rows(
             "Turso revision keys or source hashes do not match provider evidence"
         )
     return final
+
+
+def complete_ingestion_run(
+    *,
+    session,
+    reader: TursoReadPipeline,
+    endpoint: str,
+    token: str,
+    run_id: str,
+    source_session: date,
+    completed_at_utc: str,
+    expected_row_count: int,
+) -> None:
+    """Complete a fully verified run; never infer or repair missing evidence."""
+    if not IDENTIFIER.fullmatch(run_id):
+        raise ValueError("run_id has an invalid format")
+    try:
+        completed = datetime.fromisoformat(completed_at_utc.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("completed_at_utc is invalid") from exc
+    if completed.tzinfo is None or completed.utcoffset() is None:
+        raise ValueError("completed_at_utc must be timezone-aware")
+    if not isinstance(expected_row_count, int) or expected_row_count <= 0:
+        raise ValueError("expected_row_count must be a positive integer")
+
+    parent = reader.execute(
+        "SELECT ingestion_mode,requested_source_session_date,"
+        "expected_ticker_count,status FROM market_eod_ingestion_runs "
+        "WHERE run_id = ?",
+        [run_id],
+    ).rows
+    if len(parent) != 1:
+        raise RuntimeError("Turso ingestion parent run is missing or duplicated")
+    ingestion_mode, stored_session, expected_tickers, status = parent[0]
+    if stored_session != source_session.isoformat():
+        raise RuntimeError("Turso ingestion source session does not match request")
+    if status not in {"STAGING", "COMPLETE"}:
+        raise RuntimeError("Turso ingestion run is not completable")
+
+    evidence = reader.execute(
+        "SELECT COUNT(*),COUNT(DISTINCT ticker),MIN(date),MAX(date) "
+        "FROM market_eod_bar_revisions WHERE run_id = ?",
+        [run_id],
+    ).rows
+    expected_dates = source_session.isoformat()
+    if evidence != [[
+        expected_row_count, int(expected_tickers), expected_dates, expected_dates,
+    ]]:
+        raise RuntimeError("Turso ingestion evidence is incomplete or out of session")
+    if ingestion_mode == "DAILY_DELTA" and expected_row_count != int(expected_tickers):
+        raise RuntimeError("DAILY_DELTA requires exactly one row per ticker")
+
+    if status == "STAGING":
+        post_statements(session, endpoint, token, [(
+            "UPDATE market_eod_ingestion_runs SET status = 'COMPLETE',"
+            "completed_at_utc = ? WHERE run_id = ? AND status = 'STAGING'",
+            [completed_at_utc, run_id],
+        )])
+    final = reader.execute(
+        "SELECT status FROM market_eod_ingestion_runs WHERE run_id = ?",
+        [run_id],
+    ).rows
+    if final != [["COMPLETE"]]:
+        raise RuntimeError("Turso ingestion run did not reach COMPLETE")

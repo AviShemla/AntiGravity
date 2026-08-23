@@ -114,6 +114,60 @@ def fetch_tiingo_history(
     return normalized
 
 
+def fetch_tiingo_revision_bars(
+    ticker: str,
+    source_session: date,
+    start_date: str,
+    *,
+    api_key: str,
+    session: requests.Session | None = None,
+) -> pd.DataFrame:
+    """Fetch provider-native raw, adjusted, and corporate-action evidence."""
+    if not api_key:
+        raise ValueError("Tiingo credential unavailable")
+    api_ticker = ticker.replace(".", "-")
+    client = session or requests.Session()
+    response = client.get(
+        f"https://api.tiingo.com/tiingo/daily/{api_ticker}/prices",
+        params={"startDate": start_date, "endDate": source_session.isoformat()},
+        headers={"Authorization": f"Token {api_key}", "Accept": "application/json"},
+        timeout=30,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(f"Tiingo returned HTTP {response.status_code}")
+    payload = response.json()
+    if not isinstance(payload, list) or not payload:
+        raise ValueError("Tiingo returned an empty or invalid payload")
+    frame = pd.DataFrame(payload)
+    required = {
+        "date", "open", "high", "low", "close", "volume",
+        "adjOpen", "adjHigh", "adjLow", "adjClose", "adjVolume",
+        "divCash", "splitFactor",
+    }
+    missing = sorted(required.difference(frame.columns))
+    if missing:
+        raise ValueError("Tiingo revision payload missing fields: " + ", ".join(missing))
+    dates = pd.to_datetime(frame["date"], utc=True, errors="coerce")
+    if dates.isna().any():
+        raise ValueError("Tiingo revision payload contains an invalid date")
+    return pd.DataFrame({
+        "Ticker": ticker.upper(),
+        "Date": dates.dt.tz_localize(None),
+        "Raw Open": frame["open"],
+        "Raw High": frame["high"],
+        "Raw Low": frame["low"],
+        "Raw Close": frame["close"],
+        "Raw Volume": frame["volume"],
+        "Adjusted Open": frame["adjOpen"],
+        "Adjusted High": frame["adjHigh"],
+        "Adjusted Low": frame["adjLow"],
+        "Adjusted Close": frame["adjClose"],
+        "Adjusted Volume": frame["adjVolume"],
+        "Dividends": frame["divCash"],
+        "Split Factor": frame["splitFactor"],
+    })
+
+
 def fetch_validated_daily_bars(
     ticker: str,
     source_session: date,

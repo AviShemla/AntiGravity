@@ -8,6 +8,7 @@ import pandas as pd
 
 from market_data_provider import (
     fetch_tiingo_history,
+    fetch_tiingo_revision_bars,
     fetch_validated_daily_bars,
     resolve_tiingo_api_key,
 )
@@ -46,6 +47,10 @@ class FakeResponse:
                 "low": 9.0,
                 "close": 11.0,
                 "adjClose": 5.5,
+                "adjOpen": 5.0,
+                "adjHigh": 6.0,
+                "adjLow": 4.5,
+                "adjVolume": 200,
                 "volume": 100,
                 "divCash": 0.25,
                 "splitFactor": 2.0,
@@ -173,6 +178,24 @@ class MarketDataProviderTests(unittest.TestCase):
         self.assertEqual(frame.loc[0, "Adj Close"], 5.5)
         self.assertEqual(frame.loc[0, "Dividends"], 0.25)
         self.assertEqual(frame.loc[0, "Stock Splits"], 2.0)
+        self.assertIsNone(frame.loc[0, "Date"].tzinfo)
+
+    def test_tiingo_revision_fetch_preserves_provider_native_fields(self):
+        session = FakeSession()
+        frame = fetch_tiingo_revision_bars(
+            "BRK.B", SOURCE_SESSION, "2026-08-21",
+            session=session, **{"api" + "_key": "secret-" + "test-token"},
+        )
+        url, kwargs = session.call
+        self.assertEqual(url, "https://api.tiingo.com/tiingo/daily/BRK-B/prices")
+        self.assertNotIn("secret-test-token", url)
+        self.assertEqual(frame.loc[0, "Ticker"], "BRK.B")
+        self.assertEqual(frame.loc[0, "Raw Close"], 11.0)
+        self.assertEqual(frame.loc[0, "Adjusted Open"], 5.0)
+        self.assertEqual(frame.loc[0, "Adjusted Close"], 5.5)
+        self.assertEqual(frame.loc[0, "Adjusted Volume"], 200)
+        self.assertEqual(frame.loc[0, "Dividends"], 0.25)
+        self.assertEqual(frame.loc[0, "Split Factor"], 2.0)
         self.assertIsNone(frame.loc[0, "Date"].tzinfo)
 
 

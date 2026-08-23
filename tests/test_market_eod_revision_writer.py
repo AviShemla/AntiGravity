@@ -4,6 +4,7 @@ from datetime import date
 import pandas as pd
 
 from market_eod_revision_writer import (
+    complete_ingestion_run,
     prepare_revision_rows,
     stage_ingestion_run,
     stage_revision_rows,
@@ -57,6 +58,41 @@ class Session:
 
 
 class MarketEodRevisionWriterTests(unittest.TestCase):
+    def test_completes_only_exact_single_session_delta(self):
+        session = Session()
+        complete_ingestion_run(
+            session=session,
+            reader=Reader([
+                [["DAILY_DELTA", "2026-08-21", 8, "STAGING"]],
+                [[8, 8, "2026-08-21", "2026-08-21"]],
+                [["COMPLETE"]],
+            ]),
+            endpoint="https://example.test/v2/pipeline",
+            token="secret-token-value",
+            run_id="tiingo-2026-08-21-run-001",
+            source_session=date(2026, 8, 21),
+            completed_at_utc="2026-08-23T09:00:00+00:00",
+            expected_row_count=8,
+        )
+        self.assertEqual(len(session.calls), 1)
+        self.assertNotIn("secret-token-value", str(session.calls[0][1]["json"]))
+
+    def test_rejects_incomplete_or_out_of_session_delta(self):
+        with self.assertRaisesRegex(RuntimeError, "incomplete or out of session"):
+            complete_ingestion_run(
+                session=Session(),
+                reader=Reader([
+                    [["DAILY_DELTA", "2026-08-21", 8, "STAGING"]],
+                    [[7, 7, "2026-08-21", "2026-08-21"]],
+                ]),
+                endpoint="https://example.test/v2/pipeline",
+                token="secret-token-value",
+                run_id="tiingo-2026-08-21-run-001",
+                source_session=date(2026, 8, 21),
+                completed_at_utc="2026-08-23T09:00:00+00:00",
+                expected_row_count=8,
+            )
+
     def test_stages_exact_idempotent_parent_run_metadata(self):
         session = Session()
         code_hash = "a" * 64
