@@ -147,3 +147,19 @@ production integration:
 The isolated Vultr recovery suite passed 43 tests. Alpaca remains a candidate,
 not a valid production source: no Alpaca credentials were used, no live Alpaca
 request was made, and the full-universe/corporate-action bake-off remains open.
+
+## GitHub recovery checkpoint
+
+Repository-scoped GitHub SSH access was restored from Vultr using a dedicated
+read/write deploy key. Authentication, `git ls-remote`, and a non-mutating push
+dry-run passed before the first recovery commit.
+
+- Repository: `AviShemla/AntiGravity`, branch `master`.
+- Recovery commit: `68c66b837cef06240d74d7e52cc3e198bc9172aa`.
+- Post-push readback matched the local cloud worktree and remote branch exactly.
+- The previously tracked `.env` was removed from the branch head and `.env` is
+  now protected by `.gitignore`.
+- Fingerprint-only comparison proved the token in the removed public `.env` did
+  not match the active Vultr Turso token. No secret value was printed.
+- The Vultr Git worktree was clean after push.
+- Sniper, nightly, and QA services remained inactive and disabled.
