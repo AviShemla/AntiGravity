@@ -265,3 +265,44 @@ broker, recommendation, order, ledger, or trading service.
 - The run remains `STAGING` until all 471 exact-session rows are stored and
   the completion gate passes. Snapshot promotion and all downstream model or
   trading actions remain prohibited pending separate owner approval.
+
+## Daily recovery checkpoint — 2026-08-24
+
+Checkpoint time: 2026-08-24T06:01:47.087Z. This was an evidence and recovery
+operation only. No market snapshot was promoted, no model ran, no
+recommendation or order was created, and no trading service was activated.
+
+### GitHub and cloud worktree
+
+- Repository: `AviShemla/AntiGravity`, branch `master`.
+- Pre-check cloud HEAD and GitHub `origin/master` both resolved to
+  `cc21af37695c3024079df63dbec2f8a05f083f42`.
+- The Vultr worktree was clean and contained no staged files.
+- The staged secret-pattern scan reported `NO_STAGED_CHANGES`; no credential
+  value was printed or committed.
+
+### Quarantine fresh start evidence
+
+- Implementation commit:
+  `5147d922ae45d57e067d11b86ee04921a802df88`.
+- Evidence/read-back documentation commit:
+  `cc21af37695c3024079df63dbec2f8a05f083f42`.
+- Reviewed evidence SHA-256:
+  `6082de5547fc380e0cb27a11ce80f7646c47e4556e4dd4d50764200943f2c467`.
+- Stock and ETF legacy strike windows restart at source session 2026-08-21;
+  historical ledger evidence was not deleted or changed.
+- Approved successor registry `etf_registry_20260824_fresh_v2` contains 11
+  model candidates, 14 observation/valuation-only instruments, one benchmark,
+  and zero quarantined instruments.
+- The prior registry remains preserved as `SUPERSEDED`.
+- Twenty historical SPY quarantine rows remain preserved.
+- Protected counts after readback remained four pending orders, 299 capital
+  ledger rows, zero new model runs, and zero new model scorecards.
+
+### Verification
+
+- Focused quarantine-policy suite: seven tests passed, zero failed.
+- `ag-sniper.service`: inactive and disabled.
+- `antigravity-nightly.timer`: inactive and disabled.
+- `antigravity-qa-watchdog.timer`: inactive and disabled.
+- Production use of CSV, Excel, SQLite, and Streamlit was not introduced.
