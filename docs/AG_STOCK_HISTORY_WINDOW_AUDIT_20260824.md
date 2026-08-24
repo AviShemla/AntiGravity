@@ -58,11 +58,12 @@ This is a proposal for owner review, not an executed configuration.
 - Purge/embargo: at least the maximum preregistered lag (7 sessions when the
   full initial horizon is searched).
 - Never expand or change the lag horizon during an evidence or production run.
-- Periodically reassess the horizon in a separate research lane using only
-  training data, multiplicity control, untouched walk-forward evaluation, and
-  direct comparison with the incumbent horizon. Shorter or longer maxima may
-  be proposed, but promotion requires explicit owner approval. The exact review
-  cadence remains to be approved.
+- Reassess the horizon in a separate research lane after every 63 newly
+  completed trading sessions measured from the last accepted horizon review.
+  Use only training data, multiplicity control, untouched walk-forward
+  evaluation, and direct comparison with the incumbent horizon. Shorter or
+  longer maxima may be proposed, but promotion requires explicit owner
+  approval.
 - Rolling training window: 252 sessions.
 - Outer evaluation: two sequential 30-session test folds.
 - Minimum OOS evidence: 60 sessions.
