@@ -43,10 +43,8 @@ class PredictiveScreeningCliTests(unittest.TestCase):
             "--model-family",
         ):
             self.assertIn(argument, result.stderr)
-        self.assertIn(
-            "--training-window-sessions/--expanding-training-window",
-            result.stderr,
-        )
+        self.assertIn("--training-window-sessions", result.stderr)
+        self.assertIn("--expanding-training-window", result.stderr)
 
     def test_help_does_not_require_database_credentials(self):
         result = subprocess.run(
