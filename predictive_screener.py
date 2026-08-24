@@ -27,7 +27,11 @@ class ScreeningConfig:
     outer_folds: int = 4
     purge_sessions: int = 5
     min_oos_sessions: int = 200
-    min_depth: int = 3
+    # The research hypothesis permits a data-selected chain containing any
+    # number of predictive edges from one through five.  A three-edge minimum
+    # was a legacy assumption and incorrectly rejected valid one- or two-edge
+    # structures before they could be evaluated out of sample.
+    min_depth: int = 1
     max_depth: int = 5
     candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5)
     max_technical_features: int = 3

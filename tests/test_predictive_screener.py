@@ -21,6 +21,12 @@ from predictive_screener import (
 
 
 class PredictiveScreenerTests(unittest.TestCase):
+    def test_default_chain_depth_search_is_one_through_five(self):
+        config = ScreeningConfig()
+        self.assertEqual(config.min_depth, 1)
+        self.assertEqual(config.max_depth, 5)
+        config.validate()
+
     def test_bh_fdr_uses_the_largest_passing_rank(self):
         accepted = benjamini_hochberg_rejections(
             {"a": 0.001, "b": 0.02, "c": 0.04, "d": 0.20},
