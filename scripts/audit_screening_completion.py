@@ -12,6 +12,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from model_lineage import LineageError
+from stock_lag_governance import (
+    HORIZON_REVIEW_INTERVAL_SESSIONS,
+    INITIAL_MAX_LAG_SESSIONS,
+    INITIAL_STOCK_LAG_CONTRACT_ID,
+)
 from turso_read_pipeline import TursoReadPipeline
 
 
@@ -61,6 +66,13 @@ def build_completion_checks(
         candidate_lags_valid
         and int(config["purge_sessions"]) >= max(candidate_lags)
     )
+    lag_contract_valid = (
+        config.get("lag_horizon_contract_id") == INITIAL_STOCK_LAG_CONTRACT_ID
+        and int(config.get("horizon_review_interval_sessions", -1))
+        == HORIZON_REVIEW_INTERVAL_SESSIONS
+        and candidate_lags_valid
+        and max(candidate_lags) <= INITIAL_MAX_LAG_SESSIONS
+    )
     fold_count = int(folds["fold_count"])
     if evaluated:
         fold_numbers_complete = (
@@ -86,6 +98,7 @@ def build_completion_checks(
             and int(config["eligibility_hypotheses"]) == expected_tickers
         ),
         "candidate_lag_domain_valid": candidate_lags_valid,
+        "approved_lag_horizon_contract_matches": lag_contract_valid,
         "configured_purge_covers_max_candidate_lag": configured_purge_valid,
         "all_evaluated_folds_present": (
             fold_count == evaluated * expected_folds
@@ -222,7 +235,9 @@ def main() -> int:
             for key in (
                 "model_family", "min_train_sessions", "training_window_sessions",
                 "test_sessions", "outer_folds", "min_oos_sessions", "min_depth",
-                "max_depth", "candidate_lags", "purge_sessions", "eligibility_hypotheses",
+                "max_depth", "candidate_lags", "lag_horizon_contract_id",
+                "horizon_review_interval_sessions", "purge_sessions",
+                "eligibility_hypotheses",
             )
         },
         "results": results,
