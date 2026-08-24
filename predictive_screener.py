@@ -29,6 +29,7 @@ class ScreeningConfig:
     min_oos_sessions: int = 200
     min_depth: int = 3
     max_depth: int = 5
+    candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5)
     max_technical_features: int = 3
     familywise_alpha: float = 0.01
     max_calibration_error: float = 0.12
@@ -46,10 +47,16 @@ class ScreeningConfig:
                 raise LineageError("Rolling training window exceeds the required available history.")
         if self.test_sessions < 20 or self.outer_folds < 2:
             raise LineageError("Screener requires at least two meaningful outer folds.")
-        if self.purge_sessions < self.max_depth:
-            raise LineageError("Purge/embargo must be at least the maximum lag depth.")
+        if not self.candidate_lags:
+            raise LineageError("At least one target-relative candidate lag is required.")
+        if any(not isinstance(lag, int) or lag <= 0 for lag in self.candidate_lags):
+            raise LineageError("Candidate lags must be positive integer session offsets.")
+        if len(set(self.candidate_lags)) != len(self.candidate_lags):
+            raise LineageError("Candidate lags must be unique.")
+        if self.purge_sessions < max(self.candidate_lags):
+            raise LineageError("Purge/embargo must cover the maximum candidate lag.")
         if not 1 <= self.min_depth <= self.max_depth <= 5:
-            raise LineageError("Predictive lag depth must be between 1 and 5.")
+            raise LineageError("Predictive chain length must be between 1 and 5.")
         if self.min_oos_sessions > self.test_sessions * self.outer_folds:
             raise LineageError("Minimum OOS sessions exceed the configured outer test capacity.")
         if not 0 < self.familywise_alpha < 0.1:
@@ -65,6 +72,21 @@ class FeatureSpec:
     depth: int
     lag_tickers: tuple[str, ...]
     technical_features: tuple[str, ...]
+    lag_sessions: tuple[int, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.lag_sessions:
+            object.__setattr__(self, "lag_sessions", tuple(range(1, self.depth + 1)))
+        if self.depth != len(self.lag_tickers) or self.depth != len(self.lag_sessions):
+            raise LineageError("Feature depth, lag tickers, and lag sessions must agree.")
+        if not 1 <= self.depth <= 5:
+            raise LineageError("Feature chain length must be between 1 and 5.")
+        if any(not ticker.strip() for ticker in self.lag_tickers):
+            raise LineageError("Feature specification contains a blank lag ticker.")
+        if any(not isinstance(lag, int) or lag <= 0 for lag in self.lag_sessions):
+            raise LineageError("Feature lag sessions must be positive integers.")
+        if len(set(zip(self.lag_tickers, self.lag_sessions))) != self.depth:
+            raise LineageError("Feature specification contains a duplicate ticker/lag edge.")
 
 
 @dataclass(frozen=True)
@@ -156,24 +178,6 @@ def _normal_two_sided_pvalue_from_correlation(correlation: float, samples: int) 
     return max(0.0, min(1.0, 1.0 - erf(abs(fisher_z) / sqrt(2.0))))
 
 
-def _select_one_bonferroni(target: pd.Series, candidates: pd.DataFrame, alpha: float) -> str | None:
-    usable = candidates.loc[target.notna()].copy()
-    target = target.loc[usable.index]
-    correlations = usable.corrwith(target).dropna()
-    if correlations.empty:
-        return None
-    threshold = alpha / len(correlations)
-    ordered = correlations.abs().sort_values(ascending=False)
-    for name in ordered.index:
-        aligned = pd.concat([target, usable[name]], axis=1).dropna()
-        if len(aligned) < 50:
-            continue
-        corr = float(aligned.iloc[:, 0].corr(aligned.iloc[:, 1]))
-        if _normal_two_sided_pvalue_from_correlation(corr, len(aligned)) <= threshold:
-            return str(name)
-    return None
-
-
 def benjamini_hochberg_rejections(
     pvalues: dict[str, float], *, false_discovery_rate: float
 ) -> tuple[str, ...]:
@@ -200,29 +204,56 @@ def benjamini_hochberg_rejections(
     return tuple(name for name, _value in ordered[:accepted_count])
 
 
-def _select_one_bh_fdr(
-    target: pd.Series, candidates: pd.DataFrame, false_discovery_rate: float
-) -> str | None:
-    usable = candidates.loc[target.notna()].copy()
-    target = target.loc[usable.index]
+def _rank_significant_candidates(
+    target: pd.Series,
+    candidates: pd.DataFrame,
+    *,
+    alpha: float,
+    selection_method: str,
+) -> tuple[str, ...]:
+    """Test one preregistered candidate family once and rank accepted features.
+
+    Invalid or underpowered candidates remain in the multiplicity denominator
+    with p=1.0. This prevents sequential feature removal from weakening the
+    correction threshold for later selections.
+    """
+    if candidates.empty:
+        return ()
+    target = target.copy()
     evidence: dict[str, tuple[float, float]] = {}
-    for name in usable.columns:
-        aligned = pd.concat([target, usable[name]], axis=1).dropna()
+    for raw_name in candidates.columns:
+        name = str(raw_name)
+        aligned = pd.concat([target, candidates[raw_name]], axis=1).dropna()
         if len(aligned) < 50:
+            evidence[name] = (1.0, 0.0)
             continue
         correlation = float(aligned.iloc[:, 0].corr(aligned.iloc[:, 1]))
+        if not np.isfinite(correlation):
+            evidence[name] = (1.0, 0.0)
+            continue
         pvalue = _normal_two_sided_pvalue_from_correlation(correlation, len(aligned))
-        evidence[str(name)] = (pvalue, abs(correlation))
-    if not evidence:
-        return None
-    accepted = benjamini_hochberg_rejections(
-        {name: values[0] for name, values in evidence.items()},
-        false_discovery_rate=false_discovery_rate,
-    )
-    if not accepted:
-        return None
-    return min(accepted, key=lambda name: (-evidence[name][1], evidence[name][0], name))
+        evidence[name] = (pvalue, abs(correlation))
 
+    if selection_method == "bonferroni":
+        threshold = alpha / len(candidates.columns)
+        accepted = tuple(
+            name for name, (pvalue, _effect) in evidence.items()
+            if pvalue <= threshold
+        )
+    elif selection_method == "bh_fdr":
+        accepted = benjamini_hochberg_rejections(
+            {name: values[0] for name, values in evidence.items()},
+            false_discovery_rate=alpha,
+        )
+    else:
+        raise LineageError(f"Unsupported feature-selection method: {selection_method!r}.")
+
+    return tuple(
+        sorted(
+            accepted,
+            key=lambda name: (-evidence[name][1], evidence[name][0], name),
+        )
+    )
 
 def discover_feature_spec(
     *,
@@ -234,6 +265,7 @@ def discover_feature_spec(
     familywise_alpha: float,
     max_technical_features: int,
     selection_method: str = "bonferroni",
+    candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5),
 ) -> FeatureSpec | None:
     """Discover one feature specification using training rows only."""
     positions = np.asarray(list(train_positions), dtype=int)
@@ -241,36 +273,50 @@ def discover_feature_spec(
         return None
     train_returns = returns.iloc[positions]
     target = train_returns[ticker]
-    if selection_method == "bonferroni":
-        selector = _select_one_bonferroni
-    elif selection_method == "bh_fdr":
-        selector = _select_one_bh_fdr
-    else:
+    if selection_method not in {"bonferroni", "bh_fdr"}:
         raise LineageError(f"Unsupported feature-selection method: {selection_method!r}.")
-    chain: list[str] = []
-    current_target = target
-    for _step in range(1, depth + 1):
-        chosen = selector(
-            current_target,
-            train_returns.shift(1),
-            familywise_alpha,
-        )
-        if chosen is None:
-            return None
-        chain.append(chosen)
-        current_target = train_returns[chosen]
-
-    tech_names: list[str] = []
+    if not candidate_lags or any(lag <= 0 for lag in candidate_lags):
+        raise LineageError("Discovery requires positive target-relative candidate lags.")
+    candidate_columns: dict[str, pd.Series] = {}
+    candidate_lookup: dict[str, tuple[str, int]] = {}
+    for ordinal, (candidate_ticker, lag) in enumerate(
+        (ticker_name, lag_value)
+        for ticker_name in train_returns.columns
+        for lag_value in candidate_lags
+    ):
+        name = f"lag_candidate_{ordinal}"
+        candidate_columns[name] = train_returns[candidate_ticker].shift(lag)
+        candidate_lookup[name] = (str(candidate_ticker), int(lag))
+    combined_columns = dict(candidate_columns)
+    technical_lookup: dict[str, str] = {}
     if not technical_features.empty and max_technical_features:
         train_technical = technical_features.iloc[positions]
-        remaining = train_technical.copy()
-        for _ in range(max_technical_features):
-            chosen = selector(target, remaining, familywise_alpha)
-            if chosen is None:
-                break
-            tech_names.append(chosen)
-            remaining = remaining.drop(columns=[chosen])
-    return FeatureSpec(depth=depth, lag_tickers=tuple(chain), technical_features=tuple(tech_names))
+        for ordinal, technical_name in enumerate(train_technical.columns):
+            candidate_name = f"technical_candidate_{ordinal}"
+            # Selection must match the lag-1 feature used by build_design_matrix.
+            combined_columns[candidate_name] = train_technical[technical_name].shift(1)
+            technical_lookup[candidate_name] = str(technical_name)
+
+    ranked = _rank_significant_candidates(
+        target,
+        pd.DataFrame(combined_columns, index=train_returns.index),
+        alpha=familywise_alpha,
+        selection_method=selection_method,
+    )
+    selected_lags = [name for name in ranked if name in candidate_lookup]
+    if len(selected_lags) < depth:
+        return None
+    selected_edges = [candidate_lookup[name] for name in selected_lags[:depth]]
+    selected_technical = [
+        technical_lookup[name] for name in ranked if name in technical_lookup
+    ][:max_technical_features]
+    tech_names = list(selected_technical)
+    return FeatureSpec(
+        depth=depth,
+        lag_tickers=tuple(ticker_name for ticker_name, _lag in selected_edges),
+        lag_sessions=tuple(lag for _ticker_name, lag in selected_edges),
+        technical_features=tuple(tech_names),
+    )
 
 
 def build_design_matrix(
@@ -281,7 +327,7 @@ def build_design_matrix(
     spec: FeatureSpec,
 ) -> tuple[pd.DataFrame, pd.Series]:
     columns: dict[str, pd.Series] = {}
-    for lag, lag_ticker in enumerate(spec.lag_tickers, start=1):
+    for lag_ticker, lag in zip(spec.lag_tickers, spec.lag_sessions):
         columns[f"return__{lag_ticker}__lag{lag}"] = returns[lag_ticker].shift(lag)
     for name in spec.technical_features:
         columns[f"technical__{name}__lag1"] = technical_features[name].shift(1)
@@ -431,6 +477,7 @@ def _select_depth_inside_training(
             depth=depth,
             familywise_alpha=config.familywise_alpha,
             max_technical_features=config.max_technical_features,
+            candidate_lags=config.candidate_lags,
         )
         if spec is None:
             continue
@@ -509,6 +556,7 @@ def evaluate_ticker(
                 depth=depth,
                 familywise_alpha=config.familywise_alpha,
                 max_technical_features=config.max_technical_features,
+            candidate_lags=config.candidate_lags,
             )
             if spec is None:
                 raise LineageError(f"No statistically admissible outer-fold specification for {ticker}.")
@@ -523,7 +571,12 @@ def evaluate_ticker(
             test_positions=window.test_positions,
             min_fit_observations=config.min_fit_observations,
         )
-        own_lag_spec = FeatureSpec(depth=1, lag_tickers=(ticker,), technical_features=())
+        own_lag_spec = FeatureSpec(
+            depth=1,
+            lag_tickers=(ticker,),
+            lag_sessions=(1,),
+            technical_features=(),
+        )
         own_metrics, own_probabilities, own_truth = _fit_and_score_spec(
             ticker=ticker,
             returns=returns,
@@ -593,6 +646,7 @@ def evaluate_ticker(
                 depth=final_depth,
                 familywise_alpha=config.familywise_alpha,
                 max_technical_features=config.max_technical_features,
+            candidate_lags=config.candidate_lags,
             )
     if final_spec is None:
         reasons.append("NO_FINAL_ADMISSIBLE_SPECIFICATION")

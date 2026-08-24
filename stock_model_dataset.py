@@ -88,11 +88,11 @@ def build_stock_model_dataset(
         raise LineageError("Target ticker has no row for the completed source session.")
 
     features: dict[str, pd.Series] = {}
-    for depth, lag_ticker in enumerate(universe_entry.lag_tickers, start=1):
+    for lag_ticker, lag in zip(universe_entry.lag_tickers, universe_entry.lag_sessions):
         volume_mean = volumes[lag_ticker].rolling(30, min_periods=30).mean()
         volume_ratio = volumes[lag_ticker] / volume_mean
-        name = f"{lag_ticker}_return_x_volume_ratio_lag{depth}"
-        features[name] = (returns[lag_ticker] * volume_ratio).shift(depth)
+        name = f"{lag_ticker}_return_x_volume_ratio_lag{lag}"
+        features[name] = (returns[lag_ticker] * volume_ratio).shift(lag)
 
     technical = target_rows[list(TECHNICAL_COLUMNS)].copy()
     technical["DI_Spread"] = technical["Plus_DI_14d"] - technical["Minus_DI_14d"]
@@ -113,15 +113,15 @@ def build_stock_model_dataset(
 
     # A prediction for the next session uses exactly the source-session state.
     prediction_raw: dict[str, float] = {}
-    for depth, lag_ticker in enumerate(universe_entry.lag_tickers, start=1):
-        history_date_position = returns.index.get_loc(source_ts) - (depth - 1)
+    for lag_ticker, lag in zip(universe_entry.lag_tickers, universe_entry.lag_sessions):
+        history_date_position = returns.index.get_loc(source_ts) - (lag - 1)
         if history_date_position < 29:
             raise LineageError("Insufficient history for prediction volume ratios.")
         observed_date = returns.index[history_date_position]
         volume_window = volumes[lag_ticker].iloc[history_date_position - 29:history_date_position + 1]
         if volume_window.isna().any() or float(volume_window.mean()) <= 0:
             raise LineageError(f"Invalid prediction volume history for {lag_ticker}.")
-        name = f"{lag_ticker}_return_x_volume_ratio_lag{depth}"
+        name = f"{lag_ticker}_return_x_volume_ratio_lag{lag}"
         prediction_raw[name] = float(returns.at[observed_date, lag_ticker]) * (
             float(volumes.at[observed_date, lag_ticker]) / float(volume_window.mean())
         )

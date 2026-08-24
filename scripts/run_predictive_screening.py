@@ -34,8 +34,19 @@ def main() -> int:
     parser.add_argument("--cutoff-utc", required=True)
     parser.add_argument("--tickers", help="Comma-separated controlled scope; default is all snapshot tickers.")
     parser.add_argument("--code-version", required=True)
-    parser.add_argument("--min-depth", type=int, default=3)
+    parser.add_argument("--min-depth", type=int, default=1)
     parser.add_argument("--max-depth", type=int, default=5)
+    parser.add_argument(
+        "--candidate-lags",
+        required=True,
+        help="Preregistered comma-separated target-relative session lags, for example 1,2,5,7.",
+    )
+    parser.add_argument(
+        "--purge-sessions",
+        type=int,
+        required=True,
+        help="Outer/inner embargo in sessions; must cover the largest candidate lag.",
+    )
     parser.add_argument("--min-train-sessions", type=int, default=504)
     parser.add_argument(
         "--training-window-sessions",
@@ -53,6 +64,14 @@ def main() -> int:
         help="Pre-registered evaluation family; both are evidence-only.",
     )
     args = parser.parse_args()
+    try:
+        candidate_lags = tuple(int(item.strip()) for item in args.candidate_lags.split(","))
+    except ValueError as exc:
+        raise SystemExit("--candidate-lags must contain only integer session offsets.") from exc
+    if not candidate_lags or any(lag <= 0 for lag in candidate_lags):
+        raise SystemExit("--candidate-lags must contain positive session offsets.")
+    if len(set(candidate_lags)) != len(candidate_lags):
+        raise SystemExit("--candidate-lags cannot contain duplicates.")
     source_session = date.fromisoformat(args.source_session_date)
     cutoff = datetime.fromisoformat(args.cutoff_utc.replace("Z", "+00:00"))
     if cutoff.tzinfo is None:
@@ -93,6 +112,8 @@ def main() -> int:
         min_oos_sessions=args.min_oos_sessions,
         min_depth=args.min_depth,
         max_depth=args.max_depth,
+        candidate_lags=candidate_lags,
+        purge_sessions=args.purge_sessions,
         min_fit_observations=args.min_fit_observations,
         eligibility_hypotheses=len(tickers),
     )
@@ -128,6 +149,7 @@ def main() -> int:
                 fixed_spec = FeatureSpec(
                     depth=1,
                     lag_tickers=(ticker,),
+                    lag_sessions=(1,),
                     technical_features=(
                         "MARKET_RETURN",
                         "VIX_CLOSE",

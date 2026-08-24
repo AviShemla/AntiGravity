@@ -78,12 +78,15 @@ class ModelInputReaderTests(unittest.TestCase):
             Result(["row_count", "ticker_count"], [[1, 1]]),
             Result(
                 ["ticker", "selection_rank", "oos_accuracy", "causal_depth",
-                 "lag1_ticker", "lag2_ticker", "lag3_ticker", "lag4_ticker", "lag5_ticker"],
-                [["GPC", 1, 0.6, 3, "GPC", "GPC", "GPC", None, None]],
+                 "lag1_ticker", "lag2_ticker", "lag3_ticker", "lag4_ticker", "lag5_ticker",
+                 "lag1_sessions", "lag2_sessions", "lag3_sessions", "lag4_sessions", "lag5_sessions"],
+                [["GPC", 1, 0.6, 3, "GPC", "GPC", "GPC", None, None,
+                  7, 5, 2, None, None]],
             ),
         ])
         entries = load_stock_universe_config(db, snapshot)
         self.assertEqual(entries[0].lag_tickers, ("GPC", "GPC", "GPC"))
+        self.assertEqual(entries[0].lag_sessions, (7, 5, 2))
 
     def test_incomplete_lag_chain_fails_closed(self):
         snapshot = InputSnapshot(
@@ -94,11 +97,13 @@ class ModelInputReaderTests(unittest.TestCase):
             Result(["row_count", "ticker_count"], [[1, 1]]),
             Result(
                 ["ticker", "selection_rank", "oos_accuracy", "causal_depth",
-                 "lag1_ticker", "lag2_ticker", "lag3_ticker", "lag4_ticker", "lag5_ticker"],
-                [["GPC", 1, 0.6, 3, "GPC", None, "GPC", None, None]],
+                 "lag1_ticker", "lag2_ticker", "lag3_ticker", "lag4_ticker", "lag5_ticker",
+                 "lag1_sessions", "lag2_sessions", "lag3_sessions", "lag4_sessions", "lag5_sessions"],
+                [["GPC", 1, 0.6, 3, "GPC", None, "GPC", None, None,
+                  7, 5, 2, None, None]],
             ),
         ])
-        with self.assertRaisesRegex(LineageError, "incomplete lag chain"):
+        with self.assertRaisesRegex(LineageError, "incomplete lag specification"):
             load_stock_universe_config(db, snapshot)
 
 

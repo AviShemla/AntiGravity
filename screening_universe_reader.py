@@ -44,7 +44,9 @@ def load_screening_universe(
         raise LineageError("Screening run source session mismatch.")
     result = db.execute(
         """SELECT ticker,oos_accuracy,selected_depth,lag1_ticker,lag2_ticker,
-        lag3_ticker,lag4_ticker,lag5_ticker,feature_spec_json
+        lag3_ticker,lag4_ticker,lag5_ticker,
+        lag1_sessions,lag2_sessions,lag3_sessions,lag4_sessions,lag5_sessions,
+        feature_spec_json
         FROM predictive_screening_results
         WHERE screening_run_id=? AND eligible=1
         ORDER BY brier_score ASC,calibration_error ASC,ticker ASC LIMIT ?""",
@@ -58,19 +60,33 @@ def load_screening_universe(
             raise LineageError("Eligible screening row has invalid depth.")
         lags = tuple(str(row[f"lag{i}_ticker"] or "").strip().upper() for i in range(1, depth + 1))
         if any(not ticker for ticker in lags):
-            raise LineageError("Eligible screening row has incomplete lag chain.")
+            raise LineageError("Eligible screening row has incomplete lag tickers.")
+        lag_sessions = tuple(
+            int(row[f"lag{i}_sessions"])
+            for i in range(1, depth + 1)
+            if row[f"lag{i}_sessions"] is not None
+        )
+        if len(lag_sessions) != depth or any(lag <= 0 for lag in lag_sessions):
+            raise LineageError("Eligible screening row has incomplete lag sessions.")
         try:
             feature_spec = json.loads(str(row["feature_spec_json"]))
         except (TypeError, ValueError) as exc:
             raise LineageError("Eligible screening row has invalid feature specification.") from exc
         if not isinstance(feature_spec, dict) or int(feature_spec.get("depth", 0)) != depth:
             raise LineageError("Eligible screening feature specification disagrees with depth.")
+        if tuple(feature_spec.get("lag_tickers", ())) != lags:
+            raise LineageError("Eligible screening JSON disagrees with lag tickers.")
+        if tuple(feature_spec.get("lag_sessions", ())) != lag_sessions:
+            raise LineageError("Eligible screening JSON disagrees with lag sessions.")
+        if feature_spec.get("lag_semantics") != "target_relative_sessions":
+            raise LineageError("Eligible screening row lacks target-relative lag semantics.")
         candidates.append(StockUniverseEntry(
             ticker=str(row["ticker"]).strip().upper(),
             selection_rank=rank,
             oos_accuracy=float(row["oos_accuracy"]),
             causal_depth=depth,
             lag_tickers=lags,
+            lag_sessions=lag_sessions,
         ))
     return ScreeningUniverse(
         screening_run_id=screening_run_id,

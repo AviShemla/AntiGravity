@@ -28,7 +28,9 @@ def frame(days=90):
 
 class StockModelDatasetTests(unittest.TestCase):
     def entry(self):
-        return StockUniverseEntry("AAA", 1, 0.6, 2, ("BBB", "CCC"))
+        return StockUniverseEntry(
+            "AAA", 1, 0.6, 2, ("BBB", "CCC"), lag_sessions=(7, 2)
+        )
 
     def test_prediction_uses_completed_source_without_fake_outcome(self):
         data, dates = frame()
@@ -47,8 +49,9 @@ class StockModelDatasetTests(unittest.TestCase):
             data, self.entry(), source_session_date=dates[-1].date(),
             prediction_date=(dates[-1] + pd.offsets.BDay(1)).date(), lookback_sessions=30,
         )
-        self.assertIn("BBB_return_x_volume_ratio_lag1", result.feature_names)
+        self.assertIn("BBB_return_x_volume_ratio_lag7", result.feature_names)
         self.assertIn("CCC_return_x_volume_ratio_lag2", result.feature_names)
+        self.assertNotIn("BBB_return_x_volume_ratio_lag1", result.feature_names)
 
     def test_future_observation_is_rejected(self):
         data, dates = frame()

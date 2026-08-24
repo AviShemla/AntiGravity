@@ -21,7 +21,9 @@ class DB:
 RUN_COLUMNS = ["screening_run_id", "market_snapshot_id", "source_session_date", "status"]
 RESULT_COLUMNS = [
     "ticker", "oos_accuracy", "selected_depth", "lag1_ticker", "lag2_ticker",
-    "lag3_ticker", "lag4_ticker", "lag5_ticker", "feature_spec_json",
+    "lag3_ticker", "lag4_ticker", "lag5_ticker",
+    "lag1_sessions", "lag2_sessions", "lag3_sessions", "lag4_sessions", "lag5_sessions",
+    "feature_spec_json",
 ]
 
 
@@ -45,10 +47,13 @@ class ScreeningUniverseReaderTests(unittest.TestCase):
     def test_complete_candidate_is_loaded(self):
         universe = self.load([[
             "AAA", 0.61, 3, "BBB", "CCC", "DDD", None, None,
-            '{"depth":3,"lag_tickers":["BBB","CCC","DDD"]}',
+            7, 2, 5, None, None,
+            '{"depth":3,"lag_semantics":"target_relative_sessions",'
+            '"lag_sessions":[7,2,5],"lag_tickers":["BBB","CCC","DDD"]}',
         ]])
         self.assertEqual(universe.disposition, "MODEL_CANDIDATES")
         self.assertEqual(universe.candidates[0].lag_tickers, ("BBB", "CCC", "DDD"))
+        self.assertEqual(universe.candidates[0].lag_sessions, (7, 2, 5))
 
     def test_unvalidated_run_is_rejected(self):
         with self.assertRaisesRegex(LineageError, "not validated"):
@@ -58,6 +63,7 @@ class ScreeningUniverseReaderTests(unittest.TestCase):
         with self.assertRaisesRegex(LineageError, "incomplete"):
             self.load([[
                 "AAA", 0.61, 3, "BBB", None, "DDD", None, None,
+                7, 2, 5, None, None,
                 '{"depth":3}',
             ]])
 

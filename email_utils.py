@@ -7,10 +7,13 @@ import os
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 465
-SENDER_EMAIL = "avi.shemla@gmail.com"
-SENDER_PASSWORD = "pkga yfjk rwdy rgpu"
+SENDER_EMAIL = os.environ.get("GMAIL_USER")
+SENDER_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
 
 def send_native_email(to_address, subject, html_body, attachments=None, logo_path=None):
+    if not SENDER_EMAIL or not SENDER_PASSWORD:
+        print("Native Gmail credentials are unavailable; email was not sent.")
+        return False
     msg = MIMEMultipart('related')
     msg['Subject'] = subject
     msg['From'] = SENDER_EMAIL
@@ -85,7 +88,7 @@ class MockMailItem:
         send_native_email(self.To, self.Subject, self.HTMLBody, self.attachments, self.logo_path)
 
 class MockAccount:
-    SmtpAddress = "avi.shemla@gmail.com"
+    SmtpAddress = SENDER_EMAIL or ""
 
 class MockSession:
     Accounts = [MockAccount()]

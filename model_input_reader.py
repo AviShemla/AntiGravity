@@ -41,6 +41,23 @@ class StockUniverseEntry:
     oos_accuracy: float | None
     causal_depth: int
     lag_tickers: tuple[str, ...]
+    lag_sessions: tuple[int, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.lag_sessions:
+            object.__setattr__(
+                self, "lag_sessions", tuple(range(1, self.causal_depth + 1))
+            )
+        if self.causal_depth != len(self.lag_tickers) or self.causal_depth != len(self.lag_sessions):
+            raise LineageError("Universe depth, lag tickers, and lag sessions must agree.")
+        if not 1 <= self.causal_depth <= 5:
+            raise LineageError("Universe chain length must be between 1 and 5.")
+        if any(not ticker.strip() for ticker in self.lag_tickers):
+            raise LineageError("Universe contains a blank lag ticker.")
+        if any(not isinstance(lag, int) or lag <= 0 for lag in self.lag_sessions):
+            raise LineageError("Universe lag sessions must be positive integers.")
+        if len(set(zip(self.lag_tickers, self.lag_sessions))) != self.causal_depth:
+            raise LineageError("Universe contains a duplicate ticker/lag edge.")
 
 
 def select_validated_snapshot(
@@ -121,7 +138,8 @@ def load_stock_universe_config(db, snapshot: InputSnapshot) -> list[StockUnivers
     result = db.execute(
         """
         SELECT ticker, selection_rank, oos_accuracy, causal_depth,
-               lag1_ticker, lag2_ticker, lag3_ticker, lag4_ticker, lag5_ticker
+               lag1_ticker, lag2_ticker, lag3_ticker, lag4_ticker, lag5_ticker,
+               lag1_sessions, lag2_sessions, lag3_sessions, lag4_sessions, lag5_sessions
         FROM stock_universe_config
         WHERE snapshot_id = ? AND active = 1
         ORDER BY selection_rank
@@ -143,8 +161,13 @@ def load_stock_universe_config(db, snapshot: InputSnapshot) -> list[StockUnivers
             for i in range(1, depth + 1)
             if row[f"lag{i}_ticker"] is not None and str(row[f"lag{i}_ticker"]).strip()
         )
-        if len(lags) != depth:
-            raise LineageError(f"Stock universe has an incomplete lag chain for {ticker}.")
+        lag_sessions = tuple(
+            int(row[f"lag{i}_sessions"])
+            for i in range(1, depth + 1)
+            if row[f"lag{i}_sessions"] is not None
+        )
+        if len(lags) != depth or len(lag_sessions) != depth:
+            raise LineageError(f"Stock universe has an incomplete lag specification for {ticker}.")
         seen_tickers.add(ticker)
         seen_ranks.add(rank)
         entries.append(
@@ -154,6 +177,7 @@ def load_stock_universe_config(db, snapshot: InputSnapshot) -> list[StockUnivers
                 oos_accuracy=None if row["oos_accuracy"] is None else float(row["oos_accuracy"]),
                 causal_depth=depth,
                 lag_tickers=lags,
+                lag_sessions=lag_sessions,
             )
         )
     if not entries:

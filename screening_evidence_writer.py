@@ -21,6 +21,8 @@ def _spec_json(spec) -> str | None:
         {
             "depth": spec.depth,
             "lag_tickers": list(spec.lag_tickers),
+            "lag_sessions": list(spec.lag_sessions),
+            "lag_semantics": "target_relative_sessions",
             "technical_features": list(spec.technical_features),
         },
         sort_keys=True,
@@ -101,13 +103,16 @@ class ScreeningEvidenceWriter:
     def record_evaluation(self, screening_run_id: str, evaluation: TickerEvaluation) -> None:
         spec = evaluation.final_spec
         lags = list(spec.lag_tickers if spec else ()) + [None] * 5
+        lag_sessions = list(spec.lag_sessions if spec else ()) + [None] * 5
         statements: list[tuple[str, list[object]]] = [(
             "INSERT INTO predictive_screening_results "
             "(screening_run_id,ticker,eligible,rejection_reason,oos_sessions,oos_accuracy,"
             "accuracy_ci_low,accuracy_ci_high,brier_score,log_loss,calibration_error,"
             "majority_accuracy,own_lag_accuracy,own_lag_brier,selected_depth,"
-            "lag1_ticker,lag2_ticker,lag3_ticker,lag4_ticker,lag5_ticker,feature_spec_json) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "lag1_ticker,lag2_ticker,lag3_ticker,lag4_ticker,lag5_ticker,"
+            "lag1_sessions,lag2_sessions,lag3_sessions,lag4_sessions,lag5_sessions,"
+            "feature_spec_json) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             [screening_run_id, evaluation.ticker, int(evaluation.eligible),
              ",".join(evaluation.rejection_reasons) or None,
              sum(len(fold.y_true) for fold in evaluation.folds),
@@ -116,7 +121,7 @@ class ScreeningEvidenceWriter:
              evaluation.model_metrics.log_loss, evaluation.model_metrics.calibration_error,
              evaluation.majority_accuracy, evaluation.own_lag_metrics.accuracy,
              evaluation.own_lag_metrics.brier, None if spec is None else spec.depth,
-             *lags[:5], _spec_json(spec)],
+             *lags[:5], *lag_sessions[:5], _spec_json(spec)],
         )]
         for fold in evaluation.folds:
             statements.append((

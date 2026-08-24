@@ -23,6 +23,7 @@ class FakeDB:
         approval_type="PREDICTIVE_SCREENING",
         screening_snapshot="market-1",
         eligible_lags=("BBB", "CCC"),
+        eligible_lag_sessions=(7, 2),
         stale_ticker=None,
         missing_ticker=None,
         bad_ticker=None,
@@ -32,6 +33,7 @@ class FakeDB:
         self.approval_type = approval_type
         self.screening_snapshot = screening_snapshot
         self.eligible_lags = eligible_lags
+        self.eligible_lag_sessions = eligible_lag_sessions
         self.stale_ticker = stale_ticker
         self.missing_ticker = missing_ticker
         self.bad_ticker = bad_ticker
@@ -81,8 +83,10 @@ class FakeDB:
         if "FROM stock_universe_config" in compact:
             return Result(
                 ["ticker", "selection_rank", "oos_accuracy", "causal_depth",
-                 "lag1_ticker", "lag2_ticker", "lag3_ticker", "lag4_ticker", "lag5_ticker"],
-                [["AAA", 1, 0.61, 2, "BBB", "CCC", None, None, None]],
+                 "lag1_ticker", "lag2_ticker", "lag3_ticker", "lag4_ticker", "lag5_ticker",
+                 "lag1_sessions", "lag2_sessions", "lag3_sessions", "lag4_sessions", "lag5_sessions"],
+                [["AAA", 1, 0.61, 2, "BBB", "CCC", None, None, None,
+                  7, 2, None, None, None]],
             )
         if "FROM model_input_approval_events" in compact:
             if self.approval_decision is None:
@@ -105,10 +109,13 @@ class FakeDB:
             )
         if "FROM predictive_screening_results" in compact:
             lag1, lag2 = self.eligible_lags
+            lag1_sessions, lag2_sessions = self.eligible_lag_sessions
             return Result(
                 ["ticker", "selected_depth", "lag1_ticker", "lag2_ticker",
-                 "lag3_ticker", "lag4_ticker", "lag5_ticker"],
-                [["AAA", 2, lag1, lag2, None, None, None]],
+                 "lag3_ticker", "lag4_ticker", "lag5_ticker",
+                 "lag1_sessions", "lag2_sessions", "lag3_sessions", "lag4_sessions", "lag5_sessions"],
+                [["AAA", 2, lag1, lag2, None, None, None,
+                  lag1_sessions, lag2_sessions, None, None, None]],
             )
         raise AssertionError(f"Unexpected query: {compact}")
 
@@ -157,6 +164,10 @@ class StockModelPreflightTests(unittest.TestCase):
     def test_modified_lag_chain_fails_closed(self):
         with self.assertRaisesRegex(LineageError, "differ from approved screening"):
             self.run_preflight(FakeDB(eligible_lags=("BBB", "DDD")))
+
+    def test_modified_lag_sessions_fail_closed(self):
+        with self.assertRaisesRegex(LineageError, "differ from approved screening"):
+            self.run_preflight(FakeDB(eligible_lag_sessions=(5, 2)))
 
     def test_stale_required_ticker_fails_closed(self):
         with self.assertRaisesRegex(LineageError, "BBB market history is stale"):

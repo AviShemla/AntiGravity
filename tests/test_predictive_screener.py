@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -131,13 +132,115 @@ class PredictiveScreenerTests(unittest.TestCase):
         )
         self.assertEqual(mutated_spec, spec)
 
+    def test_discovery_supports_independent_nonconsecutive_target_relative_lags(self):
+        rng = np.random.default_rng(303)
+        rows = 700
+        driver_a = rng.normal(size=rows)
+        driver_b = rng.normal(size=rows)
+        target = (
+            1.8 * np.roll(driver_a, 7)
+            + 1.4 * np.roll(driver_b, 2)
+            + rng.normal(scale=0.20, size=rows)
+        )
+        returns = pd.DataFrame(
+            {"TARGET": target, "A": driver_a, "B": driver_b}
+        )
+        spec = discover_feature_spec(
+            ticker="TARGET",
+            returns=returns,
+            technical_features=pd.DataFrame(index=returns.index),
+            train_positions=range(600),
+            depth=2,
+            familywise_alpha=0.01,
+            max_technical_features=0,
+            candidate_lags=(2, 7),
+        )
+        self.assertIsNotNone(spec)
+        self.assertEqual(
+            set(zip(spec.lag_tickers, spec.lag_sessions)),
+            {("A", 7), ("B", 2)},
+        )
+
+    def test_bonferroni_family_is_not_weakened_after_first_selection(self):
+        rng = np.random.default_rng(404)
+        rows = 700
+        strong = rng.normal(size=rows)
+        medium = rng.normal(size=rows)
+        target = np.roll(strong, 1) + 0.35 * np.roll(medium, 1)
+        returns = pd.DataFrame(
+            {"TARGET": target, "STRONG": strong, "MEDIUM": medium}
+        )
+
+        def controlled_pvalue(correlation, _samples):
+            effect = abs(correlation)
+            if effect > 0.80:
+                return 0.001
+            if effect > 0.20:
+                return 0.020
+            return 1.0
+
+        with patch(
+            "predictive_screener._normal_two_sided_pvalue_from_correlation",
+            side_effect=controlled_pvalue,
+        ):
+            spec = discover_feature_spec(
+                ticker="TARGET",
+                returns=returns,
+                technical_features=pd.DataFrame(index=returns.index),
+                train_positions=range(600),
+                depth=2,
+                familywise_alpha=0.05,
+                max_technical_features=0,
+                candidate_lags=(1,),
+            )
+        # Three preregistered lag hypotheses imply alpha/3. The medium edge
+        # (p=.02) must remain rejected after the strong edge is selected.
+        self.assertIsNone(spec)
+
+    def test_technical_selection_uses_the_same_lag_one_as_the_model(self):
+        rng = np.random.default_rng(505)
+        rows = 700
+        driver = rng.normal(size=rows)
+        contemporaneous_only = rng.normal(size=rows)
+        target = (
+            1.4 * np.roll(driver, 1)
+            + 1.8 * contemporaneous_only
+            + rng.normal(scale=0.15, size=rows)
+        )
+        returns = pd.DataFrame({"TARGET": target, "DRIVER": driver})
+        technical = pd.DataFrame({"LEAKY_IF_UNSHIFTED": contemporaneous_only})
+        spec = discover_feature_spec(
+            ticker="TARGET",
+            returns=returns,
+            technical_features=technical,
+            train_positions=range(600),
+            depth=1,
+            familywise_alpha=0.01,
+            max_technical_features=1,
+            candidate_lags=(1,),
+        )
+        self.assertIsNotNone(spec)
+        self.assertEqual(spec.lag_tickers, ("DRIVER",))
+        self.assertEqual(spec.technical_features, ())
+
+    def test_feature_spec_rejects_mismatched_lag_sessions(self):
+        with self.assertRaisesRegex(LineageError, "must agree"):
+            FeatureSpec(
+                depth=2,
+                lag_tickers=("A", "B"),
+                lag_sessions=(7,),
+                technical_features=(),
+            )
+
     def test_design_matrix_respects_lag_depth(self):
         returns = pd.DataFrame({"T": [1, 2, 3, 4], "A": [10, 11, 12, 13], "B": [20, 21, 22, 23]})
         technical = pd.DataFrame({"T_RSI": [30, 31, 32, 33]})
-        spec = FeatureSpec(2, ("A", "B"), ("T_RSI",))
+        spec = FeatureSpec(
+            2, ("A", "B"), ("T_RSI",), lag_sessions=(3, 1)
+        )
         X, y = build_design_matrix(ticker="T", returns=returns, technical_features=technical, spec=spec)
-        self.assertEqual(X.loc[2, "return__A__lag1"], 11)
-        self.assertEqual(X.loc[2, "return__B__lag2"], 20)
+        self.assertTrue(pd.isna(X.loc[2, "return__A__lag3"]))
+        self.assertEqual(X.loc[2, "return__B__lag1"], 21)
         self.assertEqual(X.loc[2, "technical__T_RSI__lag1"], 31)
         self.assertEqual(y.tolist(), [1.0, 1.0, 1.0, 1.0])
 

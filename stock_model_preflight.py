@@ -118,7 +118,8 @@ def _verify_screening_source(
 
     eligible = db.execute(
         """SELECT ticker,selected_depth,lag1_ticker,lag2_ticker,lag3_ticker,
-        lag4_ticker,lag5_ticker FROM predictive_screening_results
+        lag4_ticker,lag5_ticker,lag1_sessions,lag2_sessions,lag3_sessions,
+        lag4_sessions,lag5_sessions FROM predictive_screening_results
         WHERE screening_run_id=? AND eligible=1 ORDER BY ticker""",
         [approval.source_evidence_id],
     )
@@ -131,8 +132,18 @@ def _verify_screening_source(
             str(row[f"lag{i}_ticker"] or "").strip().upper()
             for i in range(1, depth + 1)
         )
-        expected[ticker] = (depth, lags)
-    actual = {entry.ticker: (entry.causal_depth, entry.lag_tickers) for entry in universe}
+        lag_sessions = tuple(
+            int(row[f"lag{i}_sessions"])
+            for i in range(1, depth + 1)
+            if row[f"lag{i}_sessions"] is not None
+        )
+        if len(lag_sessions) != depth:
+            raise LineageError("Approved screening evidence has incomplete lag sessions.")
+        expected[ticker] = (depth, lags, lag_sessions)
+    actual = {
+        entry.ticker: (entry.causal_depth, entry.lag_tickers, entry.lag_sessions)
+        for entry in universe
+    }
     if not expected:
         raise LineageError("Approved screening run contains zero eligible stock candidates.")
     if actual != expected:
