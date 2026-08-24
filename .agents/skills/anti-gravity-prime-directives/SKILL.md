@@ -34,8 +34,51 @@ email. Activation requires the mode-transition approval defined in root
 2. **Zero-Hallucination Policy:**
    - NEVER answer questions about system architecture, configuration, pipelines, or logic based on memory or assumptions.
    - YOU MUST ALWAYS use physical tools (`grep_search`, `view_file`, raw DB queries) to verify the exact code/state BEFORE answering.
+   - Apply this to every status, progress percentage, ETA, completion,
+     scheduler, test, deployment, service, database, model, and dashboard claim.
+   - State the observation time, evidence type/source, checked identifier, and
+     observed result. If current evidence is absent, stale, contradictory, or
+     incomplete, report UNKNOWN or UNVERIFIED; never infer the missing fact.
+   - Derive percentages from an explicit denominator of individually verified
+     milestones. Do not estimate them from time spent, apparent activity, or
+     prior conversation.
+   - Treat configured, running, completed, and verified as distinct states and
+     report only the state directly proven.
+   - Report a scheduler as ACTIVE only after reading back its persisted
+     configuration and observing a representative test firing. A suggestion
+     card, accepted command, or creation response is not proof that it will
+     execute.
 
-3. **Dashboard X-Axis, Visual Anomaly & NYSE Market Hours Max Date Verification Rule:**
+3. **Continuity, Liveness, and Stale-Work Control:**
+   - Never say or imply that work continues after the current Codex turn unless
+     a persistent worker is physically verified on its execution host.
+   - RUNNING requires a fresh timestamp, host, PID or systemd unit, exact
+     command/job identifier, start time, and a durable log or checkpoint with a
+     current progress marker.
+   - If those facts are absent, report NOT RUNNING and state that work stops
+     when the turn ends. A plan, intent, open terminal, old PID, or prior status
+     is not liveness evidence.
+   - Long jobs must run on Vultr or another explicitly approved persistent host,
+     be restart-safe and idempotent, and write append-only logs plus resumable
+     checkpoints. They must not depend on the user's laptop, browser, Wi-Fi, or
+     an open chat.
+   - Re-read the worker and newest checkpoint for every update. Never recycle a
+     previous observation as current status.
+   - Declare the maximum expected checkpoint interval before launch. If the
+     checkpoint is older than that interval, mark the job STALLED, inspect
+     process/exit state and logs, and report the cause. Do not silently wait or
+     automatically restart it.
+   - Use bounded, declared retries. The same failure repeating is a blocker.
+   - Calculate ETA only from a timestamped completed/total count and measured
+     recent checkpoint throughput; show the calculation and a range. Otherwise
+     report ETA UNKNOWN.
+   - Completion requires terminal exit evidence, expected output/count checks,
+     and independent readback or QA. A vanished process is not proof.
+   - Before ending any turn that mentions ongoing work, classify it as VERIFIED
+     PERSISTENT, COMPLETE, BLOCKED/STALLED, or NOT RUNNING and include the
+     corresponding evidence.
+
+4. **Dashboard X-Axis, Visual Anomaly & NYSE Market Hours Max Date Verification Rule:**
    - Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly inspect the chart lines for unnatural vertical drops, non-trading gap artifacts, label truncation, or syntax error banners (e.g. Mermaid)!
    - **CRITICAL EXPECTED MAX DATE RULE:** NEVER rely solely on Turso DB to check expected dates (the DB could be fed stale or corrupted data!). Expected max date MUST be calculated independently using real-world NYSE market hours (`pandas_market_calendars`) vs current local time:
      * **Pre-Market (00:00 - 16:30 Israel IDT / 09:30 NYC EST):** Settled Max Date = Latest completed NYSE session date (e.g. `2026-08-19`). Pending Staged Date = Today's session (`2026-08-20`).
@@ -43,31 +86,31 @@ email. Activation requires the mode-transition approval defined in root
      * **Post-Market (23:00 - 23:59 Israel IDT / 16:00 - 24:00 NYC EST):** Settled Max Date = Today's session.
    - Mathematically prove that every dashboard tab matches this exact NYSE business logic max date.
 
-4. **Zero Polling Loop & AI Credit Conservation:**
+5. **Zero Polling Loop & AI Credit Conservation:**
    - NEVER run endless or polling loops (`manage_task` in a tight loop).
    - ALWAYS use `schedule` or system reactive wakeups.
    - Batch multiple sequential calls into a single execution script to save AI credit tokens.
 
-5. **Spike / Drop Double-Validation Rule (>5% Delta):**
+6. **Spike / Drop Double-Validation Rule (>5% Delta):**
    - Any model or portfolio equity spike or drop greater than 5% on a single date **MUST BE DOUBLE-VALIDATED** by pulling a fresh, direct Yahoo Finance price extract (`yfinance` / `download_ticker_with_failover`) for the target holding on that exact date.
    - NEVER assume or report an unverified market surge/crash without physically cross-referencing the underlying asset's real-world price data.
 
-6. **First Contact / Morning Initialization Protocol:**
+7. **First Contact / Morning Initialization Protocol:**
    - On the very first user prompt of a new session/day, the agent MUST read this SKILL document, run `/learn`, and explicitly report to the user that all Prime Directives have been loaded before answering any prompt.
 
-7. **Model Specification Equivalence:**
+8. **Model Specification Equivalence:**
    - Chain length and per-edge lag are separate. Candidate lags may be independent, non-consecutive, non-monotonic, and above five when included in the preregistered search domain.
    - Before execution, compare the actual configuration with the approved lag domain, chain semantics, cutoff, universe, and validation design. A mismatch blocks execution; a discovered mismatch marks the run `FAILED` and makes partial outputs ineligible for promotion or orders.
 
-8. **Prediction Transparency:**
+9. **Prediction Transparency:**
    - Keep raw Bayesian posterior quantities separate from production eligibility.
    - For every stock prediction, and later every ETF prediction, retain an auditable gate table for historical AntiGravity, strict Codex research, and proposed balanced policies. A blocked trade does not erase the model output.
 
-9. **Snapshot and Provider Lineage:**
+10. **Snapshot and Provider Lineage:**
    - Bind every run to an immutable market-data snapshot. Record provider, ticker universe, availability cutoff, transformations, feature/lag specification, code/config versions, sampler, and seed policy.
    - A Yahoo/Tiingo/other-provider fallback must be explicit in lineage and must never silently mix or replace observations within an approved snapshot.
 
-10. **Fresh Quarantine:**
+11. **Fresh Quarantine:**
     - Legacy quarantine membership is historical evidence only. The repaired stock and ETF systems start with empty quarantine state; every future entry/release records ticker, scope, reason code, evidence, date, and policy version.
 
 ---

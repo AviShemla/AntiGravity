@@ -36,20 +36,65 @@ an updated rule here.
    database claims, a health/status check for service claims, source inspection
    for code claims, or visual confirmation for dashboard claims. Report the
    result, the evidence type, and any remaining uncertainty to the user.
-3. **No autonomous production actions.** Legacy directives that require daily
+   This requirement applies to every user-facing status report, percentage,
+   ETA, completion statement, scheduler/automation claim, test result, and
+   deployment claim:
+   - Record the observation time, exact evidence source or command, relevant
+     object/identifier, and observed result.
+   - A progress percentage must name its denominator and derive only from
+     individually verified milestone states; never estimate progress from
+     elapsed time, activity, or memory.
+   - A scheduler is ACTIVE only after its persisted configuration is read
+     back and a representative test firing is observed. A rendered suggestion,
+     accepted command, or successful creation response alone is insufficient.
+   - Distinguish configured, running, completed, and verified; none implies
+     another.
+   - When current evidence is unavailable, stale, contradictory, or incomplete,
+     report UNKNOWN or UNVERIFIED. Never fill the gap with an assumption.
+3. **Continuity and liveness must be proven.** Never imply that work continues
+   after a Codex turn ends unless a persistent worker has been created and
+   verified on its execution host.
+   - A job is RUNNING only when a fresh observation identifies the execution
+     host, PID or systemd unit, exact command/job identifier, start time, and a
+     durable log or checkpoint containing a current progress marker.
+   - If no verified persistent worker exists, state plainly that work stops
+     when the current turn ends. An intention, plan, open terminal, prior PID,
+     or prior status report is not evidence of continuing execution.
+   - Long-running work must execute on Vultr (or another explicitly approved
+     persistent host), be restart-safe and idempotent, and write an append-only
+     log plus resumable checkpoints. It must not depend on the user's laptop,
+     browser, Wi-Fi, or an open chat.
+   - Every progress report must re-read process state and the newest durable
+     checkpoint. Never reuse an earlier observation as current evidence.
+   - Define a maximum expected checkpoint interval before starting a job. If no
+     new checkpoint appears within that interval, classify the job as STALLED,
+     inspect its process/exit state and logs, and report the evidence. Never
+     silently wait, assume progress, or restart a failed job.
+   - Retry only a bounded, declared number of times. Repeated identical failure
+     is a blocker, not evidence of activity.
+   - ETA requires a timestamped completed/total count and measured recent
+     throughput from durable checkpoints. Report the calculation and a range;
+     otherwise report ETA UNKNOWN.
+   - Completion requires a terminal exit state, expected output/count checks,
+     and an independent readback or QA check. Process disappearance alone is
+     not completion.
+   - Before ending a turn that mentions continuing work, report one of:
+     VERIFIED PERSISTENT (with worker evidence), COMPLETE (with QA evidence),
+     BLOCKED/STALLED (with cause), or NOT RUNNING.
+4. **No autonomous production actions.** Legacy directives that require daily
    pipelines, sniper execution, emails, database writes, screenshots, or
    multi-agent audits do not authorize those actions. They run only after a
    specific user request and the safeguards in this file are satisfied.
-4. **Turso is the production SSOT.** Production recommendations, holdings,
+5. **Turso is the production SSOT.** Production recommendations, holdings,
    orders, capital ledgers, scorecards, and reporting must use Turso-backed
    data. CSV and Excel files are not permitted as production data sources,
    caches, write targets, or fallbacks. A read-only legacy import/recovery
    exception requires explicit user approval and must be documented.
-5. **No SQLite.** Do not create, query, update, or introduce SQLite databases
+6. **No SQLite.** Do not create, query, update, or introduce SQLite databases
    or SQLite fallbacks for application behavior, tests representing production,
    or reporting. Existing SQLite artifacts are historical only and must not be
    treated as current truth.
-6. **No Streamlit.** Do not run, restore, patch, add, or depend on Streamlit.
+7. **No Streamlit.** Do not run, restore, patch, add, or depend on Streamlit.
    The supported dashboard stack is FastAPI plus `frontend/`. Remove legacy
    Streamlit files and dependencies only through a reviewed cleanup change.
 
