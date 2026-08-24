@@ -1,7 +1,7 @@
 # Quarantine fresh-start design — 2026-08-24
 
-Status: implementation prepared and unit-tested; Turso reset event and ETF
-registry successor are not yet applied by this document.
+Status: **applied and read back successfully** on 2026-08-24. GitHub
+implementation commit: `5147d922ae45d57e067d11b86ee04921a802df88`.
 
 ## Reconstructed AntiGravity meanings
 
@@ -45,8 +45,24 @@ ledger anomalies remain evidence and must never be deleted.
    forward-only validation used for all ETFs.
 4. Never clear historical SPY dummy rows or the 26 legacy ledger anomalies.
 
-## Production gate
+## Applied Turso evidence
 
-No reset event, registry successor, recommendation, pending order, or service
-change occurs until the migration read-back, exact before/after counts, and
-stock-first model preflight pass.
+- Evidence SHA-256:
+  `6082de5547fc380e0cb27a11ce80f7646c47e4556e4dd4d50764200943f2c467`.
+- Prior registry `etf_registry_20260822_v1`: `SUPERSEDED` and retained.
+- Successor registry `etf_registry_20260824_fresh_v2`: `APPROVED`.
+- Successor usage counts: 11 `MODEL_CANDIDATE`, 14 `VALUATION_ONLY`, one
+  `BENCHMARK`, and zero `QUARANTINED`.
+- Reset events: STOCK and ETF `LEGACY_STRIKE_BLACKLIST`, both effective
+  2026-08-21 and approved by AviShemla.
+- Historical SPY quarantined scorecard rows retained: 20.
+- Protected counts after the write: four `pending_orders`, 299
+  `capital_ledgers`, zero `model_runs`, and zero `model_scorecards`.
+- `ag-sniper`, nightly, and QA services remained inactive/failed-off. The
+  read-only dashboard continued to return HTTP 200.
+
+## Remaining production gate
+
+The reset does not authorize a model recommendation or execution. Stock-first
+model input, per-prediction eligibility comparison, lineage, and no-trade
+preflight must still pass before a future model run or pending-order write.
