@@ -4,14 +4,17 @@
 
 This change schedules evidence-only EOD ingestion. It cannot run models,
 generate recommendations, create orders, send email, or activate the sniper.
-Production market/model tables remain governed by their separate validation
-and promotion processes.
+The dated one-time job performs a full-history provider rebuild and may create
+only a `STAGING` model-input snapshot; it cannot validate or promote it. The
+durable replacement stages provider-native daily revisions only. Production
+market/model tables remain governed by separate validation and promotion.
 
 ## Verified one-time job
 
 The already installed `codex-market-ingestion-20260824-v2.timer` is enabled and
-active. It is scheduled for `2026-08-25 00:30 Asia/Jerusalem` (`2026-08-24
-21:30 UTC`) and targets the completed `2026-08-24` NYSE session. Its preflight
+active. It is scheduled for `2026-08-25 03:30 Asia/Jerusalem` (`2026-08-25
+00:30 UTC`, 20:30 New York) and targets the completed `2026-08-24` NYSE
+session. Its preflight
 passed on 2026-08-24. The sniper, legacy nightly timer, and legacy QA timer were
 all verified inactive and disabled.
 
@@ -22,14 +25,19 @@ record: the dated one-time timer was installed and scheduled.
 ## Durable replacement
 
 `run_post_close_eod_ingestion.py` derives the latest completed session from the
-NYSE calendar and UTC market-close timestamps. It requires a 30-minute grace
-period, verifies protected services remain frozen, verifies secret-file
-metadata, and invokes only the EOD revision stager.
+NYSE calendar and UTC market-close timestamps. The timer waits until 20:30 New
+York because Tiingo states that exchange corrections may arrive until 20:00
+Eastern; the runner also enforces its completed-session grace check. It verifies
+protected services remain frozen, verifies secret-file metadata, and invokes
+only the EOD revision stager.
+
+Provider timing evidence:
+https://www.tiingo.com/documentation/end-of-day
 
 The recurring timer uses `America/New_York` directly:
 
 ```text
-Mon..Fri *-*-* 16:30:00 America/New_York
+Mon..Fri *-*-* 20:30:00 America/New_York
 ```
 
 This avoids Israel/US daylight-saving offset assumptions. `Persistent=yes`
