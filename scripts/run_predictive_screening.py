@@ -34,8 +34,8 @@ def main() -> int:
     parser.add_argument("--cutoff-utc", required=True)
     parser.add_argument("--tickers", help="Comma-separated controlled scope; default is all snapshot tickers.")
     parser.add_argument("--code-version", required=True)
-    parser.add_argument("--min-depth", type=int, default=1)
-    parser.add_argument("--max-depth", type=int, default=5)
+    parser.add_argument("--min-depth", type=int, required=True)
+    parser.add_argument("--max-depth", type=int, required=True)
     parser.add_argument(
         "--candidate-lags",
         required=True,
@@ -47,20 +47,26 @@ def main() -> int:
         required=True,
         help="Outer/inner embargo in sessions; must cover the largest candidate lag.",
     )
-    parser.add_argument("--min-train-sessions", type=int, default=504)
-    parser.add_argument(
+    parser.add_argument("--min-train-sessions", type=int, required=True)
+    training_mode = parser.add_mutually_exclusive_group(required=True)
+    training_mode.add_argument(
         "--training-window-sessions",
         type=int,
-        help="Use only this many trailing sessions in each training fold; omit for expanding history.",
+        help="Use exactly this many trailing sessions in each training fold.",
     )
-    parser.add_argument("--test-sessions", type=int, default=63)
-    parser.add_argument("--outer-folds", type=int, default=4)
-    parser.add_argument("--min-oos-sessions", type=int, default=200)
-    parser.add_argument("--min-fit-observations", type=int, default=100)
+    training_mode.add_argument(
+        "--expanding-training-window",
+        action="store_true",
+        help="Explicitly preregister expanding-history training.",
+    )
+    parser.add_argument("--test-sessions", type=int, required=True)
+    parser.add_argument("--outer-folds", type=int, required=True)
+    parser.add_argument("--min-oos-sessions", type=int, required=True)
+    parser.add_argument("--min-fit-observations", type=int, required=True)
     parser.add_argument(
         "--model-family",
         choices=("selected_chain", "fixed_macro_baseline"),
-        default="selected_chain",
+        required=True,
         help="Pre-registered evaluation family; both are evidence-only.",
     )
     args = parser.parse_args()
