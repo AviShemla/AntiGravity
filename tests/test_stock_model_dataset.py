@@ -7,6 +7,7 @@ import pandas as pd
 from model_input_reader import StockUniverseEntry
 from model_lineage import LineageError
 from stock_model_dataset import build_stock_model_dataset
+from stock_research_features import build_market_regime_features
 
 
 def frame(days=90):
@@ -68,6 +69,38 @@ class StockModelDatasetTests(unittest.TestCase):
             build_stock_model_dataset(
                 data, self.entry(), source_session_date=dates[-1].date(),
                 prediction_date=(dates[-1] + pd.offsets.BDay(1)).date(), lookback_sessions=30,
+            )
+
+    def test_research_features_are_lagged_for_training_and_use_source_for_prediction(self):
+        data, dates = frame()
+        data["Sector"] = data["Ticker"].map({"AAA": "TECH", "BBB": "BANKS", "CCC": "TECH"})
+        research = build_market_regime_features(
+            data, source_session_date=dates[-1].date(), benchmark_ticker="AAA"
+        ).frame
+        required = ("breadth_advance_fraction", "volatility_vix_change_1d")
+        result = build_stock_model_dataset(
+            data,
+            self.entry(),
+            source_session_date=dates[-1].date(),
+            prediction_date=(dates[-1] + pd.offsets.BDay(1)).date(),
+            lookback_sessions=30,
+            research_features=research,
+            required_research_features=required,
+        )
+        self.assertIn("research_breadth_advance_fraction_lag1", result.feature_names)
+        self.assertIn("research_volatility_vix_change_1d_lag1", result.feature_names)
+        self.assertTrue(np.isfinite(result.x_predict).all())
+
+    def test_required_research_feature_is_fail_closed(self):
+        data, dates = frame()
+        with self.assertRaisesRegex(LineageError, "not supplied"):
+            build_stock_model_dataset(
+                data,
+                self.entry(),
+                source_session_date=dates[-1].date(),
+                prediction_date=(dates[-1] + pd.offsets.BDay(1)).date(),
+                lookback_sessions=30,
+                required_research_features=("breadth_advance_fraction",),
             )
 
 

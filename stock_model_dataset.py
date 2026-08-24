@@ -47,6 +47,8 @@ def build_stock_model_dataset(
     source_session_date: date,
     prediction_date: date,
     lookback_sessions: int = 30,
+    research_features: pd.DataFrame | None = None,
+    required_research_features: Sequence[str] = (),
 ) -> StockModelDataset:
     """Build train/predict matrices whose every predictor predates its target.
 
@@ -101,6 +103,32 @@ def build_stock_model_dataset(
     for column in technical.columns:
         features[f"{universe_entry.ticker}_{column}_lag1"] = technical[column].shift(1)
 
+    if required_research_features and research_features is None:
+        raise LineageError("Required research features were not supplied.")
+    if research_features is not None:
+        research = research_features.copy()
+        if "Date" in research.columns:
+            research["Date"] = pd.to_datetime(research["Date"], errors="coerce")
+            research = research.set_index("Date")
+        research.index = pd.to_datetime(research.index, errors="coerce")
+        if research.index.isna().any():
+            raise LineageError("Research feature frame contains invalid dates.")
+        if research.index.duplicated().any():
+            raise LineageError("Research feature frame contains duplicate sessions.")
+        if research.index.max() > source_ts:
+            raise LineageError("Research feature frame contains observations after the source session.")
+        missing_research = sorted(set(required_research_features) - set(research.columns))
+        if missing_research:
+            raise LineageError(f"Required research features are missing: {missing_research}.")
+        selected_research = (
+            list(required_research_features)
+            if required_research_features
+            else list(research.columns)
+        )
+        for column in selected_research:
+            numeric = pd.to_numeric(research[column], errors="coerce")
+            features[f"research_{column}_lag1"] = numeric.reindex(returns.index).shift(1)
+
     feature_frame = pd.DataFrame(features).sort_index()
     target_return = returns[universe_entry.ticker].rename("target_return")
     combined = feature_frame.join(target_return, how="left")
@@ -128,6 +156,11 @@ def build_stock_model_dataset(
     source_technical = technical.loc[source_ts]
     for column in technical.columns:
         prediction_raw[f"{universe_entry.ticker}_{column}_lag1"] = float(source_technical[column])
+    if research_features is not None:
+        if source_ts not in research.index:
+            raise LineageError("Research feature frame has no completed source-session row.")
+        for column in selected_research:
+            prediction_raw[f"research_{column}_lag1"] = float(research.at[source_ts, column])
 
     feature_names = tuple(feature_frame.columns)
     prediction_values = np.asarray([prediction_raw[name] for name in feature_names], dtype=float)
