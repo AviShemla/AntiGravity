@@ -1,17 +1,21 @@
 ---
-name: anti_gravity_prime_directives
-description: Master Single Source of Truth (SSOT) Prime Directives, Zero-Hallucination rules, and 100% Turso DB Table Backing policies for AntiGravity operations.
+name: anti-gravity-prime-directives
+description: AntiGravity QA companion for evidence-backed Turso, model, dashboard, and infrastructure verification; subordinate to repository-root AGENTS.md for operating authority.
 ---
 
-# 🛡️ AntiGravity Master Prime Directives (SSOT)
+# 🛡️ AntiGravity Evidence and QA Companion
 
-This document is the **Single Source of Truth (SSOT)** for all operational rules, financial credit safety constraints, and execution protocols in the AntiGravity system.
+This is a reusable QA companion. Repository-root `AGENTS.md` is the current operational authority and wins on conflict.
 
 ---
 
-## 0. 🏆 DAILY MORNING PRIME GOAL (VERIFICATION CRITERIA FOR PERFECT GREEN)
+## 0. 🏆 OPERATING MODE AND AUTHORITY
 
-Every single morning before market open, the agent MUST verify and achieve 100% GREEN status across all 4 mandatory victory conditions:
+Current mode is **FROZEN/RESEARCH**. The following are verification criteria
+for a future approved automated paper-trading morning; they are not standing
+instructions to start services, run models, stage orders, write Turso, or send
+email. Activation requires the mode-transition approval defined in root
+`AGENTS.md`.
 
 1. **Intraday Sniper Execution:** Live trade day sniper (`ag-sniper.service` on Vultr) executed successfully, monitored price ticks, and guarded all active positions.
 2. **Nightly Pipeline & Staging Execution:** Night run executed cleanly—models re-trained/scored, Turso DB updated, and pending orders for today's market open successfully staged for all 8 personas in `pending_orders`.
@@ -51,6 +55,21 @@ Every single morning before market open, the agent MUST verify and achieve 100% 
 6. **First Contact / Morning Initialization Protocol:**
    - On the very first user prompt of a new session/day, the agent MUST read this SKILL document, run `/learn`, and explicitly report to the user that all Prime Directives have been loaded before answering any prompt.
 
+7. **Model Specification Equivalence:**
+   - Chain length and per-edge lag are separate. Candidate lags may be independent, non-consecutive, non-monotonic, and above five when included in the preregistered search domain.
+   - Before execution, compare the actual configuration with the approved lag domain, chain semantics, cutoff, universe, and validation design. A mismatch blocks execution; a discovered mismatch marks the run `FAILED` and makes partial outputs ineligible for promotion or orders.
+
+8. **Prediction Transparency:**
+   - Keep raw Bayesian posterior quantities separate from production eligibility.
+   - For every stock prediction, and later every ETF prediction, retain an auditable gate table for historical AntiGravity, strict Codex research, and proposed balanced policies. A blocked trade does not erase the model output.
+
+9. **Snapshot and Provider Lineage:**
+   - Bind every run to an immutable market-data snapshot. Record provider, ticker universe, availability cutoff, transformations, feature/lag specification, code/config versions, sampler, and seed policy.
+   - A Yahoo/Tiingo/other-provider fallback must be explicit in lineage and must never silently mix or replace observations within an approved snapshot.
+
+10. **Fresh Quarantine:**
+    - Legacy quarantine membership is historical evidence only. The repaired stock and ETF systems start with empty quarantine state; every future entry/release records ticker, scope, reason code, evidence, date, and policy version.
+
 ---
 
 ## 2. ⚡ INFRASTRUCTURE & DAEMON PROTOCOLS
@@ -58,6 +77,9 @@ Every single morning before market open, the agent MUST verify and achieve 100% 
 1. **Intraday Sniper Guarding (`ag-sniper.service`):**
    - Strictly forbidden from assuming a background daemon is healthy just because its parent orchestrator ran successfully.
    - Explicitly query Vultr server or live API endpoints to verify live trade execution.
+   - Preserve the service capability, but keep it inactive in FROZEN/RESEARCH.
+     Starting it requires an explicitly approved paper/live mode and all
+     pre-execution gates in root `AGENTS.md`.
 
 2. **Deadlocked Local Task Cleanup:**
    - If a background task querying Turso via `libsql_client` hangs without returning, explicitly terminate it (`manage_task(Action='kill')`) to prevent credit drain and memory leaks.
@@ -73,7 +95,9 @@ Every single morning before market open, the agent MUST verify and achieve 100% 
 
 ## 3. 🛡️ SPECIALIZED MULTI-AGENT QA ARCHITECTURE (ZERO-TOLERANCE PROTOCOL)
 
-To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy, the morning audit is divided into 4 specialized subagents led by a Master QA Orchestrator:
+When the user requests an audit and the risk/scope justifies delegation, the QA
+work may be divided among the following specialized roles. This section does
+not require spawning agents or running the audit automatically:
 
 1. **`qa_master_orchestrator` (Lead Coordinator):**
    - Coordinates all specialized QA auditors, aggregates proofs, and generates the unified Morning Clearance Report.
@@ -98,8 +122,13 @@ To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy
 
 ---
 
-## 4. 🛠️ REUSABLE EXECUTABLE AUDIT TOOLS
+## 4. 🛠️ REUSABLE AUDIT RULES
 
-- **Pre-Market & Holdings Execution Audit (All 8 Personas):** `py C:\Users\AviShemla\AntiGravity\print_intraday_execution_table.py` *(Supports optional `--date YYYY-MM-DD` parameter. If omitted, dynamically queries `MAX(date)` from Turso DB with ZERO hardcoded dates).*
-- **Full Dashboard Screenshot QA:** `py C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f\scratch\capture_all_5_tabs.py`
-
+- Run audit tools only from the canonical Vultr-hosted Git worktree or another
+  explicitly approved execution environment; stale Windows-local and Gemini
+  scratch paths are not authoritative.
+- Query Turso directly for holdings/order/model facts and record the query,
+  cutoff, row counts, and returned identifiers without exposing credentials.
+- Dashboard claims require live API evidence plus visual inspection of every
+  affected tab, including X-axis/session continuity.
+- Audits are read-only unless the user separately approves a scoped repair.

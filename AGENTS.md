@@ -21,7 +21,7 @@ system only after the user authorizes access.
 ## Operating authority and non-negotiables
 
 This file is the live operational authority for work in this repository. If it
-conflicts with `.agents/skills/anti_gravity_prime_directives/SKILL.md`,
+   conflicts with `.agents/skills/anti-gravity-prime-directives/SKILL.md`,
 `AntiGravity_Master_Blueprint.md`, `SYSTEM_STATE.md`, a historical note, or a
 legacy script, this file takes precedence unless the user explicitly approves
 an updated rule here.
@@ -52,6 +52,22 @@ an updated rule here.
 6. **No Streamlit.** Do not run, restore, patch, add, or depend on Streamlit.
    The supported dashboard stack is FastAPI plus `frontend/`. Remove legacy
    Streamlit files and dependencies only through a reviewed cleanup change.
+
+### Operating mode and automation authority
+
+- The current mode is **FROZEN/RESEARCH**. The sniper, nightly pipeline,
+  watchdog, email dispatcher, model promotion, order staging, and any other
+  automatic action remain inactive unless the user explicitly authorizes a
+  mode change or a specific run.
+- Preserve those capabilities in source and configuration; freezing authority
+  is not permission to delete them. Activation progresses only through
+  **FROZEN/RESEARCH -> PAPER-MANUAL -> PAPER-AUTOMATED -> LIVE**.
+- A mode transition requires recorded scope, prerequisites, risk controls,
+  rollback/kill-switch procedure, verification evidence, and explicit user
+  approval. Approval for one run or one component does not activate another.
+- Legacy instructions that say an agent "must" run the sniper, nightly jobs,
+  email, Prefect recovery, screenshots, or healing are capability descriptions,
+  not current authority. The safer rule in this file controls.
 
 ## Capital Safety Charter
 
@@ -219,13 +235,35 @@ snapshot behavior as **unverified** rather than current.
 ## Model dependency contract — user-stated intent, pending implementation proof
 
 - The stock layer is intended to be a causal Bayesian/PyMC network whose edges
-  may use different empirically selected lags. The historical implementation
-  is constrained to predictors up to lag 5, but that is not the theoretical
-  contract: a candidate edge may require lag 2, 5, 7, or another defensible
-  horizon. Lag selection must use training information only, control the
-  multiple-testing/overfitting risk, and pass out-of-sample validation. Its
+  may use independently selected lags. **Chain length and per-edge lag are
+  separate parameters.** A chain need not have five edges, and its lag tuple
+  need not be consecutive, monotonic, or capped at five; for example, a
+  candidate may use lags 7, 5, and 2. The lag search domain, maximum chain
+  length, edge direction, and whether lags are target-relative or
+  edge-relative must be preregistered before a run. Lag selection must use
+  training information only, control multiple-testing/overfitting risk, and
+  pass untouched outer walk-forward validation. Its
   dated, statistically defensible outputs are intended to inform ETF-model
   priors and/or ETF feature inputs, not merely a dashboard display.
+- Before any model run, a **spec-equivalence gate** must compare the executable
+  configuration with the approved model contract. A mismatch blocks the run.
+  If discovered after launch, stop safely, mark the run `FAILED` with the exact
+  rejected assumption, retain evidence, and prohibit every partial output from
+  promotion, order staging, or sniper consumption.
+- Preserve the raw Bayesian posterior output separately from decision policy.
+  For every prediction, report the historical AntiGravity eligibility result,
+  the stricter Codex research result, and a proposed balanced result with each
+  individual gate and reason visible. Never silently turn a probabilistic model
+  into a deterministic claim, and never hide all research output merely because
+  a production gate blocks trading.
+- Every run must bind to an immutable input snapshot and record data provider,
+  symbol universe, available-at cutoff, feature/lag specification, code commit,
+  configuration hash, sampler, seed policy, and output lineage. A fallback
+  provider cannot silently change the snapshot.
+- Historical stock/ETF quarantine membership and automatic release rules are
+  evidence only. Start the repaired system with a fresh, empty quarantine;
+  future entries and releases require recorded reason codes, dates, evidence,
+  and the approved policy version.
 - The ETF layer is separately Bayesian/PyMC. It must use the relevant
   stock-derived evidence and its identified constituent "whales" to weight and
   re-evaluate the ETF. The dynamic universe may replace an ETF when the
@@ -254,7 +292,7 @@ snapshot behavior as **unverified** rather than current.
 
 ## Supporting references
 
-- `.agents/skills/anti_gravity_prime_directives/SKILL.md`: production QA and
+- `.agents/skills/anti-gravity-prime-directives/SKILL.md`: production QA and
   operating directives.
 - `AntiGravity_Master_Blueprint.md`: architecture history and recovery notes.
 - `Architecture_Map.html`: visual component/data-flow map.
