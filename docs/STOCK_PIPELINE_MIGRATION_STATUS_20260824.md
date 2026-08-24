@@ -3,14 +3,14 @@
 Mode: research/paper migration. No model was fitted, no recommendation or
 order was created, and no trading service was activated during this work.
 
-## Friday market snapshot candidate
+## Friday validated market snapshot
 
-Candidate snapshot:
+Validated snapshot:
 `market_features_2026-08-21_eee28adc62cbed61`.
 
 Direct Turso evidence:
 
-- Status remains `STAGING`.
+- Status is `VALIDATED`.
 - Source session: `2026-08-21`.
 - Provider declaration: `TIINGO_EOD+YAHOO_FINANCE`.
 - Stored content checksum:
@@ -30,10 +30,10 @@ Direct Turso evidence:
 - Friday OHLC comparison against that Tiingo delta covered all 471 tickers.
   Provider values differ at sub-cent precision for most symbols; maximum
   absolute differences were approximately 0.00503 or less for each OHLC
-  field. No tolerance or rounding rule has been used to promote the snapshot.
-
-Promotion remains a separate owner-approved database action. The snapshot has
-not been promoted by this checkpoint.
+  field.
+- A direct Turso readback on 2026-08-24 confirmed the exact snapshot is
+  `VALIDATED`, with 582,798 expected rows, 471 expected tickers, and
+  `available_at_utc=2026-08-23T06:46:36.910435+00:00`.
 
 ## Recovered stock migration modules
 
@@ -64,19 +64,18 @@ produce `NO_TRADE`, but cannot hide or rewrite the model prediction.
 
 ## Verification
 
-The isolated Vultr test environment passed 65 focused tests covering input
-governance, feature freshness, screening, sampler QA, stock dataset creation,
-stock preflight, posterior summary, and eligibility comparison.
+The isolated Vultr test environment passed the focused stock checks. The full
+protected-environment repository suite subsequently passed 199 of 199 tests on
+2026-08-24.
 
 ## Remaining gates before a stock model run
 
-1. Owner approval to promote the exact Friday market snapshot above.
-2. A Friday predictive-screening run and explicit review of its complete
+1. A Friday predictive-screening run and explicit review of its complete
    results. This is append-only research evidence, not an order.
-3. An approved Friday stock-universe snapshot derived from reviewed screening
+2. An approved Friday stock-universe snapshot derived from reviewed screening
    evidence. Zero eligible candidates must remain an explicit no-trade result.
-4. A no-write stock preflight against the exact market and universe snapshots.
-5. Separate owner approval before fitting PyMC or writing any model scorecard.
+3. A no-write stock preflight against the exact market and universe snapshots.
+4. Separate owner approval before fitting PyMC or writing any model scorecard.
 
 `ag-sniper.service`, `antigravity-nightly.timer`, and
 `antigravity-qa-watchdog.timer` must remain inactive and disabled throughout
