@@ -17,6 +17,11 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from model_lineage import LineageError
+from stock_lag_governance import (
+    HORIZON_REVIEW_INTERVAL_SESSIONS,
+    INITIAL_STOCK_LAG_CONTRACT_ID,
+    INITIAL_STOCK_LAG_GOVERNANCE,
+)
 
 
 @dataclass(frozen=True)
@@ -34,6 +39,8 @@ class ScreeningConfig:
     min_depth: int = 1
     max_depth: int = 5
     candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5)
+    lag_horizon_contract_id: str = INITIAL_STOCK_LAG_CONTRACT_ID
+    horizon_review_interval_sessions: int = HORIZON_REVIEW_INTERVAL_SESSIONS
     max_technical_features: int = 3
     familywise_alpha: float = 0.01
     max_calibration_error: float = 0.12
@@ -61,6 +68,16 @@ class ScreeningConfig:
             raise LineageError("Purge/embargo must cover the maximum candidate lag.")
         if not 1 <= self.min_depth <= self.max_depth <= 5:
             raise LineageError("Predictive chain length must be between 1 and 5.")
+        if self.lag_horizon_contract_id != INITIAL_STOCK_LAG_CONTRACT_ID:
+            raise LineageError("Unknown or unapproved lag-horizon governance contract.")
+        if self.horizon_review_interval_sessions != HORIZON_REVIEW_INTERVAL_SESSIONS:
+            raise LineageError("Lag-horizon review interval differs from the approved contract.")
+        INITIAL_STOCK_LAG_GOVERNANCE.validate_search(
+            minimum_depth=self.min_depth,
+            maximum_depth=self.max_depth,
+            candidate_lags=self.candidate_lags,
+            purge_sessions=self.purge_sessions,
+        )
         if self.min_oos_sessions > self.test_sessions * self.outer_folds:
             raise LineageError("Minimum OOS sessions exceed the configured outer test capacity.")
         if not 0 < self.familywise_alpha < 0.1:
