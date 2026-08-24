@@ -71,6 +71,10 @@ class EligibilityComparison:
     codex_action: Recommendation
     balanced_action: Recommendation
     legacy_allocation_fraction: float
+    shadow_allocation_fraction: float
+    legacy_vix_multiplier: float
+    shadow_vix_multiplier: float
+    hard_gate_failures: tuple[str, ...]
     rows: tuple[ComparisonRow, ...]
 
 
@@ -117,6 +121,29 @@ def _legacy_vix_multiplier(persona: str, vix_close: float) -> float:
     return 0.0 if vix_close > 30.0 else (0.8 if vix_close > 20.0 else 1.0)
 
 
+SHADOW_VIX_BANDS = {
+    # These are comparison hypotheses, not approved production thresholds.
+    # They reuse AG's existing transition/cutoff bounds while replacing the
+    # discontinuous zero allocation with a visible 25% sizing floor.
+    "Conservative": (20.0, 25.0, 0.25),
+    "Neutral": (20.0, 30.0, 0.25),
+    "BallsForBrains": (35.0, 45.0, 0.25),
+}
+
+
+def shadow_vix_multiplier(persona: str, vix_close: float) -> float:
+    """Return a continuous shadow-only sizing multiplier in ``[floor, 1]``."""
+    if persona not in SHADOW_VIX_BANDS:
+        raise LineageError("Unknown persona has no shadow VIX policy.")
+    start, end, floor = SHADOW_VIX_BANDS[persona]
+    if vix_close <= start:
+        return 1.0
+    if vix_close >= end:
+        return floor
+    progress = (vix_close - start) / (end - start)
+    return 1.0 - progress * (1.0 - floor)
+
+
 def _legacy_buy_allocation(
     evidence: PredictionEvidence,
     context: DecisionContext,
@@ -140,15 +167,43 @@ def _legacy_buy_allocation(
 
 
 def _hard_evidence_passes(context: DecisionContext) -> bool:
-    return all((
-        context.snapshot_validated,
-        context.universe_approved,
-        context.source_date_aligned,
-        context.model_run_completed,
-        context.sampler_qa_passed,
-        context.research_promotion_approved,
-        not context.quarantined,
-    ))
+    return not hard_gate_failures(context)
+
+
+def hard_gate_failures(context: DecisionContext) -> tuple[str, ...]:
+    """Return explicit evidence failures; sizing conditions never appear here."""
+    checks = (
+        (context.snapshot_validated, "SNAPSHOT_NOT_VALIDATED"),
+        (context.universe_approved, "UNIVERSE_NOT_APPROVED"),
+        (context.source_date_aligned, "SOURCE_DATE_MISMATCH"),
+        (context.model_run_completed, "MODEL_RUN_NOT_COMPLETED"),
+        (context.sampler_qa_passed, "SAMPLER_QA_FAILED"),
+        (context.research_promotion_approved, "RESEARCH_PROMOTION_NOT_APPROVED"),
+        (not context.quarantined, "ACTIVE_EVIDENCE_QUARANTINE"),
+    )
+    return tuple(reason for passed, reason in checks if not passed)
+
+
+def _shadow_buy_allocation(
+    evidence: PredictionEvidence,
+    context: DecisionContext,
+    persona: LegacyPersona,
+    vix_multiplier: float,
+) -> float:
+    """Compute shadow sizing without AG's fixed-allocation fallback."""
+    net_return = evidence.expected_return - context.round_trip_cost
+    if net_return <= 0.0 or evidence.expected_risk <= 0.0:
+        return 0.0
+    payoff = net_return / evidence.expected_risk
+    raw_kelly = max(
+        0.0,
+        evidence.probability_up_mean
+        - (1.0 - evidence.probability_up_mean) / payoff,
+    )
+    return min(
+        raw_kelly * persona.kelly_multiplier * vix_multiplier,
+        persona.maximum_allocation,
+    )
 
 
 def compare_stock_prediction(
@@ -172,6 +227,7 @@ def compare_stock_prediction(
     persona = LEGACY_PERSONAS[persona_name]
     raw_signal = legacy_raw_signal(evidence.probability_up_mean)
     vix_multiplier = _legacy_vix_multiplier(persona_name, context.vix_close)
+    proposed_vix_multiplier = shadow_vix_multiplier(persona_name, context.vix_close)
     legacy_allocation = _legacy_buy_allocation(evidence, context, persona, vix_multiplier)
     legacy_operational = all((
         not context.legacy_blacklisted,
@@ -186,7 +242,8 @@ def compare_stock_prediction(
         else (Recommendation.SELL if raw_signal is Recommendation.SELL else Recommendation.HOLD)
     )
 
-    hard_pass = _hard_evidence_passes(context)
+    failures = hard_gate_failures(context)
+    hard_pass = not failures
     net_return = evidence.expected_return - context.round_trip_cost
     codex_action = Recommendation.NO_TRADE
     balanced_action = Recommendation.NO_TRADE
@@ -206,6 +263,14 @@ def compare_stock_prediction(
         else:
             balanced_action = Recommendation.HOLD
 
+    shadow_allocation = (
+        _shadow_buy_allocation(
+            evidence, context, persona, proposed_vix_multiplier
+        )
+        if hard_pass and balanced_action is Recommendation.BUY
+        else 0.0
+    )
+
     rows = (
         ComparisonRow(
             "Raw Bayesian output",
@@ -217,13 +282,13 @@ def compare_stock_prediction(
             "REPORTED",
         ),
         ComparisonRow(
-            "Data and lineage",
+            "Hard safety gates",
             "Legacy broker did not prove immutable snapshot/universe lineage here.",
             "UNPROVEN",
             "Validated snapshot, approved universe, aligned source date, completed run required.",
-            "PASS" if hard_pass else "FAIL",
+            "PASS" if hard_pass else ",".join(failures),
             "Same non-negotiable evidence gate.",
-            "PASS" if hard_pass else "FAIL",
+            "PASS" if hard_pass else ",".join(failures),
         ),
         ComparisonRow(
             "Direction strength",
@@ -235,13 +300,22 @@ def compare_stock_prediction(
             balanced_action.value,
         ),
         ComparisonRow(
-            "Expected value",
+            "Kelly sizing",
             "Kelly uses expected return/risk; Neutral and BallsForBrains may fall back to flat allocation.",
             f"allocation={legacy_allocation:.6f}",
-            "Expected return after recorded round-trip cost must have the action's sign.",
-            "PASS" if (codex_action in {Recommendation.BUY, Recommendation.SELL}) else "NO_ACTION",
-            "Same net-return sign gate without requiring the interval to exclude 50%.",
-            "PASS" if (balanced_action in {Recommendation.BUY, Recommendation.SELL}) else "NO_ACTION",
+            "No fixed fallback; non-positive net return, risk, or Kelly remains zero.",
+            f"shadow_allocation={shadow_allocation:.6f}",
+            "Same shadow sizing; model output remains visible when allocation is zero.",
+            f"shadow_allocation={shadow_allocation:.6f}",
+        ),
+        ComparisonRow(
+            "VIX sizing versus gating",
+            "Step multiplier can reduce allocation or hard-block it at the persona cutoff.",
+            f"multiplier={vix_multiplier:.6f}",
+            "Continuous shadow-only sizing; VIX alone cannot upgrade or reject model evidence.",
+            f"multiplier={proposed_vix_multiplier:.6f}",
+            "Backtest the continuous hypothesis before any paper-policy promotion.",
+            "SHADOW_ONLY",
         ),
         ComparisonRow(
             "Operational safety",
@@ -259,5 +333,9 @@ def compare_stock_prediction(
         codex_action=codex_action,
         balanced_action=balanced_action,
         legacy_allocation_fraction=legacy_allocation,
+        shadow_allocation_fraction=shadow_allocation,
+        legacy_vix_multiplier=vix_multiplier,
+        shadow_vix_multiplier=proposed_vix_multiplier,
+        hard_gate_failures=failures,
         rows=rows,
     )
