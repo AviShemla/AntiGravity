@@ -8,6 +8,7 @@ import ast
 import os
 import datetime
 import database_manager
+from dashboard_data_contract import normalize_benchmark, resolve_model_alias_collisions
 
 app = FastAPI(title="AntiGravity Backend API")
 @app.middleware("http")
@@ -25,6 +26,30 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
+
+
+def _approved_pending(persona):
+    pending, status = database_manager.get_approved_pending_order(persona)
+    return pending, {"status": status, "source": "execution_plan_lineage"}
+
+
+def _db_benchmark(chart_dates, ticker="SPY"):
+    if not chart_dates:
+        return [], {"status": "NO_CHART_DATES", "source": "Turso"}
+    dates = [str(value)[:10] for value in chart_dates]
+    rows, evidence = database_manager.get_validated_benchmark_rows(
+        ticker, min(dates), max(dates)
+    )
+    result = normalize_benchmark(dates, rows)
+    evidence.update({
+        "status": result.status if evidence.get("status") == "VALIDATED" else evidence["status"],
+        "source": "Turso",
+        "ticker": ticker,
+        "first_evidence_date": result.first_evidence_date,
+        "last_evidence_date": result.last_evidence_date,
+        "evidence_count": result.evidence_count,
+    })
+    return list(result.values), evidence
 
 def calculate_metrics(df, persona):
     if 'Total_Equity' in df.columns:
@@ -251,7 +276,7 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     
     is_pending = False
     try:
-        pending = database_manager.get_pending_order(p_name)
+        pending, pending_evidence = _approved_pending(p_name)
         if pending and pending.get('date')[:10] >= str(last_row['Date'])[:10]:
             cash = float(pending['target_cash'])
             target_holdings = json.loads(pending['target_holdings_json'])
@@ -280,7 +305,7 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
             else:
                 is_pending = "Only HOLD for today"
     except Exception as e:
-        print(f"Error fetching pending orders: {e}")
+        pending_evidence = {"status": "ERROR", "detail": str(e), "source": "execution_plan_lineage"}
     
     allocations = {'Cash': cash}
     for ticker, data in holdings.items():
@@ -319,13 +344,13 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
             "equity": equity_curve
         },
         "breakdown": breakdown,
-        "is_pending": is_pending
+        "is_pending": is_pending,
+        "pending_evidence": pending_evidence
     }
 
 @app.get("/api/race")
 def get_race_data(mode: str = "Single"):
     all_ledgers = []
-    import yfinance as yf
     
     for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
         p_name = p if mode == "Single" else f"ETF_{p}"
@@ -353,23 +378,13 @@ def get_race_data(mode: str = "Single"):
             "values": plot_df[col].replace({np.nan: None}).tolist()
         }
         
-    try:
-        min_date_str = plot_df.index.min().strftime('%Y-%m-%d')
-        import yfinance as yf
-        yf_df = yf.download('SPY', start=min_date_str, progress=False)
-        if not yf_df.empty:
-            c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
-            spy_close = yf_df[c_col]
-            start_val = float(spy_close.dropna().iloc[0])
-            if start_val > 0:
-                norm_spy = (spy_close / start_val) * 10000.0
-                norm_spy = norm_spy.reindex(plot_df.index).ffill().bfill()
-                series_data["S&P 500 (SPY)"] = {
-                    "dates": norm_spy.index.strftime('%Y-%m-%d').tolist(),
-                    "values": [round(float(v), 2) if v is not None and not np.isnan(v) else None for v in norm_spy.tolist()]
-                }
-    except Exception as e:
-        print(f"[RACE] SPY Benchmark error: {e}")
+    dates = plot_df.index.strftime('%Y-%m-%d').tolist()
+    spy_values, spy_evidence = _db_benchmark(dates)
+    series_data["S&P 500 (SPY)"] = {
+        "dates": dates,
+        "values": spy_values,
+        "evidence": spy_evidence,
+    }
         
     return series_data
 
@@ -535,10 +550,7 @@ def get_olympic_data():
         if not df_db.empty:
             df_merged = df_db.pivot(index='Date', columns='model_name', values='total_equity').reset_index()
         else:
-            merged_path = os.path.join(BASE_DIR, 'financial_data', 'Olympic_Shootout_Results_MASTER.csv')
-            if not os.path.exists(merged_path):
-                merged_path = os.path.join(BASE_DIR, 'Olympic_Shootout_Results_MASTER.csv')
-            df_merged = pd.read_csv(merged_path)
+            raise HTTPException(status_code=404, detail="Database olympic_shootout_master is empty")
 
         df_merged['Date'] = pd.to_datetime(df_merged['Date']).dt.strftime('%Y-%m-%d')
         
@@ -559,7 +571,7 @@ def get_olympic_data():
         is_pending = False
         try:
             df_trial = database_manager.get_ledger('BallsForBrains')
-            pending = database_manager.get_pending_order('BallsForBrains')
+            pending, pending_evidence = _approved_pending('BallsForBrains')
             if pending and not df_trial.empty and pending.get('date')[:10] >= str(df_trial.iloc[-1]['Date'])[:10]:
                 target_holdings = json.loads(pending['target_holdings_json'])
                 last_row = df_trial.iloc[-1]
@@ -592,8 +604,8 @@ def get_olympic_data():
                     is_pending = "PRE-MARKET (PENDING)"
                 else:
                     is_pending = "Only HOLD for today"
-        except:
-            pass
+        except Exception as pending_error:
+            pending_evidence = {"status": "ERROR", "detail": str(pending_error), "source": "execution_plan_lineage"}
         
         def safe_int_rank(val):
             return int(val) if pd.notnull(val) and not np.isnan(val) else 0
@@ -609,29 +621,15 @@ def get_olympic_data():
         
         table_data = format_df_for_display(df_merged.iloc[::-1]).fillna("").to_dict('records')
         
-        # Fetch S&P 500 (SPY) benchmark starting at $10,000 for Olympic chart
-        spy_olympic = [10000.0] * len(df_merged)
-        try:
-            min_date_str = str(df_merged['Date'].min())[:10]
-            import yfinance as yf
-            yf_df = yf.download('SPY', start=min_date_str, progress=False)
-            if not yf_df.empty:
-                c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
-                yf_series = yf_df[c_col]
-                yf_map = dict(zip(yf_series.index.strftime('%Y-%m-%d'), yf_series.values))
-                spy_close = df_merged['Date'].str[:10].map(yf_map).ffill().bfill()
-                first_spy_val = float(spy_close.dropna().iloc[0])
-                if first_spy_val > 0:
-                    spy_olympic = [round(float((v / first_spy_val) * 10000.0), 2) if pd.notnull(v) else 10000.0 for v in spy_close]
-        except Exception as e_spy:
-            print(f"[OLYMPIC] SPY benchmark error: {e_spy}")
+        spy_olympic, spy_evidence = _db_benchmark(df_merged['Date'].tolist())
 
         chart_data = {
             "dates": df_merged['Date'].fillna("").tolist(),
             "EL_CAP": df_merged['EL_CAP (70% Liquidity)'].fillna(0).tolist(),
             "EL_VOLTI": df_merged['EL_VOLTI (70% Stability)'].fillna(0).tolist(),
             "CHAMPION": df_merged['CHAMPION (Live VIP)'].fillna(0).tolist(),
-            "SPY": spy_olympic
+            "SPY": spy_olympic,
+            "SPY_evidence": spy_evidence,
         }
         
         now = datetime.datetime.now()
@@ -643,7 +641,8 @@ def get_olympic_data():
             "metrics": metrics,
             "chart_data": chart_data,
             "table_data": table_data,
-            "eta_timestamp": expected_finish.isoformat()
+            "eta_timestamp": expected_finish.isoformat(),
+            "pending_evidence": pending_evidence
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -715,54 +714,47 @@ def get_prod_shadow():
             return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'lstm': [], 'spy': [], 'table': [], 'is_pending': False, 'error': 'Database prod_vs_shadow_master is empty'}
             
         ps_map = {'PROD_Bayesian_SV': 'Prod', 'Prod': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1', 'Shadow_LSTM': 'Shadow_LSTM'}
-        df_raw['model_name'] = df_raw['model_name'].map(lambda x: ps_map.get(x, x))
+        resolved_rows, alias_collisions = resolve_model_alias_collisions(
+            df_raw.to_dict('records'), ps_map, {'PROD_Bayesian_SV': 0, 'Prod': 1}
+        )
+        df_raw = pd.DataFrame(resolved_rows)
         df_raw['Date'] = pd.to_datetime(df_raw['date']).dt.strftime('%Y-%m-%d')
         
         df = df_raw.pivot(index='Date', columns='model_name', values='total_equity').reset_index().sort_values('Date').reset_index(drop=True)
         
-        # Ensure all columns exist
+        # Missing model evidence remains null; a flat $10,000 line is fabricated evidence.
         for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1', 'Shadow_LSTM']:
             if col not in df.columns:
-                df[col] = 10000.0
+                df[col] = np.nan
                 
-        # Attach S&P 500 (SPY) Benchmark starting at $10,000
-        try:
-            min_date_str = str(df['Date'].min())[:10]
-            import yfinance as yf
-            yf_df = yf.download('SPY', start=min_date_str, progress=False)
-            if not yf_df.empty:
-                c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
-                yf_series = yf_df[c_col]
-                yf_map = dict(zip(yf_series.index.strftime('%Y-%m-%d'), yf_series.values))
-                spy_close = df['Date'].astype(str).str[:10].map(yf_map).ffill().bfill()
-                first_spy_val = float(spy_close.dropna().iloc[0])
-                if first_spy_val > 0:
-                    df['SPY'] = (spy_close.astype(float) / first_spy_val) * 10000.0
-                else:
-                    df['SPY'] = 10000.0
-            else:
-                df['SPY'] = 10000.0
-        except Exception as e_spy:
-            print(f"[PROD_SHADOW] SPY fetch error: {e_spy}")
-            df['SPY'] = 10000.0
+        spy_values, spy_evidence = _db_benchmark(df['Date'].tolist())
+        df['SPY'] = spy_values
     except Exception as e_db:
         return {'dates': [], 'prod': [], 'trans': [], 'v1': [], 'lstm': [], 'spy': [], 'table': [], 'is_pending': False, 'error': str(e_db)}
 
     is_pending = False
     try:
         df_trial = database_manager.get_ledger('BallsForBrains')
-        pending = database_manager.get_pending_order('BallsForBrains')
-        if not pending.empty and not df_trial.empty:
+        pending, pending_evidence = _approved_pending('BallsForBrains')
+        if pending and not df_trial.empty:
             is_pending = True
-    except:
-        pass
+    except Exception as pending_error:
+        pending_evidence = {"status": "ERROR", "detail": str(pending_error), "source": "execution_plan_lineage"}
 
     def safe_tolist(col):
-        if col not in df.columns: return [10000.0]*len(df)
-        return [round(float(x), 2) if not np.isnan(float(x)) else 10000.0 for x in df[col]]
+        if col not in df.columns: return [None]*len(df)
+        result = []
+        for value in df[col]:
+            try:
+                number = float(value)
+                result.append(round(number, 2) if np.isfinite(number) else None)
+            except (TypeError, ValueError):
+                result.append(None)
+        return result
 
     df_table = df.copy()
     df_table['Date'] = df_table['Date'].astype(str).str[:10]
+    df_table = df_table.astype(object).where(pd.notnull(df_table), None)
 
     return {
         'dates': [str(v)[:10] for v in df['Date'].tolist()],
@@ -772,7 +764,15 @@ def get_prod_shadow():
         'lstm': safe_tolist('Shadow_LSTM'),
         'spy': safe_tolist('SPY'),
         'table': df_table.iloc[::-1].to_dict('records'),
-        'is_pending': is_pending
+        'is_pending': is_pending,
+        'pending_evidence': pending_evidence,
+        'spy_evidence': spy_evidence,
+        'model_alias_evidence': {
+            'status': 'CANONICALIZED',
+            'canonical_source': 'PROD_Bayesian_SV',
+            'legacy_source': 'Prod',
+            'collision_count': len(alias_collisions),
+        }
     }
 
 @app.get('/api/unified_arena')
@@ -786,8 +786,12 @@ def get_unified_arena():
         ps_map = {'PROD_Bayesian_SV': 'Prod', 'Prod': 'Prod', 'Shadow_Transformer': 'Shadow_Transformer', 'Sandbox_V1': 'Sandbox_V1', 'Shadow_LSTM': 'Shadow_LSTM'}
         ol_map = {'EL_CAP (70% Liquidity)': 'EL_CAP', 'EL_VOLTI (70% Stability)': 'EL_VOLTI', 'CHAMPION (Live VIP)': 'CHAMPION'}
         
+        alias_collisions = []
         if not df_ps.empty:
-            df_ps['model_name'] = df_ps['model_name'].map(lambda x: ps_map.get(x, x))
+            resolved_rows, alias_collisions = resolve_model_alias_collisions(
+                df_ps.to_dict('records'), ps_map, {'PROD_Bayesian_SV': 0, 'Prod': 1}
+            )
+            df_ps = pd.DataFrame(resolved_rows)
         if not df_ol.empty:
             df_ol['model_name'] = df_ol['model_name'].map(lambda x: ol_map.get(x, x))
         
@@ -808,35 +812,18 @@ def get_unified_arena():
             df_pivot['Prod'] = df_pivot['Prod'].fillna(df_pivot['CHAMPION'])
             df_pivot = df_pivot.drop(columns=['CHAMPION'], errors='ignore')
             
-        # Attach S&P 500 (SPY) Benchmark starting at $10,000
-        try:
-            min_date_str = str(df_pivot['Date'].min())[:10]
-            import yfinance as yf
-            yf_df = yf.download('SPY', start=min_date_str, progress=False)
-            if not yf_df.empty:
-                c_col = ('Close', 'SPY') if isinstance(yf_df.columns, pd.MultiIndex) else 'Close'
-                yf_series = yf_df[c_col]
-                yf_map = dict(zip(yf_series.index.strftime('%Y-%m-%d'), yf_series.values))
-                spy_close = df_pivot['Date'].astype(str).str[:10].map(yf_map).ffill().bfill()
-                first_spy_val = float(spy_close.dropna().iloc[0])
-                if first_spy_val > 0:
-                    df_pivot['SPY'] = (spy_close.astype(float) / first_spy_val) * 10000.0
-                else:
-                    df_pivot['SPY'] = 10000.0
-            else:
-                df_pivot['SPY'] = 10000.0
-        except Exception as e_spy:
-            df_pivot['SPY'] = 10000.0
+        spy_values, spy_evidence = _db_benchmark(df_pivot['Date'].tolist())
+        df_pivot['SPY'] = spy_values
 
         def safe_tolist(col_name):
-            if col_name not in df_pivot.columns: return [10000.0]*len(df_pivot)
+            if col_name not in df_pivot.columns: return [None]*len(df_pivot)
             res = []
             for v in df_pivot[col_name]:
                 try:
                     fv = float(v)
-                    res.append(round(fv, 2) if not np.isnan(fv) else 10000.0)
-                except:
-                    res.append(10000.0)
+                    res.append(round(fv, 2) if np.isfinite(fv) else None)
+                except (TypeError, ValueError):
+                    res.append(None)
             return res
 
         dates = df_pivot['Date'].tolist()
@@ -853,7 +840,14 @@ def get_unified_arena():
             'etf_whale': safe_tolist('Shadow_ETF_Whale'),
             'neural_safety': safe_tolist('Shadow_Neural_Safety'),
             'spy': safe_tolist('SPY'),
-            'table': table_records
+            'table': table_records,
+            'spy_evidence': spy_evidence,
+            'model_alias_evidence': {
+                'status': 'CANONICALIZED',
+                'canonical_source': 'PROD_Bayesian_SV',
+                'legacy_source': 'Prod',
+                'collision_count': len(alias_collisions),
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

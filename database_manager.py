@@ -42,6 +42,18 @@ def execute_write(query, args=None):
     client.batch([stmt])
 
 
+def close_connection_for_cli_exit():
+    """Close this thread's client when a short-lived CLI audit is finished.
+
+    Long-running services must not call this between requests; it exists only
+    so standalone evidence scripts do not leave a libsql worker thread alive.
+    """
+    client = getattr(_local, 'client', None)
+    if client is not None:
+        client.close()
+        _local.client = None
+
+
 def init_db():
     """Initializes the database schema if it doesn't exist."""
     client = get_connection()
@@ -218,6 +230,66 @@ def get_pending_order(persona):
     if res.rows:
         return dict(zip(res.columns, res.rows[0]))
     return None
+
+
+def get_approved_pending_order(persona):
+    """Return legacy pending data only when an unconsumed approved plan proves it.
+
+    Missing execution-lineage tables are an expected fail-closed state during
+    migration.  Callers receive an evidence status and must not show the legacy
+    pending row as executable.
+    """
+    from dashboard_data_contract import approved_pending_row
+
+    pending = get_pending_order(persona)
+    if pending is None:
+        return None, "NO_PENDING_ROW"
+    try:
+        plans = execute_query(
+            """
+            SELECT ep.plan_id,ep.persona,ep.target_date,ep.pending_payload_sha256,
+                   ep.qa_status,epa.decision AS approval_decision,
+                   epc.plan_id AS consumed_plan_id
+            FROM execution_plans ep
+            LEFT JOIN execution_plan_approvals epa ON epa.plan_id=ep.plan_id
+            LEFT JOIN execution_plan_consumptions epc ON epc.plan_id=ep.plan_id
+            WHERE ep.persona=? AND ep.target_date=?
+            ORDER BY ep.created_at_utc DESC LIMIT 1
+            """,
+            [persona, str(pending["date"])[:10]],
+        )
+    except Exception:
+        return None, "EXECUTION_LINEAGE_UNAVAILABLE"
+    plan = None if plans.empty else plans.iloc[0].to_dict()
+    return approved_pending_row(pending, plan)
+
+
+def get_validated_benchmark_rows(ticker, start_date, end_date):
+    """Read benchmark closes from the latest validated DB snapshot only."""
+    snapshot = execute_query(
+        """
+        SELECT snapshot_id,source_session_date,available_at_utc
+        FROM model_input_snapshots
+        WHERE dataset_type='MARKET_FEATURES' AND status='VALIDATED'
+        ORDER BY source_session_date DESC,available_at_utc DESC LIMIT 1
+        """
+    )
+    if snapshot.empty:
+        return [], {"status": "NO_VALIDATED_MARKET_SNAPSHOT"}
+    row = snapshot.iloc[0]
+    prices = execute_query(
+        """
+        SELECT date,close_price FROM market_daily_features
+        WHERE snapshot_id=? AND ticker=? AND date>=? AND date<=?
+        ORDER BY date ASC
+        """,
+        [str(row["snapshot_id"]), ticker, start_date, end_date],
+    )
+    return prices.to_dict("records"), {
+        "status": "VALIDATED",
+        "snapshot_id": str(row["snapshot_id"]),
+        "source_session_date": str(row["source_session_date"]),
+    }
 
 
 def update_continuity(pipeline_name, date_str):
