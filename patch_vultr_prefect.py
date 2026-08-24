@@ -6,7 +6,7 @@ def deploy():
     print("Starting Vultr Prefect Patch...")
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+    ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
     
     sftp = ssh.open_sftp()
     

@@ -6,7 +6,7 @@ def check_vultr():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+        ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
     except Exception as e:
         print(f"FAILED TO CONNECT TO VULTR: {e}")
         sys.exit(1)

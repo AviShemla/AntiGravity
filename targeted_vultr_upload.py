@@ -5,7 +5,7 @@ print("Starting targeted fast upload...")
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 try:
-    ssh.connect('66.42.118.26', port=22, username='root', password='M,w5_=k@eHA!ecEK')
+    ssh.connect('66.42.118.26', port=22, username='root', password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
     sftp = ssh.open_sftp()
     
     local_json = "C:/Users/AviShemla/AntiGravity/financial_data/Pending_Orders.json"

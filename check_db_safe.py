@@ -4,7 +4,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
 
 # 1. Check DB
 script = """
