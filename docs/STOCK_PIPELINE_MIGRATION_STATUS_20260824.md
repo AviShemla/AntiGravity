@@ -63,7 +63,12 @@ therefore no longer an open migration blocker.
 
 Predictive-chain discovery now searches depth 1 through 5 by default. Each
 selected edge carries its own preregistered positive session lag; chains do
-not have to use consecutive lags or a descending 5→4→3 pattern.
+not have to use consecutive lags or a descending 5→4→3 pattern. The executable
+contract `stock-lag-horizon-v1-20260824` currently permits a finite
+preregistered subset of lags 1 through 7 and requires a formal horizon review
+after every 63 newly completed trading sessions. Seven is an operational cap,
+not a theoretical maximum. The completion audit fails closed when the contract,
+review interval, or maximum lag differs.
 
 The three eligibility lanes are intentionally separate:
 
@@ -80,12 +85,14 @@ produce `NO_TRADE`, but cannot hide or rewrite the model prediction.
 
 ## Verification
 
-The isolated Vultr test environment passed the focused stock checks. After the
-replacement-patch, depth-default, governance-schema, and per-prediction audit
-changes, the full protected Vultr environment passed 251 of 251 tests on
-2026-08-24. Staged secret-pattern scans found zero matches, `git diff --check`
-passed, and GitHub `origin/master` matched cloud HEAD at
-`94c0bc2775c72e65c77f9b1ac34f6ef6c22412fe` before this documentation update.
+The isolated Vultr test environment passed the focused stock checks. Following
+the executable lag-governance and explicit-preregistration changes, 258
+non-credentialed tests passed and the two Turso ledger tests passed separately
+under the protected root environment using SELECT-only code paths: 260 total,
+zero assertion failures. `git diff --check` passed. The apparent secret-scan
+matches were inspected without printing values and were two environment-variable
+or placeholder references, not committed credentials. GitHub `origin/master`
+matched the clean Vultr worktree before this documentation update.
 
 ## Read-only dashboard and legacy-runtime audit
 
@@ -115,10 +122,11 @@ values only as auditable legacy behavior; it does not call that broker.
 
 1. Verify the explicitly approved one-time 2026-08-24 post-close ingestion by
    terminal service state, durable logs, and independent Turso readback.
-2. Integrate the exact feature replacement patch with a reviewed Turso writer;
-   no such write has been performed.
-   The exact review-only canonical migration SHA-256 is
+2. The additive canonical market-lineage schema migration was applied and
+   read back at exact SHA-256
    `db10c366a7ef6adfdf6dbe6f4c39fe1fe4b3a2e573f393ed099e3b3028df542a`.
+   Integrating and executing the exact feature replacement writer remains
+   pending; no replacement feature values have been promoted.
 3. A complete Friday predictive-screening run using the corrected,
    preregistered variable-depth/independent-lag configuration, followed by
    explicit review. The latest Friday run is failed and partial: 15 stored
@@ -127,9 +135,10 @@ values only as auditable legacy behavior; it does not call that broker.
    evidence. Zero eligible candidates must remain an explicit no-trade result.
 5. A no-write stock preflight against the exact market and universe snapshots.
 6. Separate owner approval before fitting PyMC or writing any model scorecard.
-7. Apply and read back the review-only prediction-audit migration only after
-   exact-hash approval. Its SHA-256 is
+7. The additive prediction-audit migration was applied and read back at
+   exact approved SHA-256
    `8ff5931429ceaba8713ec6d7f2efafa343292e0e4727b7835e782f31600d95c2`.
+   Populating it remains gated on an approved, completed model run.
 
 `ag-sniper.service`, `antigravity-nightly.timer`, and
 `antigravity-qa-watchdog.timer` must remain inactive and disabled throughout
