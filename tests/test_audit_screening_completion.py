@@ -15,6 +15,8 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
                 "outer_folds": 4,
                 "eligibility_hypotheses": 10,
                 "candidate_lags": [2, 7],
+                "lag_horizon_contract_id": "stock-lag-horizon-v1-20260824",
+                "horizon_review_interval_sessions": 63,
                 "purge_sessions": 7,
             },
             "results": {
@@ -60,6 +62,22 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
         self.assertFalse(checks["candidate_lag_domain_valid"])
         self.assertFalse(checks["configured_purge_covers_max_candidate_lag"])
         self.assertFalse(checks["fold_purge_covers_max_candidate_lag"])
+
+    def test_candidate_above_approved_horizon_fails_contract_check(self):
+        evidence = self.evidence()
+        evidence["config"]["candidate_lags"] = [2, 8]
+        evidence["config"]["purge_sessions"] = 8
+        evidence["folds"]["min_purge"] = 8
+        evidence["folds"]["max_purge"] = 8
+        checks = build_completion_checks(**evidence)
+        self.assertTrue(checks["candidate_lag_domain_valid"])
+        self.assertFalse(checks["approved_lag_horizon_contract_matches"])
+
+    def test_wrong_review_interval_fails_contract_check(self):
+        evidence = self.evidence()
+        evidence["config"]["horizon_review_interval_sessions"] = 62
+        checks = build_completion_checks(**evidence)
+        self.assertFalse(checks["approved_lag_horizon_contract_matches"])
 
     def test_zero_evaluated_tickers_has_vacuous_fold_checks(self):
         evidence = self.evidence()
