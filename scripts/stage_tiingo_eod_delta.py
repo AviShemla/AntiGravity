@@ -84,14 +84,23 @@ def latest_validated_snapshot(reader: TursoReadPipeline, source_session: date) -
     return list(rows[0])
 
 
+def latest_stock_rows(reader: TursoReadPipeline, snapshot_id: str) -> list[list[object]]:
+    """Read one indexed session instead of grouping the full feature history."""
+    return [
+        list(row)
+        for row in reader.execute(
+            "SELECT ticker,sector FROM market_daily_features "
+            "WHERE snapshot_id=? AND date=(SELECT MAX(date) "
+            "FROM market_daily_features WHERE snapshot_id=?) ORDER BY ticker",
+            [snapshot_id, snapshot_id],
+        ).rows
+    ]
+
+
 def controlled_universe(
     reader: TursoReadPipeline, source_session: date, snapshot_id: str
 ) -> tuple[list[str], str]:
-    stock_rows = reader.execute(
-        "SELECT ticker,MAX(sector) AS sector FROM market_daily_features "
-        "WHERE snapshot_id=? GROUP BY ticker ORDER BY ticker",
-        [snapshot_id],
-    ).rows
+    stock_rows = latest_stock_rows(reader, snapshot_id)
     etf_scorecards = reader.execute(
         "SELECT DISTINCT ticker FROM etf_scorecards_master "
         "WHERE persona LIKE 'ETF_%' ORDER BY ticker",
@@ -163,6 +172,34 @@ def existing_tickers(reader: TursoReadPipeline, run_id: str) -> set[str]:
             [run_id],
         ).rows
     }
+
+
+def complete_session_run(
+    reader: TursoReadPipeline,
+    source_session: date,
+    expected_ticker_count: int,
+) -> str | None:
+    """Return a fully evidenced run for the session, independent of code hash."""
+    rows = reader.execute(
+        "SELECT r.run_id,COUNT(b.ticker) AS evidence_rows "
+        "FROM market_eod_ingestion_runs r "
+        "JOIN market_eod_bar_revisions b ON b.run_id=r.run_id "
+        "WHERE r.provider=? AND r.ingestion_mode=? "
+        "AND r.requested_source_session_date=? AND r.status='COMPLETE' "
+        "AND r.expected_ticker_count=? "
+        "GROUP BY r.run_id HAVING COUNT(b.ticker)=? "
+        "ORDER BY MAX(r.completed_at_utc) DESC LIMIT 1",
+        [
+            PROVIDER,
+            MODE,
+            source_session.isoformat(),
+            expected_ticker_count,
+            expected_ticker_count,
+        ],
+    ).rows
+    if len(rows) > 1:
+        raise RuntimeError("complete session evidence lookup was not unique")
+    return None if not rows else str(rows[0][0])
 
 
 def core_counts(reader: TursoReadPipeline) -> dict[str, int]:
@@ -238,6 +275,9 @@ def main() -> int:
         reader, source_session
     )
     tickers, registry_id = controlled_universe(reader, source_session, str(snapshot_id))
+    completed_session_run = complete_session_run(
+        reader, source_session, len(tickers)
+    )
     manifest_hash = manifest_sha256(tickers)
     code_hash = source_code_sha256([
         Path(__file__).resolve(),
@@ -256,6 +296,13 @@ def main() -> int:
         f"apply={str(args.apply).lower()}",
         flush=True,
     )
+    if completed_session_run is not None:
+        print(
+            f"ALREADY_COMPLETE_SESSION run_id={completed_session_run} "
+            f"source_session={source_session.isoformat()} rows={len(tickers)}",
+            flush=True,
+        )
+        return 0
     unexpected = staged.difference(tickers)
     if unexpected:
         raise RuntimeError("stored evidence contains tickers outside the controlled universe")

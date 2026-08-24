@@ -1,0 +1,25 @@
+[Unit]
+Description=Guarded post-close NYSE EOD evidence ingestion
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/home/codexops/codex_git/AntiGravity
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=HOME=/var/cache/antigravity
+Nice=10
+CPUWeight=20
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/run/lock /var/cache/antigravity
+TimeoutStartSec=16h
+ExecStart=/usr/bin/flock -n /run/lock/codex-market-ingestion.lock /opt/antigravity/venv/bin/python /home/codexops/codex_git/AntiGravity/scripts/operations/run_post_close_eod_ingestion.py --apply --grace-minutes 30

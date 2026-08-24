@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule guarded post-close NYSE EOD evidence ingestion
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 16:30:00 America/New_York
+Persistent=yes
+AccuracySec=1min
+Unit=codex-market-eod-evidence.service
+
+[Install]
+WantedBy=timers.target
