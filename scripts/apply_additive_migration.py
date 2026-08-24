@@ -8,7 +8,10 @@ import os
 import re
 from pathlib import Path
 
-ALLOWED = re.compile(r"^CREATE\s+(?:TABLE|INDEX)\s+IF\s+NOT\s+EXISTS\b", re.IGNORECASE)
+ALLOWED = re.compile(
+    r"^CREATE\s+(?:TABLE|(?:UNIQUE\s+)?INDEX)\s+IF\s+NOT\s+EXISTS\b",
+    re.IGNORECASE,
+)
 
 
 def statements_from_sql(text: str) -> list[str]:

@@ -9,9 +9,10 @@ class ApplyAdditiveMigrationTests(unittest.TestCase):
     def test_accepts_create_only(self):
         statements = statements_from_sql(
             "-- comment\nCREATE TABLE IF NOT EXISTS x (id TEXT);\n"
-            "CREATE INDEX IF NOT EXISTS ix_x ON x(id);"
+            "CREATE INDEX IF NOT EXISTS ix_x ON x(id);\n"
+            "CREATE UNIQUE INDEX IF NOT EXISTS ux_x ON x(id);"
         )
-        self.assertEqual(len(statements), 2)
+        self.assertEqual(len(statements), 3)
 
     def test_rejects_mutating_or_destructive_sql(self):
         for sql in (
