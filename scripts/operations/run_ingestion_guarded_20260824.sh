@@ -30,6 +30,8 @@ test "$(stat -c '%a:%U:%G' /etc/antigravity/tiingo.token)" = "640:root:codexops"
   || fail "unexpected /etc/antigravity/tiingo.token permissions"
 test ! -e "$job_root/financial_data/api_keys.json" \
   || fail "legacy API-key file is present in the job tree"
+test ! -e /opt/antigravity/financial_data/api_keys.json \
+  || fail "legacy API-key file is present in the runtime tree"
 
 for relative_path in \
   scripts/rebuild_market_features_to_turso.py \
