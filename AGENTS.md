@@ -280,16 +280,25 @@ snapshot behavior as **unverified** rather than current.
 ## Model dependency contract — user-stated intent, pending implementation proof
 
 - The stock layer is intended to be a causal Bayesian/PyMC network whose edges
-  may use independently selected lags. **Chain length and per-edge lag are
-  separate parameters.** A chain need not have five edges, and its lag tuple
-  need not be consecutive, monotonic, or capped at five; for example, a
-  candidate may use lags 7, 5, and 2. The lag search domain, maximum chain
-  length, edge direction, and whether lags are target-relative or
-  edge-relative must be preregistered before a run. Lag selection must use
-  training information only, control multiple-testing/overfitting risk, and
-  pass untouched outer walk-forward validation. Its
-  dated, statistically defensible outputs are intended to inform ETF-model
-  priors and/or ETF feature inputs, not merely a dashboard display.
+  may use independently selected lags. **Chain depth and per-edge lag are
+  separate parameters.** The currently approved research envelope permits a
+  variable chain depth of 1 through 5 links and an initial per-edge lag horizon
+  of 1 through 7 trading sessions. Seven is an operational search cap for the
+  current research cycle, **not a theoretical maximum**. A chain need not use
+  five edges, and its lag tuple need not be consecutive or monotonic; for
+  example, a candidate may use lags 7, 5, and 2. Every run must preregister a
+  finite lag set within the approved horizon together with maximum chain depth,
+  edge direction, and whether lags are target-relative or edge-relative.
+  Lag selection must use training information only, control
+  multiple-testing/overfitting risk, and pass untouched outer walk-forward
+  validation. Never expand or change the lag horizon automatically within a
+  production or evidence run. Periodic research-only horizon reassessment may
+  consider shorter or longer maxima when enough new observations exist, but it
+  requires a new preregistration, the same leakage and multiplicity controls,
+  direct comparison against the incumbent horizon, and explicit owner approval
+  before promotion. Its dated, statistically defensible outputs are intended
+  to inform ETF-model priors and/or ETF feature inputs, not merely a dashboard
+  display.
 - Before any model run, a **spec-equivalence gate** must compare the executable
   configuration with the approved model contract. A mismatch blocks the run.
   If discovered after launch, stop safely, mark the run `FAILED` with the exact
