@@ -48,6 +48,9 @@ The recovered DB-first path contains:
 - a PyMC direction and robust Student-t return engine;
 - sampler QA for divergences, R-hat, ESS, chains, and E-BFMI;
 - a pure three-lane eligibility comparison for every posterior prediction.
+- an append-only per-prediction audit contract that stores raw posterior
+  evidence, every AG/Codex/balanced criterion result, explicit Dynamic base
+  persona resolution, hard-gate failures, and both legacy and shadow sizing;
 - deterministic canonical EOD revision selection and reconciliation;
 - exact affected-window recomputation planning for recursive features; and
 - an exact, checksummed replacement-patch contract that refuses missing,
@@ -78,10 +81,35 @@ produce `NO_TRADE`, but cannot hide or rewrite the model prediction.
 ## Verification
 
 The isolated Vultr test environment passed the focused stock checks. After the
-exact replacement-patch and depth-default changes, the full protected Vultr
-environment passed 238 of 238 tests on 2026-08-24. Staged secret-pattern scans
-found zero matches, `git diff --check` passed, and GitHub `origin/master`
-matched cloud HEAD at `193a9dc4eb232526b3a2d430e472c92364ba4c3d`.
+replacement-patch, depth-default, governance-schema, and per-prediction audit
+changes, the full protected Vultr environment passed 251 of 251 tests on
+2026-08-24. Staged secret-pattern scans found zero matches, `git diff --check`
+passed, and GitHub `origin/master` matched cloud HEAD at
+`94c0bc2775c72e65c77f9b1ac34f6ef6c22412fe` before this documentation update.
+
+## Read-only dashboard and legacy-runtime audit
+
+A direct five-tab browser QA on 2026-08-24 verified:
+
+- Stocks: one visible tab container, 11 portfolio rows, zero duplicate rows.
+- ETFs: one visible tab container, 21 portfolio rows, zero duplicate rows.
+- Arena: exactly eight model cards, 39 ledger rows, zero duplicate rows.
+- Autopsy: four charts, two tables, 143 forensic rows, zero duplicate rows.
+- Blueprint: exactly one each of sections 1 through 5.
+- Browser console: zero warning or error entries during the tab traversal.
+
+Full-page screenshots initially appeared to repeat content. DOM counts and
+ordinary viewport screenshots proved that this was capture stitching, not a
+duplicate dashboard render. No UI code was changed on that false signal.
+
+The frozen `/opt/antigravity/virtual_broker.py` is the evidenced legacy
+production-selection path: orchestration scripts invoke `virtual_broker.py`,
+not `virtual_broker_v2.py`. Its persona thresholds are 0.65 Conservative,
+0.60 Neutral, and 0.55 BallsForBrains, with 0.25/0.50/0.90 Kelly multipliers
+and 10%/10%/15% caps. It still reads Excel scorecards and contains historical
+CSV logic, so it violates the replacement architecture and must never be
+reactivated as the governed broker. The DB-first comparison preserves these
+values only as auditable legacy behavior; it does not call that broker.
 
 ## Remaining gates before a stock model run
 
@@ -89,6 +117,8 @@ matched cloud HEAD at `193a9dc4eb232526b3a2d430e472c92364ba4c3d`.
    terminal service state, durable logs, and independent Turso readback.
 2. Integrate the exact feature replacement patch with a reviewed Turso writer;
    no such write has been performed.
+   The exact review-only canonical migration SHA-256 is
+   `db10c366a7ef6adfdf6dbe6f4c39fe1fe4b3a2e573f393ed099e3b3028df542a`.
 3. A complete Friday predictive-screening run using the corrected,
    preregistered variable-depth/independent-lag configuration, followed by
    explicit review. The latest Friday run is failed and partial: 15 stored
@@ -97,6 +127,9 @@ matched cloud HEAD at `193a9dc4eb232526b3a2d430e472c92364ba4c3d`.
    evidence. Zero eligible candidates must remain an explicit no-trade result.
 5. A no-write stock preflight against the exact market and universe snapshots.
 6. Separate owner approval before fitting PyMC or writing any model scorecard.
+7. Apply and read back the review-only prediction-audit migration only after
+   exact-hash approval. Its SHA-256 is
+   `8ff5931429ceaba8713ec6d7f2efafa343292e0e4727b7835e782f31600d95c2`.
 
 `ag-sniper.service`, `antigravity-nightly.timer`, and
 `antigravity-qa-watchdog.timer` must remain inactive and disabled throughout
