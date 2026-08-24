@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule guarded NYSE 2026-08-24 market ingestion
+
+[Timer]
+OnCalendar=2026-08-25 00:30:00 Asia/Jerusalem
+Persistent=yes
+AccuracySec=1s
+Unit=codex-market-ingestion-20260824-v2.service
+
+[Install]
+WantedBy=timers.target

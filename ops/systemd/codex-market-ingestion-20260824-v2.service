@@ -1,0 +1,20 @@
+[Unit]
+Description=Guarded evidence-only NYSE 2026-08-24 market ingestion
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/home/codexops/jobs/ingest-20260824
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=HOME=/var/cache/antigravity
+Nice=10
+CPUWeight=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/run/lock /var/cache/antigravity
+TimeoutStartSec=infinity
+ExecStart=/usr/bin/flock -n /run/lock/codex-market-ingestion.lock /usr/local/sbin/run-antigravity-ingestion-20260824
