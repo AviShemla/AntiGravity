@@ -37,6 +37,72 @@ def one(result, label: str) -> dict[str, object]:
     return dict(zip(result.columns, result.rows[0]))
 
 
+def build_completion_checks(
+    *,
+    run: dict[str, object],
+    config: dict[str, object],
+    results: dict[str, object],
+    folds: dict[str, object],
+    downstream: dict[str, object],
+) -> dict[str, bool]:
+    """Build neutral evidence checks without requiring zero eligible outputs."""
+    expected_tickers = int(run["expected_ticker_count"])
+    expected_folds = int(config["outer_folds"])
+    evaluated = int(results["evaluated_count"])
+    eligible = int(results["eligible_count"])
+    raw_lags = config.get("candidate_lags")
+    candidate_lags = tuple(raw_lags) if isinstance(raw_lags, (list, tuple)) else ()
+    candidate_lags_valid = (
+        bool(candidate_lags)
+        and all(isinstance(lag, int) and lag > 0 for lag in candidate_lags)
+        and len(set(candidate_lags)) == len(candidate_lags)
+    )
+    configured_purge_valid = (
+        candidate_lags_valid
+        and int(config["purge_sessions"]) >= max(candidate_lags)
+    )
+    fold_count = int(folds["fold_count"])
+    if evaluated:
+        fold_numbers_complete = (
+            int(folds["min_fold"]) == 1
+            and int(folds["max_fold"]) == expected_folds
+        )
+        fold_purge_valid = (
+            int(folds["min_purge"]) >= max(candidate_lags)
+            and int(folds["max_purge"]) >= max(candidate_lags)
+        ) if candidate_lags_valid else False
+    else:
+        fold_numbers_complete = fold_count == 0
+        fold_purge_valid = fold_count == 0 and configured_purge_valid
+    return {
+        "run_validated": run["status"] == "VALIDATED",
+        "snapshot_validated": run["snapshot_status"] == "VALIDATED",
+        "complete_result_coverage": (
+            int(results["result_count"]) == expected_tickers
+            and int(results["distinct_tickers"]) == expected_tickers
+        ),
+        "familywise_hypotheses_cover_universe": (
+            config.get("eligibility_hypotheses") is not None
+            and int(config["eligibility_hypotheses"]) == expected_tickers
+        ),
+        "candidate_lag_domain_valid": candidate_lags_valid,
+        "configured_purge_covers_max_candidate_lag": configured_purge_valid,
+        "all_evaluated_folds_present": (
+            fold_count == evaluated * expected_folds
+            and int(folds["fold_tickers"]) == evaluated
+        ),
+        "fold_numbers_complete": fold_numbers_complete,
+        "fold_purge_covers_max_candidate_lag": fold_purge_valid,
+        "no_temporal_overlap": int(folds["temporal_overlap_count"]) == 0,
+        "eligibility_count_consistent": 0 <= eligible <= evaluated,
+        "no_model_or_prior_outputs": (
+            int(downstream["model_runs"]) == 0
+            and int(downstream["model_scorecards"]) == 0
+            and int(downstream["etf_priors"]) == 0
+        ),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
@@ -141,39 +207,9 @@ def main() -> int:
         "downstream state",
     )
 
-    expected_tickers = int(run["expected_ticker_count"])
-    expected_folds = int(config["outer_folds"])
-    evaluated = int(results["evaluated_count"])
-    checks = {
-        "run_validated": run["status"] == "VALIDATED",
-        "snapshot_validated": run["snapshot_status"] == "VALIDATED",
-        "complete_result_coverage": (
-            int(results["result_count"]) == expected_tickers
-            and int(results["distinct_tickers"]) == expected_tickers
-        ),
-        "familywise_hypotheses_cover_universe": (
-            config.get("eligibility_hypotheses") is not None
-            and int(config["eligibility_hypotheses"]) == expected_tickers
-        ),
-        "all_evaluated_folds_present": (
-            int(folds["fold_count"]) == evaluated * expected_folds
-            and int(folds["fold_tickers"]) == evaluated
-        ),
-        "fold_numbers_complete": (
-            int(folds["min_fold"]) == 1 and int(folds["max_fold"]) == expected_folds
-        ),
-        "purge_matches_max_lag": (
-            int(folds["min_purge"]) >= int(config["max_depth"])
-            and int(folds["max_purge"]) >= int(config["max_depth"])
-        ),
-        "no_temporal_overlap": int(folds["temporal_overlap_count"]) == 0,
-        "no_eligible_candidates": int(results["eligible_count"]) == 0,
-        "no_model_or_prior_outputs": (
-            int(downstream["model_runs"]) == 0
-            and int(downstream["model_scorecards"]) == 0
-            and int(downstream["etf_priors"]) == 0
-        ),
-    }
+    checks = build_completion_checks(
+        run=run, config=config, results=results, folds=folds, downstream=downstream
+    )
     payload = {
         "status": "PASS" if all(checks.values()) else "FAIL",
         "run_id": args.run_id,
@@ -186,7 +222,7 @@ def main() -> int:
             for key in (
                 "model_family", "min_train_sessions", "training_window_sessions",
                 "test_sessions", "outer_folds", "min_oos_sessions", "min_depth",
-                "max_depth", "purge_sessions", "eligibility_hypotheses",
+                "max_depth", "candidate_lags", "purge_sessions", "eligibility_hypotheses",
             )
         },
         "results": results,
