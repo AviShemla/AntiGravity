@@ -292,8 +292,9 @@ snapshot behavior as **unverified** rather than current.
   Lag selection must use training information only, control
   multiple-testing/overfitting risk, and pass untouched outer walk-forward
   validation. Never expand or change the lag horizon automatically within a
-  production or evidence run. Periodic research-only horizon reassessment may
-  consider shorter or longer maxima when enough new observations exist, but it
+  production or evidence run. A formal research-only horizon reassessment is
+  due after each 63 newly completed trading sessions measured from the last
+  accepted horizon review. It may consider shorter or longer maxima, but it
   requires a new preregistration, the same leakage and multiplicity controls,
   direct comparison against the incumbent horizon, and explicit owner approval
   before promotion. Its dated, statistically defensible outputs are intended
