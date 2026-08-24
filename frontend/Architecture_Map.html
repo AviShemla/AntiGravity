@@ -49,10 +49,31 @@
             height: auto !important;
             margin: 0 auto;
         }
+        .mermaid { display: none; }
+        .architecture-grid { display: grid; gap: 22px; margin: 24px auto; max-width: 1450px; width: 95%; }
+        .architecture-layer { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px; }
+        .architecture-layer h2 { color: #58a6ff; font-size: 1rem; letter-spacing: .08em; margin: 0 0 16px; text-transform: uppercase; }
+        .architecture-nodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
         .node {
-            cursor: crosshair;
+            align-items: center;
+            background: #0d1117;
+            border: 2px solid #238636;
+            border-radius: 12px;
+            color: #c9d1d9;
+            cursor: help;
+            display: flex;
+            justify-content: center;
+            min-height: 76px;
+            padding: 12px;
+            text-align: center;
             transition: all 0.3s ease;
         }
+        .node.input { border-color: #1f6feb; }
+        .node.database { border-color: #e34c26; }
+        .node.blocked { border-color: #f85149; }
+        .node.frozen { border-color: #a371f7; }
+        .node.pipeline { border-color: #d29922; }
+        .flow-label { color: #8b949e; font-size: .85rem; margin-top: 14px; }
         .node:hover {
             filter: brightness(1.3) drop-shadow(0 0 10px rgba(255,255,255,0.3));
         }
@@ -173,8 +194,60 @@
         WATCHDOG -.-> API
     </div>
 
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    <div class="architecture-grid" aria-label="Verified AntiGravity architecture">
+        <section class="architecture-layer">
+            <h2>1 — Governed market evidence</h2>
+            <div class="architecture-nodes">
+                <div class="node input" id="node-YF">Yahoo Finance<br>primary provider</div>
+                <div class="node input" id="node-TIINGO">Tiingo<br>audited fallback</div>
+                <div class="node pipeline" id="node-INGEST">Guarded ingestion<br>staging only</div>
+                <div class="node database" id="node-MARKET">Turso market snapshots<br>validated SSOT</div>
+            </div>
+            <div class="flow-label">Providers → staging snapshot with lineage → validation and approval → authoritative market snapshot.</div>
+        </section>
+        <section class="architecture-layer">
+            <h2>2 — Stock research and model governance</h2>
+            <div class="architecture-nodes">
+                <div class="node blocked" id="node-SPEC">Approved model specification<br>required before execution</div>
+                <div class="node" id="node-SCREEN">Predictive screening<br>independent edge lags</div>
+                <div class="node blocked" id="node-UNIVERSE">Governed STOCK_UNIVERSE<br>currently missing</div>
+                <div class="node" id="node-STOCK_MODEL">Stock PyMC model<br>blocked; not running</div>
+                <div class="node database" id="node-MODEL_LINEAGE">Model lineage<br>schema present; empty</div>
+            </div>
+            <div class="flow-label">Approved specification + validated Turso data → screening evidence → governed universe → raw posterior and diagnostics.</div>
+        </section>
+        <section class="architecture-layer">
+            <h2>3 — Stock-to-ETF Bayesian interlock</h2>
+            <div class="architecture-nodes">
+                <div class="node blocked" id="node-CONSTITUENTS">ETF constituent snapshots<br>schema pending approval</div>
+                <div class="node" id="node-PRIOR">DB-backed stock-to-ETF prior<br>code recovered</div>
+                <div class="node" id="node-ETF_MODEL">ETF PyMC model<br>not running</div>
+                <div class="node database" id="node-ETF_LINEAGE">ETF prior lineage<br>currently empty</div>
+            </div>
+            <div class="flow-label">Dated stock posteriors + dated constituent weights → auditable ETF prior → raw ETF posterior and diagnostics.</div>
+        </section>
+        <section class="architecture-layer">
+            <h2>4 — Approval boundary and execution</h2>
+            <div class="architecture-nodes">
+                <div class="node blocked" id="node-EXEC_PLAN">Execution-plan lineage<br>schema pending approval</div>
+                <div class="node database" id="node-PENDING">Turso pending_orders<br>legacy state; no new writes</div>
+                <div class="node frozen" id="node-SNIPER">ag-sniper.service<br>inactive + disabled</div>
+                <div class="node database" id="node-LEDGER">Turso capital_ledgers<br>read-only evidence</div>
+            </div>
+            <div class="flow-label">No recommendation may become an order without validated evidence and explicit approval. Trading remains frozen.</div>
+        </section>
+        <section class="architecture-layer">
+            <h2>5 — Operations and visibility</h2>
+            <div class="architecture-nodes">
+                <div class="node frozen" id="node-NIGHTLY">antigravity-nightly.timer<br>inactive + disabled</div>
+                <div class="node frozen" id="node-WATCHDOG">antigravity-qa-watchdog.timer<br>inactive + disabled</div>
+                <div class="node pipeline" id="node-API">FastAPI + Uvicorn<br>active read-only dashboard</div>
+                <div class="node" id="node-UI">Five-tab dashboard<br>live visual QA</div>
+            </div>
+        </section>
+    </div>
+
+    <script>
         
         const nodeData = {
             "YF": {name: "Yahoo Finance", purpose: "Primary daily market-data provider when its response passes ingestion validation.", input: "Approved ticker manifest", output: "Provider evidence", schedule: "Guarded ingestion only"},
@@ -200,18 +273,7 @@
             "UI": {name: "Five-tab dashboard", purpose: "Displays portfolio, ETF, Arena, autopsy, and this verified architecture map.", input: "FastAPI JSON", output: "Browser UI", schedule: "Active; visually audited"}
         };
 
-        mermaid.initialize({ 
-            startOnLoad: false, 
-            theme: 'dark', 
-            securityLevel: 'loose',
-            flowchart: {
-                nodeSpacing: 150,
-                rankSpacing: 100
-            }
-        });
-
-        // Use Event Delegation to dynamically capture hovers.
-        // This ensures the tooltip works even if Mermaid takes longer than 1.5s to render.
+        // Use event delegation so every evidence card exposes the same details.
         const tooltip = document.getElementById('custom-tooltip');
 
         document.addEventListener('mouseover', (e) => {
