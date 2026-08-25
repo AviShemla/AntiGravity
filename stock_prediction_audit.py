@@ -14,6 +14,7 @@ import json
 import re
 
 from model_lineage import LineageError
+from statistical_units import basis_points_to_percentage_points
 from stock_prediction_eligibility import (
     DecisionContext,
     PredictionEvidence,
@@ -104,9 +105,9 @@ def build_stock_prediction_audit_records(
         evidence.probability_up_mean,
         evidence.probability_up_q05,
         evidence.probability_up_q95,
-        evidence.expected_return,
-        evidence.expected_risk,
-        context.round_trip_cost,
+        evidence.expected_return_pp,
+        evidence.expected_risk_pp,
+        basis_points_to_percentage_points(context.round_trip_cost_bps),
         context.vix_close,
         comparison.raw_model_signal.value,
         comparison.ag_action.value,
