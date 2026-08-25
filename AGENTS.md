@@ -97,6 +97,18 @@ an updated rule here.
 7. **No Streamlit.** Do not run, restore, patch, add, or depend on Streamlit.
    The supported dashboard stack is FastAPI plus `frontend/`. Remove legacy
    Streamlit files and dependencies only through a reviewed cleanup change.
+8. **Evidence-driven self-healing.** When an already authorized operation
+   fails or stalls, immediately preserve evidence, stop deterministic repeat
+   failures, make the smallest reversible repair, test it safely, and continue
+   the same idempotent operation when doing so stays within its approved scope.
+   A prohibition on blind automatic restart does not require waiting for the
+   user before diagnosis and safe repair. Ask before continuing only when the
+   remedy expands scope, weakens a capital/data gate, changes model, risk, or
+   execution semantics, performs destructive schema/data work, handles a new
+   credential, or creates another material external commitment. The owner has
+   authorized bounded technical sub-agents for independent diagnosis and
+   verification when parallel work materially shortens an incident; their
+   conclusions are not proof until reconciled with direct evidence.
 
 ### Operating mode and automation authority
 

@@ -77,6 +77,18 @@ email. Activation requires the mode-transition approval defined in root
    - Before ending any turn that mentions ongoing work, classify it as VERIFIED
      PERSISTENT, COMPLETE, BLOCKED/STALLED, or NOT RUNNING and include the
      corresponding evidence.
+   - When an already authorized job fails or stalls, do not wait passively and
+     do not blindly restart it. Preserve evidence, stop deterministic retry
+     loops, identify the smallest reversible repair, test it with a focused
+     check or preflight, and continue the same idempotent job automatically
+     when the remedy stays within its existing approved scope and does not
+     weaken a data, model, risk, or capital-safety gate.
+   - A rule prohibiting automatic restart prohibits an unexamined retry; it
+     does not prohibit diagnosis, safe repair, verification, and continuation
+     of the already approved workflow. Ask before continuing only when the
+     remedy expands scope, weakens a gate, changes model/risk/execution
+     semantics, performs destructive data/schema work, handles a new secret,
+     or creates a material new external commitment.
 
 4. **Dashboard X-Axis, Visual Anomaly & NYSE Market Hours Max Date Verification Rule:**
    - Whenever checking or verifying the Dashboard UI for correctness, you MUST explicitly inspect the chart lines for unnatural vertical drops, non-trading gap artifacts, label truncation, or syntax error banners (e.g. Mermaid)!
@@ -141,6 +153,14 @@ email. Activation requires the mode-transition approval defined in root
 When the user requests an audit and the risk/scope justifies delegation, the QA
 work may be divided among the following specialized roles. This section does
 not require spawning agents or running the audit automatically:
+
+The owner also authorizes bounded technical sub-agents for an AntiGravity
+incident or migration task when independent parallel diagnosis, test design,
+read-only Turso auditing, or service/log inspection materially shortens the
+critical path. Sub-agents receive no broader production authority than the
+parent task; production mutation, credential handling, and final recovery
+decisions remain with the primary agent, and every finding must be reconciled
+against direct evidence.
 
 1. **`qa_master_orchestrator` (Lead Coordinator):**
    - Coordinates all specialized QA auditors, aggregates proofs, and generates the unified Morning Clearance Report.

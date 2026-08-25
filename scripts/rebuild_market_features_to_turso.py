@@ -318,6 +318,9 @@ def apply_approved_instrument_registry(
     if len(registry_ids) != 1:
         raise ValueError("Exactly one approved instrument registry is required.")
     registry_id = next(iter(registry_ids))
+    currently_required_etfs = {
+        ticker for ticker, sector in universe.items() if sector == "ETF"
+    }
     controlled = {
         ticker: sector for ticker, sector in universe.items() if sector != "ETF"
     }
@@ -341,7 +344,9 @@ def apply_approved_instrument_registry(
         if asset_class == "ETF":
             if usage == "MODEL_CANDIDATE":
                 model_candidates += 1
-            if usage in allowed_usages:
+            if usage in {"MODEL_CANDIDATE", "BENCHMARK"} or (
+                usage == "VALUATION_ONLY" and ticker in currently_required_etfs
+            ):
                 controlled[ticker] = "ETF" if sector is None else str(sector)
         elif asset_class == "STOCK":
             if ticker not in controlled:
@@ -555,7 +560,8 @@ def main() -> int:
     )
     etf_scorecard_universe = db.execute(
         "SELECT DISTINCT ticker FROM etf_scorecards_master "
-        "WHERE persona LIKE 'ETF_%' ORDER BY ticker",
+        "WHERE persona LIKE 'ETF_%' AND date=(SELECT MAX(date) "
+        "FROM etf_scorecards_master WHERE persona LIKE 'ETF_%') ORDER BY ticker",
         [],
     )
     etf_latest_ledgers = db.execute(

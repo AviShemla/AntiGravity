@@ -232,6 +232,31 @@ class RebuildMarketFeaturesTests(unittest.TestCase):
         )
         self.assertEqual(universe, {"AAPL": "Technology", "XLK": "ETF", "SPY": "ETF"})
 
+    def test_registry_does_not_add_inactive_valuation_only_etf(self):
+        universe = apply_approved_instrument_registry(
+            {"AAPL": "Technology"},
+            [("registry-1",)],
+            [
+                ("registry-1", "XLK", "ETF", "ETF", "MODEL_CANDIDATE", 252),
+                ("registry-1", "MRVU", "ETF", "ETF", "VALUATION_ONLY", 252),
+            ],
+        )
+        self.assertEqual(universe, {"AAPL": "Technology", "XLK": "ETF"})
+
+    def test_registry_preserves_current_valuation_only_etf(self):
+        universe = apply_approved_instrument_registry(
+            {"AAPL": "Technology", "MRVU": "ETF"},
+            [("registry-1",)],
+            [
+                ("registry-1", "XLK", "ETF", "ETF", "MODEL_CANDIDATE", 252),
+                ("registry-1", "MRVU", "ETF", "ETF", "VALUATION_ONLY", 252),
+            ],
+        )
+        self.assertEqual(
+            universe,
+            {"AAPL": "Technology", "XLK": "ETF", "MRVU": "ETF"},
+        )
+
     def test_registry_requires_exactly_one_approved_version(self):
         with self.assertRaisesRegex(ValueError, "Exactly one"):
             apply_approved_instrument_registry(
