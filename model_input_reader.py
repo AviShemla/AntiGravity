@@ -44,18 +44,14 @@ class StockUniverseEntry:
     lag_sessions: tuple[int, ...] = ()
 
     def __post_init__(self) -> None:
-        if not self.lag_sessions:
-            object.__setattr__(
-                self, "lag_sessions", tuple(range(1, self.causal_depth + 1))
-            )
         if self.causal_depth != len(self.lag_tickers) or self.causal_depth != len(self.lag_sessions):
             raise LineageError("Universe depth, lag tickers, and lag sessions must agree.")
         if not 1 <= self.causal_depth <= 5:
             raise LineageError("Universe chain length must be between 1 and 5.")
         if any(not ticker.strip() for ticker in self.lag_tickers):
             raise LineageError("Universe contains a blank lag ticker.")
-        if any(not isinstance(lag, int) or lag <= 0 for lag in self.lag_sessions):
-            raise LineageError("Universe lag sessions must be positive integers.")
+        if any(not isinstance(lag, int) or not 1 <= lag <= 7 for lag in self.lag_sessions):
+            raise LineageError("Universe lag sessions must be integers between 1 and 7.")
         if len(set(zip(self.lag_tickers, self.lag_sessions))) != self.causal_depth:
             raise LineageError("Universe contains a duplicate ticker/lag edge.")
 
