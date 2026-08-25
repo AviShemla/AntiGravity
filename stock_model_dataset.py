@@ -22,7 +22,7 @@ class StockModelDataset:
     training_dates: tuple[date, ...]
     x_train: np.ndarray
     y_direction: np.ndarray
-    y_return_pct: np.ndarray
+    y_return_pp: np.ndarray
     x_predict: np.ndarray
     train_mean: np.ndarray
     train_scale: np.ndarray
@@ -184,7 +184,7 @@ def build_stock_model_dataset(
         training_dates=tuple(ts.date() for ts in training.index),
         x_train=x_train,
         y_direction=y_direction,
-        y_return_pct=y_return,
+        y_return_pp=y_return,
         x_predict=x_predict,
         train_mean=mean,
         train_scale=scale,
