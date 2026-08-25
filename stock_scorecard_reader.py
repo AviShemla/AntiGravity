@@ -62,9 +62,9 @@ def load_stock_evidence_for_etf(
     """Load one proven stock run and its scorecards from the additive schema.
 
     The newest completed stock run available by the ETF cutoff is selected.
-    All returned scorecards must belong to that one run.  Missing constituents
-    are omitted here and must subsequently fail or pass the explicit coverage
-    gate in ``build_directional_prior``.
+    All returned scorecards must belong to one completed frozen research run.
+    Every requested constituent must have one exact NO_TRADE scorecard carrying
+    the frozen action-policy and percentage-point unit markers.
     """
     if etf_cutoff_utc.tzinfo is None:
         raise LineageError("ETF cutoff must be timezone-aware.")
@@ -89,12 +89,13 @@ def load_stock_evidence_for_etf(
         WHERE run.asset_class = ?
           AND run.prediction_date = ?
           AND run.status = ?
+          AND run.model_name = ?
           AND score.created_at_utc <= ?
         GROUP BY run.run_id, run.source_session_date
         ORDER BY completed_at_utc DESC, run.run_id DESC
         LIMIT 2
         """,
-        ["STOCK", prediction_date.isoformat(), "COMPLETED", etf_cutoff_utc.isoformat()],
+        ["STOCK", prediction_date.isoformat(), "COMPLETED", "STOCK_PYMC_RESEARCH", etf_cutoff_utc.isoformat()],
     )
     runs = _row_dicts(run_result)
     if not runs:
@@ -149,12 +150,12 @@ def load_stock_evidence_for_etf(
     score_result = db.execute(
         f"""
         SELECT ticker, posterior_probability, posterior_probability_std,
-               expected_return, expected_return_std, created_at_utc
+               expected_return, expected_return_std, expected_risk,
+               recommendation, proposed_allocation, quarantine_reason, created_at_utc
         FROM model_scorecards
         WHERE run_id = ?
           AND persona = ?
           AND ticker IN ({placeholders})
-          AND quarantine_reason IS NULL
         ORDER BY ticker
         """,
         [selected["run_id"], stock_persona, *tickers],
@@ -172,6 +173,21 @@ def load_stock_evidence_for_etf(
             raise LineageError(f"{ticker}: scorecard was created after the ETF cutoff.")
         if row["posterior_probability"] is None or row["expected_return"] is None:
             raise LineageError(f"{ticker}: posterior probability and expected return are required.")
+        if str(row["recommendation"]) != "NO_TRADE":
+            raise LineageError(f"{ticker}: frozen stock evidence is not NO_TRADE.")
+        if float(row["proposed_allocation"]) != 0.0:
+            raise LineageError(f"{ticker}: frozen stock evidence has non-zero allocation.")
+        quarantine = str(row["quarantine_reason"] or "")
+        required_markers = (
+            "RESEARCH_ONLY",
+            "PROMOTION_DISABLED",
+            "ACTION_LANES_NO_TRADE",
+            "UNIT_CONTRACT=statistical-units-v1",
+        )
+        if any(marker not in quarantine for marker in required_markers):
+            raise LineageError(f"{ticker}: frozen stock evidence policy marker is incomplete.")
+        if row["expected_risk"] is None or float(row["expected_risk"]) < 0.0:
+            raise LineageError(f"{ticker}: predictive risk in percentage points is required.")
         evidence.append(
             StockPosteriorEvidence(
                 ticker=ticker,
@@ -181,8 +197,8 @@ def load_stock_evidence_for_etf(
                     if row["posterior_probability_std"] is None
                     else float(row["posterior_probability_std"])
                 ),
-                expected_return=float(row["expected_return"]),
-                expected_return_std=(
+                expected_return_pp=float(row["expected_return"]),
+                expected_return_pp_std=(
                     None
                     if row["expected_return_std"] is None
                     else float(row["expected_return_std"])
@@ -191,8 +207,15 @@ def load_stock_evidence_for_etf(
             )
         )
 
-    if not evidence:
-        raise LineageError("Selected stock run has no usable Turso scorecards for this ETF.")
+    missing_tickers = sorted(set(tickers).difference(seen))
+    unexpected_tickers = sorted(seen.difference(tickers))
+    if missing_tickers or unexpected_tickers:
+        detail = []
+        if missing_tickers:
+            detail.append("missing " + ", ".join(missing_tickers))
+        if unexpected_tickers:
+            detail.append("unexpected " + ", ".join(unexpected_tickers))
+        raise LineageError("Frozen stock evidence ticker lineage is incomplete: " + "; ".join(detail) + ".")
     for item in evidence:
         item.validate()
 
