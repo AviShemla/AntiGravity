@@ -81,10 +81,11 @@ class FakeDB:
         if "FROM model_scorecards" in compact:
             return Result(
                 ["ticker", "posterior_probability", "posterior_probability_std",
-                 "expected_return", "expected_return_std", "created_at_utc"],
+                 "expected_return", "expected_return_std", "expected_risk",
+                 "recommendation", "proposed_allocation", "quarantine_reason", "created_at_utc"],
                 [
-                    ["AAPL", 0.65, 0.04, 0.012, 0.006, "2026-08-22T04:01:00+00:00"],
-                    ["MSFT", 0.58, 0.05, 0.008, 0.005, "2026-08-22T04:01:00+00:00"],
+                    ["AAPL", 0.65, 0.04, 1.2, 0.6, 2.4, "NO_TRADE", 0.0, "RESEARCH_ONLY;PROMOTION_DISABLED;ACTION_LANES_NO_TRADE;UNIT_CONTRACT=statistical-units-v1", "2026-08-22T04:01:00+00:00"],
+                    ["MSFT", 0.58, 0.05, 0.8, 0.5, 1.8, "NO_TRADE", 0.0, "RESEARCH_ONLY;PROMOTION_DISABLED;ACTION_LANES_NO_TRADE;UNIT_CONTRACT=statistical-units-v1", "2026-08-22T04:01:00+00:00"],
                 ],
             )
         raise AssertionError(f"Unexpected query: {compact}")
