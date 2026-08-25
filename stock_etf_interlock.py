@@ -33,8 +33,8 @@ class StockPosteriorEvidence:
     ticker: str
     posterior_probability: float
     posterior_probability_std: float | None
-    expected_return: float
-    expected_return_std: float | None
+    expected_return_pp: float
+    expected_return_pp_std: float | None
     constituent_weight: float
 
     def validate(self) -> None:
@@ -46,7 +46,7 @@ class StockPosteriorEvidence:
             raise LineageError(f"{self.ticker}: posterior uncertainty is required.")
         if not isfinite(self.expected_return):
             raise LineageError(f"{self.ticker}: expected return must be finite.")
-        if self.expected_return_std is None or self.expected_return_std <= 0.0:
+        if self.expected_return_pp_std is None or self.expected_return_pp_std <= 0.0:
             raise LineageError(f"{self.ticker}: expected-return uncertainty is required.")
         if not 0.0 < self.constituent_weight <= 1.0:
             raise LineageError(f"{self.ticker}: constituent weight must be in (0, 1].")
@@ -56,8 +56,8 @@ class StockPosteriorEvidence:
 class ETFDirectionalPrior:
     mean_log_odds: float
     sigma_log_odds: float
-    weighted_expected_return: float
-    expected_return_sigma: float
+    weighted_expected_return_pp: float
+    expected_return_sigma_pp: float
     weight_coverage: float
     contributor_count: int
 
@@ -116,27 +116,27 @@ def build_directional_prior(
         sqrt(propagated_variance + disagreement_variance),
     )
     weighted_return = sum(
-        weight * item.expected_return for weight, item in zip(normalized, evidence)
+        weight * item.expected_return_pp for weight, item in zip(normalized, evidence)
     )
     propagated_return_variance = sum(
-        (weight * item.expected_return_std) ** 2
+        (weight * item.expected_return_pp_pp_std) ** 2
         for weight, item in zip(normalized, evidence)
     )
     return_disagreement_variance = sum(
-        weight * (item.expected_return - weighted_return) ** 2
+        weight * (item.expected_return_pp - weighted_return) ** 2
         for weight, item in zip(normalized, evidence)
     )
-    expected_return_sigma = sqrt(
+    expected_return_sigma_pp = sqrt(
         propagated_return_variance + return_disagreement_variance
     )
-    if expected_return_sigma <= 0.0 or not isfinite(expected_return_sigma):
+    if expected_return_sigma_pp <= 0.0 or not isfinite(expected_return_sigma_pp):
         raise LineageError("Pooled expected-return uncertainty is invalid.")
 
     return ETFDirectionalPrior(
         mean_log_odds=mean_log_odds,
         sigma_log_odds=sigma_log_odds,
-        weighted_expected_return=weighted_return,
-        expected_return_sigma=expected_return_sigma,
+        weighted_expected_return_pp=weighted_return,
+        expected_return_sigma_pp=expected_return_sigma_pp,
         weight_coverage=coverage,
         contributor_count=len(evidence),
     )
