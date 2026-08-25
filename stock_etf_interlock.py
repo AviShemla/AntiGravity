@@ -44,7 +44,7 @@ class StockPosteriorEvidence:
             raise LineageError(f"{self.ticker}: probability must be strictly between 0 and 1.")
         if self.posterior_probability_std is None or self.posterior_probability_std <= 0.0:
             raise LineageError(f"{self.ticker}: posterior uncertainty is required.")
-        if not isfinite(self.expected_return):
+        if not isfinite(self.expected_return_pp):
             raise LineageError(f"{self.ticker}: expected return must be finite.")
         if self.expected_return_pp_std is None or self.expected_return_pp_std <= 0.0:
             raise LineageError(f"{self.ticker}: expected-return uncertainty is required.")
@@ -119,7 +119,7 @@ def build_directional_prior(
         weight * item.expected_return_pp for weight, item in zip(normalized, evidence)
     )
     propagated_return_variance = sum(
-        (weight * item.expected_return_pp_pp_std) ** 2
+        (weight * item.expected_return_pp_std) ** 2
         for weight, item in zip(normalized, evidence)
     )
     return_disagreement_variance = sum(
