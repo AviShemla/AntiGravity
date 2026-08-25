@@ -86,7 +86,7 @@ def prepare_etf_stock_prior(
             available_at_utc=batch.available_at_utc,
             constituent_weight=item.constituent_weight,
             transformed_value=item.expected_return_pp,
-            prior_sigma=item.expected_return_pp_pp_std,
+            prior_sigma=item.expected_return_pp_std,
             transformation="stock expected-return posterior; value/sigma in percentage points",
         )
         return_record.validate_for(etf_run)
