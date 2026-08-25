@@ -25,7 +25,7 @@ class StockPosteriorSummaryTests(unittest.TestCase):
         self.assertGreater(result.probability_up_std, 0)
         self.assertLessEqual(result.probability_up_q05, result.probability_up_mean)
         self.assertGreaterEqual(result.probability_up_q95, result.probability_up_mean)
-        self.assertGreater(result.predictive_risk_pct, result.expected_return_pct_std)
+        self.assertGreater(result.predictive_risk_pp, result.expected_return_pp_std)
 
     def test_nonfinite_draw_is_rejected(self):
         with self.assertRaisesRegex(LineageError, "non-finite"):
