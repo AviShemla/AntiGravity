@@ -107,12 +107,12 @@ def load_stock_model_market_frame(
             raw_ticker = str(row["ticker"]).strip()
             raw_date = str(row["date"]).strip()
             raw_key = (raw_ticker, raw_date)
-            if not raw_ticker or not raw_date or raw_key <= cursor:
-                raise LineageError("Market snapshot keyset order is invalid or non-progressing.")
             ticker = raw_ticker.upper()
             key = (ticker, raw_date)
             if key in seen_keys:
                 raise LineageError("Market snapshot contains duplicate ticker/session keys.")
+            if not raw_ticker or not raw_date or raw_key <= cursor:
+                raise LineageError("Market snapshot keyset order is invalid or non-progressing.")
             seen_keys.add(key)
             records.append({
                 _COLUMN_RENAMES[column]: (ticker if column == "ticker" else row[column])
