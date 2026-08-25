@@ -85,3 +85,16 @@ this migration was not applied to production.
   credentials they fail closed before SQL; with a newly minted one-day
   read-only production token they still fail at the legacy Hrana WebSocket
   handshake with HTTP 400. They do not exercise the v2 migration path.
+
+
+## Disposable resource cleanup
+
+After commit `3785c61f32cd636fdc93407a448de0cb4b741272` preserved the
+evidence, the explicitly approved disposable branch was destroyed. Readback
+proved:
+
+- branch `theoracle-codex-lagv2-20260825t1022z` is absent;
+- temporary credential file
+  `~/.config/antigravity/lagv2-isolated.env` is absent;
+- production schema objects remained 63 before and after cleanup;
+- production v2 objects remained 0 before and after cleanup.
