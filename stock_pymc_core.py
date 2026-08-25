@@ -20,9 +20,9 @@ class StockPosteriorEvidence:
     probability_up_std: float
     probability_up_q05: float
     probability_up_q95: float
-    expected_return_pct_mean: float
-    expected_return_pct_std: float
-    predictive_risk_pct: float
+    expected_return_pp_mean: float
+    expected_return_pp_std: float
+    predictive_risk_pp: float
     diagnostics: SamplerDiagnostics
 
 
@@ -77,16 +77,16 @@ def summarize_stock_posterior(
         probability_up_std=float(np.std(probabilities, ddof=1)),
         probability_up_q05=float(np.quantile(probabilities, 0.05)),
         probability_up_q95=float(np.quantile(probabilities, 0.95)),
-        expected_return_pct_mean=float(np.mean(return_means)),
-        expected_return_pct_std=float(np.std(return_means, ddof=1)),
-        predictive_risk_pct=float(np.sqrt(total_return_variance)),
+        expected_return_pp_mean=float(np.mean(return_means)),
+        expected_return_pp_std=float(np.std(return_means, ddof=1)),
+        predictive_risk_pp=float(np.sqrt(total_return_variance)),
         diagnostics=diagnostics,
     )
     numeric = (
         result.probability_up_mean, result.probability_up_std,
         result.probability_up_q05, result.probability_up_q95,
-        result.expected_return_pct_mean, result.expected_return_pct_std,
-        result.predictive_risk_pct,
+        result.expected_return_pp_mean, result.expected_return_pp_std,
+        result.predictive_risk_pp,
     )
     if not all(isfinite(value) for value in numeric) or result.probability_up_std <= 0:
         raise LineageError("Posterior forecast uncertainty is invalid.")
@@ -101,11 +101,11 @@ def fit_stock_posterior(
     """Fit direction and robust-return heads; fail if sampler QA is not green."""
     if dataset.x_train.ndim != 2 or dataset.x_predict.shape != (1, dataset.x_train.shape[1]):
         raise LineageError("Stock model matrices have incompatible shapes.")
-    if len(dataset.y_direction) != len(dataset.x_train) or len(dataset.y_return_pct) != len(dataset.x_train):
+    if len(dataset.y_direction) != len(dataset.x_train) or len(dataset.y_return_pp) != len(dataset.x_train):
         raise LineageError("Stock model outcomes do not align with training features.")
     if len(np.unique(dataset.y_direction)) < 2:
         raise LineageError("Direction training outcome contains only one class.")
-    values = (dataset.x_train, dataset.x_predict, dataset.y_direction, dataset.y_return_pct)
+    values = (dataset.x_train, dataset.x_predict, dataset.y_direction, dataset.y_return_pp)
     if not all(np.isfinite(value).all() for value in values):
         raise LineageError("Stock model matrices contain non-finite values.")
 
@@ -114,8 +114,8 @@ def fit_stock_posterior(
     import pymc as pm
 
     feature_count = dataset.x_train.shape[1]
-    return_location = float(np.mean(dataset.y_return_pct))
-    return_spread = max(float(np.std(dataset.y_return_pct, ddof=1)), 0.10)
+    return_location = float(np.mean(dataset.y_return_pp))
+    return_spread = max(float(np.std(dataset.y_return_pp, ddof=1)), 0.10)
     with pm.Model(coords={"feature": dataset.feature_names}) as model:
         x_train = pm.Data("x_train", dataset.x_train, dims=("observation", "feature"))
         alpha_direction = pm.Normal("alpha_direction", mu=0.0, sigma=1.0)
@@ -130,7 +130,7 @@ def fit_stock_posterior(
         return_mu = alpha_return + pm.math.dot(x_train, beta_return)
         pm.StudentT(
             "return_observed", nu=return_nu, mu=return_mu,
-            sigma=return_scale, observed=dataset.y_return_pct,
+            sigma=return_scale, observed=dataset.y_return_pp,
         )
         trace = pm.sample(**config)
 
