@@ -19,7 +19,7 @@ def context(**changes):
         "research_promotion_approved": True,
         "available_capital": 10_000.0,
         "vix_close": 15.0,
-        "round_trip_cost": 0.001,
+        "round_trip_cost_bps": 10.0,
     }
     values.update(changes)
     return DecisionContext(**values)
@@ -28,7 +28,7 @@ def context(**changes):
 class StockPredictionEligibilityTests(unittest.TestCase):
     def test_raw_output_survives_failed_safety_gate(self):
         result = compare_stock_prediction(
-            PredictionEvidence(0.72, 0.55, 0.84, 0.012, 0.02),
+            PredictionEvidence(0.72, 0.55, 0.84, 1.2, 2.0),
             context(snapshot_validated=False),
             persona_name="Neutral",
         )
@@ -41,7 +41,7 @@ class StockPredictionEligibilityTests(unittest.TestCase):
 
     def test_strict_and_balanced_can_disagree_without_hiding_prediction(self):
         result = compare_stock_prediction(
-            PredictionEvidence(0.64, 0.47, 0.78, 0.010, 0.02),
+            PredictionEvidence(0.64, 0.47, 0.78, 1.0, 2.0),
             context(),
             persona_name="Neutral",
         )
@@ -51,7 +51,7 @@ class StockPredictionEligibilityTests(unittest.TestCase):
 
     def test_legacy_flat_fallback_is_preserved_as_observed_behavior(self):
         result = compare_stock_prediction(
-            PredictionEvidence(0.62, 0.51, 0.72, -0.001, 0.02),
+            PredictionEvidence(0.62, 0.51, 0.72, -0.1, 2.0),
             context(),
             persona_name="Neutral",
         )
@@ -62,7 +62,7 @@ class StockPredictionEligibilityTests(unittest.TestCase):
 
     def test_conservative_has_no_flat_fallback(self):
         result = compare_stock_prediction(
-            PredictionEvidence(0.70, 0.55, 0.82, -0.001, 0.02),
+            PredictionEvidence(0.70, 0.55, 0.82, -0.1, 2.0),
             context(),
             persona_name="Conservative",
         )
@@ -72,7 +72,7 @@ class StockPredictionEligibilityTests(unittest.TestCase):
     def test_unknown_dynamic_persona_requires_resolution(self):
         with self.assertRaisesRegex(LineageError, "resolved base persona"):
             compare_stock_prediction(
-                PredictionEvidence(0.70, 0.55, 0.82, 0.01, 0.02),
+                PredictionEvidence(0.70, 0.55, 0.82, 1.0, 2.0),
                 context(),
                 persona_name="Dynamic",
             )
@@ -83,7 +83,7 @@ class StockPredictionEligibilityTests(unittest.TestCase):
         self.assertEqual(shadow_vix_multiplier("Neutral", 30.0), 0.25)
         self.assertEqual(shadow_vix_multiplier("Neutral", 80.0), 0.25)
         result = compare_stock_prediction(
-            PredictionEvidence(0.72, 0.55, 0.84, 0.03, 0.02),
+            PredictionEvidence(0.72, 0.55, 0.84, 3.0, 2.0),
             context(vix_close=31.0),
             persona_name="Neutral",
         )
@@ -93,8 +93,8 @@ class StockPredictionEligibilityTests(unittest.TestCase):
 
     def test_shadow_sizing_never_uses_flat_fallback(self):
         result = compare_stock_prediction(
-            PredictionEvidence(0.70, 0.54, 0.82, 0.001, 0.02),
-            context(round_trip_cost=0.002),
+            PredictionEvidence(0.70, 0.54, 0.82, 0.1, 2.0),
+            context(round_trip_cost_bps=20.0),
             persona_name="BallsForBrains",
         )
         self.assertEqual(result.legacy_allocation_fraction, 0.15)
