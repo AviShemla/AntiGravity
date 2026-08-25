@@ -106,7 +106,15 @@ class StockResearchRunWriter(ModelRunWriter):
             (SELECT COUNT(*) FROM model_run_inputs i WHERE i.run_id=r.run_id) AS input_count,
             (SELECT COUNT(*) FROM model_scorecards s WHERE s.run_id=r.run_id) AS scorecard_count,
             (SELECT COUNT(*) FROM model_scorecards s WHERE s.run_id=r.run_id
-             AND s.recommendation='NO_TRADE' AND s.proposed_allocation=0.0) AS frozen_count
+             AND s.recommendation='NO_TRADE' AND s.proposed_allocation=0.0) AS frozen_count,
+            (SELECT snapshot_id FROM model_run_inputs i
+             WHERE i.run_id=r.run_id AND i.input_role='MARKET_FEATURES') AS market_snapshot_id,
+            (SELECT snapshot_checksum_sha256 FROM model_run_inputs i
+             WHERE i.run_id=r.run_id AND i.input_role='MARKET_FEATURES') AS market_checksum,
+            (SELECT snapshot_id FROM model_run_inputs i
+             WHERE i.run_id=r.run_id AND i.input_role='STOCK_UNIVERSE') AS universe_snapshot_id,
+            (SELECT snapshot_checksum_sha256 FROM model_run_inputs i
+             WHERE i.run_id=r.run_id AND i.input_role='STOCK_UNIVERSE') AS universe_checksum
             FROM model_runs r WHERE r.run_id=?""",
             [run.run_id],
         )
@@ -128,6 +136,14 @@ class StockResearchRunWriter(ModelRunWriter):
         count = len(scorecards)
         if int(row["input_count"]) != 2:
             raise LineageError("Completed stock research run is not bound to exactly two inputs.")
+        expected_inputs = {
+            "market_snapshot_id": evidence.market_snapshot.snapshot_id,
+            "market_checksum": evidence.market_snapshot.source_checksum_sha256,
+            "universe_snapshot_id": evidence.universe_snapshot.snapshot_id,
+            "universe_checksum": evidence.universe_snapshot.source_checksum_sha256,
+        }
+        if any(str(row[key]) != str(value) for key, value in expected_inputs.items()):
+            raise LineageError("Completed stock research input lineage differs from preflight.")
         if int(row["scorecard_count"]) != count or int(row["frozen_count"]) != count:
             raise LineageError("Completed stock research scorecard reconciliation failed.")
         return CompletedStockResearchReceipt(
