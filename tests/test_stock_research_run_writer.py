@@ -67,7 +67,8 @@ class Session:
             "run_id", "model_name", "asset_class", "prediction_date",
             "source_session_date", "as_of_timestamp_utc", "code_version",
             "config_version", "status", "input_count", "scorecard_count",
-            "frozen_count",
+            "frozen_count", "market_snapshot_id", "market_checksum",
+            "universe_snapshot_id", "universe_checksum",
         ]
         rows = []
         if self.readback:
@@ -75,7 +76,8 @@ class Session:
                 "run-1", "STOCK_PYMC_RESEARCH", "STOCK", "2026-08-25",
                 "2026-08-24", "2026-08-25T03:30:00+00:00", "code-1",
                 "config-1", "COMPLETED", 2, self.scorecard_count,
-                self.scorecard_count,
+                self.scorecard_count, "market-1", "a" * 64,
+                "universe-1", "b" * 64,
             ]]]
         return Response(200, {
             "results": [{
