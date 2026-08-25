@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 import libsql_client
 import threading
 
+from model_lineage import LineageError
+from turso_read_pipeline import TursoReadPipeline
+
 load_dotenv()
 
 TURSO_URL = os.environ.get("TURSO_DATABASE_URL")
@@ -27,9 +30,35 @@ def get_connection():
         _local.client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
     return _local.client
 
+def _https_pipeline_endpoint(raw_url):
+    """Normalize the configured Turso URL to the canonical HTTPS pipeline."""
+    value = str(raw_url or "").strip()
+    if value.startswith("libsql://"):
+        value = "https://" + value[len("libsql://"):]
+    if not value.startswith("https://"):
+        raise LineageError("Turso read URL must use libsql:// or https://.")
+    value = value.rstrip("/")
+    if not value.endswith("/v2/pipeline"):
+        value += "/v2/pipeline"
+    return value
+
+
+def get_read_connection():
+    """Return one bounded, read-only HTTPS Turso adapter per thread."""
+    if not TURSO_URL or not TURSO_TOKEN:
+        raise ValueError("Missing TURSO credentials in environment.")
+    endpoint = _https_pipeline_endpoint(TURSO_URL)
+    client = getattr(_local, "read_client", None)
+    if client is None or getattr(_local, "read_endpoint", None) != endpoint:
+        client = TursoReadPipeline(endpoint, TURSO_TOKEN)
+        _local.read_client = client
+        _local.read_endpoint = endpoint
+    return client
+
+
 def execute_query(query, args=None):
-    """Generic helper to execute SELECT queries and return a DataFrame."""
-    client = get_connection()
+    """Execute a bounded SELECT through Turso's canonical HTTPS pipeline."""
+    client = get_read_connection()
     res = client.execute(query, args or [])
     if not res.rows:
         return pd.DataFrame(columns=res.columns)
@@ -52,6 +81,8 @@ def close_connection_for_cli_exit():
     if client is not None:
         client.close()
         _local.client = None
+    _local.read_client = None
+    _local.read_endpoint = None
 
 
 def init_db():
