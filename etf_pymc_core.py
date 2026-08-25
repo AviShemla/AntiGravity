@@ -21,13 +21,13 @@ class ETFPosteriorEvidence:
     probability_up_std: float
     probability_up_q05: float
     probability_up_q95: float
-    expected_return_pct_mean: float
-    expected_return_pct_std: float
-    predictive_risk_pct: float
+    expected_return_pp_mean: float
+    expected_return_pp_std: float
+    predictive_risk_pp: float
     stock_direction_prior_mean_log_odds: float
     stock_direction_prior_sigma_log_odds: float
-    stock_return_prior_mean_pct: float
-    stock_return_prior_sigma_pct: float
+    stock_return_prior_mean_pp: float
+    stock_return_prior_sigma_pp: float
     stock_weight_coverage: float
     stock_contributor_count: int
     diagnostics: SamplerDiagnostics
@@ -43,24 +43,24 @@ def validate_etf_inputs(
         raise LineageError("ETF dataset and stock prior source sessions do not match.")
     if dataset.x_train.ndim != 2 or dataset.x_predict.shape != (1, dataset.x_train.shape[1]):
         raise LineageError("ETF model matrices have incompatible shapes.")
-    if len(dataset.y_direction) != len(dataset.x_train) or len(dataset.y_return_pct) != len(dataset.x_train):
+    if len(dataset.y_direction) != len(dataset.x_train) or len(dataset.y_return_pp) != len(dataset.x_train):
         raise LineageError("ETF model outcomes do not align with training features.")
     if len(np.unique(dataset.y_direction)) < 2:
         raise LineageError("ETF direction training outcome contains only one class.")
-    values = (dataset.x_train, dataset.x_predict, dataset.y_direction, dataset.y_return_pct)
+    values = (dataset.x_train, dataset.x_predict, dataset.y_direction, dataset.y_return_pp)
     if not all(np.isfinite(value).all() for value in values):
         raise LineageError("ETF model matrices contain non-finite values.")
     aggregate = stock_prior.aggregate
     prior_values = (
         aggregate.mean_log_odds,
         aggregate.sigma_log_odds,
-        aggregate.weighted_expected_return,
-        aggregate.expected_return_sigma,
+        aggregate.weighted_expected_return_pp,
+        aggregate.expected_return_sigma_pp,
         aggregate.weight_coverage,
     )
     if not all(isfinite(value) for value in prior_values):
         raise LineageError("Stock-derived ETF prior contains non-finite values.")
-    if aggregate.sigma_log_odds <= 0.0 or aggregate.expected_return_sigma <= 0.0:
+    if aggregate.sigma_log_odds <= 0.0 or aggregate.expected_return_sigma_pp <= 0.0:
         raise LineageError("Stock-derived ETF prior uncertainty must be positive.")
 
 
@@ -113,13 +113,13 @@ def summarize_etf_posterior(
         probability_up_std=float(np.std(probabilities, ddof=1)),
         probability_up_q05=float(np.quantile(probabilities, 0.05)),
         probability_up_q95=float(np.quantile(probabilities, 0.95)),
-        expected_return_pct_mean=float(np.mean(return_means)),
-        expected_return_pct_std=float(np.std(return_means, ddof=1)),
-        predictive_risk_pct=float(np.sqrt(predictive_variance)),
+        expected_return_pp_mean=float(np.mean(return_means)),
+        expected_return_pp_std=float(np.std(return_means, ddof=1)),
+        predictive_risk_pp=float(np.sqrt(predictive_variance)),
         stock_direction_prior_mean_log_odds=aggregate.mean_log_odds,
         stock_direction_prior_sigma_log_odds=aggregate.sigma_log_odds,
-        stock_return_prior_mean_pct=aggregate.weighted_expected_return,
-        stock_return_prior_sigma_pct=aggregate.expected_return_sigma,
+        stock_return_prior_mean_pp=aggregate.weighted_expected_return_pp,
+        stock_return_prior_sigma_pp=aggregate.expected_return_sigma_pp,
         stock_weight_coverage=aggregate.weight_coverage,
         stock_contributor_count=aggregate.contributor_count,
         diagnostics=diagnostics,
@@ -147,7 +147,7 @@ def fit_etf_posterior(
 
     aggregate = stock_prior.aggregate
     feature_count = dataset.x_train.shape[1]
-    observed_return_spread = max(float(np.std(dataset.y_return_pct, ddof=1)), 0.10)
+    observed_return_spread = max(float(np.std(dataset.y_return_pp, ddof=1)), 0.10)
     with pm.Model(coords={"feature": dataset.feature_names}) as model:
         x_train = pm.Data("x_train", dataset.x_train, dims=("observation", "feature"))
         alpha_direction = pm.Normal(
@@ -161,8 +161,8 @@ def fit_etf_posterior(
 
         alpha_return = pm.Normal(
             "alpha_return",
-            mu=aggregate.weighted_expected_return,
-            sigma=aggregate.expected_return_sigma,
+            mu=aggregate.weighted_expected_return_pp,
+            sigma=aggregate.expected_return_sigma_pp,
         )
         beta_return = pm.Normal("beta_return", mu=0.0, sigma=0.5, dims="feature")
         return_scale = pm.HalfNormal("return_scale", sigma=observed_return_spread)
@@ -172,7 +172,7 @@ def fit_etf_posterior(
         return_mu = alpha_return + pm.math.dot(x_train, beta_return)
         pm.StudentT(
             "return_observed", nu=return_nu, mu=return_mu,
-            sigma=return_scale, observed=dataset.y_return_pct,
+            sigma=return_scale, observed=dataset.y_return_pp,
         )
         trace = pm.sample(**config)
 
