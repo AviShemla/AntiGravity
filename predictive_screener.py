@@ -241,18 +241,23 @@ def _rank_significant_candidates(
     if candidates.empty:
         return ()
     target = target.copy()
+    # Compute pairwise correlations and non-null sample counts in one
+    # vectorized pass. The prior implementation realigned a two-column
+    # DataFrame separately for every ticker/lag hypothesis.
+    correlations = candidates.corrwith(target)
+    sample_counts = candidates.notna().mul(target.notna(), axis=0).sum(axis=0)
     evidence: dict[str, tuple[float, float]] = {}
     for raw_name in candidates.columns:
         name = str(raw_name)
-        aligned = pd.concat([target, candidates[raw_name]], axis=1).dropna()
-        if len(aligned) < 50:
+        samples = int(sample_counts[raw_name])
+        if samples < 50:
             evidence[name] = (1.0, 0.0)
             continue
-        correlation = float(aligned.iloc[:, 0].corr(aligned.iloc[:, 1]))
+        correlation = float(correlations[raw_name])
         if not np.isfinite(correlation):
             evidence[name] = (1.0, 0.0)
             continue
-        pvalue = _normal_two_sided_pvalue_from_correlation(correlation, len(aligned))
+        pvalue = _normal_two_sided_pvalue_from_correlation(correlation, samples)
         evidence[name] = (pvalue, abs(correlation))
 
     if selection_method == "bonferroni":
@@ -276,22 +281,20 @@ def _rank_significant_candidates(
         )
     )
 
-def discover_feature_spec(
-    *,
+def _discover_ranked_features(*,
     ticker: str,
     returns: pd.DataFrame,
     technical_features: pd.DataFrame,
     train_positions: Iterable[int],
-    depth: int,
     familywise_alpha: float,
     max_technical_features: int,
     selection_method: str = "bonferroni",
     candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5),
-) -> FeatureSpec | None:
-    """Discover one feature specification using training rows only."""
+) -> tuple[tuple[tuple[str, int], ...], tuple[str, ...]]:
+    """Rank admissible lag edges and technical features once per fold."""
     positions = np.asarray(list(train_positions), dtype=int)
-    if depth < 1 or depth > 5 or len(positions) < 50:
-        return None
+    if len(positions) < 50:
+        return (), ()
     train_returns = returns.iloc[positions]
     target = train_returns[ticker]
     if selection_method not in {"bonferroni", "bh_fdr"}:
@@ -325,18 +328,46 @@ def discover_feature_spec(
         selection_method=selection_method,
     )
     selected_lags = [name for name in ranked if name in candidate_lookup]
-    if len(selected_lags) < depth:
-        return None
-    selected_edges = [candidate_lookup[name] for name in selected_lags[:depth]]
-    selected_technical = [
+    selected_edges = tuple(candidate_lookup[name] for name in selected_lags)
+    selected_technical = tuple(
         technical_lookup[name] for name in ranked if name in technical_lookup
-    ][:max_technical_features]
-    tech_names = list(selected_technical)
+    )[:max_technical_features]
+    return selected_edges, selected_technical
+
+
+def discover_feature_spec(
+    *,
+    ticker: str,
+    returns: pd.DataFrame,
+    technical_features: pd.DataFrame,
+    train_positions: Iterable[int],
+    depth: int,
+    familywise_alpha: float,
+    max_technical_features: int,
+    selection_method: str = "bonferroni",
+    candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5),
+) -> FeatureSpec | None:
+    """Discover one feature specification using training rows only."""
+    if depth < 1 or depth > 5:
+        return None
+    selected_edges, selected_technical = _discover_ranked_features(
+        ticker=ticker,
+        returns=returns,
+        technical_features=technical_features,
+        train_positions=train_positions,
+        familywise_alpha=familywise_alpha,
+        max_technical_features=max_technical_features,
+        selection_method=selection_method,
+        candidate_lags=candidate_lags,
+    )
+    if len(selected_edges) < depth:
+        return None
+    chosen_edges = selected_edges[:depth]
     return FeatureSpec(
         depth=depth,
-        lag_tickers=tuple(ticker_name for ticker_name, _lag in selected_edges),
-        lag_sessions=tuple(lag for _ticker_name, lag in selected_edges),
-        technical_features=tuple(tech_names),
+        lag_tickers=tuple(ticker_name for ticker_name, _lag in chosen_edges),
+        lag_sessions=tuple(lag for _ticker_name, lag in chosen_edges),
+        technical_features=selected_technical,
     )
 
 
@@ -488,20 +519,26 @@ def _select_depth_inside_training(
         return None
     inner_train = outer_train_positions[:inner_train_end]
     inner_test = outer_train_positions[inner_test_start:]
+    selected_edges, selected_technical = _discover_ranked_features(
+        ticker=ticker,
+        returns=returns,
+        technical_features=technical_features,
+        train_positions=inner_train,
+        familywise_alpha=config.familywise_alpha,
+        max_technical_features=config.max_technical_features,
+        candidate_lags=config.candidate_lags,
+    )
     candidates: list[tuple[float, float, int]] = []
     for depth in range(config.min_depth, config.max_depth + 1):
-        spec = discover_feature_spec(
-            ticker=ticker,
-            returns=returns,
-            technical_features=technical_features,
-            train_positions=inner_train,
+        if len(selected_edges) < depth:
+            break
+        chosen_edges = selected_edges[:depth]
+        spec = FeatureSpec(
             depth=depth,
-            familywise_alpha=config.familywise_alpha,
-            max_technical_features=config.max_technical_features,
-            candidate_lags=config.candidate_lags,
+            lag_tickers=tuple(ticker_name for ticker_name, _lag in chosen_edges),
+            lag_sessions=tuple(lag for _ticker_name, lag in chosen_edges),
+            technical_features=selected_technical,
         )
-        if spec is None:
-            continue
         try:
             metrics, _probabilities, _truth = _fit_and_score_spec(
                 ticker=ticker,
