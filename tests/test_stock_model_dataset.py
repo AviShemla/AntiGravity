@@ -54,6 +54,16 @@ class StockModelDatasetTests(unittest.TestCase):
         self.assertIn("CCC_return_x_volume_ratio_lag2", result.feature_names)
         self.assertNotIn("BBB_return_x_volume_ratio_lag1", result.feature_names)
 
+    def test_missing_close_is_rejected_before_atr_ratio(self):
+        data, dates = frame()
+        data = data.drop(columns=["Close"])
+        with self.assertRaisesRegex(LineageError, "Close"):
+            build_stock_model_dataset(
+                data, self.entry(), source_session_date=dates[-1].date(),
+                prediction_date=(dates[-1] + pd.offsets.BDay(1)).date(),
+                lookback_sessions=30,
+            )
+
     def test_future_observation_is_rejected(self):
         data, dates = frame()
         with self.assertRaisesRegex(LineageError, "after the declared source"):
