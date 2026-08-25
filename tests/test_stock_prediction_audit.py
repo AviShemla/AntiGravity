@@ -12,7 +12,7 @@ from stock_prediction_eligibility import (
 
 
 def evidence():
-    return PredictionEvidence(0.72, 0.55, 0.84, 0.012, 0.02)
+    return PredictionEvidence(0.72, 0.55, 0.84, 1.2, 2.0)
 
 
 def context(**changes):
@@ -25,7 +25,7 @@ def context(**changes):
         "research_promotion_approved": True,
         "available_capital": 10_000.0,
         "vix_close": 18.0,
-        "round_trip_cost": 0.001,
+        "round_trip_cost_bps": 10.0,
     }
     values.update(changes)
     return DecisionContext(**values)
