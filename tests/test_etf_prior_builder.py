@@ -18,7 +18,7 @@ class FakeDB:
     def execute(self, query, _args):
         if "FROM model_runs" in query:
             return Result(
-                ["run_id", "source_session_date", "as_of_timestamp_utc"],
+                ["run_id", "source_session_date", "completed_at_utc"],
                 [["stock-run", self.source_session, "2026-08-22T04:00:00+00:00"]],
             )
         if "FROM model_run_inputs" in query:
