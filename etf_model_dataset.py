@@ -20,7 +20,7 @@ class ETFModelDataset:
     training_dates: tuple[date, ...]
     x_train: np.ndarray
     y_direction: np.ndarray
-    y_return_pct: np.ndarray
+    y_return_pp: np.ndarray
     x_predict: np.ndarray
     train_mean: np.ndarray
     train_scale: np.ndarray
@@ -144,7 +144,7 @@ def build_etf_model_dataset(
         training_dates=tuple(ts.date() for ts in training.index),
         x_train=(raw_x - mean) / scale,
         y_direction=(y_return > 0).astype(int),
-        y_return_pct=y_return,
+        y_return_pp=y_return,
         x_predict=((prediction - mean) / scale).reshape(1, -1),
         train_mean=mean,
         train_scale=scale,
