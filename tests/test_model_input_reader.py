@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 
 from model_input_reader import (
     InputSnapshot,
+    StockUniverseEntry,
     load_stock_universe_config,
     select_validated_snapshot,
     verify_snapshot_counts,
@@ -87,6 +88,36 @@ class ModelInputReaderTests(unittest.TestCase):
         entries = load_stock_universe_config(db, snapshot)
         self.assertEqual(entries[0].lag_tickers, ("GPC", "GPC", "GPC"))
         self.assertEqual(entries[0].lag_sessions, (7, 5, 2))
+
+    def test_missing_lag_sessions_never_default_from_chain_depth(self):
+        with self.assertRaisesRegex(LineageError, "must agree"):
+            StockUniverseEntry(
+                ticker="GPC",
+                selection_rank=1,
+                oos_accuracy=0.6,
+                causal_depth=2,
+                lag_tickers=("AAPL", "MSFT"),
+            )
+
+    def test_lag_horizon_seven_passes_and_eight_fails(self):
+        accepted = StockUniverseEntry(
+            ticker="GPC",
+            selection_rank=1,
+            oos_accuracy=0.6,
+            causal_depth=2,
+            lag_tickers=("AAPL", "MSFT"),
+            lag_sessions=(7, 2),
+        )
+        self.assertEqual(accepted.lag_sessions, (7, 2))
+        with self.assertRaisesRegex(LineageError, "between 1 and 7"):
+            StockUniverseEntry(
+                ticker="GPC",
+                selection_rank=1,
+                oos_accuracy=0.6,
+                causal_depth=2,
+                lag_tickers=("AAPL", "MSFT"),
+                lag_sessions=(8, 2),
+            )
 
     def test_incomplete_lag_chain_fails_closed(self):
         snapshot = InputSnapshot(
