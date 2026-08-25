@@ -11,7 +11,7 @@ import json
 import os
 import sys
 import uuid
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import date, datetime
 from pathlib import Path
 
@@ -83,6 +83,24 @@ def main() -> int:
     if cutoff.tzinfo is None:
         raise SystemExit("--cutoff-utc must be timezone-aware.")
 
+    preflight_config = ScreeningConfig(
+        min_train_sessions=args.min_train_sessions,
+        training_window_sessions=args.training_window_sessions,
+        test_sessions=args.test_sessions,
+        outer_folds=args.outer_folds,
+        min_oos_sessions=args.min_oos_sessions,
+        min_depth=args.min_depth,
+        max_depth=args.max_depth,
+        candidate_lags=candidate_lags,
+        purge_sessions=args.purge_sessions,
+        min_fit_observations=args.min_fit_observations,
+        eligibility_hypotheses=1,
+    )
+    try:
+        preflight_config.validate()
+    except LineageError as exc:
+        raise SystemExit(f"Invalid screening configuration: {exc}") from exc
+
     load_dotenv(ROOT / ".env")
     raw_url = os.environ.get("TURSO_DATABASE_URL", "")
     token = os.environ.get("TURSO_AUTH_TOKEN", "")
@@ -110,19 +128,7 @@ def main() -> int:
     if not snapshot_id:
         raise SystemExit("Validated market frame is missing snapshot lineage.")
 
-    config = ScreeningConfig(
-        min_train_sessions=args.min_train_sessions,
-        training_window_sessions=args.training_window_sessions,
-        test_sessions=args.test_sessions,
-        outer_folds=args.outer_folds,
-        min_oos_sessions=args.min_oos_sessions,
-        min_depth=args.min_depth,
-        max_depth=args.max_depth,
-        candidate_lags=candidate_lags,
-        purge_sessions=args.purge_sessions,
-        min_fit_observations=args.min_fit_observations,
-        eligibility_hypotheses=len(tickers),
-    )
+    config = replace(preflight_config, eligibility_hypotheses=len(tickers))
     config.validate()
     run_id = f"predictive_screening_{source_session.isoformat()}_{uuid.uuid4().hex[:12]}"
     config_payload = {

@@ -24,6 +24,18 @@ from stock_lag_governance import (
 )
 
 
+def nested_inner_fold_capacity(
+    *,
+    outer_train_sessions: int,
+    test_sessions: int,
+    purge_sessions: int,
+) -> tuple[int, int]:
+    """Return deterministic inner holdout and fit capacity for one outer fold."""
+    inner_test_sessions = min(test_sessions, max(20, outer_train_sessions // 5))
+    inner_fit_observations = outer_train_sessions - inner_test_sessions - purge_sessions
+    return inner_test_sessions, inner_fit_observations
+
+
 @dataclass(frozen=True)
 class ScreeningConfig:
     min_train_sessions: int = 504
@@ -84,6 +96,24 @@ class ScreeningConfig:
             raise LineageError("Familywise alpha is outside the supported safety range.")
         if self.min_fit_observations < 50:
             raise LineageError("Model fits require at least 50 completed observations.")
+        minimum_outer_train = (
+            self.training_window_sessions
+            if self.training_window_sessions is not None
+            else self.min_train_sessions
+        )
+        inner_test_sessions, inner_fit_observations = nested_inner_fold_capacity(
+            outer_train_sessions=minimum_outer_train,
+            test_sessions=self.test_sessions,
+            purge_sessions=self.purge_sessions,
+        )
+        required_inner_fit = self.min_fit_observations + self.max_depth
+        if inner_fit_observations < required_inner_fit:
+            raise LineageError(
+                "Nested inner fold is infeasible: "
+                f"{minimum_outer_train} outer-train - {inner_test_sessions} inner-test "
+                f"- {self.purge_sessions} purge = {inner_fit_observations} fit observations; "
+                f"at least min_fit + max_depth = {required_inner_fit} are required."
+            )
         if self.eligibility_hypotheses < 1:
             raise LineageError("Eligibility hypothesis count must be positive.")
 
@@ -512,9 +542,12 @@ def _select_depth_inside_training(
     config: ScreeningConfig,
 ) -> int | None:
     """Choose depth on a purged inner holdout wholly inside outer training."""
-    inner_test_sessions = min(config.test_sessions, max(20, len(outer_train_positions) // 5))
+    inner_test_sessions, inner_train_end = nested_inner_fold_capacity(
+        outer_train_sessions=len(outer_train_positions),
+        test_sessions=config.test_sessions,
+        purge_sessions=config.purge_sessions,
+    )
     inner_test_start = len(outer_train_positions) - inner_test_sessions
-    inner_train_end = inner_test_start - config.purge_sessions
     if inner_train_end < config.min_fit_observations + config.max_depth:
         return None
     inner_train = outer_train_positions[:inner_train_end]

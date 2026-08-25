@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 import unittest
@@ -58,6 +59,57 @@ class PredictiveScreeningCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--candidate-lags", result.stdout)
         self.assertIn("--expanding-training-window", result.stdout)
+
+    def test_impossible_nested_fold_fails_before_turso_access(self):
+        environment = os.environ.copy()
+        environment.pop("TURSO_DATABASE_URL", None)
+        environment.pop("TURSO_AUTH_TOKEN", None)
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(RUNNER),
+                "--source-session-date",
+                "2026-08-21",
+                "--cutoff-utc",
+                "2026-08-23T06:46:36+00:00",
+                "--code-version",
+                "test",
+                "--min-depth",
+                "1",
+                "--max-depth",
+                "5",
+                "--candidate-lags",
+                "1,2,3,4,5",
+                "--purge-sessions",
+                "7",
+                "--min-train-sessions",
+                "126",
+                "--training-window-sessions",
+                "126",
+                "--test-sessions",
+                "30",
+                "--outer-folds",
+                "4",
+                "--min-oos-sessions",
+                "120",
+                "--min-fit-observations",
+                "126",
+                "--model-family",
+                "selected_chain",
+            ],
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Invalid screening configuration", result.stderr)
+        self.assertIn("Nested inner fold is infeasible", result.stderr)
+        self.assertIn("94 fit observations", result.stderr)
+        self.assertIn("131 are required", result.stderr)
+        self.assertNotIn("Turso environment variables are unavailable", result.stderr)
 
 
 if __name__ == "__main__":

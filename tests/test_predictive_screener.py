@@ -78,7 +78,7 @@ class PredictiveScreenerTests(unittest.TestCase):
     def test_rolling_walk_forward_uses_only_the_declared_recent_history(self):
         config = ScreeningConfig(
             min_train_sessions=252,
-            training_window_sessions=126,
+            training_window_sessions=140,
             test_sessions=25,
             outer_folds=4,
             purge_sessions=5,
@@ -86,8 +86,40 @@ class PredictiveScreenerTests(unittest.TestCase):
         )
         windows = expanding_windows(pd.RangeIndex(400), config)
         for window in windows:
-            self.assertEqual(len(window.train_positions), 126)
+            self.assertEqual(len(window.train_positions), 140)
             self.assertEqual(window.test_positions[0] - window.train_positions[-1], 6)
+
+    def test_nested_inner_fold_capacity_is_rejected_preflight(self):
+        config = ScreeningConfig(
+            min_train_sessions=126,
+            training_window_sessions=126,
+            test_sessions=30,
+            outer_folds=4,
+            purge_sessions=7,
+            min_oos_sessions=120,
+            max_depth=5,
+            candidate_lags=(1, 2, 3, 4, 5),
+            min_fit_observations=126,
+        )
+        with self.assertRaisesRegex(
+            LineageError,
+            r"126 outer-train - 25 inner-test - 7 purge = 94 fit observations.*131",
+        ):
+            config.validate()
+
+    def test_nested_inner_fold_capacity_accepts_exact_boundary(self):
+        config = ScreeningConfig(
+            min_train_sessions=168,
+            training_window_sessions=168,
+            test_sessions=30,
+            outer_folds=4,
+            purge_sessions=7,
+            min_oos_sessions=120,
+            max_depth=5,
+            candidate_lags=(1, 2, 3, 4, 5),
+            min_fit_observations=126,
+        )
+        config.validate()
 
     def test_rolling_window_shorter_than_126_sessions_is_rejected(self):
         config = ScreeningConfig(
