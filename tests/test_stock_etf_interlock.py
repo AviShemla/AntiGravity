@@ -29,7 +29,7 @@ class StockETFInterlockTests(unittest.TestCase):
         )
         self.assertTrue(math.isfinite(prior.mean_log_odds))
         self.assertGreaterEqual(prior.sigma_log_odds, 0.20)
-        self.assertGreater(prior.expected_return_sigma, 0.0)
+        self.assertGreater(prior.expected_return_sigma_pp, 0.0)
         self.assertAlmostEqual(prior.weight_coverage, 0.80)
         self.assertEqual(prior.contributor_count, 3)
 
