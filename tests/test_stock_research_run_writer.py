@@ -86,7 +86,7 @@ class Session:
                         "rows": rows,
                     }
                 },
-            }, {"type": "ok", "response": {"result": {}}]
+            }, {"type": "ok", "response": {"result": {}}}]
         })
 
 
