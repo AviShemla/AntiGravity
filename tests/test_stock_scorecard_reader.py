@@ -34,7 +34,8 @@ class FakeDB:
             return Result(
                 [
                     "ticker", "posterior_probability", "posterior_probability_std",
-                    "expected_return", "expected_return_std", "created_at_utc",
+                    "expected_return", "expected_return_std", "expected_risk",
+                    "recommendation", "proposed_allocation", "quarantine_reason", "created_at_utc",
                 ],
                 self.score_rows,
             )
@@ -54,8 +55,8 @@ class StockScorecardReaderTests(unittest.TestCase):
         return FakeDB(
             [["stock_run_1", "2026-08-20", "2026-08-21T04:00:00+00:00"]],
             [
-                ["AAPL", 0.65, 0.04, 0.012, 0.006, "2026-08-21T04:01:00+00:00"],
-                ["MSFT", 0.58, 0.05, 0.008, 0.005, "2026-08-21T04:01:00+00:00"],
+                ["AAPL", 0.65, 0.04, 1.2, 0.6, 2.4, "NO_TRADE", 0.0, "RESEARCH_ONLY;PROMOTION_DISABLED;ACTION_LANES_NO_TRADE;UNIT_CONTRACT=statistical-units-v1", "2026-08-21T04:01:00+00:00"],
+                ["MSFT", 0.58, 0.05, 0.8, 0.5, 1.8, "NO_TRADE", 0.0, "RESEARCH_ONLY;PROMOTION_DISABLED;ACTION_LANES_NO_TRADE;UNIT_CONTRACT=statistical-units-v1", "2026-08-21T04:01:00+00:00"],
             ],
         )
 
@@ -106,7 +107,7 @@ class StockScorecardReaderTests(unittest.TestCase):
 
     def test_future_scorecard_fails_closed(self):
         db = self.valid_db()
-        db.score_rows[0][5] = "2026-08-21T05:01:00+00:00"
+        db.score_rows[0][9] = "2026-08-21T05:01:00+00:00"
         with self.assertRaisesRegex(LineageError, "after the ETF cutoff"):
             load_stock_evidence_for_etf(
                 db,
