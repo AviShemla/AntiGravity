@@ -286,9 +286,10 @@ class ModelRunWriter:
                 raise LineageError("Atomic model-run batch failed and was rolled back.")
             if results[5] is not None or errors[5] is not None:
                 raise LineageError("Rollback unexpectedly executed after a successful commit.")
-        except (KeyError, IndexError, TypeError, ValueError) as exc:
-            raise LineageError("Turso returned malformed model-run batch evidence.") from exc
-        except LineageError:
+        except (KeyError, IndexError, TypeError, ValueError, LineageError):
+            # The server may have committed even when the HTTP/batch response is
+            # missing, malformed, or reports an error. Never retry blindly:
+            # exact readback is the only acceptable proof of persistence.
             return self._reconcile(run, evidence, created)
 
         return self._reconcile(run, evidence, created)
