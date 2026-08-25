@@ -27,7 +27,7 @@ class FakeDB:
         self.calls.append((query, args))
         if "FROM model_runs" in query:
             return Result(
-                ["run_id", "source_session_date", "as_of_timestamp_utc"],
+                ["run_id", "source_session_date", "completed_at_utc"],
                 self.run_rows,
             )
         if "FROM model_scorecards" in query:
@@ -72,6 +72,8 @@ class StockScorecardReaderTests(unittest.TestCase):
         self.assertEqual(batch.stock_persona, "Neutral")
         self.assertEqual(batch.run_id, "stock_run_1")
         self.assertEqual(len(batch.evidence), 2)
+        self.assertEqual(batch.available_at_utc, datetime(2026, 8, 21, 4, 0, tzinfo=timezone.utc))
+        self.assertIn("MAX(score.created_at_utc)", db.calls[0][0])
         queries = " ".join(query for query, _ in db.calls)
         self.assertNotIn("etf_scorecards_master", queries)
         self.assertNotIn("csv", queries.lower())
