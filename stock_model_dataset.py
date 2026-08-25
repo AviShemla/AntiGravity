@@ -61,7 +61,7 @@ def build_stock_model_dataset(
         raise LineageError("Prediction date must follow the completed source session.")
     if lookback_sessions < 30:
         raise LineageError("Research lookback must contain at least 30 completed sessions.")
-    required = {"Ticker", "Date", "Daily_Return_%", "Volume", *TECHNICAL_COLUMNS}
+    required = {"Ticker", "Date", "Daily_Return_%", "Volume", "Close", *TECHNICAL_COLUMNS}
     missing = sorted(required - set(market_frame.columns))
     if missing:
         raise LineageError(f"Market snapshot is missing required columns: {missing}.")
