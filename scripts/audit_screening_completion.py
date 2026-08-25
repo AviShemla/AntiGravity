@@ -106,7 +106,7 @@ def build_completion_checks(
         ),
         "fold_numbers_complete": fold_numbers_complete,
         "fold_purge_covers_max_candidate_lag": fold_purge_valid,
-        "no_temporal_overlap": int(folds["temporal_overlap_count"]) == 0,
+        "no_temporal_overlap": int(folds["temporal_overlap_count"] or 0) == 0,
         "eligibility_count_consistent": 0 <= eligible <= evaluated,
         "no_model_or_prior_outputs": (
             int(downstream["model_runs"]) == 0

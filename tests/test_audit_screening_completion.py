@@ -90,10 +90,12 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
             "max_fold": None,
             "min_purge": None,
             "max_purge": None,
+            "temporal_overlap_count": None,
         })
         checks = build_completion_checks(**evidence)
         self.assertTrue(checks["fold_numbers_complete"])
         self.assertTrue(checks["fold_purge_covers_max_candidate_lag"])
+        self.assertTrue(checks["no_temporal_overlap"])
 
     def test_eligible_count_cannot_exceed_evaluated_count(self):
         evidence = self.evidence()
