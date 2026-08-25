@@ -1,6 +1,6 @@
 # Lag-edge v2 production schema approval package
 
-Status: GO/NO-GO PACKAGE ONLY - NOT APPROVED OR APPLIED
+Status: APPROVED AND APPLIED ON 2026-08-25; see `LAG_EDGE_V2_PRODUCTION_APPLICATION_EVIDENCE_20260825.md`.
 
 Prepared from GitHub master `5be1e38e7c2dacb5935b2a05945a0b7072167f06`.
 Read-only production preflight timestamp: `2026-08-25T11:42:46Z`.
@@ -104,9 +104,10 @@ default. Application is failure-atomic through the Turso transaction baton:
    APPLY ledger event, without a COMMIT request;
 3. require every result to be `ok`;
 4. send COMMIT only after all schema statements and the ledger passed;
-5. require COMMIT success, then close the baton;
-6. on any failure before COMMIT, send ROLLBACK, require rollback success, close
-   the baton, and report failure.
+5. require COMMIT success; a successful terminal COMMIT normally returns no
+   baton and must not be followed by close or rollback;
+6. on any failure before a proven COMMIT, send ROLLBACK and require its
+   successful terminal response without requiring a returned baton.
 
 An unconditional COMMIT is never placed in the same request as statements that
 may fail.

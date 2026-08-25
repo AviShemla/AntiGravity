@@ -93,13 +93,13 @@ def test_result_verification_fails_closed():
         verify_pipeline_results({"results":[{"type":"ok"},{"type":"error"}]},2)
 
 
-def test_success_uses_baton_and_commits_only_after_all_steps_pass():
+def test_success_uses_baton_and_accepts_terminal_commit_without_baton():
     migration=parse_atomic_bundle(bundle())
     step_count=len(migration.statements)+1
     session=FakeSession([
         ok("b1"),
         {"baton":"b2","results":[{"type":"ok"}]*step_count},
-        ok("b3"), ok("b4"),
+        ok(None),
     ])
     apply_atomic_migration(session,"https://isolated/v2/pipeline","token",migration,
         event_id="event-1",actor="test",target_database_id="isolated",evidence={},
@@ -110,7 +110,7 @@ def test_success_uses_baton_and_commits_only_after_all_steps_pass():
     assert all(r["stmt"]["sql"]!="COMMIT" for r in bodies[1]["requests"])
     assert bodies[2]["baton"]=="b2"
     assert bodies[2]["requests"][0]["stmt"]["sql"]=="COMMIT"
-    assert bodies[3]=={"baton":"b3","requests":[{"type":"close"}]}
+    assert len(bodies)==3
 
 
 def test_failure_rolls_back_and_never_commits():
@@ -120,7 +120,7 @@ def test_failure_rolls_back_and_never_commits():
     session=FakeSession([
         ok("b1"),
         {"baton":"b2","results":failed},
-        ok("b3"), ok("b4"),
+        ok(None),
     ])
     with pytest.raises(AtomicMigrationError,match="result indexes"):
         apply_atomic_migration(session,"https://isolated/v2/pipeline","token",migration,

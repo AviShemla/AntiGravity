@@ -146,7 +146,9 @@ def _rollback_connection(session, endpoint: str, token: str, baton: str)->None:
     payload=_post_pipeline(session,endpoint,token,[{"type":"execute","stmt":{
         "sql":"ROLLBACK","args":[]}}],baton=baton)
     verify_pipeline_results(payload,1)
-    _close_connection(session,endpoint,token,_require_baton(payload))
+    # COMMIT and ROLLBACK terminate the Hrana transaction. Turso normally
+    # returns no baton after either terminal statement, so there is no
+    # connection left to close.
 
 
 def apply_atomic_migration(session, endpoint: str, token: str, migration: AtomicMigration, *,
@@ -166,8 +168,8 @@ def apply_atomic_migration(session, endpoint: str, token: str, migration: Atomic
         verify_pipeline_results(applied,len(requests_))
         committed=_post_pipeline(session,endpoint,token,[{"type":"execute","stmt":{
             "sql":"COMMIT","args":[]}}],baton=baton)
-        baton=_require_baton(committed)
         verify_pipeline_results(committed,1)
+        # A successful COMMIT is terminal and normally returns no baton.
     except Exception as exc:
         try: _rollback_connection(session,endpoint,token,baton)
         except Exception as rollback_exc:
@@ -175,7 +177,6 @@ def apply_atomic_migration(session, endpoint: str, token: str, migration: Atomic
                 f"Migration failed and rollback could not be verified: {rollback_exc}"
             ) from exc
         raise
-    _close_connection(session,endpoint,token,baton)
 
 
 def resolve_target_environment(environment: str, production_approval_id: str|None)->tuple[str,str]:

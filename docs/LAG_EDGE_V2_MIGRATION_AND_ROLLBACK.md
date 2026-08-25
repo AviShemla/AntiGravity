@@ -26,8 +26,9 @@ Application uses Turso's transaction baton deliberately:
    under that baton, without a `COMMIT` request;
 3. require every response to be `ok`;
 4. send `COMMIT` only after every statement and the ledger have passed;
-5. on any error, send `ROLLBACK`, require its successful response, and close
-   the baton before reporting the failure.
+5. accept a successful terminal COMMIT without requiring a returned baton;
+6. on any pre-COMMIT error, send `ROLLBACK` and require its successful
+   terminal response without requiring a returned baton.
 
 This sequence is required because a single Turso pipeline can continue after a
 statement error; placing an unconditional `COMMIT` later in that same request
