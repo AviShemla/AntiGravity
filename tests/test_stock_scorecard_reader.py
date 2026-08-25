@@ -168,5 +168,45 @@ class StockScorecardReaderTests(unittest.TestCase):
             )
 
 
+    def test_missing_requested_constituent_fails_closed(self):
+        db = self.valid_db()
+        db.score_rows = db.score_rows[:1]
+        with self.assertRaisesRegex(LineageError, "ticker lineage is incomplete"):
+            load_stock_evidence_for_etf(
+                db,
+                etf_persona="ETF_Neutral",
+                prediction_date=date(2026, 8, 21),
+                etf_cutoff_utc=self.cutoff,
+                expected_market_snapshot_id="market-1",
+                constituent_weights={"AAPL": 0.35, "MSFT": 0.30},
+            )
+
+    def test_actionable_stock_scorecard_fails_closed(self):
+        db = self.valid_db()
+        db.score_rows[0][6] = "BUY"
+        with self.assertRaisesRegex(LineageError, "is not NO_TRADE"):
+            load_stock_evidence_for_etf(
+                db,
+                etf_persona="ETF_Neutral",
+                prediction_date=date(2026, 8, 21),
+                etf_cutoff_utc=self.cutoff,
+                expected_market_snapshot_id="market-1",
+                constituent_weights={"AAPL": 0.35, "MSFT": 0.30},
+            )
+
+    def test_missing_research_unit_marker_fails_closed(self):
+        db = self.valid_db()
+        db.score_rows[0][8] = "RESEARCH_ONLY;PROMOTION_DISABLED"
+        with self.assertRaisesRegex(LineageError, "policy marker is incomplete"):
+            load_stock_evidence_for_etf(
+                db,
+                etf_persona="ETF_Neutral",
+                prediction_date=date(2026, 8, 21),
+                etf_cutoff_utc=self.cutoff,
+                expected_market_snapshot_id="market-1",
+                constituent_weights={"AAPL": 0.35, "MSFT": 0.30},
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
