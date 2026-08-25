@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 import pytest
 from scripts.apply_atomic_migration import (
-    build_atomic_pipeline, canonical_utc_seconds, parse_atomic_bundle,
-    resolve_target_environment, verify_expected_hash, verify_pipeline_results,
+    AtomicMigrationError, apply_atomic_migration, build_atomic_statement_batch,
+    canonical_utc_seconds, parse_atomic_bundle, resolve_target_environment,
+    verify_expected_hash, verify_pipeline_results,
 )
 
 
@@ -14,6 +15,22 @@ def bundle():
         b"CREATE TRIGGER IF NOT EXISTS no_delete BEFORE DELETE ON x\n"
         b"BEGIN\nSELECT RAISE(ABORT, 'no');\nEND\n-- end-statement\n"
     )
+
+
+class FakeResponse:
+    def __init__(self,payload,status_code=200):
+        self.payload=payload; self.status_code=status_code
+    def json(self): return self.payload
+
+
+class FakeSession:
+    def __init__(self,payloads): self.payloads=list(payloads); self.calls=[]
+    def post(self,url,**kwargs):
+        self.calls.append((url,kwargs))
+        return FakeResponse(self.payloads.pop(0))
+
+
+def ok(baton): return {"baton":baton,"results":[{"type":"ok"}]}
 
 
 def test_parser_preserves_trigger_semicolons():
@@ -50,33 +67,69 @@ def test_timestamp_is_canonical_seconds():
         canonical_utc_seconds(datetime(2026,8,25,8,9,10))
 
 
-def test_pipeline_is_one_transaction_with_ledger():
+def test_statement_batch_contains_migration_and_ledger_without_commit():
     migration=parse_atomic_bundle(bundle())
-    body=build_atomic_pipeline(migration,event_id="event-1",actor="test",
+    requests=build_atomic_statement_batch(migration,event_id="event-1",actor="test",
         target_database_id="isolated",evidence={"scope":"test"},
         executed_at_utc="2026-08-25T08:09:10Z")
-    requests=body["requests"]
-    assert requests[0]["stmt"]["sql"]=="BEGIN IMMEDIATE"
-    assert requests[-2]["stmt"]["sql"]=="COMMIT"
-    assert requests[-1]["type"]=="close"
-    assert [r["stmt"]["sql"] for r in requests[1:3]]==[sql for _,sql in migration.statements]
-    assert "INSERT INTO schema_migration_events_v2" in requests[-3]["stmt"]["sql"]
-    assert len(requests[-3]["stmt"]["args"])==9
+    assert [r["stmt"]["sql"] for r in requests[:2]]==[sql for _,sql in migration.statements]
+    assert "INSERT INTO schema_migration_events_v2" in requests[-1]["stmt"]["sql"]
+    assert len(requests[-1]["stmt"]["args"])==9
+    assert all(r["stmt"]["sql"] not in ("BEGIN IMMEDIATE","COMMIT") for r in requests)
 
 
-def test_pipeline_rejects_noncanonical_timestamp():
+def test_batch_rejects_noncanonical_timestamp():
     with pytest.raises(ValueError,match="canonical UTC"):
-        build_atomic_pipeline(parse_atomic_bundle(bundle()),event_id="e",actor="a",
+        build_atomic_statement_batch(parse_atomic_bundle(bundle()),event_id="e",actor="a",
             target_database_id="isolated",evidence={},
             executed_at_utc="2026-08-25T08:09:10+00:00")
 
 
 def test_result_verification_fails_closed():
     verify_pipeline_results({"results":[{"type":"ok"}]*5},5)
-    with pytest.raises(ValueError,match="incomplete"):
+    with pytest.raises(AtomicMigrationError,match="incomplete"):
         verify_pipeline_results({"results":[{"type":"ok"}]},2)
-    with pytest.raises(ValueError,match="result indexes"):
+    with pytest.raises(AtomicMigrationError,match="result indexes"):
         verify_pipeline_results({"results":[{"type":"ok"},{"type":"error"}]},2)
+
+
+def test_success_uses_baton_and_commits_only_after_all_steps_pass():
+    migration=parse_atomic_bundle(bundle())
+    step_count=len(migration.statements)+1
+    session=FakeSession([
+        ok("b1"),
+        {"baton":"b2","results":[{"type":"ok"}]*step_count},
+        ok("b3"), ok("b4"),
+    ])
+    apply_atomic_migration(session,"https://isolated/v2/pipeline","token",migration,
+        event_id="event-1",actor="test",target_database_id="isolated",evidence={},
+        executed_at_utc="2026-08-25T08:09:10Z")
+    bodies=[call[1]["json"] for call in session.calls]
+    assert bodies[0]["requests"][0]["stmt"]["sql"]=="BEGIN IMMEDIATE"
+    assert bodies[1]["baton"]=="b1"
+    assert all(r["stmt"]["sql"]!="COMMIT" for r in bodies[1]["requests"])
+    assert bodies[2]["baton"]=="b2"
+    assert bodies[2]["requests"][0]["stmt"]["sql"]=="COMMIT"
+    assert bodies[3]=={"baton":"b3","requests":[{"type":"close"}]}
+
+
+def test_failure_rolls_back_and_never_commits():
+    migration=parse_atomic_bundle(bundle())
+    step_count=len(migration.statements)+1
+    failed=[{"type":"ok"},{"type":"error"}]+[{"type":"ok"}]*(step_count-2)
+    session=FakeSession([
+        ok("b1"),
+        {"baton":"b2","results":failed},
+        ok("b3"), ok("b4"),
+    ])
+    with pytest.raises(AtomicMigrationError,match="result indexes"):
+        apply_atomic_migration(session,"https://isolated/v2/pipeline","token",migration,
+            event_id="event-1",actor="test",target_database_id="isolated",evidence={},
+            executed_at_utc="2026-08-25T08:09:10Z")
+    sqls=[req["stmt"].get("sql") for _,call in session.calls
+          for req in call["json"]["requests"] if req["type"]=="execute"]
+    assert "ROLLBACK" in sqls
+    assert "COMMIT" not in sqls
 
 
 def test_isolated_target_cannot_alias_production(monkeypatch):

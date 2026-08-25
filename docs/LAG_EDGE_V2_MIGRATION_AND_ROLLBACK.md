@@ -13,15 +13,27 @@ when it exactly equals the referenced frozen screening edge set.
 The schema is additive. Legacy positional lag columns remain untouched and
 must not be used by the future v2 read path after v2 activation.
 
-## Atomic application
+## Failure-atomic application
 
-'scripts/apply_atomic_migration.py' parses explicit statement markers instead
-of splitting on semicolons. It sends BEGIN IMMEDIATE, every reviewed DDL
-statement, an append-only migration-ledger event, and COMMIT in one Turso
-pipeline request. Exact migration bytes must match the reviewed SHA-256.
-Check-only is the default. Apply additionally requires event, actor, explicit
-target database identity, and evidence JSON. This document grants no production
-application authority.
+`scripts/apply_atomic_migration.py` parses explicit statement markers instead
+of splitting on semicolons. Exact migration bytes must match the reviewed
+SHA-256, and check-only is the default.
+
+Application uses Turso's transaction baton deliberately:
+
+1. send `BEGIN IMMEDIATE` and require an explicit baton;
+2. send every reviewed migration statement plus the append-only ledger event
+   under that baton, without a `COMMIT` request;
+3. require every response to be `ok`;
+4. send `COMMIT` only after every statement and the ledger have passed;
+5. on any error, send `ROLLBACK`, require its successful response, and close
+   the baton before reporting the failure.
+
+This sequence is required because a single Turso pipeline can continue after a
+statement error; placing an unconditional `COMMIT` later in that same request
+does not prove atomic rollback. Apply additionally requires event, actor,
+explicit target database identity, and evidence JSON. This document grants no
+production application authority.
 
 ## Required isolated Turso matrix
 
@@ -39,8 +51,8 @@ Turso branch and independently prove:
 9. further header updates and every delete are rejected;
 10. a deliberately failing DDL rolls back all earlier DDL and the ledger event.
 
-Record branch identity, artifact SHA-256, event ids, scoped sqlite_master object
-hashes, and ledger readback. Never run this matrix against production.
+Record branch identity, artifact SHA-256, event ids, scoped `sqlite_master`
+object hashes, and ledger readback. Never run this matrix against production.
 
 ## Rollback
 

@@ -1,4 +1,4 @@
-"""Hash-pinned atomic Turso migration runner; check-only by default."""
+"""Hash-pinned failure-atomic Turso migration runner; check-only by default."""
 from __future__ import annotations
 import argparse, hashlib, json, os, re, sys
 from dataclasses import dataclass
@@ -25,6 +25,10 @@ class AtomicMigration:
     schema_version: int
     artifact_sha256: str
     statements: tuple[tuple[str,str],...]
+
+
+class AtomicMigrationError(ValueError):
+    """Raised when Turso cannot prove a failure-atomic migration outcome."""
 
 
 def canonical_utc_seconds(value: datetime|None=None)->str:
@@ -78,15 +82,15 @@ def verify_expected_hash(migration: AtomicMigration, expected: str)->None:
         raise ValueError("Migration SHA-256 does not match the reviewed artifact.")
 
 
-def build_atomic_pipeline(migration: AtomicMigration, *, event_id: str, actor: str,
-                          target_database_id: str, evidence: dict[str,object],
-                          executed_at_utc: str)->dict[str,list[dict]]:
+def build_atomic_statement_batch(migration: AtomicMigration, *, event_id: str, actor: str,
+                                  target_database_id: str, evidence: dict[str,object],
+                                  executed_at_utc: str)->list[dict]:
     if not all(v.strip() for v in (event_id,actor,target_database_id)):
         raise ValueError("Migration ledger identity is incomplete.")
     if not _UTC.fullmatch(executed_at_utc):
         raise ValueError("Migration timestamp must be canonical UTC seconds.")
-    requests=[{"type":"execute","stmt":{"sql":"BEGIN IMMEDIATE","args":[]}}]
-    requests += [{"type":"execute","stmt":{"sql":sql,"args":[]}} for _,sql in migration.statements]
+    requests=[{"type":"execute","stmt":{"sql":sql,"args":[]}}
+              for _,sql in migration.statements]
     values=[event_id,migration.migration_id,migration.schema_version,
             migration.artifact_sha256,"APPLY",actor,target_database_id,
             json.dumps(evidence,sort_keys=True,separators=(",",":")),executed_at_utc]
@@ -95,18 +99,83 @@ def build_atomic_pipeline(migration: AtomicMigration, *, event_id: str, actor: s
         "(event_id,migration_id,schema_version,artifact_sha256,operation,actor,"
         "target_database_id,evidence_json,executed_at_utc) VALUES (?,?,?,?,?,?,?,?,?)",
         "args":[_encode_arg(v) for v in values]}})
-    requests += [{"type":"execute","stmt":{"sql":"COMMIT","args":[]}},{"type":"close"}]
-    return {"requests":requests}
+    return requests
 
 
 def verify_pipeline_results(payload: object, expected: int)->None:
     if not isinstance(payload,dict) or not isinstance(payload.get("results"),list):
-        raise ValueError("Turso returned invalid migration JSON.")
+        raise AtomicMigrationError("Turso returned invalid migration JSON.")
     results=payload["results"]
-    if len(results)<expected: raise ValueError("Turso returned an incomplete migration result set.")
+    if len(results)<expected:
+        raise AtomicMigrationError("Turso returned an incomplete migration result set.")
     failed=[i for i,item in enumerate(results[:expected])
             if not isinstance(item,dict) or item.get("type")!="ok"]
-    if failed: raise ValueError(f"Turso rejected the atomic migration at result indexes {failed}.")
+    if failed:
+        raise AtomicMigrationError(f"Turso rejected the atomic migration at result indexes {failed}.")
+
+
+def _post_pipeline(session, endpoint: str, token: str, requests_: list[dict], *,
+                   baton: str|None=None, timeout: float=45.0)->dict:
+    body={"requests":requests_}
+    if baton is not None: body["baton"]=baton
+    response=session.post(endpoint,headers={"Authorization":f"Bearer {token}",
+        "Content-Type":"application/json"},json=body,timeout=timeout)
+    if response.status_code!=200:
+        raise AtomicMigrationError(f"Atomic migration failed with HTTP {response.status_code}.")
+    try: payload=response.json()
+    except (ValueError,json.JSONDecodeError) as exc:
+        raise AtomicMigrationError("Turso returned invalid migration JSON.") from exc
+    if not isinstance(payload,dict):
+        raise AtomicMigrationError("Turso returned invalid migration JSON.")
+    return payload
+
+
+def _require_baton(payload: dict)->str:
+    baton=payload.get("baton")
+    if not isinstance(baton,str) or not baton:
+        raise AtomicMigrationError("Turso did not return a transaction baton.")
+    return baton
+
+
+def _close_connection(session, endpoint: str, token: str, baton: str)->None:
+    payload=_post_pipeline(session,endpoint,token,[{"type":"close"}],baton=baton)
+    verify_pipeline_results(payload,1)
+
+
+def _rollback_connection(session, endpoint: str, token: str, baton: str)->None:
+    payload=_post_pipeline(session,endpoint,token,[{"type":"execute","stmt":{
+        "sql":"ROLLBACK","args":[]}}],baton=baton)
+    verify_pipeline_results(payload,1)
+    _close_connection(session,endpoint,token,_require_baton(payload))
+
+
+def apply_atomic_migration(session, endpoint: str, token: str, migration: AtomicMigration, *,
+                           event_id: str, actor: str, target_database_id: str,
+                           evidence: dict[str,object], executed_at_utc: str)->None:
+    """Apply all statements and the ledger inside one rollback-capable transaction."""
+    begin=_post_pipeline(session,endpoint,token,[{"type":"execute","stmt":{
+        "sql":"BEGIN IMMEDIATE","args":[]}}])
+    verify_pipeline_results(begin,1)
+    baton=_require_baton(begin)
+    try:
+        requests_=build_atomic_statement_batch(migration,event_id=event_id,actor=actor,
+            target_database_id=target_database_id,evidence=evidence,
+            executed_at_utc=executed_at_utc)
+        applied=_post_pipeline(session,endpoint,token,requests_,baton=baton)
+        baton=_require_baton(applied)
+        verify_pipeline_results(applied,len(requests_))
+        committed=_post_pipeline(session,endpoint,token,[{"type":"execute","stmt":{
+            "sql":"COMMIT","args":[]}}],baton=baton)
+        baton=_require_baton(committed)
+        verify_pipeline_results(committed,1)
+    except Exception as exc:
+        try: _rollback_connection(session,endpoint,token,baton)
+        except Exception as rollback_exc:
+            raise AtomicMigrationError(
+                f"Migration failed and rollback could not be verified: {rollback_exc}"
+            ) from exc
+        raise
+    _close_connection(session,endpoint,token,baton)
 
 
 def resolve_target_environment(environment: str, production_approval_id: str|None)->tuple[str,str]:
@@ -163,15 +232,11 @@ def main()->int:
     load_dotenv(root/".env")
     try: endpoint,token=resolve_target_environment(args.target_environment,args.production_approval_id)
     except ValueError as exc: raise SystemExit(str(exc)) from exc
-    body=build_atomic_pipeline(migration,event_id=args.event_id,actor=args.actor,
-        target_database_id=args.target_database_id,evidence=evidence,
-        executed_at_utc=canonical_utc_seconds())
-    response=requests.post(endpoint,headers={"Authorization":f"Bearer {token}",
-        "Content-Type":"application/json"},json=body,timeout=45.0)
-    if response.status_code!=200:
-        raise SystemExit(f"Atomic migration failed with HTTP {response.status_code}.")
-    try: verify_pipeline_results(response.json(),len(migration.statements)+3)
-    except (ValueError,json.JSONDecodeError) as exc: raise SystemExit(str(exc)) from exc
+    try:
+        apply_atomic_migration(requests,endpoint,token,migration,event_id=args.event_id,
+            actor=args.actor,target_database_id=args.target_database_id,evidence=evidence,
+            executed_at_utc=canonical_utc_seconds())
+    except (AtomicMigrationError,ValueError) as exc: raise SystemExit(str(exc)) from exc
     print(f"APPLIED_ATOMIC_MIGRATION id={migration.migration_id} "
           f"version={migration.schema_version} statements={len(migration.statements)} "
           f"sha256={migration.artifact_sha256}")
