@@ -16,6 +16,7 @@ from predictive_screener import (
     evaluate_ticker,
     expanding_windows,
     score_probabilities,
+    signal_discovery_positions,
     wilson_interval,
 )
 
@@ -120,6 +121,53 @@ class PredictiveScreenerTests(unittest.TestCase):
             min_fit_observations=126,
         )
         config.validate()
+
+    def test_supported_signal_windows_do_not_reduce_fitted_training(self):
+        for signal_window in (30, 60, 126, 252):
+            with self.subTest(signal_window=signal_window):
+                config = ScreeningConfig(
+                    min_train_sessions=289,
+                    training_window_sessions=289,
+                    signal_lookback_sessions=signal_window,
+                    test_sessions=30,
+                    outer_folds=2,
+                    purge_sessions=7,
+                    min_oos_sessions=60,
+                    min_fit_observations=126,
+                )
+                config.validate()
+                windows = expanding_windows(pd.RangeIndex(400), config)
+                self.assertTrue(all(len(window.train_positions) == 289 for window in windows))
+
+    def test_signal_window_must_fit_wholly_inside_inner_training(self):
+        config = ScreeningConfig(
+            min_train_sessions=168,
+            training_window_sessions=168,
+            signal_lookback_sessions=252,
+            test_sessions=30,
+            outer_folds=2,
+            purge_sessions=7,
+            min_oos_sessions=60,
+            min_fit_observations=126,
+        )
+        with self.assertRaisesRegex(
+            LineageError,
+            "131 inner-fit observations are available but 252 signal sessions",
+        ):
+            config.validate()
+
+    def test_unsupported_signal_window_is_rejected(self):
+        config = ScreeningConfig(signal_lookback_sessions=45)
+        with self.assertRaisesRegex(LineageError, "Signal lookback must be one of"):
+            config.validate()
+
+    def test_signal_discovery_positions_are_recent_and_exact(self):
+        positions = signal_discovery_positions(range(100, 300), 30)
+        np.testing.assert_array_equal(positions, np.arange(270, 300))
+
+    def test_signal_discovery_positions_never_silently_truncate(self):
+        with self.assertRaisesRegex(LineageError, "Only 29 discovery observations"):
+            signal_discovery_positions(range(29), 30)
 
     def test_rolling_window_shorter_than_126_sessions_is_rejected(self):
         config = ScreeningConfig(

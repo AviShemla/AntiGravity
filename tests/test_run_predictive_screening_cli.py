@@ -41,6 +41,7 @@ class PredictiveScreeningCliTests(unittest.TestCase):
             "--outer-folds",
             "--min-oos-sessions",
             "--min-fit-observations",
+            "--signal-lookback-sessions",
             "--model-family",
         ):
             self.assertIn(argument, result.stderr)
@@ -86,6 +87,8 @@ class PredictiveScreeningCliTests(unittest.TestCase):
                 "126",
                 "--training-window-sessions",
                 "126",
+                "--signal-lookback-sessions",
+                "30",
                 "--test-sessions",
                 "30",
                 "--outer-folds",

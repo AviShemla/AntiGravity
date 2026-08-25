@@ -24,6 +24,10 @@ from stock_lag_governance import (
 )
 
 
+SIGNAL_LOOKBACK_OPTIONS = (30, 60, 126, 252)
+SCREENING_WINDOW_CONTRACT_ID = "screening-window-separation-v1-20260825"
+
+
 def nested_inner_fold_capacity(
     *,
     outer_train_sessions: int,
@@ -39,7 +43,11 @@ def nested_inner_fold_capacity(
 @dataclass(frozen=True)
 class ScreeningConfig:
     min_train_sessions: int = 504
+    # Governed evidence used to fit every inner and outer classifier.
     training_window_sessions: int | None = None
+    # Optional recent slice used only to discover/rank candidate signals.
+    signal_lookback_sessions: int | None = None
+    window_semantics_contract_id: str = SCREENING_WINDOW_CONTRACT_ID
     test_sessions: int = 63
     outer_folds: int = 4
     purge_sessions: int = 5
@@ -68,6 +76,16 @@ class ScreeningConfig:
                 raise LineageError("A rolling training window must contain at least 126 sessions.")
             if self.training_window_sessions > self.min_train_sessions:
                 raise LineageError("Rolling training window exceeds the required available history.")
+        if self.window_semantics_contract_id != SCREENING_WINDOW_CONTRACT_ID:
+            raise LineageError("Unknown or unapproved screening-window semantics contract.")
+        if (
+            self.signal_lookback_sessions is not None
+            and self.signal_lookback_sessions not in SIGNAL_LOOKBACK_OPTIONS
+        ):
+            raise LineageError(
+                f"Signal lookback must be one of {SIGNAL_LOOKBACK_OPTIONS}; "
+                "it is not a fitted-training window."
+            )
         if self.test_sessions < 20 or self.outer_folds < 2:
             raise LineageError("Screener requires at least two meaningful outer folds.")
         if not self.candidate_lags:
@@ -113,6 +131,15 @@ class ScreeningConfig:
                 f"{minimum_outer_train} outer-train - {inner_test_sessions} inner-test "
                 f"- {self.purge_sessions} purge = {inner_fit_observations} fit observations; "
                 f"at least min_fit + max_depth = {required_inner_fit} are required."
+            )
+        if (
+            self.signal_lookback_sessions is not None
+            and inner_fit_observations < self.signal_lookback_sessions
+        ):
+            raise LineageError(
+                "Signal lookback is infeasible inside nested training: "
+                f"{inner_fit_observations} inner-fit observations are available but "
+                f"{self.signal_lookback_sessions} signal sessions were requested."
             )
         if self.eligibility_hypotheses < 1:
             raise LineageError("Eligibility hypothesis count must be positive.")
@@ -311,6 +338,24 @@ def _rank_significant_candidates(
         )
     )
 
+def signal_discovery_positions(
+    train_positions: Iterable[int],
+    signal_lookback_sessions: int | None,
+) -> np.ndarray:
+    """Return the exact recent discovery slice without changing fit positions."""
+    positions = np.asarray(list(train_positions), dtype=int)
+    if signal_lookback_sessions is None:
+        return positions
+    if signal_lookback_sessions not in SIGNAL_LOOKBACK_OPTIONS:
+        raise LineageError(f"Signal lookback must be one of {SIGNAL_LOOKBACK_OPTIONS}.")
+    if len(positions) < signal_lookback_sessions:
+        raise LineageError(
+            f"Only {len(positions)} discovery observations are available; "
+            f"{signal_lookback_sessions} were requested."
+        )
+    return positions[-signal_lookback_sessions:]
+
+
 def _discover_ranked_features(*,
     ticker: str,
     returns: pd.DataFrame,
@@ -376,6 +421,7 @@ def discover_feature_spec(
     max_technical_features: int,
     selection_method: str = "bonferroni",
     candidate_lags: tuple[int, ...] = (1, 2, 3, 4, 5),
+    signal_lookback_sessions: int | None = None,
 ) -> FeatureSpec | None:
     """Discover one feature specification using training rows only."""
     if depth < 1 or depth > 5:
@@ -384,7 +430,9 @@ def discover_feature_spec(
         ticker=ticker,
         returns=returns,
         technical_features=technical_features,
-        train_positions=train_positions,
+        train_positions=signal_discovery_positions(
+            train_positions, signal_lookback_sessions
+        ),
         familywise_alpha=familywise_alpha,
         max_technical_features=max_technical_features,
         selection_method=selection_method,
@@ -556,7 +604,9 @@ def _select_depth_inside_training(
         ticker=ticker,
         returns=returns,
         technical_features=technical_features,
-        train_positions=inner_train,
+        train_positions=signal_discovery_positions(
+            inner_train, config.signal_lookback_sessions
+        ),
         familywise_alpha=config.familywise_alpha,
         max_technical_features=config.max_technical_features,
         candidate_lags=config.candidate_lags,
@@ -647,7 +697,8 @@ def evaluate_ticker(
                 depth=depth,
                 familywise_alpha=config.familywise_alpha,
                 max_technical_features=config.max_technical_features,
-            candidate_lags=config.candidate_lags,
+                candidate_lags=config.candidate_lags,
+                signal_lookback_sessions=config.signal_lookback_sessions,
             )
             if spec is None:
                 raise LineageError(f"No statistically admissible outer-fold specification for {ticker}.")
@@ -737,7 +788,8 @@ def evaluate_ticker(
                 depth=final_depth,
                 familywise_alpha=config.familywise_alpha,
                 max_technical_features=config.max_technical_features,
-            candidate_lags=config.candidate_lags,
+                candidate_lags=config.candidate_lags,
+                signal_lookback_sessions=config.signal_lookback_sessions,
             )
     if final_spec is None:
         reasons.append("NO_FINAL_ADMISSIBLE_SPECIFICATION")

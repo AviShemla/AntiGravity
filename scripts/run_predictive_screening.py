@@ -59,6 +59,16 @@ def main() -> int:
         action="store_true",
         help="Explicitly preregister expanding-history training.",
     )
+    parser.add_argument(
+        "--signal-lookback-sessions",
+        type=int,
+        choices=(30, 60, 126, 252),
+        required=True,
+        help=(
+            "Recent sessions used only for signal discovery; classifier fitting "
+            "continues to use the governed training window."
+        ),
+    )
     parser.add_argument("--test-sessions", type=int, required=True)
     parser.add_argument("--outer-folds", type=int, required=True)
     parser.add_argument("--min-oos-sessions", type=int, required=True)
@@ -86,6 +96,7 @@ def main() -> int:
     preflight_config = ScreeningConfig(
         min_train_sessions=args.min_train_sessions,
         training_window_sessions=args.training_window_sessions,
+        signal_lookback_sessions=args.signal_lookback_sessions,
         test_sessions=args.test_sessions,
         outer_folds=args.outer_folds,
         min_oos_sessions=args.min_oos_sessions,

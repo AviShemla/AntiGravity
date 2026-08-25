@@ -12,6 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from model_lineage import LineageError
+from predictive_screener import (
+    SCREENING_WINDOW_CONTRACT_ID,
+    SIGNAL_LOOKBACK_OPTIONS,
+)
 from stock_lag_governance import (
     HORIZON_REVIEW_INTERVAL_SESSIONS,
     INITIAL_MAX_LAG_SESSIONS,
@@ -73,6 +77,12 @@ def build_completion_checks(
         and candidate_lags_valid
         and max(candidate_lags) <= INITIAL_MAX_LAG_SESSIONS
     )
+    signal_lookback = config.get("signal_lookback_sessions")
+    window_contract_valid = (
+        config.get("window_semantics_contract_id") == SCREENING_WINDOW_CONTRACT_ID
+        and isinstance(signal_lookback, int)
+        and signal_lookback in SIGNAL_LOOKBACK_OPTIONS
+    )
     fold_count = int(folds["fold_count"])
     if evaluated:
         fold_numbers_complete = (
@@ -99,6 +109,7 @@ def build_completion_checks(
         ),
         "candidate_lag_domain_valid": candidate_lags_valid,
         "approved_lag_horizon_contract_matches": lag_contract_valid,
+        "screening_window_contract_matches": window_contract_valid,
         "configured_purge_covers_max_candidate_lag": configured_purge_valid,
         "all_evaluated_folds_present": (
             fold_count == evaluated * expected_folds
@@ -234,6 +245,7 @@ def main() -> int:
             key: config.get(key)
             for key in (
                 "model_family", "min_train_sessions", "training_window_sessions",
+                "signal_lookback_sessions", "window_semantics_contract_id",
                 "test_sessions", "outer_folds", "min_oos_sessions", "min_depth",
                 "max_depth", "candidate_lags", "lag_horizon_contract_id",
                 "horizon_review_interval_sessions", "purge_sessions",
