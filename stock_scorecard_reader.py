@@ -82,13 +82,16 @@ def load_stock_evidence_for_etf(
     stock_persona = stock_persona_for(etf_persona)
     run_result = db.execute(
         """
-        SELECT run_id, source_session_date, as_of_timestamp_utc
-        FROM model_runs
-        WHERE asset_class = ?
-          AND prediction_date = ?
-          AND status = ?
-          AND as_of_timestamp_utc <= ?
-        ORDER BY as_of_timestamp_utc DESC, run_id DESC
+        SELECT run.run_id, run.source_session_date,
+               MAX(score.created_at_utc) AS completed_at_utc
+        FROM model_runs run
+        JOIN model_scorecards score ON score.run_id = run.run_id
+        WHERE run.asset_class = ?
+          AND run.prediction_date = ?
+          AND run.status = ?
+          AND score.created_at_utc <= ?
+        GROUP BY run.run_id, run.source_session_date
+        ORDER BY completed_at_utc DESC, run.run_id DESC
         LIMIT 2
         """,
         ["STOCK", prediction_date.isoformat(), "COMPLETED", etf_cutoff_utc.isoformat()],
@@ -96,14 +99,14 @@ def load_stock_evidence_for_etf(
     runs = _row_dicts(run_result)
     if not runs:
         raise LineageError("No completed stock model run is available for the ETF cutoff.")
-    if len(runs) > 1 and runs[0]["as_of_timestamp_utc"] == runs[1]["as_of_timestamp_utc"]:
+    if len(runs) > 1 and runs[0]["completed_at_utc"] == runs[1]["completed_at_utc"]:
         raise LineageError("Ambiguous stock runs share the latest availability timestamp.")
 
     selected = runs[0]
     source_session = date.fromisoformat(str(selected["source_session_date"]))
     if source_session >= prediction_date:
         raise LineageError("Stock source session must precede the prediction date.")
-    available_at = _aware_utc(selected["as_of_timestamp_utc"], "as_of_timestamp_utc")
+    available_at = _aware_utc(selected["completed_at_utc"], "completed_at_utc")
     if available_at > etf_cutoff_utc:
         raise LineageError("Stock run was not available at the ETF cutoff.")
 
