@@ -66,7 +66,7 @@ class FakeDB:
             )
         if "FROM model_runs" in compact:
             rows = [["stock-run", "2026-08-21", "2026-08-22T04:00:00+00:00"]] if self.stock_run else []
-            return Result(["run_id", "source_session_date", "as_of_timestamp_utc"], rows)
+            return Result(["run_id", "source_session_date", "completed_at_utc"], rows)
         if "FROM model_run_inputs" in compact:
             return Result(
                 ["input_role", "snapshot_id", "snapshot_checksum_sha256",
