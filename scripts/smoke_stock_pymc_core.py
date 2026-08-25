@@ -32,7 +32,7 @@ def main() -> int:
         training_dates=tuple(start + timedelta(days=i) for i in range(observations)),
         x_train=x,
         y_direction=y_direction,
-        y_return_pct=y_return,
+        y_return_pp=y_return,
         x_predict=np.asarray([[0.5, -0.25, 0.1]]),
         train_mean=np.zeros(features),
         train_scale=np.ones(features),
@@ -42,9 +42,9 @@ def main() -> int:
         "ticker": evidence.ticker,
         "probability_up_mean": evidence.probability_up_mean,
         "probability_up_std": evidence.probability_up_std,
-        "expected_return_pct_mean": evidence.expected_return_pct_mean,
-        "expected_return_pct_std": evidence.expected_return_pct_std,
-        "predictive_risk_pct": evidence.predictive_risk_pct,
+        "expected_return_pp_mean": evidence.expected_return_pp_mean,
+        "expected_return_pp_std": evidence.expected_return_pp_std,
+        "predictive_risk_pp": evidence.predictive_risk_pp,
         "diagnostics": evidence.diagnostics.__dict__,
     }, indent=2))
     return 0
