@@ -85,9 +85,9 @@ def prepare_etf_stock_prior(
             source_session_date=batch.source_session_date,
             available_at_utc=batch.available_at_utc,
             constituent_weight=item.constituent_weight,
-            transformed_value=item.expected_return,
-            prior_sigma=item.expected_return_std,
-            transformation="stock expected-return posterior in percentage-point units",
+            transformed_value=item.expected_return_pp,
+            prior_sigma=item.expected_return_pp_pp_std,
+            transformation="stock expected-return posterior; value/sigma in percentage points",
         )
         return_record.validate_for(etf_run)
         records.append(return_record)
@@ -121,10 +121,10 @@ def prepare_etf_stock_prior(
         source_session_date=batch.source_session_date,
         available_at_utc=batch.available_at_utc,
         constituent_weight=aggregate.weight_coverage,
-        transformed_value=aggregate.weighted_expected_return,
-        prior_sigma=aggregate.expected_return_sigma,
+        transformed_value=aggregate.weighted_expected_return_pp,
+        prior_sigma=aggregate.expected_return_sigma_pp,
         transformation=(
-            "normalized weighted expected return with posterior and "
+            "normalized weighted expected return in percentage points with posterior and "
             "cross-constituent disagreement variance"
         ),
     )
