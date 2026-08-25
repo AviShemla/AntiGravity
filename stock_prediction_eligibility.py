@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from math import isfinite
 
 from model_lineage import LineageError, Recommendation
+from statistical_units import basis_points_to_percentage_points
 
 
 @dataclass(frozen=True)
@@ -33,8 +34,8 @@ class PredictionEvidence:
     probability_up_mean: float
     probability_up_q05: float
     probability_up_q95: float
-    expected_return: float
-    expected_risk: float
+    expected_return_pp: float
+    expected_risk_pp: float
 
 
 @dataclass(frozen=True)
@@ -50,7 +51,7 @@ class DecisionContext:
     available_capital: float = 0.0
     vix_close: float = 15.0
     price_available: bool = True
-    round_trip_cost: float = 0.0
+    round_trip_cost_bps: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -83,11 +84,11 @@ def _validate(evidence: PredictionEvidence, context: DecisionContext) -> None:
         evidence.probability_up_mean,
         evidence.probability_up_q05,
         evidence.probability_up_q95,
-        evidence.expected_return,
-        evidence.expected_risk,
+        evidence.expected_return_pp,
+        evidence.expected_risk_pp,
         context.available_capital,
         context.vix_close,
-        context.round_trip_cost,
+        context.round_trip_cost_bps,
     )
     if not all(isfinite(value) for value in values):
         raise LineageError("Prediction eligibility evidence must be finite.")
@@ -98,10 +99,10 @@ def _validate(evidence: PredictionEvidence, context: DecisionContext) -> None:
         <= 1.0
     ):
         raise LineageError("Posterior probability interval is invalid.")
-    if evidence.expected_risk < 0.0 or context.available_capital < 0.0:
+    if evidence.expected_risk_pp < 0.0 or context.available_capital < 0.0:
         raise LineageError("Risk and available capital cannot be negative.")
-    if context.round_trip_cost < 0.0:
-        raise LineageError("Transaction-cost evidence cannot be negative.")
+    if context.round_trip_cost_bps < 0.0:
+        raise LineageError("Transaction-cost basis points cannot be negative.")
 
 
 def legacy_raw_signal(probability_up: float) -> Recommendation:
@@ -152,10 +153,10 @@ def _legacy_buy_allocation(
 ) -> float:
     if evidence.probability_up_mean <= persona.probability_threshold:
         return 0.0
-    if evidence.expected_return <= 0.0 or evidence.expected_risk <= 0.0:
+    if evidence.expected_return_pp <= 0.0 or evidence.expected_risk_pp <= 0.0:
         raw_kelly = 0.0
     else:
-        payoff = evidence.expected_return / evidence.expected_risk
+        payoff = evidence.expected_return_pp / evidence.expected_risk_pp
         raw_kelly = max(
             0.0,
             evidence.probability_up_mean - (1.0 - evidence.probability_up_mean) / payoff,
@@ -191,10 +192,10 @@ def _shadow_buy_allocation(
     vix_multiplier: float,
 ) -> float:
     """Compute shadow sizing without AG's fixed-allocation fallback."""
-    net_return = evidence.expected_return - context.round_trip_cost
-    if net_return <= 0.0 or evidence.expected_risk <= 0.0:
+    net_return = evidence.expected_return_pp - basis_points_to_percentage_points(context.round_trip_cost_bps)
+    if net_return <= 0.0 or evidence.expected_risk_pp <= 0.0:
         return 0.0
-    payoff = net_return / evidence.expected_risk
+    payoff = net_return / evidence.expected_risk_pp
     raw_kelly = max(
         0.0,
         evidence.probability_up_mean
@@ -244,7 +245,7 @@ def compare_stock_prediction(
 
     failures = hard_gate_failures(context)
     hard_pass = not failures
-    net_return = evidence.expected_return - context.round_trip_cost
+    net_return = evidence.expected_return_pp - basis_points_to_percentage_points(context.round_trip_cost_bps)
     codex_action = Recommendation.NO_TRADE
     balanced_action = Recommendation.NO_TRADE
     if hard_pass:
