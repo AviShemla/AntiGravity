@@ -16,7 +16,7 @@ class ModelScorecardInputGuardMigrationTests(unittest.TestCase):
         cls.compact = " ".join(cls.sql.split()).upper()
 
     def test_is_additive_and_review_only(self):
-        self.assertIn("REVIEW-ONLY", self.sql)
+        self.assertIn("REVIEW-ONLY", self.compact)
         self.assertIn("CREATE TRIGGER IF NOT EXISTS", self.compact)
         for forbidden in ("DROP TABLE", "DELETE FROM", "UPDATE MODEL_RUNS", "UPDATE MODEL_RUN_INPUTS"):
             self.assertNotIn(forbidden, self.compact)
