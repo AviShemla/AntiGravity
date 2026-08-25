@@ -146,6 +146,29 @@ email. Activation requires the mode-transition approval defined in root
    - ABSOLUTELY NO Windows Outlook COM / win32com automation!
    - 100% of email notifications and daily reports MUST use `email_utils.send_native_email()` via Gmail SMTP (`smtp.gmail.com:465`).
 
+5. **Deployment Topology and Path Preflight:**
+   - The canonical Vultr Git worktree is
+     `/home/codexops/codex_git/AntiGravity`. The live runtime tree is
+     `/opt/antigravity`; it is not a Git worktree and is not an edit or test
+     destination. A completed ingestion job checkout under
+     `/home/codexops/jobs/` is historical execution evidence, not the current
+     code authority.
+   - Before any code edit, file transfer, test, audit, commit, or deployment,
+     read back `git rev-parse --show-toplevel`, `git rev-parse HEAD`,
+     `git remote get-url origin`, worktree status, target ownership, and the
+     affected systemd unit's `WorkingDirectory`, `ExecStart`, and
+     `EnvironmentFiles`. The observed values must match the intended operation.
+   - Code changes, tests, and read-only audits run from the canonical Git
+     worktree. They may use the live virtual environment and read-only secret
+     files, but must not silently copy source or tests into `/opt/antigravity`.
+   - Updating `/opt/antigravity` is a separate deployment operation. It
+     requires an explicitly identified source commit, an approved deployment
+     scope, pre/post file hashes, service-impact assessment, and readback.
+   - If any authoritative path, remote, commit, ownership, or unit path is
+     missing or contradictory, classify the operation as BLOCKED and stop
+     before mutation. Never choose a path from memory or because similarly
+     named files exist there.
+
 ---
 
 ## 3. 🛡️ SPECIALIZED MULTI-AGENT QA ARCHITECTURE (ZERO-TOLERANCE PROTOCOL)
