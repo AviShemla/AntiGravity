@@ -23,7 +23,7 @@ def dataset(source=SOURCE):
         training_dates=tuple(date(2026, 7, day) for day in range(1, 5)),
         x_train=np.array([[-1.0, 0.5], [0.0, 0.2], [0.5, -0.2], [1.0, -0.5]]),
         y_direction=np.array([0, 0, 1, 1]),
-        y_return_pct=np.array([-0.4, -0.1, 0.2, 0.5]),
+        y_return_pp=np.array([-0.4, -0.1, 0.2, 0.5]),
         x_predict=np.array([[0.25, -0.1]]),
         train_mean=np.array([0.0, 0.0]), train_scale=np.array([1.0, 1.0]),
     )
@@ -40,7 +40,7 @@ def prepared(source=SOURCE, return_sigma=0.30):
     )
     aggregate = ETFDirectionalPrior(
         mean_log_odds=0.6, sigma_log_odds=0.25,
-        weighted_expected_return=0.20, expected_return_sigma=return_sigma,
+        weighted_expected_return_pp=0.20, expected_return_sigma_pp=return_sigma,
         weight_coverage=0.65, contributor_count=1,
     )
     return PreparedETFStockPrior(batch, aggregate, ())
@@ -62,9 +62,9 @@ class ETFPosteriorCoreTests(unittest.TestCase):
             return_nu=np.array([8.0, 10.0, 12.0]), diagnostics=diagnostics(),
         )
         self.assertEqual(result.stock_direction_prior_mean_log_odds, 0.6)
-        self.assertEqual(result.stock_return_prior_mean_pct, 0.20)
+        self.assertEqual(result.stock_return_prior_mean_pp, 0.20)
         self.assertGreater(result.probability_up_std, 0.0)
-        self.assertGreater(result.predictive_risk_pct, result.expected_return_pct_std)
+        self.assertGreater(result.predictive_risk_pp, result.expected_return_pp_std)
 
     def test_source_session_mismatch_fails_closed(self):
         with self.assertRaisesRegex(LineageError, "source sessions do not match"):
