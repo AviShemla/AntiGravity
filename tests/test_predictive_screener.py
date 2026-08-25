@@ -6,8 +6,11 @@ import pandas as pd
 
 from model_lineage import LineageError
 from predictive_screener import (
+    _rank_significant_candidates,
     FeatureSpec,
+    MIN_DISCOVERY_COMPLETE_PAIRS,
     MetricSet,
+    SIGNAL_LOOKBACK_OPTIONS,
     ScreeningConfig,
     benjamini_hochberg_rejections,
     build_design_matrix,
@@ -16,6 +19,7 @@ from predictive_screener import (
     evaluate_ticker,
     expanding_windows,
     score_probabilities,
+    signal_discovery_complete_pair_capacity,
     signal_discovery_positions,
     wilson_interval,
 )
@@ -123,7 +127,7 @@ class PredictiveScreenerTests(unittest.TestCase):
         config.validate()
 
     def test_supported_signal_windows_do_not_reduce_fitted_training(self):
-        for signal_window in (30, 60, 126, 252):
+        for signal_window in (60, 126, 252):
             with self.subTest(signal_window=signal_window):
                 config = ScreeningConfig(
                     min_train_sessions=289,
@@ -138,6 +142,54 @@ class PredictiveScreenerTests(unittest.TestCase):
                 config.validate()
                 windows = expanding_windows(pd.RangeIndex(400), config)
                 self.assertTrue(all(len(window.train_positions) == 289 for window in windows))
+
+    def test_30_session_arm_remains_governed_but_is_preflight_blocked(self):
+        self.assertIn(30, SIGNAL_LOOKBACK_OPTIONS)
+        config = ScreeningConfig(
+            min_train_sessions=168,
+            training_window_sessions=168,
+            signal_lookback_sessions=30,
+            test_sessions=30,
+            outer_folds=2,
+            purge_sessions=7,
+            min_oos_sessions=60,
+            min_fit_observations=126,
+        )
+        with self.assertRaisesRegex(
+            LineageError,
+            "30 is BLOCKED_MIN_50_COMPLETE_PAIRS.*29 complete lag pairs.*50",
+        ):
+            config.validate()
+
+    def test_discovery_pair_capacity_has_exact_49_50_boundary(self):
+        self.assertEqual(signal_discovery_complete_pair_capacity(50, (1, 2, 5)), 49)
+        self.assertLess(
+            signal_discovery_complete_pair_capacity(50, (1, 2, 5)),
+            MIN_DISCOVERY_COMPLETE_PAIRS,
+        )
+        self.assertEqual(signal_discovery_complete_pair_capacity(51, (1, 2, 5)), 50)
+        self.assertGreaterEqual(
+            signal_discovery_complete_pair_capacity(51, (1, 2, 5)),
+            MIN_DISCOVERY_COMPLETE_PAIRS,
+        )
+
+    def test_rank_gate_rejects_49_and_accepts_50_complete_pairs(self):
+        target = pd.Series(np.arange(50, dtype=float))
+        complete = pd.DataFrame({"driver": target.copy()})
+        underpowered = complete.copy()
+        underpowered.loc[0, "driver"] = np.nan
+        self.assertEqual(
+            _rank_significant_candidates(
+                target, underpowered, alpha=0.01, selection_method="bonferroni"
+            ),
+            (),
+        )
+        self.assertEqual(
+            _rank_significant_candidates(
+                target, complete, alpha=0.01, selection_method="bonferroni"
+            ),
+            ("driver",),
+        )
 
     def test_signal_window_must_fit_wholly_inside_inner_training(self):
         config = ScreeningConfig(

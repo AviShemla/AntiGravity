@@ -61,6 +61,43 @@ class PredictiveScreeningCliTests(unittest.TestCase):
         self.assertIn("--candidate-lags", result.stdout)
         self.assertIn("--expanding-training-window", result.stdout)
 
+    def test_blocked_30_signal_window_fails_before_turso_access(self):
+        environment = os.environ.copy()
+        environment.pop("TURSO_DATABASE_URL", None)
+        environment.pop("TURSO_AUTH_TOKEN", None)
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(RUNNER),
+                "--source-session-date", "2026-08-21",
+                "--cutoff-utc", "2026-08-23T06:46:36+00:00",
+                "--code-version", "test",
+                "--min-depth", "1",
+                "--max-depth", "5",
+                "--candidate-lags", "1,2,3,4,5",
+                "--purge-sessions", "7",
+                "--min-train-sessions", "168",
+                "--training-window-sessions", "168",
+                "--signal-lookback-sessions", "30",
+                "--test-sessions", "30",
+                "--outer-folds", "4",
+                "--min-oos-sessions", "120",
+                "--min-fit-observations", "126",
+                "--model-family", "selected_chain",
+            ],
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Invalid screening configuration", result.stderr)
+        self.assertIn("BLOCKED_MIN_50_COMPLETE_PAIRS", result.stderr)
+        self.assertIn("29 complete lag pairs", result.stderr)
+        self.assertNotIn("Turso environment variables are unavailable", result.stderr)
+
     def test_impossible_nested_fold_fails_before_turso_access(self):
         environment = os.environ.copy()
         environment.pop("TURSO_DATABASE_URL", None)
@@ -88,7 +125,7 @@ class PredictiveScreeningCliTests(unittest.TestCase):
                 "--training-window-sessions",
                 "126",
                 "--signal-lookback-sessions",
-                "30",
+                "60",
                 "--test-sessions",
                 "30",
                 "--outer-folds",

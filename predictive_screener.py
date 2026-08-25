@@ -25,7 +25,33 @@ from stock_lag_governance import (
 
 
 SIGNAL_LOOKBACK_OPTIONS = (30, 60, 126, 252)
+MIN_DISCOVERY_COMPLETE_PAIRS = 50
+SIGNAL_LOOKBACK_GOVERNANCE = {
+    30: "BLOCKED_MIN_50_COMPLETE_PAIRS",
+    60: "ENABLED",
+    126: "ENABLED",
+    252: "ENABLED",
+}
 SCREENING_WINDOW_CONTRACT_ID = "screening-window-separation-v1-20260825"
+
+
+def signal_discovery_complete_pair_capacity(
+    signal_lookback_sessions: int,
+    candidate_lags: Iterable[int],
+) -> int:
+    """Return the best-case complete pairs available to any lag candidate."""
+    lags = tuple(candidate_lags)
+    if signal_lookback_sessions <= 0 or not lags or any(lag <= 0 for lag in lags):
+        raise LineageError("Signal capacity requires a positive window and candidate lags.")
+    return max(0, signal_lookback_sessions - min(lags))
+
+
+def signal_lookback_governance_status(signal_lookback_sessions: int) -> str:
+    """Return the governed status without changing the allowed comparison domain."""
+    try:
+        return SIGNAL_LOOKBACK_GOVERNANCE[signal_lookback_sessions]
+    except KeyError as exc:
+        raise LineageError(f"Signal lookback must be one of {SIGNAL_LOOKBACK_OPTIONS}.") from exc
 
 
 def nested_inner_fold_capacity(
@@ -94,6 +120,17 @@ class ScreeningConfig:
             raise LineageError("Candidate lags must be positive integer session offsets.")
         if len(set(self.candidate_lags)) != len(self.candidate_lags):
             raise LineageError("Candidate lags must be unique.")
+        if self.signal_lookback_sessions is not None:
+            complete_pair_capacity = signal_discovery_complete_pair_capacity(
+                self.signal_lookback_sessions, self.candidate_lags
+            )
+            if complete_pair_capacity < MIN_DISCOVERY_COMPLETE_PAIRS:
+                status = signal_lookback_governance_status(self.signal_lookback_sessions)
+                raise LineageError(
+                    f"Signal lookback {self.signal_lookback_sessions} is {status}: "
+                    f"at most {complete_pair_capacity} complete lag pairs are possible "
+                    f"but feature discovery requires {MIN_DISCOVERY_COMPLETE_PAIRS}."
+                )
         if self.purge_sessions < max(self.candidate_lags):
             raise LineageError("Purge/embargo must cover the maximum candidate lag.")
         if not 1 <= self.min_depth <= self.max_depth <= 5:

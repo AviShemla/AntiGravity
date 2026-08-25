@@ -15,6 +15,7 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
                 "outer_folds": 4,
                 "eligibility_hypotheses": 10,
                 "signal_lookback_sessions": 60,
+                "signal_lookback_governance_status": "ENABLED",
                 "window_semantics_contract_id": "screening-window-separation-v1-20260825",
                 "candidate_lags": [2, 7],
                 "lag_horizon_contract_id": "stock-lag-horizon-v1-20260824",
@@ -86,6 +87,16 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
         evidence["config"]["window_semantics_contract_id"] = "legacy-ambiguous-window"
         checks = build_completion_checks(**evidence)
         self.assertFalse(checks["screening_window_contract_matches"])
+
+    def test_governed_30_session_arm_is_explicitly_blocked(self):
+        evidence = self.evidence()
+        evidence["config"]["signal_lookback_sessions"] = 30
+        evidence["config"]["signal_lookback_governance_status"] = (
+            "BLOCKED_MIN_50_COMPLETE_PAIRS"
+        )
+        checks = build_completion_checks(**evidence)
+        self.assertTrue(checks["screening_window_contract_matches"])
+        self.assertFalse(checks["signal_discovery_capacity_feasible"])
 
     def test_unapproved_signal_lookback_fails_closed(self):
         evidence = self.evidence()

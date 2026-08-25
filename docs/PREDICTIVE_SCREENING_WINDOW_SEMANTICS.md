@@ -24,10 +24,22 @@ feasible fitted-training window is 168 sessions.
 
 ## Signal discovery recency
 
-`signal_lookback_sessions` is restricted to `30`, `60`, `126`, or
-`252`. It selects the exact trailing slice used only to rank lag edges and
-technical signals inside each training boundary. It never shortens the rows
-used to fit or score a classifier.
+`signal_lookback_sessions` has the governed comparison domain `30`, `60`,
+`126`, or `252`. It selects the exact trailing slice used only to rank lag
+edges and technical signals inside each training boundary. It never shortens
+the rows used to fit or score a classifier.
+
+Current governed status:
+
+| Signal window | Status |
+| --- | --- |
+| 30 | `BLOCKED_MIN_50_COMPLETE_PAIRS` |
+| 60 | `ENABLED` |
+| 126 | `ENABLED` |
+| 252 | `ENABLED` |
+
+Keeping 30 in the domain records the requested research arm; `BLOCKED` means
+the current method cannot execute it, not that it was silently removed.
 
 The requested signal window must fit wholly inside the inner training
 evidence. Preflight rejects a configuration instead of silently truncating the
@@ -38,10 +50,12 @@ signal window. Under the current `test=30` and `purge=7` contract, the 30,
 
 The existing candidate-significance rule also remains unchanged: fewer than
 50 complete paired observations cannot establish an admissible discovery
-feature. Consequently, the 30-session arm can be executed and preserved as a
-pre-registered comparison, but it may yield no admissible selected-chain
-specification. That outcome is evidence, not permission to weaken the
-significance gate.
+feature. For a signal window `S` and the smallest candidate lag `L`, the
+best-case pair capacity is `S - L`. With the approved lag-1 candidate, a
+30-session window can produce at most 29 pairs, so it is guaranteed to fail.
+Preflight therefore blocks it before credentials, Turso access, or run
+creation. The exact mathematical boundary is 49 pairs rejected and 50 pairs
+accepted for significance evaluation; the gate itself is not weakened.
 
 ## Leakage boundary
 
@@ -56,6 +70,7 @@ For each outer fold:
 4. Neither feature discovery nor fitting sees the corresponding test rows.
 
 The CLI requires `--signal-lookback-sessions` for every new evidence run.
-The contract identifier and both window values are persisted in `config_json`.
+The contract identifier, both window values, and the governed signal-window
+status are persisted in `config_json`.
 Legacy results without these fields retain their historical meaning and fail
 the new contract audit rather than being silently reinterpreted.

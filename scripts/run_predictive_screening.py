@@ -22,7 +22,12 @@ sys.path.insert(0, str(ROOT))
 
 from model_input_reader import select_validated_snapshot
 from model_lineage import LineageError
-from predictive_screener import FeatureSpec, ScreeningConfig, evaluate_ticker
+from predictive_screener import (
+    FeatureSpec,
+    ScreeningConfig,
+    evaluate_ticker,
+    signal_lookback_governance_status,
+)
 from screening_input_reader import build_return_matrix, build_target_features, load_screening_frame
 from screening_evidence_writer import ScreeningEvidenceWriter
 from turso_read_pipeline import TursoReadPipeline
@@ -146,6 +151,9 @@ def main() -> int:
         **asdict(config),
         "requested_tickers": tickers,
         "model_family": args.model_family,
+        "signal_lookback_governance_status": signal_lookback_governance_status(
+            config.signal_lookback_sessions
+        ),
         "terminology": "predictive_lead_lag_not_causal_identification",
     }
     writer = ScreeningEvidenceWriter(endpoint, token, timeout_seconds=30.0)
