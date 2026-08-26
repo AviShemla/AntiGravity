@@ -518,9 +518,9 @@ def run_disposable_matrix_lifecycle(
     expected_executor_git_commit: str = EXPECTED_EXECUTOR_GIT_COMMIT,
     reconciliation_sleeper: Callable[[float], None] = time.sleep,
     reconciliation_utc_clock: Callable[[], datetime] | None = None,
-    reconciliation_max_wait_seconds: float = 45.0,
+    reconciliation_max_wait_seconds: float = 180.0,
     reconciliation_interval_seconds: float = 5.0,
-    reconciliation_attempts_per_phase: int = 4,
+    reconciliation_attempts_per_phase: int = 25,
 ) -> LifecycleArtifacts:
     """Run one approved lifecycle; mutating commands are never retried."""
 
@@ -528,7 +528,7 @@ def run_disposable_matrix_lifecycle(
     if moment.tzinfo is None:
         raise LifecycleError("Lifecycle timestamp must be timezone-aware.")
     moment = moment.astimezone(timezone.utc)
-    if reconciliation_max_wait_seconds <= 0 or reconciliation_max_wait_seconds > 45:
+    if reconciliation_max_wait_seconds <= 0 or reconciliation_max_wait_seconds > 180:
         raise LifecycleError("Identity reconciliation total wait bound is invalid.")
     reconciliation_budget = _ReconciliationBudget(reconciliation_max_wait_seconds)
     if reconciliation_utc_clock is None:

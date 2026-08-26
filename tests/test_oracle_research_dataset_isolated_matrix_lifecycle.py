@@ -438,21 +438,21 @@ def test_partial_success_identity_materializes_then_proceeds_without_duplicate_c
 
 
 def test_exact_identity_within_extended_primary_phase_proceeds(tmp_path):
-    cli = Cli(partial_identity_shows=4)
+    cli = Cli(partial_identity_shows=24)
     sleeps = []
     result = run(
         tmp_path,
         cli,
         reconciliation_sleeper=sleeps.append,
-        reconciliation_attempts_per_phase=7,
     )
     assert result.cleanup_verified is True
-    assert cli.branch_show_count >= 5
+    assert cli.branch_show_count >= 25
+    assert sum(sleeps) == 120.0
     assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 1, 1)
 
 
 def test_primary_partial_exhaustion_finally_binds_and_destroys_without_token(tmp_path):
-    cli = Cli(partial_identity_shows=4)
+    cli = Cli(partial_identity_shows=31)
     sleeps = []
     with pytest.raises(LifecycleError, match="unresolved"):
         run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
@@ -462,13 +462,20 @@ def test_primary_partial_exhaustion_finally_binds_and_destroys_without_token(tmp
     payload = _payload(terminal)
     assert payload["cleanup_identity_state"] == "EXACT_PROOF"
     assert payload["cleanup"]["cleanup_verified"] is True
+    assert sum(sleeps) == 150.0
 
 
 def test_primary_exhaustion_cleanup_phase_later_binds_and_destroys_once(tmp_path):
     cli = Cli(identity_absent_shows=4)
     sleeps = []
     with pytest.raises(IdentityPropagationPending):
-        run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
+        run(
+            tmp_path,
+            cli,
+            reconciliation_sleeper=sleeps.append,
+            reconciliation_max_wait_seconds=45.0,
+            reconciliation_attempts_per_phase=4,
+        )
     assert cli.create_count == 1
     assert cli.token_count == 0
     assert cli.destroy_count == 1
@@ -487,8 +494,8 @@ def test_contradictory_identity_never_issues_token_or_destroy(tmp_path):
     with pytest.raises(LifecycleError, match="unresolved"):
         run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
     assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 0, 0)
-    assert cli.branch_show_count == 11
-    assert sum(sleeps) == 45.0
+    assert cli.branch_show_count == 38
+    assert sum(sleeps) == 180.0
     assert cli.exists is True
     assert next((tmp_path / "evidence").glob("*-cleanup-incident.json"))
 
@@ -498,7 +505,7 @@ def test_identity_absence_across_both_phases_stays_within_single_wait_budget(tmp
     sleeps = []
     with pytest.raises(IdentityPropagationPending):
         run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
-    assert sum(sleeps) <= 45.0
+    assert sum(sleeps) == 180.0
     assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 0, 0)
     assert next((tmp_path / "evidence").glob("*-cleanup-incident.json"))
 
