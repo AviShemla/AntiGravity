@@ -14,6 +14,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
+import subprocess
 import sys
 
 import pandas as pd
@@ -28,7 +30,205 @@ from scripts.rebuild_market_features_to_turso import (
     apply_approved_instrument_registry,
     apply_symbol_lifecycle,
     build_controlled_universe,
+    content_checksum,
+    provider_lineage_checksum,
 )
+from scripts.repair_rejected_ohlc_snapshot import (
+    NORMALIZATION_COMMIT,
+    read_snapshot_frame,
+)
+
+
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+REPAIR_NOTE_KEYS = frozenset({
+    "repair", "supersedes_rejected_snapshot_id",
+    "supersedes_rejection_event_id", "original_checksum_sha256",
+    "stored_rows_checksum_sha256", "normalization_commit",
+    "repair_code_version", "production_approval_id",
+    "provider_lineage_sha256", "validation_state",
+})
+REPAIR_BOOLEAN_KEYS = (
+    "note_schema_exact", "snapshot_commit_matches_note",
+    "normalization_commit_matches", "published_head_matches",
+    "normalization_is_ancestor", "repair_is_ancestor",
+    "repair_commit_records_tool", "original_metadata_matches", "original_stored_checksum_matches",
+    "replacement_stored_checksum_matches", "rejection_event_matches",
+    "approval_binding_matches", "provider_lineage_matches",
+    "supersession_exact", "replacement_has_no_approval_events",
+)
+
+
+def evaluate_creation_lineage(
+    snapshot: dict[str, object], *, rebuild_hash: str, notes: object,
+    repair_evidence: dict[str, bool] | None = None,
+) -> dict[str, object]:
+    """Fail closed for either a script-hash rebuild or evidence-linked repair."""
+    parsed = notes if isinstance(notes, dict) else {}
+    if "repair" in parsed and parsed.get("repair") != "CANONICAL_OHLC_ENVELOPE":
+        return {"creation_mode": "INVALID_REPAIR", "matches": False}
+    if "repair" not in parsed:
+        return {
+            "creation_mode": "FULL_REBUILD",
+            "matches": str(snapshot.get("code_version", "")) == rebuild_hash,
+        }
+    evidence = repair_evidence or {}
+    repair_commit = str(parsed.get("repair_code_version", ""))
+    hashes_well_formed = all(
+        SHA256_RE.fullmatch(str(parsed.get(key, "")))
+        for key in ("original_checksum_sha256", "stored_rows_checksum_sha256",
+                    "provider_lineage_sha256")
+    )
+    ids_present = all(
+        isinstance(parsed.get(key), str) and bool(parsed.get(key))
+        for key in ("supersedes_rejected_snapshot_id",
+                    "supersedes_rejection_event_id", "production_approval_id")
+    )
+    booleans = {key: evidence.get(key) is True for key in REPAIR_BOOLEAN_KEYS}
+    matches = (
+        set(parsed) == REPAIR_NOTE_KEYS
+        and parsed.get("validation_state") == "STAGING_NOT_VALIDATED"
+        and parsed.get("normalization_commit") == NORMALIZATION_COMMIT
+        and GIT_SHA_RE.fullmatch(repair_commit) is not None
+        and hashes_well_formed and ids_present and all(booleans.values())
+    )
+    return {"creation_mode": "EVIDENCE_LINKED_REPAIR", "matches": matches,
+            "repair_checks": booleans}
+
+
+def _git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args], cwd=ROOT, check=check, capture_output=True,
+        text=True, timeout=20,
+    )
+
+
+def _is_ancestor(older: str, newer: str) -> bool:
+    return _git("merge-base", "--is-ancestor", older, newer, check=False).returncode == 0
+
+
+def _provider_rows(db, snapshot_id: str) -> list[list[object]]:
+    return [list(row) for row in db.execute(
+        "SELECT ticker,provider,requested_source_session_date,"
+        "first_available_date,last_available_date,source_row_count,"
+        "source_checksum_sha256 FROM market_data_provider_lineage "
+        "WHERE snapshot_id=? ORDER BY ticker", [snapshot_id],
+    ).rows]
+
+
+def build_creation_lineage_evidence(
+    db, snapshot_id: str, snapshot: dict[str, object], source_session: str,
+    rebuild_hash: str,
+) -> dict[str, object]:
+    try:
+        notes = json.loads(str(snapshot.get("validation_notes") or "{}"))
+    except (TypeError, ValueError):
+        notes = {}
+    if not isinstance(notes, dict) or notes.get("repair") != "CANONICAL_OHLC_ENVELOPE":
+        return evaluate_creation_lineage(snapshot, rebuild_hash=rebuild_hash, notes=notes)
+
+    original_id = str(notes.get("supersedes_rejected_snapshot_id", ""))
+    rejection_event_id = str(notes.get("supersedes_rejection_event_id", ""))
+    approval_id = str(notes.get("production_approval_id", ""))
+    repair_commit = str(notes.get("repair_code_version", ""))
+    original_checksum = str(notes.get("original_checksum_sha256", ""))
+    stored_checksum = str(notes.get("stored_rows_checksum_sha256", ""))
+    lineage_checksum = str(notes.get("provider_lineage_sha256", ""))
+    current_head = _git("rev-parse", "HEAD").stdout.strip()
+    published_head = _git("rev-parse", "origin/master").stdout.strip()
+
+    changed_paths = set(
+        _git("diff-tree", "--no-commit-id", "--name-only", "-r", repair_commit).stdout.splitlines()
+    ) if GIT_SHA_RE.fullmatch(repair_commit) else set()
+    try:
+        repair_blob = _git(
+            "show", f"{repair_commit}:scripts/repair_rejected_ohlc_snapshot.py"
+        ).stdout
+    except subprocess.CalledProcessError:
+        repair_blob = ""
+
+    original = _one(db,
+        "SELECT COUNT(*) AS row_count,MIN(source_session_date) AS source_session_date,"
+        "MIN(status) AS status,MIN(source_checksum_sha256) AS source_checksum_sha256,"
+        "MIN(expected_row_count) AS expected_row_count,"
+        "MIN(expected_ticker_count) AS expected_ticker_count "
+        "FROM model_input_snapshots WHERE snapshot_id=?", [original_id])
+    original_counts = _one(db,
+        "SELECT COUNT(*) AS row_count,COUNT(DISTINCT ticker) AS ticker_count "
+        "FROM market_daily_features WHERE snapshot_id=?", [original_id])
+    rejection_rows = _rows(db,
+        "SELECT snapshot_id,decision,snapshot_checksum_sha256,"
+        "source_evidence_id,approval_notes FROM model_input_approval_events "
+        "WHERE event_id=?", [rejection_event_id])
+    try:
+        rejection_notes = json.loads(str(rejection_rows[0]["approval_notes"])) if len(rejection_rows) == 1 else {}
+    except (TypeError, ValueError):
+        rejection_notes = {}
+    siblings = _rows(db,
+        "SELECT snapshot_id,status FROM model_input_snapshots "
+        "WHERE dataset_type='MARKET_FEATURES' AND source_session_date=? "
+        "ORDER BY snapshot_id", [source_session])
+    replacement_approvals = _one(db,
+        "SELECT COUNT(*) AS count FROM model_input_approval_events WHERE snapshot_id=?",
+        [snapshot_id])
+    original_frame = read_snapshot_frame(db, original_id)
+    replacement_frame = read_snapshot_frame(db, snapshot_id)
+    original_lineage = _provider_rows(db, original_id)
+    replacement_lineage = _provider_rows(db, snapshot_id)
+
+    original_metadata_matches = (
+        original["row_count"] == 1
+        and original["source_session_date"] == source_session
+        and original["status"] == "REJECTED"
+        and original["source_checksum_sha256"] == original_checksum
+        and original["expected_row_count"] == snapshot["expected_row_count"]
+        and original["expected_ticker_count"] == snapshot["expected_ticker_count"]
+        and original_counts["row_count"] == original["expected_row_count"]
+        and original_counts["ticker_count"] == original["expected_ticker_count"]
+    )
+    rejection_event_matches = (
+        len(rejection_rows) == 1
+        and rejection_rows[0]["snapshot_id"] == original_id
+        and rejection_rows[0]["decision"] == "REJECTED"
+        and rejection_rows[0]["snapshot_checksum_sha256"] == original_checksum
+        and rejection_rows[0]["source_evidence_id"] == approval_id
+    )
+    approval_binding_matches = (
+        isinstance(rejection_notes, dict)
+        and rejection_notes.get("original_checksum_sha256") == original_checksum
+        and rejection_notes.get("stored_rows_checksum_sha256") == stored_checksum
+        and rejection_notes.get("production_approval_id") == approval_id
+    )
+    expected_siblings = sorted([
+        {"snapshot_id": original_id, "status": "REJECTED"},
+        {"snapshot_id": snapshot_id, "status": "STAGING"},
+    ], key=lambda item: item["snapshot_id"])
+    repair_evidence = {
+        "note_schema_exact": set(notes) == REPAIR_NOTE_KEYS,
+        "snapshot_commit_matches_note": snapshot["code_version"] == repair_commit,
+        "normalization_commit_matches": notes.get("normalization_commit") == NORMALIZATION_COMMIT,
+        "published_head_matches": current_head == published_head,
+        "normalization_is_ancestor": GIT_SHA_RE.fullmatch(repair_commit) is not None and _is_ancestor(NORMALIZATION_COMMIT, repair_commit),
+        "repair_is_ancestor": GIT_SHA_RE.fullmatch(repair_commit) is not None and _is_ancestor(repair_commit, current_head),
+        "repair_commit_records_tool": (
+            "scripts/repair_rejected_ohlc_snapshot.py" in changed_paths
+            and NORMALIZATION_COMMIT in repair_blob
+            and "STAGING_NOT_VALIDATED" in repair_blob
+        ),
+        "original_metadata_matches": original_metadata_matches,
+        "original_stored_checksum_matches": content_checksum(original_frame) == stored_checksum,
+        "replacement_stored_checksum_matches": content_checksum(replacement_frame) == snapshot["source_checksum_sha256"],
+        "rejection_event_matches": rejection_event_matches,
+        "approval_binding_matches": approval_binding_matches,
+        "provider_lineage_matches": provider_lineage_checksum(original_lineage) == lineage_checksum and provider_lineage_checksum(replacement_lineage) == lineage_checksum,
+        "supersession_exact": siblings == expected_siblings,
+        "replacement_has_no_approval_events": replacement_approvals["count"] == 0,
+    }
+    result = evaluate_creation_lineage(
+        snapshot, rebuild_hash=rebuild_hash, notes=notes, repair_evidence=repair_evidence)
+    result.update({"repair_commit": repair_commit, "current_head": current_head,
+                   "published_head": published_head})
+    return result
 
 
 CRITICAL_FEATURE_COLUMNS = (
@@ -54,7 +254,7 @@ def evaluate_checks(evidence: dict[str, object]) -> dict[str, bool]:
         ),
         "source_session_matches": snapshot["source_session_date"] == evidence["source_session"],
         "available_after_market_close": evidence["available_after_market_close"],
-        "rebuild_code_hash_matches": evidence["rebuild_code_hash_matches"],
+        "snapshot_code_lineage_matches": evidence["creation_lineage"]["matches"],
         "expected_counts_match": (
             counts["row_count"] == snapshot["expected_row_count"]
             and counts["ticker_count"] == snapshot["expected_ticker_count"]
@@ -139,7 +339,9 @@ def main() -> int:
         "SELECT COUNT(*) AS row_count,MIN(source_session_date) AS source_session_date,"
         "MIN(expected_row_count) AS expected_row_count,"
         "MIN(expected_ticker_count) AS expected_ticker_count,MIN(status) AS status,"
-        "MIN(available_at_utc) AS available_at_utc,MIN(code_version) AS code_version "
+        "MIN(available_at_utc) AS available_at_utc,MIN(code_version) AS code_version,"
+        "MIN(source_checksum_sha256) AS source_checksum_sha256,"
+        "MIN(validation_notes) AS validation_notes "
         "FROM model_input_snapshots WHERE snapshot_id=?",
         [sid],
     )
@@ -287,6 +489,9 @@ def main() -> int:
         available_at = available_at.tz_localize("UTC")
     rebuild_path = ROOT / "scripts" / "rebuild_market_features_to_turso.py"
     rebuild_hash = hashlib.sha256(rebuild_path.read_bytes()).hexdigest()
+    creation_lineage = build_creation_lineage_evidence(
+        db, sid, snapshot, source_session, rebuild_hash
+    )
 
     evidence = {
         "snapshot_id": sid,
@@ -316,7 +521,7 @@ def main() -> int:
         "available_after_market_close": available_at >= market_close,
         "market_close_utc": market_close.isoformat(),
         "available_at_utc": available_at.isoformat(),
-        "rebuild_code_hash_matches": str(snapshot["code_version"]) == rebuild_hash,
+        "creation_lineage": creation_lineage,
         "current_rebuild_code_sha256": rebuild_hash,
         "registry": {
             "approved_registry_count": len(registry_versions.rows),
