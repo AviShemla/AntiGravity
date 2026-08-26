@@ -1,7 +1,7 @@
 import hashlib
 import json
 import subprocess
-from dataclasses import replace
+from dataclasses import asdict, replace
 from datetime import datetime, timezone
 
 import pytest
@@ -9,6 +9,7 @@ import pytest
 from model_lineage import LineageError
 from oracle_research_branch_cleanup_verifier import (
     BranchCleanupEvidence,
+    verify_and_cleanup_bound_branch,
     verify_and_cleanup_isolated_branch,
 )
 from scripts.oracle_research_dataset_isolated_matrix import (
@@ -381,3 +382,61 @@ def test_production_fingerprint_mismatch_before_blocks_destroy(tmp_path):
 def test_production_fingerprint_or_count_mismatch_after_rejects_cleanup_evidence(tmp_path):
     with pytest.raises(LineageError, match="Post-destroy production"):
         execute(tmp_path, reader=ChangingProductionReader())
+
+
+def bound_failure_files(tmp_path):
+    current_intent = intent()
+    intent_path = tmp_path / "intent.json"
+    intent_path.write_text(json.dumps(_pre_branch_payload(current_intent)), encoding="utf-8")
+    payload = {
+        "evidence_contract": "oracle-isolated-matrix-lifecycle-failure-v1",
+        "intent_id": current_intent.intent_id,
+        "artifact_source_commit": current_intent.source_commit,
+        "executor_git_commit": "39dc9dcdc07ad3a2b02354d1bca1ae4ae92031eb",
+        "branch_identity": asdict(proof()),
+        "primary_failure_type": "RuntimeError",
+    }
+    evidence_path = tmp_path / "failure.json"
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    evidence_path.write_bytes(raw)
+    return current_intent, intent_path, evidence_path, hashlib.sha256(raw).hexdigest()
+
+
+def test_bound_failure_cleanup_binds_durable_sha_and_uses_same_strong_proof(tmp_path):
+    _, intent_path, evidence_path, digest = bound_failure_files(tmp_path)
+    reader = ProductionReader()
+    fingerprint, count = _fingerprint(reader)
+    runner = Runner(normal_results())
+    result = verify_and_cleanup_bound_branch(
+        intent_path=intent_path,
+        identity_proof=proof(),
+        durable_evidence_path=evidence_path,
+        expected_durable_evidence_sha256=digest,
+        expected_production_fingerprint=fingerprint,
+        expected_production_object_count=count,
+        runner=runner,
+        production_reader=reader,
+        observed_at=NOW,
+    )
+    assert result.persisted_evidence_file_sha256 == digest
+    assert result.branch_show_readback == "EXACT_OBSERVED_NOT_FOUND"
+    assert result.parent_branch_list_readback == "EXACT_NAME_ABSENCE"
+    assert runner.calls.count((CLI, "db", "destroy", BRANCH, "--yes")) == 1
+
+
+def test_bound_failure_cleanup_rejects_well_formed_wrong_durable_sha_before_cli(tmp_path):
+    _, intent_path, evidence_path, _ = bound_failure_files(tmp_path)
+    runner = Runner(normal_results())
+    with pytest.raises(LineageError, match="file SHA-256 differs"):
+        verify_and_cleanup_bound_branch(
+            intent_path=intent_path,
+            identity_proof=proof(),
+            durable_evidence_path=evidence_path,
+            expected_durable_evidence_sha256="0" * 64,
+            expected_production_fingerprint="a" * 64,
+            expected_production_object_count=0,
+            runner=runner,
+            production_reader=ProductionReader(),
+            observed_at=NOW,
+        )
+    assert runner.calls == []

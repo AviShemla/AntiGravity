@@ -203,6 +203,11 @@ def _read_fingerprint(reader, label: str) -> tuple[str, int]:
         raise LineageError(f"{label} production fingerprint read failed.") from exc
 
 
+def read_production_fingerprint(reader, *, label: str = "Lifecycle") -> tuple[str, int]:
+    """Public fail-closed production fingerprint read for lifecycle binding."""
+    return _read_fingerprint(reader, label)
+
+
 def _prove_exact_missing(result: CliResult, argv: tuple[str, ...], branch_name: str):
     result = _exact_result(result, argv, "Missing-branch readback")
     expected = (
@@ -235,23 +240,21 @@ def _prove_parent_listing_absence(
         raise LineageError("Disposable branch remains in the parent branch listing.")
 
 
-def verify_and_cleanup_isolated_branch(
+def _cleanup_bound_identity(
     *,
-    intent_path: Path,
-    persisted_evidence_path: Path,
-    expected_persisted_evidence_sha256: str,
+    intent,
+    persisted_proof: BranchIdentityProof,
+    identity: IsolatedBranchIdentity,
+    evidence_file_sha256: str,
+    evidence_payload_sha256: str,
+    expected_production_fingerprint: str,
+    expected_production_object_count: int,
     runner: CliRunner,
     production_reader,
     observed_at: datetime,
 ) -> BranchCleanupEvidence:
-    """Execute one exact destroy and prove absence without exposing raw identity."""
-    if runner is None or production_reader is None:
-        raise LineageError("Cleanup requires injected CLI and production readers.")
-    intent = load_pre_branch_intent(intent_path)
-    loaded = _load_bound_evidence(
-        persisted_evidence_path, expected_persisted_evidence_sha256, intent
-    )
-    _, persisted_proof, identity, file_sha, payload_sha, expected_fp, expected_count = loaded
+    """Shared exact-target destroy and independent cleanup proof."""
+
     try:
         fresh = derive_branch_identity_from_cli(intent, runner, observed_at=observed_at)
     except LineageError:
@@ -270,18 +273,18 @@ def verify_and_cleanup_isolated_branch(
         fresh.branch_id != persisted_proof.branch_id
         or fresh.parent_id != persisted_proof.parent_id
     ):
-        raise LineageError("Fresh branch identity differs from persisted matrix evidence.")
-    production_before, count_before = _read_fingerprint(
-        production_reader, "Pre-destroy"
-    )
-    if (production_before, count_before) != (expected_fp, expected_count):
+        raise LineageError("Fresh branch identity differs from persisted evidence.")
+    production_before, count_before = _read_fingerprint(production_reader, "Pre-destroy")
+    if (production_before, count_before) != (
+        expected_production_fingerprint,
+        expected_production_object_count,
+    ):
         raise LineageError("Pre-destroy production fingerprint or object count differs.")
 
     destroy_argv = exact_cleanup_command(fresh)
     try:
         destroy = _run_cli(runner, destroy_argv, "Destroy")
     except subprocess.TimeoutExpired:
-        destroy = None
         destroy_result = "AMBIGUOUS_TIMEOUT_PROVEN_BY_READBACK"
     else:
         if destroy.returncode == 0 and destroy.stderr == "":
@@ -293,9 +296,7 @@ def verify_and_cleanup_isolated_branch(
 
     show_argv = (CLI, "db", "show", identity.branch_name)
     _prove_exact_missing(
-        _run_cli(runner, show_argv, "Missing-branch readback"),
-        show_argv,
-        identity.branch_name,
+        _run_cli(runner, show_argv, "Missing-branch readback"), show_argv, identity.branch_name
     )
     list_argv = (CLI, "db", "show", EXPECTED_PRODUCTION_NAME, "--branches")
     _prove_parent_listing_absence(
@@ -303,17 +304,14 @@ def verify_and_cleanup_isolated_branch(
         list_argv,
         identity.branch_name,
     )
-    production_after, count_after = _read_fingerprint(
-        production_reader, "Post-destroy"
-    )
+    production_after, count_after = _read_fingerprint(production_reader, "Post-destroy")
     if (production_after, count_after) != (production_before, count_before):
         raise LineageError("Post-destroy production fingerprint or object count differs.")
-
     return BranchCleanupEvidence(
         contract="oracle-research-isolated-branch-cleanup-v1",
         intent_sha256=_sha(asdict(intent)),
-        persisted_evidence_file_sha256=file_sha,
-        persisted_evidence_payload_sha256=payload_sha,
+        persisted_evidence_file_sha256=evidence_file_sha256,
+        persisted_evidence_payload_sha256=evidence_payload_sha256,
         fresh_identity_proof_sha256=_sha(asdict(fresh)),
         destroy_argv_sha256=_sha(list(destroy_argv)),
         destroy_result=destroy_result,
@@ -324,10 +322,107 @@ def verify_and_cleanup_isolated_branch(
     )
 
 
+def verify_and_cleanup_bound_branch(
+    *,
+    intent_path: Path,
+    identity_proof: BranchIdentityProof,
+    durable_evidence_path: Path,
+    expected_durable_evidence_sha256: str,
+    expected_production_fingerprint: str,
+    expected_production_object_count: int,
+    runner: CliRunner,
+    production_reader,
+    observed_at: datetime,
+) -> BranchCleanupEvidence:
+    """Clean a bound branch after a durable non-success lifecycle outcome."""
+
+    if runner is None or production_reader is None:
+        raise LineageError("Cleanup requires injected CLI and production readers.")
+    intent = load_pre_branch_intent(intent_path)
+    if not SHA256.fullmatch(str(expected_durable_evidence_sha256)):
+        raise LineageError("Expected durable evidence SHA-256 is invalid.")
+    raw = Path(durable_evidence_path).read_bytes()
+    if not raw or len(raw) > MAX_EVIDENCE_BYTES:
+        raise LineageError("Durable lifecycle evidence is empty or oversized.")
+    actual_sha = hashlib.sha256(raw).hexdigest()
+    if actual_sha != expected_durable_evidence_sha256:
+        raise LineageError("Durable lifecycle evidence file SHA-256 differs.")
+    try:
+        payload = json.loads(raw, object_pairs_hook=_reject_duplicate_keys)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise LineageError("Durable lifecycle evidence JSON is invalid.") from exc
+    if not isinstance(payload, dict):
+        raise LineageError("Durable lifecycle evidence must be an object.")
+    identity = IsolatedBranchIdentity(
+        identity_proof.branch_name,
+        identity_proof.branch_id,
+        identity_proof.parent_name,
+        identity_proof.parent_id,
+    )
+    identity_proof.validate(identity, intent_created_at_utc=intent.created_at_utc)
+    if payload.get("intent_id") != intent.intent_id:
+        raise LineageError("Durable lifecycle evidence intent differs.")
+    if payload.get("artifact_source_commit") != intent.source_commit:
+        raise LineageError("Durable lifecycle evidence source commit differs.")
+    if payload.get("branch_identity") != asdict(identity_proof):
+        raise LineageError("Durable lifecycle evidence branch identity differs.")
+    if not isinstance(expected_production_object_count, int) or isinstance(
+        expected_production_object_count, bool
+    ) or expected_production_object_count < 0:
+        raise LineageError("Expected production object count is invalid.")
+    if not SHA256.fullmatch(str(expected_production_fingerprint)):
+        raise LineageError("Expected production fingerprint is invalid.")
+    return _cleanup_bound_identity(
+        intent=intent,
+        persisted_proof=identity_proof,
+        identity=identity,
+        evidence_file_sha256=actual_sha,
+        evidence_payload_sha256=_sha(payload),
+        expected_production_fingerprint=expected_production_fingerprint,
+        expected_production_object_count=expected_production_object_count,
+        runner=runner,
+        production_reader=production_reader,
+        observed_at=observed_at,
+    )
+
+
+def verify_and_cleanup_isolated_branch(
+    *,
+    intent_path: Path,
+    persisted_evidence_path: Path,
+    expected_persisted_evidence_sha256: str,
+    runner: CliRunner,
+    production_reader,
+    observed_at: datetime,
+) -> BranchCleanupEvidence:
+    """Execute one exact destroy and prove absence without exposing raw identity."""
+    if runner is None or production_reader is None:
+        raise LineageError("Cleanup requires injected CLI and production readers.")
+    intent = load_pre_branch_intent(intent_path)
+    loaded = _load_bound_evidence(
+        persisted_evidence_path, expected_persisted_evidence_sha256, intent
+    )
+    _, persisted_proof, identity, file_sha, payload_sha, expected_fp, expected_count = loaded
+    return _cleanup_bound_identity(
+        intent=intent,
+        persisted_proof=persisted_proof,
+        identity=identity,
+        evidence_file_sha256=file_sha,
+        evidence_payload_sha256=payload_sha,
+        expected_production_fingerprint=expected_fp,
+        expected_production_object_count=expected_count,
+        runner=runner,
+        production_reader=production_reader,
+        observed_at=observed_at,
+    )
+
+
 __all__ = [
     "BranchCleanupEvidence",
     "CliRunner",
     "CliResult",
     "SubprocessCliRunner",
+    "read_production_fingerprint",
+    "verify_and_cleanup_bound_branch",
     "verify_and_cleanup_isolated_branch",
 ]
