@@ -6,7 +6,7 @@ Isolated-matrix executor commit: `64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`06febf827d933afa26437db72291d25dacec432826ffa35d727c88c7dfa1dfbb`
+`a7bcd60c402b01a47d32068f968661424caddad6b5a123bdc290f38b81272355`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:

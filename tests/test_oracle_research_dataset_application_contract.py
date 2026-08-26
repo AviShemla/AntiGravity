@@ -20,6 +20,15 @@ MATRIX_READBACK_PATH = (
 MATRIX_TERMINAL_PATH = (
     ROOT / "docs" / "evidence" / "oracle_research_isolated_matrix_terminal_20260826.json"
 )
+ORPHAN_PRE_CLEANUP_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_research_orphan_branch_pre_cleanup_20260826.json"
+)
+ORPHAN_FINAL_CLEANUP_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_research_orphan_branch_cleanup_final_20260826.json"
+)
+NORMALIZED_EDGE_EVIDENCE_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_normalized_screening_edge_audit_20260826.json"
+)
 
 
 def load_contract():
@@ -136,6 +145,100 @@ def test_isolated_turso_matrix_is_hash_locked_complete_and_cleanup_verified():
     assert terminal["cleanup"]["cleanup_verified"] is True
     assert terminal["cleanup"]["production_fingerprint_sha256"] == reference["production_fingerprint_after"]
     assert terminal["matrix_evidence_file_sha256"] == reference["matrix_readback"]["sha256"]
+
+
+def test_orphan_cleanup_is_separate_hash_locked_and_grants_no_authority():
+    contract = load_contract()
+    reference = contract["production_evidence"]["orphan_disposable_branch_cleanup"]
+    assert reference["status"] == "OBSERVED/VERIFIED_CLEANUP"
+    assert reference["branch_name"] == "theoracle-codex-oracle-rd-20260826t1945z-d530dc"
+    assert reference["branch_id"] == "01a03f9c-2f01-74bb-8ba2-6b73aaf7b208"
+    assert reference["successful_matrix_branch"] is False
+    assert reference["matrix_execution_reached"] is False
+    matrix = contract["production_evidence"]["isolated_turso_matrix_readback"]
+    assert reference["branch_name"] != matrix["disposable_branch_name"]
+    assert reference["branch_id"] != matrix["disposable_branch_id"]
+    assert reference["production_fingerprint_before"] == reference["production_fingerprint_after"]
+    assert reference["production_oracle_object_count_before"] == 0
+    assert reference["production_oracle_object_count_after"] == 0
+    assert reference["cleanup_verified"] is True
+    assert reference["branch_show_readback"] == "EXACT_OBSERVED_NOT_FOUND"
+    assert reference["parent_branch_list_readback"] == "EXACT_NAME_ABSENCE"
+    assert reference["authorizes_schema_application"] is False
+    assert reference["authorizes_dataset_freeze"] is False
+    for key, path in (
+        ("pre_cleanup", ORPHAN_PRE_CLEANUP_PATH),
+        ("final_cleanup", ORPHAN_FINAL_CLEANUP_PATH),
+    ):
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == reference[key]["sha256"]
+    pre = json.loads(ORPHAN_PRE_CLEANUP_PATH.read_text(encoding="utf-8"))
+    final = json.loads(ORPHAN_FINAL_CLEANUP_PATH.read_text(encoding="utf-8"))
+    assert pre["branch_identity"]["branch_name"] == reference["branch_name"]
+    assert pre["branch_identity"]["branch_id"] == reference["branch_id"]
+    assert pre["redaction"] == {
+        "credentials_included": False,
+        "response_bodies_included": False,
+        "urls_included": False,
+    }
+    assert final["pre_cleanup_file_sha256"] == reference["pre_cleanup"]["sha256"]
+    assert final["cleanup"]["branch_show_readback"] == "EXACT_OBSERVED_NOT_FOUND"
+    assert final["cleanup"]["parent_branch_list_readback"] == "EXACT_NAME_ABSENCE"
+    assert final["cleanup"]["production_fingerprint_sha256"] == reference["production_fingerprint_after"]
+    assert final["cleanup"]["production_oracle_object_count"] == 0
+
+
+def test_normalized_edge_audit_is_hash_locked_exact_and_read_only():
+    contract = load_contract()
+    reference = contract["production_evidence"]["normalized_screening_edge_read_only_audit"]
+    assert hashlib.sha256(NORMALIZED_EDGE_EVIDENCE_PATH.read_bytes()).hexdigest() == reference["sha256"]
+    evidence = json.loads(NORMALIZED_EDGE_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    logical = dict(evidence)
+    claimed = logical.pop("evidence_sha256")
+    canonical = json.dumps(
+        logical,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical).hexdigest() == claimed == reference["logical_evidence_sha256"]
+    assert evidence["coverage"] == {
+        "runs_observed": 3,
+        "runs_expected": 3,
+        "result_rows_observed": 1422,
+        "result_rows_expected": 1422,
+        "evaluated_rows_inspected": 23,
+        "evaluated_rows_expected": 23,
+        "extractable_edge_sets": 10,
+        "evaluated_without_final_spec": 13,
+        "normalized_edges_observed": 19,
+        "normalized_edges_expected": 19,
+        "eligible_edge_sets": 0,
+    }
+    assert len(evidence["observational_edge_sets"]) == 10
+    assert sum(len(item["edges"]) for item in evidence["observational_edge_sets"]) == 19
+    assert all(value == 0 for value in evidence["normalized_table_counts"].values())
+    assert all(value == 0 for value in evidence["downstream_counts"].values())
+    assert all(
+        item == {"object_type": "table", "presence": "PRESENT", "row_count": 0}
+        for item in evidence["optional_schema_objects"].values()
+    )
+    assert reference["optional_schema_state"] == {
+        "present_empty_table_count": 7,
+        "absent_object_count": 0,
+        "nonempty_table_count": 0,
+        "present_empty_tables": sorted(evidence["optional_schema_objects"]),
+    }
+    assert reference["coverage"] == {
+        key: evidence["coverage"][key]
+        for key in reference["coverage"]
+    }
+    assert evidence["database_writes"] == evidence["model_fits"] == 0
+    assert evidence["etf_prior_outputs"] == 0
+    assert reference["authorizes_schema_application"] is False
+    assert reference["authorizes_dataset_freeze"] is False
+    assert contract["approval_gates"]["schema_application"]["approval_id"] is None
+    assert contract["approval_gates"]["dataset_freeze"]["approval_id"] is None
 
 
 def test_every_database_audit_statement_is_read_only():

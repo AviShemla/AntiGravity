@@ -23,6 +23,34 @@ evidence hashes, not a retained unit, are the continuing proof.
 This clears only the isolated-matrix evidence gate. It grants no production
 schema application or dataset-freeze authority.
 
+## Earlier orphaned branch cleanup — separate from the successful matrix
+
+A prior lifecycle attempt created disposable branch
+`theoracle-codex-oracle-rd-20260826t1945z-d530dc` (ID
+`01a03f9c-2f01-74bb-8ba2-6b73aaf7b208`) but did not reach the matrix
+execution stage. It is not the successful 26/26 matrix branch documented
+above and supplies no migration or behavioral-assertion evidence.
+
+The exact orphan identity was later rebound to its original intent and
+terminal evidence and cleaned by immutable recovery commit
+`76f96e40bea974816ceac53a4da4fe34c45caf41`. Runtime unit
+`codex-oracle-unbound-cleanup-20260826t2100z-76f96e4.service`, InvocationID
+`93d188dde279449a90c407a8b3ef482e`, worker PID `930140`, completed
+successfully in 4.689 seconds. Sanitized evidence is preserved at:
+
+- `docs/evidence/oracle_research_orphan_branch_pre_cleanup_20260826.json`
+  (SHA-256 `0a275e15eaca8e22458e92adc5fcab3de7077c1fc8473b86077fed6afcd3ddc9`);
+- `docs/evidence/oracle_research_orphan_branch_cleanup_final_20260826.json`
+  (SHA-256 `c874a500ad5874cd5888728777201b5bfcb5b4c3479b98e51b69614594ae6962`).
+
+The final evidence independently records exact branch-show not-found, exact
+parent-list name absence, unchanged production fingerprint
+`95cf13e3061f8fcbad798d77d96570de9293e3db8a865a0d73be918c6a5f1523`,
+and zero production Oracle research objects. This cleanup exhausted only the
+already-approved exact disposable-branch cleanup action. It creates no new
+branch, schema, dataset-freeze, model, ETF-prior, recommendation, order, or
+trading authority.
+
 ## Fresh host and production readback
 
 - Reviewed source Git: `cf8345c30e2c8264cbb7140bef3b397a7799e488`, clean at the

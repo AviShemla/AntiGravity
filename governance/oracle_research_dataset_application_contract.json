@@ -144,6 +144,93 @@
         "source_rows_included": false
       }
     },
+    "orphan_disposable_branch_cleanup": {
+      "status": "OBSERVED/VERIFIED_CLEANUP",
+      "branch_name": "theoracle-codex-oracle-rd-20260826t1945z-d530dc",
+      "branch_id": "01a03f9c-2f01-74bb-8ba2-6b73aaf7b208",
+      "successful_matrix_branch": false,
+      "matrix_execution_reached": false,
+      "artifact_source_git_commit": "cf8345c30e2c8264cbb7140bef3b397a7799e488",
+      "cleanup_executor_git_commit": "76f96e40bea974816ceac53a4da4fe34c45caf41",
+      "approval_id": "avi-six-action-matrix-20260826",
+      "production_fingerprint_before": "95cf13e3061f8fcbad798d77d96570de9293e3db8a865a0d73be918c6a5f1523",
+      "production_fingerprint_after": "95cf13e3061f8fcbad798d77d96570de9293e3db8a865a0d73be918c6a5f1523",
+      "production_oracle_object_count_before": 0,
+      "production_oracle_object_count_after": 0,
+      "cleanup_verified": true,
+      "branch_show_readback": "EXACT_OBSERVED_NOT_FOUND",
+      "parent_branch_list_readback": "EXACT_NAME_ABSENCE",
+      "runtime": {
+        "unit": "codex-oracle-unbound-cleanup-20260826t2100z-76f96e4.service",
+        "invocation_id": "93d188dde279449a90c407a8b3ef482e",
+        "worker_pid": 930140,
+        "terminal_state": "deactivated successfully",
+        "wall_duration_seconds": 4.689,
+        "cpu_duration_seconds": 1.472,
+        "peak_memory": "27.6M"
+      },
+      "pre_cleanup": {
+        "path": "docs/evidence/oracle_research_orphan_branch_pre_cleanup_20260826.json",
+        "sha256": "0a275e15eaca8e22458e92adc5fcab3de7077c1fc8473b86077fed6afcd3ddc9"
+      },
+      "final_cleanup": {
+        "path": "docs/evidence/oracle_research_orphan_branch_cleanup_final_20260826.json",
+        "sha256": "c874a500ad5874cd5888728777201b5bfcb5b4c3479b98e51b69614594ae6962"
+      },
+      "authorizes_schema_application": false,
+      "authorizes_dataset_freeze": false
+    },
+    "normalized_screening_edge_read_only_audit": {
+      "status": "OBSERVED/VERIFIED_READBACK",
+      "path": "docs/evidence/oracle_normalized_screening_edge_audit_20260826.json",
+      "sha256": "104ed709af929232ab353bccdbd3564fa3c0c56cf9139ab76e2626be2d9441e1",
+      "logical_evidence_sha256": "be8fa2c1efc4e69248b6d1ada16548ffadefb77e307343ab135b3f3ebf217198",
+      "executor_git_commit": "05de0365043b32c7d27526321491d5e47d451b10",
+      "screening_code_version": "2ef4a1082c91c023b9b0204611730492f03ad576",
+      "runtime": {
+        "unit": "codex-normalized-edge-audit-20260826t2116z-05de036.service",
+        "invocation_id": "cb2da211ec544a84915d4d2af6dfca71",
+        "worker_pid": null,
+        "worker_pid_status": "NOT_RECOVERABLE_AFTER_TRANSIENT_UNIT_COLLECTION",
+        "terminal_state": "deactivated successfully",
+        "started_at_utc": "2026-08-26T21:08:24.556213Z",
+        "terminal_at_utc": "2026-08-26T21:08:26.967183Z"
+      },
+      "coverage": {
+        "runs_observed": 3,
+        "runs_expected": 3,
+        "result_rows_observed": 1422,
+        "result_rows_expected": 1422,
+        "evaluated_rows_inspected": 23,
+        "evaluated_rows_expected": 23,
+        "extractable_edge_sets": 10,
+        "evaluated_without_final_spec": 13,
+        "normalized_edges_observed": 19,
+        "normalized_edges_expected": 19,
+        "eligible_edge_sets": 0
+      },
+      "optional_schema_state": {
+        "present_empty_table_count": 7,
+        "absent_object_count": 0,
+        "nonempty_table_count": 0,
+        "present_empty_tables": [
+          "etf_prior_lineage",
+          "model_runs",
+          "model_scorecards",
+          "predictive_screening_edge_sets_v2",
+          "predictive_screening_edges_v2",
+          "stock_universe_edge_sets_v2",
+          "stock_universe_edges_v2"
+        ]
+      },
+      "normalized_table_rows": 0,
+      "downstream_model_scorecard_etf_rows": 0,
+      "database_writes": 0,
+      "model_fits": 0,
+      "etf_prior_outputs": 0,
+      "authorizes_schema_application": false,
+      "authorizes_dataset_freeze": false
+    },
     "actual_586710_row_digest_readback": {
       "status": "OBSERVED/VERIFIED_READBACK",
       "path": "docs/evidence/oracle_research_content_audit_20260826.json",
