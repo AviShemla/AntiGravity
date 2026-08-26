@@ -34,13 +34,14 @@ from scripts.oracle_research_dataset_isolated_matrix_lifecycle import (
     CommandResult,
     LifecycleArtifacts,
     LifecycleError,
+    IdentityPropagationPending,
     RepositoryGitIdentity,
     atomic_write_redacted_json,
     run_disposable_matrix_lifecycle,
 )
 
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 NOW = datetime(2026, 8, 26, 18, 0, tzinfo=timezone.utc)
@@ -96,7 +97,14 @@ class Git:
 
 
 class Cli:
-    def __init__(self, *, create="success", destroy="success", wrong_create_argv=False):
+    def __init__(
+        self,
+        *,
+        create="success",
+        destroy="success",
+        wrong_create_argv=False,
+        identity_absent_shows=0,
+    ):
         self.exists = False
         self.branch_id = "01a-disposable-lifecycle"
         self.create_behavior = create
@@ -108,6 +116,7 @@ class Cli:
         self.force_list_present = False
         self.malformed_show = False
         self.wrong_create_argv = wrong_create_argv
+        self.identity_absent_shows = identity_absent_shows
 
     def result(self, argv, code=0, stdout=b"", stderr=b"", ambiguous=False):
         return CommandResult(tuple(argv), code, stdout, stderr, ambiguous)
@@ -130,6 +139,13 @@ class Cli:
             return self.result(argv, code=1, stderr=b"create rejected\n")
         if argv == (CLI, "db", "show", intent().branch_name):
             if self.exists:
+                if self.identity_absent_shows > 0:
+                    self.identity_absent_shows -= 1
+                    return self.result(
+                        argv,
+                        code=1,
+                        stderr=(NOT_FOUND_TEMPLATE.format(name=intent().branch_name) + "\n").encode(),
+                    )
                 if self.malformed_show:
                     return self.result(argv, stdout=b"ambiguous identity\n")
                 return self.result(
@@ -211,10 +227,16 @@ class Matrix:
         return build_redacted_evidence(plan, readback, intent=intent(), proof=proof)
 
 
-def run(tmp_path, cli=None, matrix=None, git=None, current_intent=None):
+def run(tmp_path, cli=None, matrix=None, git=None, current_intent=None, **lifecycle_kwargs):
     reader = ProductionReader()
     matrix = matrix or Matrix()
     matrix.reader = reader
+    ticks = [0]
+
+    def utc_clock():
+        ticks[0] += 1
+        return NOW + timedelta(seconds=ticks[0])
+
     return run_disposable_matrix_lifecycle(
         intent=current_intent or intent(),
         cli=cli or Cli(),
@@ -224,6 +246,13 @@ def run(tmp_path, cli=None, matrix=None, git=None, current_intent=None):
         evidence_directory=tmp_path / "evidence",
         secret_directory=tmp_path / "secrets",
         now=NOW,
+        reconciliation_sleeper=lifecycle_kwargs.pop(
+            "reconciliation_sleeper", lambda seconds: None
+        ),
+        reconciliation_utc_clock=lifecycle_kwargs.pop(
+            "reconciliation_utc_clock", utc_clock
+        ),
+        **lifecycle_kwargs,
     )
 
 
@@ -377,6 +406,51 @@ def test_wrong_create_result_argv_stops_before_token_and_still_cleans(tmp_path):
     payload = _payload(terminal)
     assert payload["primary_failure_type"] == "LifecycleError"
     assert payload["cleanup"]["cleanup_verified"] is True
+
+
+def test_identity_propagates_on_third_read_without_duplicate_create(tmp_path):
+    cli = Cli(identity_absent_shows=2)
+    sleeps = []
+    result = run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
+    assert result.cleanup_verified is True
+    assert sleeps == [5.0, 5.0]
+    assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 1, 1)
+
+
+def test_primary_exhaustion_cleanup_phase_later_binds_and_destroys_once(tmp_path):
+    cli = Cli(identity_absent_shows=4)
+    sleeps = []
+    with pytest.raises(IdentityPropagationPending):
+        run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
+    assert cli.create_count == 1
+    assert cli.token_count == 0
+    assert cli.destroy_count == 1
+    assert cli.exists is False
+    terminal = next((tmp_path / "evidence").glob("*-terminal.json"))
+    payload = _payload(terminal)
+    assert payload["primary_failure_type"] == "IdentityPropagationPending"
+    assert payload["cleanup"]["cleanup_verified"] is True
+    assert sum(sleeps) <= 45.0
+
+
+def test_contradictory_identity_never_issues_token_or_destroy(tmp_path):
+    cli = Cli()
+    cli.malformed_show = True
+    with pytest.raises(LifecycleError, match="contradicts"):
+        run(tmp_path, cli)
+    assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 0, 0)
+    assert cli.exists is True
+    assert next((tmp_path / "evidence").glob("*-cleanup-incident.json"))
+
+
+def test_identity_absence_across_both_phases_stays_within_single_wait_budget(tmp_path):
+    cli = Cli(identity_absent_shows=99)
+    sleeps = []
+    with pytest.raises(IdentityPropagationPending):
+        run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
+    assert sum(sleeps) <= 45.0
+    assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 0, 0)
+    assert next((tmp_path / "evidence").glob("*-cleanup-incident.json"))
 
 
 def test_terminal_binds_raw_matrix_file_sha_to_shared_cleanup(tmp_path):

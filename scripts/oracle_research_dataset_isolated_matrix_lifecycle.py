@@ -9,7 +9,7 @@ creation becomes possible.  It never retries a mutating command.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import os
@@ -18,8 +18,10 @@ import re
 import stat
 import subprocess
 import sys
+import time
 from types import TracebackType
 from typing import Protocol
+from typing import Callable
 from urllib.parse import urlparse
 
 from model_lineage import LineageError
@@ -60,6 +62,14 @@ class LifecycleError(RuntimeError):
 
 class CleanupError(LifecycleError):
     """Raised when exact cleanup could not be independently verified."""
+
+
+class IdentityPropagationPending(LifecycleError):
+    """Exact absence persisted through one bounded reconciliation phase."""
+
+
+class IdentityContradiction(LifecycleError):
+    """Identity evidence contradicted the governed branch/parent contract."""
 
 
 @dataclass(frozen=True)
@@ -397,6 +407,101 @@ def _derive_identity(intent: PreBranchIntent, cli: LifecycleCli, now: datetime):
     return proof, branch_result
 
 
+@dataclass
+class _ReconciliationBudget:
+    max_wait_seconds: float
+    waited_seconds: float = 0.0
+
+    def wait(self, requested: float, sleeper: Callable[[float], None]) -> bool:
+        remaining = self.max_wait_seconds - self.waited_seconds
+        if remaining <= 0:
+            return False
+        duration = min(requested, remaining)
+        sleeper(duration)
+        self.waited_seconds += duration
+        return duration > 0
+
+
+def _reconcile_identity_phase(
+    intent: PreBranchIntent,
+    cli: LifecycleCli,
+    *,
+    budget: _ReconciliationBudget,
+    sleeper: Callable[[float], None],
+    utc_clock: Callable[[], datetime],
+    attempts: int,
+    interval_seconds: float,
+):
+    if attempts <= 0 or interval_seconds <= 0:
+        raise LifecycleError("Identity reconciliation bounds are invalid.")
+    last_absence: CommandResult | None = None
+    for attempt in range(attempts):
+        observed_at = utc_clock()
+        if observed_at.tzinfo is None:
+            raise LifecycleError("Identity reconciliation clock is not timezone-aware.")
+        adapter = _IdentityAdapter(cli)
+        try:
+            proof = derive_branch_identity_from_cli(
+                intent,
+                adapter,
+                observed_at=observed_at.astimezone(timezone.utc),
+            )
+        except LineageError as exc:
+            branch = adapter.results.get((CLI, "db", "show", intent.branch_name))
+            production = adapter.results.get((CLI, "db", "show", "theoracle"))
+            if (
+                branch is not None
+                and _exact_not_found(branch, intent.branch_name)
+                and production is not None
+                and production.returncode == 0
+                and not production.ambiguous
+                and production.stderr.strip() == b""
+                and bool(production.stdout)
+            ):
+                last_absence = branch
+            else:
+                raise IdentityContradiction(
+                    "Branch identity evidence contradicts the governed contract."
+                ) from exc
+        else:
+            branch_result = adapter.results[(CLI, "db", "show", intent.branch_name)]
+            return proof, branch_result
+        if attempt + 1 < attempts and budget.wait(interval_seconds, sleeper):
+            continue
+        break
+    if last_absence is not None:
+        raise IdentityPropagationPending(
+            "Branch identity remained exactly absent through bounded propagation checks."
+        )
+    raise IdentityContradiction("Branch identity reconciliation ended without exact evidence.")
+
+
+def _persist_failure_evidence(
+    *,
+    path: Path,
+    intent: PreBranchIntent,
+    proof: BranchIdentityProof,
+    executor_commit: str,
+    create_result: CommandResult | None,
+    primary: BaseException | None,
+    production_fingerprint: str,
+    production_object_count: int,
+) -> str:
+    payload = {
+        "evidence_contract": "oracle-isolated-matrix-lifecycle-failure-v1",
+        "intent_id": intent.intent_id,
+        "artifact_source_commit": intent.source_commit,
+        "executor_git_commit": executor_commit,
+        "branch_identity": asdict(proof),
+        "create": None if create_result is None else _result_digest(create_result),
+        "primary_failure_type": _exception_type(primary),
+        "production_fingerprint_sha256": production_fingerprint,
+        "production_oracle_object_count": production_object_count,
+    }
+    written = atomic_write_redacted_json(path, payload)
+    return hashlib.sha256(written.read_bytes()).hexdigest()
+
+
 def run_disposable_matrix_lifecycle(
     *,
     intent: PreBranchIntent,
@@ -408,6 +513,11 @@ def run_disposable_matrix_lifecycle(
     secret_directory: Path,
     now: datetime | None = None,
     expected_executor_git_commit: str = EXPECTED_EXECUTOR_GIT_COMMIT,
+    reconciliation_sleeper: Callable[[float], None] = time.sleep,
+    reconciliation_utc_clock: Callable[[], datetime] | None = None,
+    reconciliation_max_wait_seconds: float = 45.0,
+    reconciliation_interval_seconds: float = 5.0,
+    reconciliation_attempts_per_phase: int = 4,
 ) -> LifecycleArtifacts:
     """Run one approved lifecycle; mutating commands are never retried."""
 
@@ -415,6 +525,16 @@ def run_disposable_matrix_lifecycle(
     if moment.tzinfo is None:
         raise LifecycleError("Lifecycle timestamp must be timezone-aware.")
     moment = moment.astimezone(timezone.utc)
+    if reconciliation_max_wait_seconds <= 0 or reconciliation_max_wait_seconds > 45:
+        raise LifecycleError("Identity reconciliation total wait bound is invalid.")
+    reconciliation_budget = _ReconciliationBudget(reconciliation_max_wait_seconds)
+    if reconciliation_utc_clock is None:
+        if now is None:
+            reconciliation_utc_clock = lambda: datetime.now(timezone.utc)
+        else:
+            reconciliation_utc_clock = lambda: moment + timedelta(
+                seconds=reconciliation_budget.waited_seconds
+            )
     _validate_intent_commands(intent)
     executor_commit = _validate_executor_identity(
         intent, git_reader, expected_executor_git_commit
@@ -459,6 +579,7 @@ def run_disposable_matrix_lifecycle(
     execution_file_sha256: str | None = None
     failure_file_sha256: str | None = None
     failure_evidence_error: BaseException | None = None
+    identity_contradiction = False
     production_fingerprint, production_object_count = read_production_fingerprint(
         production_reader, label="Lifecycle pre-create"
     )
@@ -473,16 +594,22 @@ def run_disposable_matrix_lifecycle(
         create_attempted = True
         create_result = cli.run(create_argv, sensitive_stdout=False)
         try:
-            bound_proof, branch_show = _derive_identity(intent, cli, moment)
-        except BaseException:
-            # A definite exact absence proves that ambiguous/failed create left no resource.
-            adapter = _IdentityAdapter(cli)
-            absent = adapter.cli.run(
-                (CLI, "db", "show", intent.branch_name), sensitive_stdout=False
+            bound_proof, branch_show = _reconcile_identity_phase(
+                intent,
+                cli,
+                budget=reconciliation_budget,
+                sleeper=reconciliation_sleeper,
+                utc_clock=reconciliation_utc_clock,
+                attempts=reconciliation_attempts_per_phase,
+                interval_seconds=reconciliation_interval_seconds,
             )
-            if _exact_not_found(absent, intent.branch_name):
+        except IdentityPropagationPending:
+            if create_result.returncode != 0 and not create_result.ambiguous:
                 creation_absence_verified = True
                 raise LifecycleError("Branch creation failed and exact absence was verified.")
+            raise
+        except IdentityContradiction:
+            identity_contradiction = True
             raise
         if create_result.argv != create_argv:
             raise LifecycleError("Create result command identity is not exact.")
@@ -526,38 +653,54 @@ def run_disposable_matrix_lifecycle(
         primary_tb = sys.exc_info()[2]
         if bound_proof is not None:
             try:
-                failure_payload = {
-                    "evidence_contract": "oracle-isolated-matrix-lifecycle-failure-v1",
-                    "intent_id": intent.intent_id,
-                    "artifact_source_commit": intent.source_commit,
-                    "executor_git_commit": executor_commit,
-                    "branch_identity": asdict(bound_proof),
-                    "create": None if create_result is None else _result_digest(create_result),
-                    "primary_failure_type": _exception_type(primary),
-                    "production_fingerprint_sha256": production_fingerprint,
-                    "production_oracle_object_count": production_object_count,
-                }
-                written_failure = atomic_write_redacted_json(failure_path, failure_payload)
-                failure_file_sha256 = hashlib.sha256(written_failure.read_bytes()).hexdigest()
+                failure_file_sha256 = _persist_failure_evidence(
+                    path=failure_path,
+                    intent=intent,
+                    proof=bound_proof,
+                    executor_commit=executor_commit,
+                    create_result=create_result,
+                    primary=primary,
+                    production_fingerprint=production_fingerprint,
+                    production_object_count=production_object_count,
+                )
             except BaseException as evidence_exc:
                 failure_evidence_error = evidence_exc
     finally:
         if create_attempted:
             try:
-                if bound_proof is None:
+                if (
+                    bound_proof is None
+                    and not identity_contradiction
+                    and not creation_absence_verified
+                ):
                     try:
-                        cleanup_observed_at = (
-                            moment if now is not None else datetime.now(timezone.utc)
+                        bound_proof, _ = _reconcile_identity_phase(
+                            intent,
+                            cli,
+                            budget=reconciliation_budget,
+                            sleeper=reconciliation_sleeper,
+                            utc_clock=reconciliation_utc_clock,
+                            attempts=reconciliation_attempts_per_phase,
+                            interval_seconds=reconciliation_interval_seconds,
                         )
-                        bound_proof, _ = _derive_identity(
-                            intent, cli, cleanup_observed_at
-                        )
-                    except BaseException:
+                    except (IdentityPropagationPending, IdentityContradiction):
                         bound_proof = None
                 if bound_proof is not None:
-                    cleanup_observed_at = (
-                        moment if now is not None else datetime.now(timezone.utc)
-                    )
+                    if failure_file_sha256 is None and execution_written is None:
+                        failure_file_sha256 = _persist_failure_evidence(
+                            path=failure_path,
+                            intent=intent,
+                            proof=bound_proof,
+                            executor_commit=executor_commit,
+                            create_result=create_result,
+                            primary=primary,
+                            production_fingerprint=production_fingerprint,
+                            production_object_count=production_object_count,
+                        )
+                    cleanup_observed_at = reconciliation_utc_clock()
+                    if cleanup_observed_at.tzinfo is None:
+                        raise CleanupError("Cleanup reconciliation clock is not timezone-aware.")
+                    cleanup_observed_at = cleanup_observed_at.astimezone(timezone.utc)
                     adapter = _CleanupAdapter(cli)
                     if execution_written is not None and execution_file_sha256 is not None:
                         cleanup = verify_and_cleanup_isolated_branch(
