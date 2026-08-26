@@ -60,7 +60,9 @@ class ClaimEvidenceManifestTests(unittest.TestCase):
             "authorities": [{
                 "id": "external-test-verifier", "enabled": True,
                 "public_key_base64": base64.b64encode(public_key).decode(),
-                "allowed_command_ids": ["provider-production-path-v1"],
+                "allowed_commands": {
+                    "provider-production-path-v1": hashlib.sha256(self.manifest["behavioral_proof"]["command"].encode()).hexdigest()
+                },
             }],
         }))
         self.ledger = self.root / "used-nonces.jsonl"
@@ -73,6 +75,7 @@ class ClaimEvidenceManifestTests(unittest.TestCase):
         attestation = {
             "verifier_id": "external-test-verifier",
             "command_id": "provider-production-path-v1",
+            "command_digest": hashlib.sha256(self.manifest["behavioral_proof"]["command"].encode()).hexdigest(),
             "issued_at": "2026-08-26T07:59:00Z",
             "expires_at": "2026-08-26T08:01:00Z",
             "nonce": "n" * 32,
@@ -112,15 +115,25 @@ class ClaimEvidenceManifestTests(unittest.TestCase):
         self.assertIn("attestation signature is invalid", self.errors())
 
     def test_attestation_binds_artifact_and_runtime(self) -> None:
-        self.manifest["runtime"]["identity"] = "different-runtime"
-        errors = self.errors()
-        self.assertIn("attestation subject digest does not bind the manifest", errors)
-        self.assertIn("attestation does not bind the runtime identity", errors)
+        self.manifest["attestation"]["runtime_identity"] = "different-runtime"
+        self.manifest["attestation"]["signature"] = base64.b64encode(self.private_key.sign(signing_payload(self.manifest["attestation"]))).decode()
+        self.assertIn("attestation does not bind the runtime identity", self.errors())
 
     def test_attestation_command_must_be_allowlisted(self) -> None:
         self.manifest["attestation"]["command_id"] = "unapproved-command"
         self.manifest["attestation"]["signature"] = base64.b64encode(self.private_key.sign(signing_payload(self.manifest["attestation"]))).decode()
         self.assertIn("attestation command is not allowlisted for this verifier", self.errors())
+
+    def test_attestation_binds_exact_command(self) -> None:
+        self.manifest["attestation"]["command_digest"] = "0" * 64
+        self.manifest["attestation"]["signature"] = base64.b64encode(self.private_key.sign(signing_payload(self.manifest["attestation"]))).decode()
+        self.assertIn("attestation does not bind the exact manifest command", self.errors())
+
+    def test_nonce_not_consumed_when_other_manifest_check_fails(self) -> None:
+        self.manifest["contradictions"] = ["known contradiction"]
+        self.assertIn("contradictions force state FAILED or UNVERIFIED", self.errors(consume_nonce=True))
+        self.manifest["contradictions"] = []
+        self.assertEqual(self.errors(consume_nonce=True), [])
 
     def test_attestation_nonce_replay_is_blocked(self) -> None:
         self.assertEqual(self.errors(consume_nonce=True), [])

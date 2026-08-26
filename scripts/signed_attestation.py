@@ -79,7 +79,7 @@ def verify_attestation(
     attestation = manifest.get("attestation")
     if not isinstance(attestation, dict):
         return ["VERIFIED requires a signed external attestation"]
-    required = {"verifier_id", "command_id", "issued_at", "expires_at", "nonce", "subject_digest", "artifact_digest", "runtime_identity", "signature"}
+    required = {"verifier_id", "command_id", "command_digest", "issued_at", "expires_at", "nonce", "subject_digest", "artifact_digest", "runtime_identity", "signature"}
     missing = sorted(required - attestation.keys())
     if missing:
         return [f"attestation missing field: {field}" for field in missing]
@@ -88,8 +88,14 @@ def verify_attestation(
     authority, authority_error = _load_authority(authority_registry, attestation["verifier_id"])
     if authority_error:
         return [authority_error]
-    if attestation["command_id"] not in authority.get("allowed_command_ids", []):
+    allowed_commands = authority.get("allowed_commands", {})
+    expected_command_digest = hashlib.sha256(manifest.get("behavioral_proof", {}).get("command", "").encode()).hexdigest()
+    if attestation["command_id"] not in allowed_commands:
         errors.append("attestation command is not allowlisted for this verifier")
+    elif allowed_commands[attestation["command_id"]] != expected_command_digest:
+        errors.append("authority command contract does not match the manifest command")
+    if attestation["command_digest"] != expected_command_digest:
+        errors.append("attestation does not bind the exact manifest command")
     expected_subject = claim_subject_digest(manifest)
     if attestation["subject_digest"] != expected_subject:
         errors.append("attestation subject digest does not bind the manifest")

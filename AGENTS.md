@@ -142,7 +142,7 @@ an updated rule here.
    - `VERIFIED` also requires a fresh, one-use Ed25519 attestation from an
      enabled verifier in `governance/verifier_authorities.json`. The signature
      must bind the complete claim subject, artifact digest, runtime identity,
-     and an allowlisted verifier command. The implementation agent must never
+     and the exact digest of an allowlisted verifier command. The implementation agent must never
      possess or create the verifier private key. With no separately provisioned
      authority, `VERIFIED` is intentionally impossible and the claim remains
      `TESTED`, `OBSERVED`, or `UNVERIFIED` as supported by evidence.

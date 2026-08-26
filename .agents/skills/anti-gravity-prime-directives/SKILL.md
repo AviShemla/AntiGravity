@@ -148,7 +148,7 @@ email. Activation requires the mode-transition approval defined in root
     - `VERIFIED` requires a detached Ed25519 attestation from a separately
       configured authority in `governance/verifier_authorities.json`. It must
       bind the full claim, artifact digest, runtime identity, fresh one-use
-      nonce, and an allowlisted verifier command. Never create, request, store,
+      nonce, and the exact digest of an allowlisted verifier command. Never create, request, store,
       or use the verifier private key from the implementation environment.
       Without an external authority and nonce ledger, strong claims remain
       blocked.

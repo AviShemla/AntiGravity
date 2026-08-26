@@ -173,7 +173,7 @@ def validate_manifest(
             or bound_regression.get("repaired_behavior_passed") != regression.get("repaired_behavior_passed")
         ):
             errors.append("regression artifact does not match the manifest")
-    if state == "VERIFIED":
+    if state == "VERIFIED" and not errors:
         errors.extend(verify_attestation(
             manifest, authority_registry=authority_registry,
             nonce_ledger=nonce_ledger, now=current,
