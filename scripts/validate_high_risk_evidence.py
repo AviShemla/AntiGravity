@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts.evidence_binding import load_bound_json
+
 VALID_CLASSIFICATIONS = {"MACHINE_ENFORCED", "EVIDENCE_GATED", "APPROVAL_GATED", "ADVISORY"}
 
 
@@ -42,7 +44,21 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
     return registry
 
 
-def validate_bundle(registry: dict[str, dict[str, Any]], bundle: Any, *, now: datetime | None = None) -> list[str]:
+def _semantic_value(rule_id: str, key: str, value: Any, freshness: int) -> bool:
+    if key == "service.pid":
+        return isinstance(value, int) and not isinstance(value, bool) and value > 0
+    if key == "service.checkpoint_age":
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value <= freshness
+    if key in {"source_scan.test_result", "recovery.tests"}:
+        return isinstance(value, int) and not isinstance(value, bool) and value > 0
+    if key == "recovery.secret_scan":
+        return isinstance(value, dict) and value.get("actionable_hits") == 0
+    if key in {"git.clean", "runtime.hash_match", "snapshot.no_unauthorized_outputs", "model.spec_equivalent", "model.no_leakage", "trading.kill_switch", "trading.risk_gates", "trading.plan_unique", "trading.ledger_reconciled", "recovery.push_readback", "recovery.checkpoint_readback"}:
+        return value is True
+    return value is not None and value != ""
+
+
+def validate_bundle(registry: dict[str, dict[str, Any]], bundle: Any, *, now: datetime | None = None, evidence_root: Path | None = None) -> list[str]:
     if not isinstance(bundle, dict) or not isinstance(bundle.get("rules"), list):
         return ["bundle must contain a rules array"]
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
@@ -85,12 +101,34 @@ def validate_bundle(registry: dict[str, dict[str, Any]], bundle: Any, *, now: da
                 continue
             if item.get("status") != "PASS":
                 errors.append(f"{rule_id}: evidence {key} is not PASS")
-            if not isinstance(item.get("ref"), str) or not item["ref"].strip():
-                errors.append(f"{rule_id}: evidence {key} has no primary reference")
+            artifact, ref_error = load_bound_json(item.get("ref"), evidence_root)
+            if ref_error:
+                errors.append(f"{rule_id}: evidence {key}: {ref_error}")
+                continue
+            if artifact.get("rule_id") != rule_id or artifact.get("evidence_key") != key:
+                errors.append(f"{rule_id}: evidence {key} artifact identity mismatch")
+            if artifact.get("status") != item.get("status") or artifact.get("exit_code") != 0:
+                errors.append(f"{rule_id}: evidence {key} artifact did not pass")
+            if not isinstance(artifact.get("command"), str) or not artifact["command"].strip():
+                errors.append(f"{rule_id}: evidence {key} artifact has no executable command")
+            try:
+                artifact_age = (current - _when(artifact.get("observed_at"))).total_seconds()
+                if artifact_age < 0 or artifact_age > rule["freshness_seconds"]:
+                    errors.append(f"{rule_id}: evidence {key} artifact is stale or future-dated")
+            except (ValueError, TypeError):
+                errors.append(f"{rule_id}: evidence {key} artifact timestamp is invalid")
+            if not _semantic_value(rule_id, key, artifact.get("value"), rule["freshness_seconds"]):
+                errors.append(f"{rule_id}: evidence {key} artifact value fails semantic validation")
         if rule["classification"] == "APPROVAL_GATED":
             approval = result.get("approval")
-            if not isinstance(approval, dict) or not approval.get("scoped") or not approval.get("ref"):
+            if not isinstance(approval, dict) or not approval.get("scoped"):
                 errors.append(f"{rule_id}: explicit scoped approval evidence is required")
+            else:
+                approval_artifact, approval_error = load_bound_json(approval.get("ref"), evidence_root)
+                if approval_error:
+                    errors.append(f"{rule_id}: approval: {approval_error}")
+                elif approval_artifact.get("evidence_type") != "approval" or approval_artifact.get("authority") != "Avi" or approval_artifact.get("scoped") is not True:
+                    errors.append(f"{rule_id}: approval artifact is not an explicit scoped Avi approval")
     for rule_id, rule in registry.items():
         if rule["classification"] != "ADVISORY" and rule_id not in seen:
             errors.append(f"missing enforced rule result: {rule_id}")
@@ -101,11 +139,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path)
     parser.add_argument("--registry", type=Path, default=Path("governance/high_risk_rule_registry.json"))
+    parser.add_argument("--evidence-root", type=Path, required=True)
     args = parser.parse_args()
     try:
         registry = load_registry(args.registry)
         bundle = json.loads(args.bundle.read_text(encoding="utf-8"))
-        errors = validate_bundle(registry, bundle)
+        errors = validate_bundle(registry, bundle, evidence_root=args.evidence_root)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"INVALID: {exc}", file=sys.stderr)
         return 2

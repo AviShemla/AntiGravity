@@ -4,6 +4,17 @@
   "title": "AntiGravity claim evidence manifest",
   "type": "object",
   "additionalProperties": false,
+  "$defs": {
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  },
   "required": ["schema_version", "claim_id", "claim_text", "state", "prior_claim_issue", "artifact", "behavioral_proof", "runtime", "independent_readback", "observed_at", "fresh_until", "contradictions"],
   "properties": {
     "schema_version": {"const": "1.0"},
@@ -26,7 +37,7 @@
       "properties": {
         "command": {"type": "string"}, "exit_code": {"type": "integer"},
         "result": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-        "evidence_ref": {"type": "string"}
+        "evidence_ref": {"$ref": "#/$defs/evidence_ref"}
       }
     },
     "regression": {
@@ -36,7 +47,7 @@
         "original_failure_reproduced": {"type": "boolean"},
         "repaired_behavior_passed": {"type": "boolean"},
         "command": {"type": "string", "minLength": 1},
-        "evidence_ref": {"type": "string", "minLength": 1}
+        "evidence_ref": {"$ref": "#/$defs/evidence_ref"}
       }
     },
     "runtime": {
@@ -45,7 +56,7 @@
       "properties": {
         "applicable": {"type": "boolean"},
         "production_path_proven": {"type": "boolean"},
-        "identity": {"type": "string"}, "evidence_ref": {"type": "string"}
+        "identity": {"type": "string"}, "evidence_ref": {"$ref": "#/$defs/evidence_ref"}
       }
     },
     "independent_readback": {
@@ -54,7 +65,7 @@
       "properties": {
         "command": {"type": "string"},
         "result": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-        "evidence_ref": {"type": "string"}
+        "evidence_ref": {"$ref": "#/$defs/evidence_ref"}
       }
     },
     "observed_at": {"type": "string", "format": "date-time"},

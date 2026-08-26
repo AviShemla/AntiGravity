@@ -11,6 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
+from scripts.evidence_binding import load_bound_json
+
 STATES = {"DESIGNED", "IMPLEMENTED", "TESTED", "DEPLOYED", "OBSERVED", "VERIFIED", "FAILED", "UNVERIFIED"}
 STRONG_TERMS = ("fixed", "handled", "complete", "working", "healthy")
 
@@ -35,10 +39,25 @@ def _nonempty(mapping: Any, field: str, errors: list[str]) -> None:
         errors.append(f"{field} evidence is required")
 
 
-def validate_manifest(manifest: Any, *, now: datetime | None = None) -> list[str]:
+def _bound(ref: Any, root: Path | None, label: str, errors: list[str]) -> dict[str, Any] | None:
+    artifact, error = load_bound_json(ref, root)
+    if error:
+        errors.append(f"{label}: {error}")
+        return None
+    return artifact
+
+
+def validate_manifest(manifest: Any, *, now: datetime | None = None, evidence_root: Path | None = None, schema_path: Path | None = None) -> list[str]:
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ["manifest must be a JSON object"]
+    schema_file = schema_path or Path(__file__).resolve().parents[1] / "schemas" / "claim_evidence_manifest.schema.json"
+    try:
+        schema = json.loads(schema_file.read_text(encoding="utf-8"))
+        schema_errors = sorted(Draft202012Validator(schema).iter_errors(manifest), key=lambda error: list(error.path))
+        errors.extend(f"schema: {error.message}" for error in schema_errors)
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"schema could not be loaded: {exc}")
     required = {"schema_version", "claim_id", "claim_text", "state", "prior_claim_issue", "artifact", "behavioral_proof", "runtime", "independent_readback", "observed_at", "fresh_until", "contradictions"}
     missing = sorted(required - manifest.keys())
     errors.extend(f"missing required field: {name}" for name in missing)
@@ -91,19 +110,16 @@ def validate_manifest(manifest: Any, *, now: datetime | None = None) -> list[str
             errors.append("VERIFIED claims cannot contain contradictions")
         if not isinstance(proof, dict) or proof.get("result") != "PASS" or proof.get("exit_code") != 0:
             errors.append("VERIFIED requires passing executable behavioral proof")
-        for field in ("command", "evidence_ref"):
-            _nonempty(proof, field, errors)
+        _nonempty(proof, "command", errors)
         if not isinstance(readback, dict) or readback.get("result") != "PASS":
             errors.append("VERIFIED requires passing independent readback")
-        for field in ("command", "evidence_ref"):
-            _nonempty(readback, field, errors)
+        _nonempty(readback, "command", errors)
         if fresh and fresh < current:
             errors.append("VERIFIED evidence is stale")
         if isinstance(runtime, dict) and runtime.get("applicable"):
             if not runtime.get("production_path_proven"):
                 errors.append("VERIFIED runtime claim requires production-path proof")
-            for field in ("identity", "evidence_ref"):
-                _nonempty(runtime, field, errors)
+            _nonempty(runtime, "identity", errors)
     if manifest["prior_claim_issue"]:
         regression = manifest.get("regression")
         if not isinstance(regression, dict):
@@ -113,24 +129,58 @@ def validate_manifest(manifest: Any, *, now: datetime | None = None) -> list[str
                 errors.append("regression must reproduce the original failure")
             if regression.get("repaired_behavior_passed") is not True:
                 errors.append("regression must pass after the repair")
-            for field in ("command", "evidence_ref"):
-                _nonempty(regression, field, errors)
+            _nonempty(regression, "command", errors)
     collector = manifest.get("collector")
     if isinstance(collector, dict) and collector.get("narrative_is_proof") is not False:
         errors.append("collector narrative_is_proof must be false")
+    if verified_chain:
+        bound_proof = _bound(proof.get("evidence_ref") if isinstance(proof, dict) else None, evidence_root, "behavioral_proof", errors)
+        if bound_proof and (
+            bound_proof.get("evidence_type") != "behavioral_proof"
+            or bound_proof.get("command") != proof.get("command")
+            or bound_proof.get("exit_code") != proof.get("exit_code")
+            or bound_proof.get("result") != proof.get("result")
+        ):
+            errors.append("behavioral_proof artifact does not match the manifest")
+        bound_readback = _bound(readback.get("evidence_ref") if isinstance(readback, dict) else None, evidence_root, "independent_readback", errors)
+        if bound_readback and (
+            bound_readback.get("evidence_type") != "independent_readback"
+            or bound_readback.get("command") != readback.get("command")
+            or bound_readback.get("result") != readback.get("result")
+        ):
+            errors.append("independent_readback artifact does not match the manifest")
+        if isinstance(runtime, dict) and runtime.get("applicable"):
+            bound_runtime = _bound(runtime.get("evidence_ref"), evidence_root, "runtime", errors)
+            if bound_runtime and (
+                bound_runtime.get("evidence_type") != "runtime"
+                or bound_runtime.get("identity") != runtime.get("identity")
+                or bound_runtime.get("production_path_proven") != runtime.get("production_path_proven")
+            ):
+                errors.append("runtime artifact does not match the manifest")
+    if manifest["prior_claim_issue"] and isinstance(manifest.get("regression"), dict):
+        regression = manifest["regression"]
+        bound_regression = _bound(regression.get("evidence_ref"), evidence_root, "regression", errors)
+        if bound_regression and (
+            bound_regression.get("evidence_type") != "regression"
+            or bound_regression.get("command") != regression.get("command")
+            or bound_regression.get("original_failure_reproduced") != regression.get("original_failure_reproduced")
+            or bound_regression.get("repaired_behavior_passed") != regression.get("repaired_behavior_passed")
+        ):
+            errors.append("regression artifact does not match the manifest")
     return errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
+    parser.add_argument("--evidence-root", type=Path, required=True)
     args = parser.parse_args()
     try:
         manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         print(f"INVALID: {exc}", file=sys.stderr)
         return 2
-    errors = validate_manifest(manifest)
+    errors = validate_manifest(manifest, evidence_root=args.evidence_root)
     if errors:
         for error in errors:
             print(f"INVALID: {error}", file=sys.stderr)
