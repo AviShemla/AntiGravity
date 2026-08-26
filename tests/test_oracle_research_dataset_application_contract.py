@@ -29,6 +29,9 @@ ORPHAN_FINAL_CLEANUP_PATH = (
 NORMALIZED_EDGE_EVIDENCE_PATH = (
     ROOT / "docs" / "evidence" / "oracle_normalized_screening_edge_audit_20260826.json"
 )
+HISTORICAL_QUALITY_EVIDENCE_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_pinned_historical_quality_audit_20260826.json"
+)
 
 
 def load_contract():
@@ -237,6 +240,68 @@ def test_normalized_edge_audit_is_hash_locked_exact_and_read_only():
     assert evidence["etf_prior_outputs"] == 0
     assert reference["authorizes_schema_application"] is False
     assert reference["authorizes_dataset_freeze"] is False
+    assert contract["approval_gates"]["schema_application"]["approval_id"] is None
+    assert contract["approval_gates"]["dataset_freeze"]["approval_id"] is None
+
+
+def test_historical_quality_audit_is_hash_locked_exact_and_read_only():
+    contract = load_contract()
+    reference = contract["production_evidence"]["pinned_historical_quality_read_only_audit"]
+    assert reference["status"] == "OBSERVED/VERIFIED_READBACK"
+    assert hashlib.sha256(HISTORICAL_QUALITY_EVIDENCE_PATH.read_bytes()).hexdigest() == reference["sha256"]
+    evidence = json.loads(HISTORICAL_QUALITY_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    logical = dict(evidence)
+    claimed = logical.pop("evidence_sha256")
+    canonical = json.dumps(
+        logical,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical).hexdigest() == claimed == reference["logical_evidence_sha256"]
+    assert evidence["status"] == "PASS"
+    assert evidence["read_only"] is True
+    assert len(evidence["checks"]) == reference["coverage"]["checks_expected"] == 10
+    assert sum(value is True for value in evidence["checks"].values()) == reference["coverage"]["checks_passed"] == 10
+    assert reference["coverage"] == {
+        "rows_observed": evidence["coverage"]["row_count"],
+        "rows_expected": evidence["denominators"]["rows"],
+        "tickers_observed": evidence["coverage"]["ticker_count"],
+        "tickers_expected": evidence["denominators"]["tickers"],
+        "sessions_observed": evidence["coverage"]["session_count"],
+        "sessions_expected": evidence["denominators"]["sessions"],
+        "ticker_session_cells_observed": evidence["ticker_session_grid"]["observed_cells"],
+        "ticker_session_cells_possible": evidence["ticker_session_grid"]["possible_cells"],
+        "ticker_session_cells_unavailable": evidence["ticker_session_grid"]["missing_cells"],
+        "provider_lineage_rows_observed": evidence["provider_lineage"]["lineage_rows"],
+        "provider_lineage_rows_expected": evidence["denominators"]["provider_lineage_rows"],
+        "checks_passed": 10,
+        "checks_expected": 10,
+    }
+    assert reference["duplicate_rows"] == evidence["duplicates"]["duplicate_rows"] == 0
+    assert reference["duplicate_keys"] == evidence["duplicates"]["duplicate_keys"] == 0
+    assert reference["quality_violation_count"] == sum(evidence["quality"].values()) == 0
+    assert reference["calendar_missing_sessions"] == evidence["calendar"]["missing_sessions"] == 0
+    assert reference["calendar_non_session_dates"] == evidence["calendar"]["non_session_dates"] == 0
+    assert reference["provider_lineage_violation_count"] == sum(
+        evidence["provider_lineage"][key]
+        for key in (
+            "feature_tickers_without_lineage",
+            "invalid_lineage",
+            "invalid_provider",
+            "duplicate_lineage",
+        )
+    ) == 0
+    assert reference["fresh_reproduction_select_statements"] == 13
+    assert reference["fresh_reproduction_write_statements"] == 0
+    assert reference["database_writes"] == 0
+    assert reference["authorizes_schema_application"] is False
+    assert reference["authorizes_dataset_freeze"] is False
+    assert evidence["sanitization"] == {
+        "credentials_included": False,
+        "source_rows_included": False,
+    }
     assert contract["approval_gates"]["schema_application"]["approval_id"] is None
     assert contract["approval_gates"]["dataset_freeze"]["approval_id"] is None
 

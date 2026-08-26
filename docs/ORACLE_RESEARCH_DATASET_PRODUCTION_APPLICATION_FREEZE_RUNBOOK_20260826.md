@@ -6,7 +6,7 @@ Isolated-matrix executor commit: `64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`a7bcd60c402b01a47d32068f968661424caddad6b5a123bdc290f38b81272355`
+`46aba1d3a03de3a4393ef4b19d670388e71636303b7cafe8cbaddd708afde1e8`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:
@@ -72,6 +72,15 @@ production application authority.
   is `b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3`.
   This clears only the content-digest readback blocker and grants no schema or
   freeze authority.
+- The pinned historical source snapshot quality audit is independently
+  `OBSERVED/VERIFIED_READBACK` in
+  `docs/evidence/oracle_pinned_historical_quality_audit_20260826.json`. All
+  10/10 governed checks passed over 586,710 rows, 474 tickers, 1,246 NYSE
+  sessions, 590,604 possible ticker-session cells, and 476 provider-lineage
+  rows. A fresh guarded reproduction executed 13/13 `SELECT` statements with
+  zero writes and reproduced the exact logical evidence. The 3,894 unavailable
+  ticker-session cells are explicitly recorded coverage history, not silently
+  imputed data. This evidence grants no schema or freeze authority.
 - No production dataset freeze or freeze readback has been performed.
 - No separately scoped dataset-freeze approval exists.
 
