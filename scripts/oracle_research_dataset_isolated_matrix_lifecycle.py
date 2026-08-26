@@ -109,11 +109,24 @@ class SubprocessLifecycleCli:
 
 class RepositoryGitIdentity:
     def __init__(self, root: Path):
-        self.root = Path(root)
+        try:
+            resolved = Path(root).resolve(strict=True)
+        except OSError as exc:
+            raise LifecycleError("Executor repository root could not be resolved.") from exc
+        if not resolved.is_absolute() or not resolved.is_dir():
+            raise LifecycleError("Executor repository root is not an exact directory.")
+        self.root = resolved
 
     def head(self) -> str:
+        argv = (
+            "git",
+            "-c",
+            f"safe.directory={self.root}",
+            "rev-parse",
+            "HEAD",
+        )
         completed = subprocess.run(
-            ("git", "rev-parse", "HEAD"),
+            argv,
             cwd=self.root,
             shell=False,
             check=False,

@@ -4,6 +4,7 @@ from pathlib import Path
 import stat
 from dataclasses import replace
 from concurrent.futures import ThreadPoolExecutor
+import subprocess
 
 import pytest
 
@@ -33,6 +34,7 @@ from scripts.oracle_research_dataset_isolated_matrix_lifecycle import (
     CommandResult,
     LifecycleArtifacts,
     LifecycleError,
+    RepositoryGitIdentity,
     atomic_write_redacted_json,
     run_disposable_matrix_lifecycle,
 )
@@ -423,3 +425,35 @@ def test_atomic_evidence_replaces_completely_with_exact_mode_and_readback(tmp_pa
     assert stat.S_IMODE(os.lstat(path).st_mode) == 0o600
     assert not list(tmp_path.glob(".*.tmp"))
     assert os.lstat(path).st_ino != first_inode
+
+
+def test_repository_git_identity_uses_exact_scoped_safe_directory_argv(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_run(argv, **kwargs):
+        captured["argv"] = argv
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(argv, 0, EXPECTED_EXECUTOR_GIT_COMMIT + "\n", "")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    identity = RepositoryGitIdentity(tmp_path)
+    assert identity.head() == EXPECTED_EXECUTOR_GIT_COMMIT
+    resolved = tmp_path.resolve()
+    assert captured["argv"] == (
+        "git", "-c", f"safe.directory={resolved}", "rev-parse", "HEAD"
+    )
+    assert captured["cwd"] == resolved
+    assert captured["shell"] is False
+    assert captured["check"] is False
+    assert captured["capture_output"] is True
+
+
+def test_repository_git_identity_rejects_stderr_and_invalid_root(monkeypatch, tmp_path):
+    def failed(argv, **kwargs):
+        return subprocess.CompletedProcess(argv, 0, EXPECTED_EXECUTOR_GIT_COMMIT + "\n", "warning\n")
+
+    monkeypatch.setattr(subprocess, "run", failed)
+    with pytest.raises(LifecycleError, match="could not be read exactly"):
+        RepositoryGitIdentity(tmp_path).head()
+    with pytest.raises(LifecycleError, match="could not be resolved"):
+        RepositoryGitIdentity(tmp_path / "missing")
