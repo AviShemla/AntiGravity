@@ -582,7 +582,7 @@ def run_disposable_matrix_lifecycle(
     execution_file_sha256: str | None = None
     failure_file_sha256: str | None = None
     failure_evidence_error: BaseException | None = None
-    identity_contradiction = False
+    cleanup_identity_state: str | None = None
     production_fingerprint, production_object_count = read_production_fingerprint(
         production_reader, label="Lifecycle pre-create"
     )
@@ -612,7 +612,6 @@ def run_disposable_matrix_lifecycle(
                 raise LifecycleError("Branch creation failed and exact absence was verified.")
             raise
         except IdentityContradiction:
-            identity_contradiction = True
             raise
         if create_result.argv != create_argv:
             raise LifecycleError("Create result command identity is not exact.")
@@ -673,22 +672,35 @@ def run_disposable_matrix_lifecycle(
             try:
                 if (
                     bound_proof is None
-                    and not identity_contradiction
                     and not creation_absence_verified
                 ):
                     try:
+                        cleanup_attempts = max(
+                            reconciliation_attempts_per_phase,
+                            int(
+                                reconciliation_max_wait_seconds
+                                // reconciliation_interval_seconds
+                            )
+                            + 2,
+                        )
                         bound_proof, _ = _reconcile_identity_phase(
                             intent,
                             cli,
                             budget=reconciliation_budget,
                             sleeper=reconciliation_sleeper,
                             utc_clock=reconciliation_utc_clock,
-                            attempts=reconciliation_attempts_per_phase,
+                            attempts=cleanup_attempts,
                             interval_seconds=reconciliation_interval_seconds,
                         )
-                    except (IdentityPropagationPending, IdentityContradiction):
+                        cleanup_identity_state = "EXACT_PROOF"
+                    except IdentityPropagationPending:
+                        cleanup_identity_state = "EXACT_ABSENCE_EXHAUSTED"
+                        bound_proof = None
+                    except IdentityContradiction:
+                        cleanup_identity_state = "UNRESOLVED_EXHAUSTED"
                         bound_proof = None
                 if bound_proof is not None:
+                    cleanup_identity_state = "EXACT_PROOF"
                     if failure_file_sha256 is None and execution_written is None:
                         failure_file_sha256 = _persist_failure_evidence(
                             path=failure_path,
@@ -754,6 +766,11 @@ def run_disposable_matrix_lifecycle(
             "primary_failure_type": _exception_type(primary),
             "cleanup_failure_type": _exception_type(cleanup_failure),
             "cleanup": cleanup_payload,
+            "cleanup_identity_state": (
+                "EXACT_ABSENCE_CONFIRMED"
+                if creation_absence_verified
+                else cleanup_identity_state
+            ),
             "intent_evidence_sha256": hashlib.sha256(intent_path.read_bytes()).hexdigest(),
             "matrix_evidence_file_sha256": execution_file_sha256,
             "failure_evidence_file_sha256": failure_file_sha256,
