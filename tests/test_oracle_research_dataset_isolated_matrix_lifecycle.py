@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 from pathlib import Path
 import stat
@@ -36,9 +37,11 @@ from scripts.oracle_research_dataset_isolated_matrix_lifecycle import (
     LifecycleError,
     IdentityPropagationPending,
     RepositoryGitIdentity,
+    _safe_lineage_error_diagnostic,
     atomic_write_redacted_json,
     run_disposable_matrix_lifecycle,
 )
+from model_lineage import LineageError
 
 
 from datetime import datetime, timedelta, timezone
@@ -509,6 +512,46 @@ def test_contradictory_identity_never_issues_token_or_destroy(tmp_path):
     assert diagnostic["outcome"] == "UNRESOLVED_EXHAUSTED"
     assert diagnostic["attempt_count"] == 25
     assert diagnostic["waited_seconds"] == 120.0
+    assert diagnostic["last_lineage_error_reason"] == "SHOW_AMBIGUOUS_HEADER"
+    assert diagnostic["last_unknown_lineage_error_sha256"] is None
+    assert diagnostic["final_observed_at_utc"] == "2026-08-26T18:01:26Z"
+    assert diagnostic["intent_created_at_utc"] == "2026-08-26T17:55:00Z"
+
+
+def test_exact_show_outputs_with_predating_clock_persist_safe_timestamp_reason(tmp_path):
+    cli = Cli()
+    observed = datetime(2026, 8, 26, 17, 54, tzinfo=timezone.utc)
+    with pytest.raises(LifecycleError, match="unresolved"):
+        run(
+            tmp_path,
+            cli,
+            reconciliation_utc_clock=lambda: observed,
+        )
+    terminal = next((tmp_path / "evidence").glob("*-terminal.json"))
+    diagnostic = _payload(terminal)["cleanup_reconciliation_diagnostic"]
+    assert diagnostic["last_lineage_error_reason"] == "PROOF_PREDATES_INTENT"
+    assert diagnostic["last_unknown_lineage_error_sha256"] is None
+    assert diagnostic["final_observed_at_utc"] == "2026-08-26T17:54:00Z"
+    assert diagnostic["intent_created_at_utc"] == "2026-08-26T17:55:00Z"
+    assert len(diagnostic["branch_result"]["stdout_sha256"]) == 64
+    assert len(diagnostic["production_result"]["stdout_sha256"]) == 64
+    assert TOKEN.strip() not in terminal.read_bytes()
+
+
+def test_unknown_lineage_error_is_hashed_without_raw_message():
+    error = LineageError("unmapped-sensitive-diagnostic-value")
+    diagnostic = _safe_lineage_error_diagnostic(error)
+    expected_source = (
+        f"{type(error).__module__}.{type(error).__qualname__}:"
+        "unmapped-sensitive-diagnostic-value"
+    )
+    assert diagnostic == {
+        "last_lineage_error_reason": "UNKNOWN_LINEAGE_ERROR",
+        "last_unknown_lineage_error_sha256": hashlib.sha256(
+            expected_source.encode("utf-8")
+        ).hexdigest(),
+    }
+    assert "unmapped-sensitive-diagnostic-value" not in json.dumps(diagnostic)
 
 
 def test_identity_absence_across_both_phases_stays_within_single_wait_budget(tmp_path):

@@ -56,6 +56,34 @@ NOT_FOUND_TEMPLATE = (
 MAX_CLI_BYTES = 64 * 1024
 
 
+_KNOWN_IDENTITY_LINEAGE_ERRORS = {
+    "Turso CLI identity evidence is not UTF-8.": "IDENTITY_EVIDENCE_NOT_UTF8",
+    "Branch identity proof source is not exact.": "PROOF_SOURCE_NOT_EXACT",
+    "Branch identity or parent proof differs from the approved plan.": "PROOF_IDENTITY_MISMATCH",
+    "Branch proof timestamp is invalid.": "PROOF_TIMESTAMP_INVALID",
+    "Branch proof timestamp must be timezone-aware.": "PROOF_TIMESTAMP_NOT_TIMEZONE_AWARE",
+    "Pre-branch intent timestamp is invalid.": "INTENT_TIMESTAMP_INVALID",
+    "Branch proof predates the preserved pre-branch intent.": "PROOF_PREDATES_INTENT",
+    "Branch proof verification timestamp must be timezone-aware.": "VERIFICATION_TIMESTAMP_NOT_TIMEZONE_AWARE",
+    "Branch identity proof is stale or future-dated.": "PROOF_TIMESTAMP_OUT_OF_RANGE",
+    "Branch identity proof evidence hash is invalid.": "PROOF_EVIDENCE_HASH_INVALID",
+    "Evidence timestamp must be timezone-aware.": "EVIDENCE_TIMESTAMP_NOT_TIMEZONE_AWARE",
+    "Turso CLI evidence command identity is not exact.": "SHOW_COMMAND_IDENTITY_MISMATCH",
+    "Turso CLI identity command did not succeed.": "SHOW_COMMAND_FAILED",
+    "Turso CLI identity command emitted unexpected stderr.": "SHOW_UNEXPECTED_STDERR",
+    "Turso CLI identity output is empty, oversized, or contains controls.": "SHOW_OUTPUT_INVALID_SIZE_OR_CONTROLS",
+    "Turso CLI identity output contains an ambiguous header line.": "SHOW_AMBIGUOUS_HEADER",
+    "Turso CLI identity output contains a duplicate field.": "SHOW_DUPLICATE_FIELD",
+    "Turso CLI branch identity output is missing required fields.": "BRANCH_SHOW_MISSING_REQUIRED_FIELDS",
+    "Turso CLI production identity output is missing required fields.": "PRODUCTION_SHOW_MISSING_REQUIRED_FIELDS",
+    "Production identity unexpectedly reports a parent.": "PRODUCTION_SHOW_UNEXPECTED_PARENT",
+    "Turso CLI branch name differs from the preserved intent.": "BRANCH_NAME_MISMATCH",
+    "Turso CLI production name differs from the governed parent.": "PRODUCTION_NAME_MISMATCH",
+    "Turso CLI production ID differs from the governed parent.": "PRODUCTION_ID_MISMATCH",
+    "Turso CLI branch parent differs from production readback.": "BRANCH_PARENT_MISMATCH",
+}
+
+
 class LifecycleError(RuntimeError):
     """Fail-closed lifecycle error whose message never contains credentials."""
 
@@ -300,6 +328,25 @@ def _result_digest(result: CommandResult) -> dict[str, object]:
     }
 
 
+def _safe_lineage_error_diagnostic(error: LineageError) -> dict[str, object]:
+    """Classify an identity failure without persisting its raw message."""
+
+    message = str(error)
+    reason = _KNOWN_IDENTITY_LINEAGE_ERRORS.get(message)
+    if reason is not None:
+        return {
+            "last_lineage_error_reason": reason,
+            "last_unknown_lineage_error_sha256": None,
+        }
+    fingerprint_source = f"{type(error).__module__}.{type(error).__qualname__}:{message}"
+    return {
+        "last_lineage_error_reason": "UNKNOWN_LINEAGE_ERROR",
+        "last_unknown_lineage_error_sha256": hashlib.sha256(
+            fingerprint_source.encode("utf-8")
+        ).hexdigest(),
+    }
+
+
 def _validate_executor_identity(
     intent: PreBranchIntent,
     git_reader: GitIdentityReader,
@@ -447,25 +494,34 @@ def _reconcile_identity_phase(
                 "waited_seconds": 0.0,
                 "branch_result": None,
                 "production_result": None,
+                "final_observed_at_utc": None,
+                "intent_created_at_utc": intent.created_at_utc,
+                "last_lineage_error_reason": None,
+                "last_unknown_lineage_error_sha256": None,
             }
         )
     for attempt in range(attempts):
         observed_at = utc_clock()
         if observed_at.tzinfo is None:
             raise LifecycleError("Identity reconciliation clock is not timezone-aware.")
+        observed_at = observed_at.astimezone(timezone.utc)
         adapter = _IdentityAdapter(cli)
         if diagnostics is not None:
             diagnostics["attempt_count"] = attempt + 1
+            diagnostics["final_observed_at_utc"] = observed_at.strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
         try:
             proof = derive_branch_identity_from_cli(
                 intent,
                 adapter,
-                observed_at=observed_at.astimezone(timezone.utc),
+                observed_at=observed_at,
             )
         except LineageError as exc:
             branch = adapter.results.get((CLI, "db", "show", intent.branch_name))
             production = adapter.results.get((CLI, "db", "show", "theoracle"))
             if diagnostics is not None:
+                diagnostics.update(_safe_lineage_error_diagnostic(exc))
                 diagnostics["branch_result"] = (
                     None if branch is None else _safe_read_result_diagnostic(branch)
                 )
@@ -495,6 +551,8 @@ def _reconcile_identity_phase(
                 diagnostics["production_result"] = _safe_read_result_diagnostic(
                     adapter.results[(CLI, "db", "show", "theoracle")]
                 )
+                diagnostics["last_lineage_error_reason"] = None
+                diagnostics["last_unknown_lineage_error_sha256"] = None
             return proof, branch_result
         if attempt + 1 < attempts and budget.wait(interval_seconds, sleeper):
             continue
