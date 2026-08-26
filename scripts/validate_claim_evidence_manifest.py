@@ -14,6 +14,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 from scripts.evidence_binding import load_bound_json
+from scripts.signed_attestation import verify_attestation
 
 STATES = {"DESIGNED", "IMPLEMENTED", "TESTED", "DEPLOYED", "OBSERVED", "VERIFIED", "FAILED", "UNVERIFIED"}
 STRONG_TERMS = ("fixed", "handled", "complete", "working", "healthy")
@@ -47,7 +48,12 @@ def _bound(ref: Any, root: Path | None, label: str, errors: list[str]) -> dict[s
     return artifact
 
 
-def validate_manifest(manifest: Any, *, now: datetime | None = None, evidence_root: Path | None = None, schema_path: Path | None = None) -> list[str]:
+def validate_manifest(
+    manifest: Any, *, now: datetime | None = None,
+    evidence_root: Path | None = None, schema_path: Path | None = None,
+    authority_registry: Path | None = None, nonce_ledger: Path | None = None,
+    consume_nonce: bool = True,
+) -> list[str]:
     errors: list[str] = []
     if not isinstance(manifest, dict):
         return ["manifest must be a JSON object"]
@@ -167,6 +173,12 @@ def validate_manifest(manifest: Any, *, now: datetime | None = None, evidence_ro
             or bound_regression.get("repaired_behavior_passed") != regression.get("repaired_behavior_passed")
         ):
             errors.append("regression artifact does not match the manifest")
+    if state == "VERIFIED":
+        errors.extend(verify_attestation(
+            manifest, authority_registry=authority_registry,
+            nonce_ledger=nonce_ledger, now=current,
+            consume_nonce=consume_nonce,
+        ))
     return errors
 
 
@@ -174,13 +186,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--evidence-root", type=Path, required=True)
+    parser.add_argument("--authority-registry", type=Path, default=Path("governance/verifier_authorities.json"))
+    parser.add_argument("--nonce-ledger", type=Path, required=True)
     args = parser.parse_args()
     try:
         manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         print(f"INVALID: {exc}", file=sys.stderr)
         return 2
-    errors = validate_manifest(manifest, evidence_root=args.evidence_root)
+    errors = validate_manifest(
+        manifest, evidence_root=args.evidence_root,
+        authority_registry=args.authority_registry,
+        nonce_ledger=args.nonce_ledger,
+    )
     if errors:
         for error in errors:
             print(f"INVALID: {error}", file=sys.stderr)

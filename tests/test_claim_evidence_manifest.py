@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import hashlib
+import base64
 import json
 import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 from scripts.validate_claim_evidence_manifest import validate_manifest
+from scripts.signed_attestation import claim_subject_digest, signing_payload
 
 NOW = datetime(2026, 8, 26, 8, 0, tzinfo=timezone.utc)
 
@@ -44,15 +49,82 @@ class ClaimEvidenceManifestTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.manifest = verified_manifest(self.root)
+        self.private_key = Ed25519PrivateKey.generate()
+        public_key = self.private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw,
+        )
+        self.registry = self.root / "authorities.json"
+        self.registry.write_text(json.dumps({
+            "schema_version": "1.0",
+            "authorities": [{
+                "id": "external-test-verifier", "enabled": True,
+                "public_key_base64": base64.b64encode(public_key).decode(),
+                "allowed_command_ids": ["provider-production-path-v1"],
+            }],
+        }))
+        self.ledger = self.root / "used-nonces.jsonl"
+        self.sign_manifest()
 
     def tearDown(self) -> None:
         self.temp.cleanup()
 
-    def errors(self) -> list[str]:
-        return validate_manifest(self.manifest, now=NOW, evidence_root=self.root)
+    def sign_manifest(self, private_key: Ed25519PrivateKey | None = None) -> None:
+        attestation = {
+            "verifier_id": "external-test-verifier",
+            "command_id": "provider-production-path-v1",
+            "issued_at": "2026-08-26T07:59:00Z",
+            "expires_at": "2026-08-26T08:01:00Z",
+            "nonce": "n" * 32,
+            "subject_digest": claim_subject_digest(self.manifest),
+            "artifact_digest": self.manifest["artifact"]["digest"],
+            "runtime_identity": self.manifest["runtime"]["identity"],
+        }
+        attestation["signature"] = base64.b64encode((private_key or self.private_key).sign(signing_payload(attestation))).decode()
+        self.manifest["attestation"] = attestation
+
+    def errors(self, *, consume_nonce: bool = False) -> list[str]:
+        return validate_manifest(
+            self.manifest, now=NOW, evidence_root=self.root,
+            authority_registry=self.registry, nonce_ledger=self.ledger,
+            consume_nonce=consume_nonce,
+        )
 
     def test_complete_verified_chain_passes(self) -> None:
         self.assertEqual(self.errors(), [])
+
+    def test_unprovisioned_authority_registry_blocks_verified(self) -> None:
+        empty = self.root / "empty-authorities.json"
+        empty.write_text('{"schema_version":"1.0","authorities":[]}')
+        errors = validate_manifest(
+            self.manifest, now=NOW, evidence_root=self.root,
+            authority_registry=empty, nonce_ledger=self.ledger,
+            consume_nonce=False,
+        )
+        self.assertIn("verifier is not a unique enabled authority", errors)
+
+    def test_self_signed_untrusted_attestation_fails(self) -> None:
+        self.sign_manifest(Ed25519PrivateKey.generate())
+        self.assertIn("attestation signature is invalid", self.errors())
+
+    def test_fabricated_signature_fails(self) -> None:
+        self.manifest["attestation"]["signature"] = base64.b64encode(b"fabricated").decode()
+        self.assertIn("attestation signature is invalid", self.errors())
+
+    def test_attestation_binds_artifact_and_runtime(self) -> None:
+        self.manifest["runtime"]["identity"] = "different-runtime"
+        errors = self.errors()
+        self.assertIn("attestation subject digest does not bind the manifest", errors)
+        self.assertIn("attestation does not bind the runtime identity", errors)
+
+    def test_attestation_command_must_be_allowlisted(self) -> None:
+        self.manifest["attestation"]["command_id"] = "unapproved-command"
+        self.manifest["attestation"]["signature"] = base64.b64encode(self.private_key.sign(signing_payload(self.manifest["attestation"]))).decode()
+        self.assertIn("attestation command is not allowlisted for this verifier", self.errors())
+
+    def test_attestation_nonce_replay_is_blocked(self) -> None:
+        self.assertEqual(self.errors(consume_nonce=True), [])
+        self.assertIn("attestation nonce has already been consumed", self.errors(consume_nonce=True))
 
     def test_strong_language_without_verified_state_fails(self) -> None:
         self.manifest["state"] = "TESTED"

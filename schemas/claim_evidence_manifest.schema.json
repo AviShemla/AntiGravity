@@ -75,6 +75,22 @@
       "type": "object", "additionalProperties": false,
       "required": ["identity", "narrative_is_proof"],
       "properties": {"identity": {"type": "string", "minLength": 1}, "narrative_is_proof": {"const": false}}
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verifier_id", "command_id", "issued_at", "expires_at", "nonce", "subject_digest", "artifact_digest", "runtime_identity", "signature"],
+      "properties": {
+        "verifier_id": {"type": "string", "minLength": 1},
+        "command_id": {"type": "string", "minLength": 1},
+        "issued_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": "string", "format": "date-time"},
+        "nonce": {"type": "string", "minLength": 32},
+        "subject_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "artifact_digest": {"type": "string", "minLength": 1},
+        "runtime_identity": {"type": "string", "minLength": 1},
+        "signature": {"type": "string", "minLength": 1}
+      }
     }
   }
 }

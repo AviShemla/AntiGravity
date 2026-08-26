@@ -145,6 +145,13 @@ email. Activation requires the mode-transition approval defined in root
     - A sub-agent or independent reviewer may gather evidence and attempt to
       falsify a claim. Its narrative conclusion is not evidence; validate the
       referenced commands, artifacts, identifiers, results, and timestamps.
+    - `VERIFIED` requires a detached Ed25519 attestation from a separately
+      configured authority in `governance/verifier_authorities.json`. It must
+      bind the full claim, artifact digest, runtime identity, fresh one-use
+      nonce, and an allowlisted verifier command. Never create, request, store,
+      or use the verifier private key from the implementation environment.
+      Without an external authority and nonce ledger, strong claims remain
+      blocked.
     - Before reporting a strong claim, validate and preserve its manifest. If
       validation fails, report the exact missing or contradictory fields and
       use `FAILED` or `UNVERIFIED`, not reassuring language.

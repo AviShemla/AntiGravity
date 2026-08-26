@@ -139,6 +139,16 @@ an updated rule here.
    - An independent verifier may collect and challenge evidence, but its prose
      conclusion is never proof. The primary agent must validate the underlying
      artifacts and readbacks directly before reporting the claim.
+   - `VERIFIED` also requires a fresh, one-use Ed25519 attestation from an
+     enabled verifier in `governance/verifier_authorities.json`. The signature
+     must bind the complete claim subject, artifact digest, runtime identity,
+     and an allowlisted verifier command. The implementation agent must never
+     possess or create the verifier private key. With no separately provisioned
+     authority, `VERIFIED` is intentionally impossible and the claim remains
+     `TESTED`, `OBSERVED`, or `UNVERIFIED` as supported by evidence.
+   - Consume attestation nonces in an external append-only ledger. Replayed,
+     expired, future-dated, self-signed, unallowlisted, artifact-mismatched, or
+     runtime-mismatched attestations fail closed.
    - The high-risk controls are indexed in
      `governance/high_risk_rule_registry.json`. Before a production-readiness,
      scheduler-health, snapshot-readiness, model-readiness, execution-safety,
