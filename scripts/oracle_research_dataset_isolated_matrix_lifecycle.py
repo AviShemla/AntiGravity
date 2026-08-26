@@ -431,16 +431,31 @@ def _reconcile_identity_phase(
     utc_clock: Callable[[], datetime],
     attempts: int,
     interval_seconds: float,
+    diagnostics: dict[str, object] | None = None,
 ):
     if attempts <= 0 or interval_seconds <= 0:
         raise LifecycleError("Identity reconciliation bounds are invalid.")
     last_absence: CommandResult | None = None
     saw_unresolved = False
+    starting_waited = budget.waited_seconds
+    if diagnostics is not None:
+        diagnostics.clear()
+        diagnostics.update(
+            {
+                "outcome": "IN_PROGRESS",
+                "attempt_count": 0,
+                "waited_seconds": 0.0,
+                "branch_result": None,
+                "production_result": None,
+            }
+        )
     for attempt in range(attempts):
         observed_at = utc_clock()
         if observed_at.tzinfo is None:
             raise LifecycleError("Identity reconciliation clock is not timezone-aware.")
         adapter = _IdentityAdapter(cli)
+        if diagnostics is not None:
+            diagnostics["attempt_count"] = attempt + 1
         try:
             proof = derive_branch_identity_from_cli(
                 intent,
@@ -450,6 +465,13 @@ def _reconcile_identity_phase(
         except LineageError as exc:
             branch = adapter.results.get((CLI, "db", "show", intent.branch_name))
             production = adapter.results.get((CLI, "db", "show", "theoracle"))
+            if diagnostics is not None:
+                diagnostics["branch_result"] = (
+                    None if branch is None else _safe_read_result_diagnostic(branch)
+                )
+                diagnostics["production_result"] = (
+                    None if production is None else _safe_read_result_diagnostic(production)
+                )
             if (
                 branch is not None
                 and _exact_not_found(branch, intent.branch_name)
@@ -464,19 +486,43 @@ def _reconcile_identity_phase(
                 saw_unresolved = True
         else:
             branch_result = adapter.results[(CLI, "db", "show", intent.branch_name)]
+            if diagnostics is not None:
+                diagnostics["outcome"] = "EXACT_PROOF"
+                diagnostics["waited_seconds"] = (
+                    budget.waited_seconds - starting_waited
+                )
+                diagnostics["branch_result"] = _safe_read_result_diagnostic(branch_result)
+                diagnostics["production_result"] = _safe_read_result_diagnostic(
+                    adapter.results[(CLI, "db", "show", "theoracle")]
+                )
             return proof, branch_result
         if attempt + 1 < attempts and budget.wait(interval_seconds, sleeper):
             continue
         break
     if saw_unresolved:
+        if diagnostics is not None:
+            diagnostics["outcome"] = "UNRESOLVED_EXHAUSTED"
+            diagnostics["waited_seconds"] = budget.waited_seconds - starting_waited
         raise IdentityContradiction(
             "Branch identity remained unresolved through bounded propagation checks."
         )
     if last_absence is not None:
+        if diagnostics is not None:
+            diagnostics["outcome"] = "EXACT_ABSENCE_EXHAUSTED"
+            diagnostics["waited_seconds"] = budget.waited_seconds - starting_waited
         raise IdentityPropagationPending(
             "Branch identity remained exactly absent through bounded propagation checks."
         )
     raise IdentityContradiction("Branch identity reconciliation ended without exact evidence.")
+
+
+def _safe_read_result_diagnostic(result: CommandResult) -> dict[str, object]:
+    return {
+        "returncode": result.returncode,
+        "ambiguous": result.ambiguous,
+        "stdout_sha256": hashlib.sha256(result.stdout).hexdigest(),
+        "stderr_sha256": hashlib.sha256(result.stderr).hexdigest(),
+    }
 
 
 def _persist_failure_evidence(
@@ -518,9 +564,9 @@ def run_disposable_matrix_lifecycle(
     expected_executor_git_commit: str = EXPECTED_EXECUTOR_GIT_COMMIT,
     reconciliation_sleeper: Callable[[float], None] = time.sleep,
     reconciliation_utc_clock: Callable[[], datetime] | None = None,
-    reconciliation_max_wait_seconds: float = 180.0,
+    reconciliation_max_wait_seconds: float = 420.0,
     reconciliation_interval_seconds: float = 5.0,
-    reconciliation_attempts_per_phase: int = 25,
+    reconciliation_attempts_per_phase: int = 61,
 ) -> LifecycleArtifacts:
     """Run one approved lifecycle; mutating commands are never retried."""
 
@@ -528,7 +574,7 @@ def run_disposable_matrix_lifecycle(
     if moment.tzinfo is None:
         raise LifecycleError("Lifecycle timestamp must be timezone-aware.")
     moment = moment.astimezone(timezone.utc)
-    if reconciliation_max_wait_seconds <= 0 or reconciliation_max_wait_seconds > 180:
+    if reconciliation_max_wait_seconds <= 0 or reconciliation_max_wait_seconds > 420:
         raise LifecycleError("Identity reconciliation total wait bound is invalid.")
     reconciliation_budget = _ReconciliationBudget(reconciliation_max_wait_seconds)
     if reconciliation_utc_clock is None:
@@ -583,6 +629,7 @@ def run_disposable_matrix_lifecycle(
     failure_file_sha256: str | None = None
     failure_evidence_error: BaseException | None = None
     cleanup_identity_state: str | None = None
+    cleanup_reconciliation_diagnostic: dict[str, object] | None = None
     production_fingerprint, production_object_count = read_production_fingerprint(
         production_reader, label="Lifecycle pre-create"
     )
@@ -675,6 +722,7 @@ def run_disposable_matrix_lifecycle(
                     and not creation_absence_verified
                 ):
                     try:
+                        cleanup_reconciliation_diagnostic = {}
                         cleanup_attempts = max(
                             reconciliation_attempts_per_phase,
                             int(
@@ -691,6 +739,7 @@ def run_disposable_matrix_lifecycle(
                             utc_clock=reconciliation_utc_clock,
                             attempts=cleanup_attempts,
                             interval_seconds=reconciliation_interval_seconds,
+                            diagnostics=cleanup_reconciliation_diagnostic,
                         )
                         cleanup_identity_state = "EXACT_PROOF"
                     except IdentityPropagationPending:
@@ -771,6 +820,7 @@ def run_disposable_matrix_lifecycle(
                 if creation_absence_verified
                 else cleanup_identity_state
             ),
+            "cleanup_reconciliation_diagnostic": cleanup_reconciliation_diagnostic,
             "intent_evidence_sha256": hashlib.sha256(intent_path.read_bytes()).hexdigest(),
             "matrix_evidence_file_sha256": execution_file_sha256,
             "failure_evidence_file_sha256": failure_file_sha256,
