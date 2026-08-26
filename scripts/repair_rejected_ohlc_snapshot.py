@@ -231,6 +231,16 @@ def require_normalization_ancestry(code_version: str) -> None:
         raise ValueError("Expected code version must be a lowercase 40-character Git SHA.")
     if git_head() != code_version:
         raise SnapshotRepairError("Cloud worktree HEAD differs from the reviewed code version.")
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if status.stdout.strip():
+        raise SnapshotRepairError("Cloud worktree is not clean at the reviewed code version.")
     result = subprocess.run(
         ["git", "merge-base", "--is-ancestor", NORMALIZATION_COMMIT, code_version],
         cwd=ROOT,
