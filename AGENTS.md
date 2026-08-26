@@ -5,6 +5,10 @@ the verified architecture and migration constraints from the imported snapshot.
 It does not replace production evidence: when a question concerns live status,
 holdings, recommendations, or an active service, verify the relevant live
 system only after the user authorizes access.
+For migration autonomy, recovery, liveness, and status work, use the Codex-owned
+`.agents/skills/codex-oracle-autonomy/SKILL.md` companion. The legacy
+`anti-gravity-prime-directives` skill is retained only for auditing inherited
+AG behavior and is not the target operating identity.
 
 ## Scope and safety
 
@@ -109,6 +113,19 @@ an updated rule here.
    authorized bounded technical sub-agents for independent diagnosis and
    verification when parallel work materially shortens an incident; their
    conclusions are not proof until reconciled with direct evidence.
+   A blocked, stalled, failed, or no-qualifying-output result is a transition
+   trigger, not permission to monitor passively. Enumerate the successor graph
+   and classify every successor as `SAFE_NOW`, `DEPENDENCY_BLOCKED`, or
+   `APPROVAL_REQUIRED`. Launch every independent `SAFE_NOW` successor within
+   measured available capacity, in parallel when technically independent, while
+   preserving all safety and approval gates. Do not stop with unlaunched safe
+   work: complete it in-turn or attach it to a freshly verified persistent
+   worker with a durable checkpoint. Unlaunched safe work is an orchestration
+   incident. Never tune thresholds, windows, features, hypotheses, eligibility,
+   or model families in response to a failed outcome; preserve the failed run
+   and separately preregister any successor family. Validate this invariant with
+   `scripts/validate_autonomy_transition_policy.py` against
+   `governance/autonomy_transition_policy.json`.
 9. **Claim-evidence promotion gate.** Every material engineering claim must use
    one of these states: `DESIGNED`, `IMPLEMENTED`, `TESTED`, `DEPLOYED`,
    `OBSERVED`, `VERIFIED`, `FAILED`, or `UNVERIFIED`. These states are not

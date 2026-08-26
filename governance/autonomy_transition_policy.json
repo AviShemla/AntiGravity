@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "trigger_states": ["BLOCKED", "STALLED", "FAILED", "NO_QUALIFYING_OUTPUT"],
+  "successor_classifications": ["SAFE_NOW", "DEPENDENCY_BLOCKED", "APPROVAL_REQUIRED"],
+  "requirements": {
+    "enumerate_successors": true,
+    "launch_all_independent_safe_now": true,
+    "parallelize_when_independent": true,
+    "preserve_safety_gates": true,
+    "require_persistent_worker_for_continuity_claim": true,
+    "require_durable_checkpoint_for_long_job": true,
+    "stop_only_when_no_safe_now_remains": true,
+    "report_unlaunched_safe_work_as_incident": true
+  }
+}
