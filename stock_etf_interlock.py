@@ -40,15 +40,29 @@ class StockPosteriorEvidence:
     def validate(self) -> None:
         if not self.ticker:
             raise LineageError("Stock evidence requires a ticker.")
-        if not 0.0 < self.posterior_probability < 1.0:
+        if (
+            not isfinite(self.posterior_probability)
+            or not 0.0 < self.posterior_probability < 1.0
+        ):
             raise LineageError(f"{self.ticker}: probability must be strictly between 0 and 1.")
-        if self.posterior_probability_std is None or self.posterior_probability_std <= 0.0:
+        if (
+            self.posterior_probability_std is None
+            or not isfinite(self.posterior_probability_std)
+            or self.posterior_probability_std <= 0.0
+        ):
             raise LineageError(f"{self.ticker}: posterior uncertainty is required.")
         if not isfinite(self.expected_return_pp):
             raise LineageError(f"{self.ticker}: expected return must be finite.")
-        if self.expected_return_pp_std is None or self.expected_return_pp_std <= 0.0:
+        if (
+            self.expected_return_pp_std is None
+            or not isfinite(self.expected_return_pp_std)
+            or self.expected_return_pp_std <= 0.0
+        ):
             raise LineageError(f"{self.ticker}: expected-return uncertainty is required.")
-        if not 0.0 < self.constituent_weight <= 1.0:
+        if (
+            not isfinite(self.constituent_weight)
+            or not 0.0 < self.constituent_weight <= 1.0
+        ):
             raise LineageError(f"{self.ticker}: constituent weight must be in (0, 1].")
 
 
@@ -76,7 +90,7 @@ def build_directional_prior(
     """
     if not 0.0 < minimum_weight_coverage <= 1.0:
         raise LineageError("minimum_weight_coverage must be in (0, 1].")
-    if calibrated_sigma_floor <= 0.0:
+    if not isfinite(calibrated_sigma_floor) or calibrated_sigma_floor <= 0.0:
         raise LineageError("calibrated_sigma_floor must be positive.")
     if not evidence:
         raise LineageError("At least one stock posterior is required.")

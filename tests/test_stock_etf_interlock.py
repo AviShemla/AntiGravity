@@ -64,6 +64,36 @@ class StockETFInterlockTests(unittest.TestCase):
                 rows, minimum_weight_coverage=0.60, calibrated_sigma_floor=0.20
             )
 
+    def test_non_finite_posterior_uncertainty_fails_closed(self) -> None:
+        rows = self.evidence()
+        rows[0] = StockPosteriorEvidence(
+            "AAPL", 0.70, math.nan, 0.012, 0.006, 0.35
+        )
+        with self.assertRaisesRegex(LineageError, "posterior uncertainty"):
+            build_directional_prior(
+                rows, minimum_weight_coverage=0.60, calibrated_sigma_floor=0.20
+            )
+
+    def test_non_finite_return_uncertainty_fails_closed(self) -> None:
+        rows = self.evidence()
+        rows[0] = StockPosteriorEvidence(
+            "AAPL", 0.70, 0.04, 0.012, math.inf, 0.35
+        )
+        with self.assertRaisesRegex(LineageError, "expected-return uncertainty"):
+            build_directional_prior(
+                rows, minimum_weight_coverage=0.60, calibrated_sigma_floor=0.20
+            )
+
+    def test_non_finite_calibrated_sigma_floor_fails_closed(self) -> None:
+        for sigma_floor in (math.nan, math.inf):
+            with self.subTest(sigma_floor=sigma_floor):
+                with self.assertRaisesRegex(LineageError, "sigma_floor"):
+                    build_directional_prior(
+                        self.evidence(),
+                        minimum_weight_coverage=0.60,
+                        calibrated_sigma_floor=sigma_floor,
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

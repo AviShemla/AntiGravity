@@ -100,6 +100,22 @@ class StockPredictionEligibilityTests(unittest.TestCase):
         self.assertEqual(result.legacy_allocation_fraction, 0.15)
         self.assertEqual(result.shadow_allocation_fraction, 0.0)
 
+    def test_non_boolean_hard_gate_fails_closed(self):
+        with self.assertRaisesRegex(LineageError, "explicit booleans"):
+            compare_stock_prediction(
+                PredictionEvidence(0.72, 0.55, 0.84, 1.2, 2.0),
+                context(snapshot_validated="False"),
+                persona_name="Neutral",
+            )
+
+    def test_negative_vix_evidence_fails_closed(self):
+        with self.assertRaisesRegex(LineageError, "VIX evidence cannot be negative"):
+            compare_stock_prediction(
+                PredictionEvidence(0.72, 0.55, 0.84, 1.2, 2.0),
+                context(vix_close=-1.0),
+                persona_name="Neutral",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -80,6 +80,19 @@ class EligibilityComparison:
 
 
 def _validate(evidence: PredictionEvidence, context: DecisionContext) -> None:
+    hard_gate_values = (
+        context.snapshot_validated,
+        context.universe_approved,
+        context.source_date_aligned,
+        context.model_run_completed,
+        context.sampler_qa_passed,
+        context.research_promotion_approved,
+        context.quarantined,
+        context.legacy_blacklisted,
+        context.price_available,
+    )
+    if not all(type(value) is bool for value in hard_gate_values):
+        raise LineageError("Prediction eligibility gates must be explicit booleans.")
     values = (
         evidence.probability_up_mean,
         evidence.probability_up_q05,
@@ -103,6 +116,8 @@ def _validate(evidence: PredictionEvidence, context: DecisionContext) -> None:
         raise LineageError("Risk and available capital cannot be negative.")
     if context.round_trip_cost_bps < 0.0:
         raise LineageError("Transaction-cost basis points cannot be negative.")
+    if context.vix_close < 0.0:
+        raise LineageError("VIX evidence cannot be negative.")
 
 
 def legacy_raw_signal(probability_up: float) -> Recommendation:
