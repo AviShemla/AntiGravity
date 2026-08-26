@@ -32,6 +32,9 @@ NORMALIZED_EDGE_EVIDENCE_PATH = (
 HISTORICAL_QUALITY_EVIDENCE_PATH = (
     ROOT / "docs" / "evidence" / "oracle_pinned_historical_quality_audit_20260826.json"
 )
+SIMPLE_BASELINE_EVIDENCE_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_simple_screening_baseline_audit_20260826.json"
+)
 
 
 def load_contract():
@@ -302,6 +305,71 @@ def test_historical_quality_audit_is_hash_locked_exact_and_read_only():
         "credentials_included": False,
         "source_rows_included": False,
     }
+    assert contract["approval_gates"]["schema_application"]["approval_id"] is None
+    assert contract["approval_gates"]["dataset_freeze"]["approval_id"] is None
+
+
+def test_simple_baseline_audit_is_hash_locked_exact_and_read_only():
+    contract = load_contract()
+    reference = contract["production_evidence"]["simple_screening_baseline_read_only_audit"]
+    assert reference["status"] == "OBSERVED/VERIFIED_READBACK"
+    assert hashlib.sha256(SIMPLE_BASELINE_EVIDENCE_PATH.read_bytes()).hexdigest() == reference["sha256"]
+    evidence = json.loads(SIMPLE_BASELINE_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    logical = dict(evidence)
+    claimed = logical.pop("evidence_sha256")
+    canonical = json.dumps(
+        logical,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical).hexdigest() == claimed == reference["logical_evidence_sha256"]
+    assert evidence["contract"] == "simple-screening-baseline-audit-v1"
+    assert evidence["disposition"] == "STORED_SIMPLE_BASELINES_OBSERVED"
+    assert evidence["audit_runtime"]["executor_git_commit"] == reference["executor_git_commit"]
+    assert evidence["lineage"]["screening_code_version"] == reference["screening_code_version"]
+    assert reference["coverage"] == evidence["coverage"] == {
+        "runs_observed": 3,
+        "runs_expected": 3,
+        "result_rows_observed": 1422,
+        "result_rows_expected": 1422,
+        "evaluated_rows_observed": 23,
+        "evaluated_rows_expected": 23,
+        "unevaluated_rows_observed": 1399,
+        "unevaluated_rows_expected": 1399,
+        "eligible_rows": 0,
+    }
+    assert reference["arm_evaluated_rows"] == {
+        str(arm["signal_lookback_sessions"]): arm["evaluated_count"]
+        for arm in evidence["arms"]
+    } == {"60": 0, "126": 3, "252": 20}
+    assert len(evidence["evaluated_screening_records"]) == 23
+    assert all(
+        set(record) == {
+            "run_id",
+            "ticker",
+            "oos_sessions",
+            "rejection_reason",
+            "candidate_screening_metrics",
+            "simple_baselines",
+        }
+        for record in evidence["evaluated_screening_records"]
+    )
+    assert reference["fresh_reproduction_select_statements"] == 2
+    assert reference["fresh_reproduction_write_statements"] == 0
+    assert evidence["side_effects"] == {
+        "database_writes": 0,
+        "model_fits": 0,
+        "predictions_created": 0,
+        "recommendations_created": 0,
+        "orders_created": 0,
+        "etf_priors_created": 0,
+    }
+    for key, value in evidence["side_effects"].items():
+        assert reference[key] == value == 0
+    assert reference["authorizes_schema_application"] is False
+    assert reference["authorizes_dataset_freeze"] is False
     assert contract["approval_gates"]["schema_application"]["approval_id"] is None
     assert contract["approval_gates"]["dataset_freeze"]["approval_id"] is None
 

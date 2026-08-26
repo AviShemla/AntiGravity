@@ -277,6 +277,50 @@
       "authorizes_schema_application": false,
       "authorizes_dataset_freeze": false
     },
+    "simple_screening_baseline_read_only_audit": {
+      "status": "OBSERVED/VERIFIED_READBACK",
+      "path": "docs/evidence/oracle_simple_screening_baseline_audit_20260826.json",
+      "sha256": "4f662be3337b308ff12f071e0dbf580d95eeede7cb7dced324381fb8e6d73986",
+      "logical_evidence_sha256": "c6f198f318cdcb055bcc134d2d6928c7bdd86db00afad968346ff1fa4191817a",
+      "executor_git_commit": "e4f1d20c72ce425fb0aa6733badb0f916a317eed",
+      "screening_code_version": "2ef4a1082c91c023b9b0204611730492f03ad576",
+      "runtime": {
+        "unit": "codex-simple-baseline-audit-20260826t2151z-e4f1d20.service",
+        "invocation_id": "c39d783ac7b5410b8eba6a1df10b79a2",
+        "worker_pid": null,
+        "worker_pid_status": "NOT_RECOVERABLE_AFTER_TRANSIENT_UNIT_COLLECTION",
+        "terminal_state": "deactivated successfully",
+        "started_at_utc": "2026-08-26T21:51:45.330129Z",
+        "terminal_at_utc": "2026-08-26T21:51:47.008111Z",
+        "wall_duration_seconds": 1.678
+      },
+      "coverage": {
+        "runs_observed": 3,
+        "runs_expected": 3,
+        "result_rows_observed": 1422,
+        "result_rows_expected": 1422,
+        "evaluated_rows_observed": 23,
+        "evaluated_rows_expected": 23,
+        "unevaluated_rows_observed": 1399,
+        "unevaluated_rows_expected": 1399,
+        "eligible_rows": 0
+      },
+      "arm_evaluated_rows": {
+        "60": 0,
+        "126": 3,
+        "252": 20
+      },
+      "fresh_reproduction_select_statements": 2,
+      "fresh_reproduction_write_statements": 0,
+      "database_writes": 0,
+      "model_fits": 0,
+      "predictions_created": 0,
+      "recommendations_created": 0,
+      "orders_created": 0,
+      "etf_priors_created": 0,
+      "authorizes_schema_application": false,
+      "authorizes_dataset_freeze": false
+    },
     "actual_586710_row_digest_readback": {
       "status": "OBSERVED/VERIFIED_READBACK",
       "path": "docs/evidence/oracle_research_content_audit_20260826.json",

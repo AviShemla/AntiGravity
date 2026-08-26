@@ -6,7 +6,7 @@ Isolated-matrix executor commit: `64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`46aba1d3a03de3a4393ef4b19d670388e71636303b7cafe8cbaddd708afde1e8`
+`127f2e5f11944b6489f28c4e6be1cede9487974e863a2da8b19ff04253716f17`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:
@@ -81,6 +81,16 @@ production application authority.
   zero writes and reproduced the exact logical evidence. The 3,894 unavailable
   ticker-session cells are explicitly recorded coverage history, not silently
   imputed data. This evidence grants no schema or freeze authority.
+- The stored simple-screening baselines are independently
+  `OBSERVED/VERIFIED_READBACK` in
+  `docs/evidence/oracle_simple_screening_baseline_audit_20260826.json`. Exact
+  coverage is 3/3 governed arms and 1,422/1,422 ticker-window rows: 23/23 rows
+  contain previously stored fold-local majority and own-lag baseline metrics,
+  while 1,399/1,399 unevaluated rows contain no fabricated metrics. A fresh
+  guarded reproduction executed exactly two SELECTs, zero writes, and matched
+  the logical evidence. Zero rows were eligible and no model fit, prediction,
+  recommendation, order, or ETF prior was created. This does not prove a
+  full-universe baseline and grants no schema or freeze authority.
 - No production dataset freeze or freeze readback has been performed.
 - No separately scoped dataset-freeze approval exists.
 
