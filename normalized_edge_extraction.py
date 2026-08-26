@@ -8,7 +8,7 @@ screening specifications into evidence records only.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import hashlib
 import json
 import re
@@ -216,13 +216,19 @@ def _validate_lineage_date(value: str, label: str) -> None:
         raise LineageError(f"{label} is not canonical YYYY-MM-DD.")
 
 
-def _validate_lineage_timestamp(value: str, label: str) -> None:
+def _canonical_utc_timestamp(value: object, label: str) -> str:
+    text = _required_text(value, label)
+    if text != text.strip() or re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})", text
+    ) is None:
+        raise LineageError(f"{label} must be a second-aligned timezone-aware ISO timestamp.")
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(text[:-1] + "+00:00" if text.endswith("Z") else text)
     except ValueError as exc:
         raise LineageError(f"{label} is not an ISO timestamp.") from exc
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
+    if parsed.tzinfo is None or parsed.utcoffset() is None or parsed.microsecond != 0:
         raise LineageError(f"{label} must be timezone-aware.")
+    return parsed.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _validate_config(raw: object, arm: ExpectedArm) -> str:
@@ -357,7 +363,7 @@ def build_normalized_edge_audit(
         raise LineageError("Expected normalized-edge arms are empty or duplicated.")
     _required_text(expected_snapshot_id, "expected_snapshot_id")
     _validate_lineage_date(expected_source_session_date, "expected_source_session_date")
-    _validate_lineage_timestamp(expected_cutoff_utc, "expected_cutoff_utc")
+    canonical_cutoff_utc = _canonical_utc_timestamp(expected_cutoff_utc, "expected_cutoff_utc")
     if not re.fullmatch(r"[0-9a-f]{40}", expected_code_version):
         raise LineageError("expected_code_version must be a Git commit.")
 
@@ -371,7 +377,8 @@ def build_normalized_edge_audit(
         if (
             row.get("market_snapshot_id") != expected_snapshot_id
             or row.get("source_session_date") != expected_source_session_date
-            or row.get("cutoff_utc") != expected_cutoff_utc
+            or _canonical_utc_timestamp(row.get("cutoff_utc"), "screening cutoff_utc")
+            != canonical_cutoff_utc
             or row.get("code_version") != expected_code_version
             or row.get("status") != "VALIDATED"
             or row.get("snapshot_status") != "VALIDATED"
@@ -457,7 +464,7 @@ def build_normalized_edge_audit(
         "lineage": {
             "market_snapshot_id": expected_snapshot_id,
             "source_session_date": expected_source_session_date,
-            "cutoff_utc": expected_cutoff_utc,
+            "cutoff_utc": canonical_cutoff_utc,
             "code_version": expected_code_version,
         },
         "coverage": {

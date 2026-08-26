@@ -239,6 +239,44 @@ def test_golden_normalization_is_deterministic_order_independent_and_terminal():
     ).hexdigest() == claimed
 
 
+@pytest.mark.parametrize(
+    "expected,row_value",
+    [
+        ("2026-08-26T07:00:00Z", "2026-08-26T07:00:00+00:00"),
+        ("2026-08-26T07:00:00+00:00", "2026-08-26T09:00:00+02:00"),
+    ],
+)
+def test_cutoff_timestamps_compare_as_utc_instants_and_emit_canonical_z(expected, row_value):
+    runs = run_rows()
+    for row in runs:
+        row["cutoff_utc"] = row_value
+    evidence = build(run_rows=runs, expected_cutoff_utc=expected)
+    assert evidence["lineage"]["cutoff_utc"] == "2026-08-26T07:00:00Z"
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2026-08-26T07:00:00",
+        "not-a-timestamp",
+        "2026-08-26T07:00:00.500000+00:00",
+        "2026-08-26T07:00Z",
+        "2026-08-26T07:00:01+00:00",
+    ],
+)
+def test_cutoff_rejects_naive_malformed_non_second_or_non_equivalent_values(value):
+    runs = run_rows()
+    for row in runs:
+        row["cutoff_utc"] = value
+    with pytest.raises(LineageError):
+        build(run_rows=runs)
+
+
+def test_expected_cutoff_must_also_be_timezone_aware_and_second_aligned():
+    with pytest.raises(LineageError):
+        build(expected_cutoff_utc="2026-08-26T07:00:00")
+
+
 def test_real_three_arm_contract_has_exact_frozen_denominators_and_edges():
     runs, rows = real_contract_rows()
     evidence = build(
