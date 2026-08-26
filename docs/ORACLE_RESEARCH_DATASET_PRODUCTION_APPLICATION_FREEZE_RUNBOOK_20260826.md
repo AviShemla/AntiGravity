@@ -1,11 +1,11 @@
 # Oracle research dataset production application and freeze runbook
 
 Status: **REVIEW-ONLY / NOT EXECUTABLE**
-Baseline commit: `2cc365de3e1811c9b870e1e7738d5ec3bcd6d381`
+Baseline commit: `eb08ce518a557bf6b772aa66e6bad25e3d681cd3`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`854a4d17e66a4f00a7192646feb2274d517ad731026740796ba2a52aa61cc447`
+`02464ca615c4b6ae8c647cd7cfd6e74cfe25e16e412a86d17213906b59d18d63`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:
@@ -35,8 +35,7 @@ not application authority and does not satisfy the isolated-environment gate.
 - `oracle_research_dataset_writer.py` is an implemented, tested pure transaction
   interface at SHA-256
   `0220845dcb870946e38c08055d1ea0a663be8e5cc2232b57b8b237f2eb065adf`.
-  It owns no connection, credentials, or transport. No production transaction
-  adapter is implemented or approved.
+  It owns no connection, credentials, or transport.
 - `oracle_research_dataset_serializers.py` is an implemented, tested streaming
   serializer interface at SHA-256
   `c4b7621663de01dc5a4a56abe73992ae89f9502612e614b7200c13ed3239eac7`.
@@ -48,8 +47,18 @@ not application authority and does not satisfy the isolated-environment gate.
   It performs bounded keyset `SELECT`-only streaming into the canonical
   digester and reports zero retained rows; it owns no endpoint, credentials,
   connection, or production write path.
-- No approved production transaction adapter/application exists, and the
-  migration has not been approved or applied.
+- `oracle_research_dataset_freeze_manifest.py` is an implemented, tested
+  `REVIEW_ONLY` immutable-manifest builder at SHA-256
+  `6bca13f27fd30e76dd64f393c9647633baceb5e83d592f95e1aa8ed04c46420f`.
+  It cannot build a production manifest without two distinct real schema and
+  freeze approval IDs. Neither approval exists, so no actual production
+  manifest has been built.
+- `oracle_research_dataset_turso_adapter.py` is an implemented, tested injected
+  atomic interface at SHA-256
+  `316c13aa221b6c3af3f2b6488f06c82d85b4991d61c4b9b24bc7820e0af504db`.
+  It owns no endpoint, token, session, or environment lookup, has never been
+  used in production, and is not approved for execution.
+- The migration has not been approved or applied.
 - The actual 586,710-row production content/ticker digest is
   `OBSERVED/VERIFIED_READBACK` in the sanitized canonical evidence record
   `docs/evidence/oracle_research_content_audit_20260826.json`. The SELECT-only
@@ -68,8 +77,9 @@ above or reuse its approval.
 
 The machine-readable contract pins the migration, frozen-dataset read-only
 reader, bounded source-content read-only streaming interface, canonical
-streaming serializers, pure freeze-writer interface, atomic runner, source
-commit, and target Turso database identity. Before any approved
+streaming serializers, review-only freeze-manifest builder, pure freeze-writer
+interface, injected atomic Turso adapter, atomic migration runner, source commit,
+and target Turso database identity. Before any approved
 operation, independently hash the bytes on the execution host and compare every
 value with the contract. Any mismatch stops the operation and creates an
 incident record; do not regenerate hashes during the same approval.
@@ -150,9 +160,10 @@ The schema post-audit does not authorize freezing.
 Required authority for audit: read-only. Required authority for later mutation:
 separate **dataset-freeze approval**.
 
-Before any freeze transaction:
+No production freeze manifest currently exists. Before any freeze transaction:
 
-1. Re-read the exact contract and approved freeze-manifest hashes.
+1. Require two distinct real approval IDs, build the deterministic manifest,
+   and then re-read the exact contract and approved freeze-manifest hashes.
 2. Run only `pre_freeze` SELECT statements and bind every placeholder from the
    immutable manifest.
 3. Reconcile exact source snapshot identity, checksum, source session, row/
@@ -184,13 +195,15 @@ manifest reconcile.
 Required authority: explicit **dataset-freeze approval** whose ID differs from
 the schema approval ID.
 
-The pure writer, bounded read-only content reader, and canonical serializer
-interfaces are implemented, hash-pinned, and tested. The actual 586,710-row
-content/ticker digest has an independently matched readback. This phase remains
-non-executable until a production transaction adapter/application is
-implemented, hash-pinned, tested, and separately approved; the migration is
-approved and applied; the schema post-audit is recorded; and separate freeze
-approval is granted. The required transaction contract is:
+The review-only manifest builder, pure writer, bounded read-only content reader,
+canonical serializer, and injected atomic adapter interfaces are implemented,
+hash-pinned, and tested. The actual 586,710-row content/ticker digest has an
+independently matched readback. No production manifest has been built and the
+adapter has never been used. This phase remains non-executable until the adapter
+is separately approved for execution; two distinct real schema/freeze approvals
+exist and bind a newly built production manifest; the migration is approved and
+applied; and the schema post-audit is recorded. The required transaction
+contract is:
 
 1. `BEGIN IMMEDIATE` once and acquire the single freeze-writer identity.
 2. Re-run duplicate checks inside the transaction.

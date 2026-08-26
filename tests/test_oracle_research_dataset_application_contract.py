@@ -24,6 +24,8 @@ def test_contract_hash_locks_current_reviewed_artifacts():
         "read_only_reader",
         "dataset_serializers",
         "dataset_content_reader",
+        "freeze_manifest_builder",
+        "injected_turso_atomic_adapter",
         "atomic_runner",
     ):
         artifact = contract["artifacts"][artifact_name]
@@ -118,12 +120,13 @@ def test_freeze_is_blocked_after_pure_writer_interface_boundary():
         "status": "IMPLEMENTED/TESTED_INTERFACE",
         "path": "oracle_research_dataset_writer.py",
         "sha256": "0220845dcb870946e38c08055d1ea0a663be8e5cc2232b57b8b237f2eb065adf",
-        "production_adapter_status": "NOT_IMPLEMENTED_OR_APPROVED",
+        "production_adapter_status": "IMPLEMENTED_TESTED_BUT_NOT_APPROVED_FOR_EXECUTION",
     }
     assert hashlib.sha256((ROOT / writer["path"]).read_bytes()).hexdigest() == writer["sha256"]
     blockers = set(contract["execution_readiness"]["freeze_blockers"])
     assert "FREEZE_WRITER_NOT_IMPLEMENTED" not in blockers
-    assert "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED" in blockers
+    assert "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED" not in blockers
+    assert "PRODUCTION_TRANSACTION_ADAPTER_NOT_APPROVED_FOR_EXECUTION" in blockers
     assert "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED" in blockers
     assert "CANONICAL_CONTENT_SERIALIZER_NOT_IMPLEMENTED" not in blockers
     assert "CANONICAL_TICKER_UNIVERSE_SERIALIZER_NOT_IMPLEMENTED" not in blockers
@@ -135,7 +138,7 @@ def test_freeze_is_blocked_after_pure_writer_interface_boundary():
 
 def test_canonical_serializers_are_hash_locked_with_observed_production_readback():
     contract = load_contract()
-    assert contract["source_git_commit"] == "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381"
+    assert contract["source_git_commit"] == "eb08ce518a557bf6b772aa66e6bad25e3d681cd3"
     serializers = contract["artifacts"]["dataset_serializers"]
     assert serializers == {
         "status": "IMPLEMENTED/TESTED_INTERFACE",
@@ -235,8 +238,35 @@ def test_observed_content_evidence_hash_and_exact_readback_are_reproducible():
     }
     assert set(contract["execution_readiness"]["freeze_blockers"]) == {
         "FREEZE_APPROVAL_MISSING",
-        "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED",
+        "PRODUCTION_TRANSACTION_ADAPTER_NOT_APPROVED_FOR_EXECUTION",
         "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED",
         "SCHEMA_POST_AUDIT_NOT_RECORDED",
         "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED",
     }
+
+
+def test_manifest_builder_and_injected_adapter_are_hash_locked_but_not_executable():
+    contract = load_contract()
+    manifest = contract["artifacts"]["freeze_manifest_builder"]
+    assert manifest == {
+        "status": "IMPLEMENTED/TESTED_REVIEW_ONLY",
+        "path": "oracle_research_dataset_freeze_manifest.py",
+        "sha256": "6bca13f27fd30e76dd64f393c9647633baceb5e83d592f95e1aa8ed04c46420f",
+        "manifest_status": "REVIEW_ONLY",
+        "production_manifest_status": "NOT_BUILT",
+        "requires_two_distinct_real_approval_ids": True,
+    }
+    adapter = contract["artifacts"]["injected_turso_atomic_adapter"]
+    assert adapter == {
+        "status": "IMPLEMENTED/TESTED_INJECTED_INTERFACE",
+        "path": "oracle_research_dataset_turso_adapter.py",
+        "sha256": "316c13aa221b6c3af3f2b6488f06c82d85b4991d61c4b9b24bc7820e0af504db",
+        "execution_status": "NOT_APPROVED_FOR_EXECUTION",
+        "production_use_status": "NEVER_USED",
+        "owns_endpoint_token_session_or_environment": False,
+    }
+    for artifact in (manifest, adapter):
+        assert hashlib.sha256((ROOT / artifact["path"]).read_bytes()).hexdigest() == artifact["sha256"]
+    assert contract["approval_gates"]["schema_application"]["approval_id"] is None
+    assert contract["approval_gates"]["dataset_freeze"]["approval_id"] is None
+    assert not contract["execution_readiness"]["dataset_freeze_executable"]

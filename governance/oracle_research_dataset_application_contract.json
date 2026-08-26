@@ -2,7 +2,7 @@
   "contract_id": "oracle-research-dataset-application-freeze-v1",
   "contract_status": "REVIEW_ONLY",
   "target_database_id": "theoracle-avishe",
-  "source_git_commit": "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381",
+  "source_git_commit": "eb08ce518a557bf6b772aa66e6bad25e3d681cd3",
   "artifacts": {
     "schema_migration": {
       "path": "migrations/20260826_oracle_research_dataset_versions_additive.sql",
@@ -32,6 +32,22 @@
       "retained_row_count": 0,
       "production_digest_readback_status": "OBSERVED/VERIFIED_READBACK"
     },
+    "freeze_manifest_builder": {
+      "status": "IMPLEMENTED/TESTED_REVIEW_ONLY",
+      "path": "oracle_research_dataset_freeze_manifest.py",
+      "sha256": "6bca13f27fd30e76dd64f393c9647633baceb5e83d592f95e1aa8ed04c46420f",
+      "manifest_status": "REVIEW_ONLY",
+      "production_manifest_status": "NOT_BUILT",
+      "requires_two_distinct_real_approval_ids": true
+    },
+    "injected_turso_atomic_adapter": {
+      "status": "IMPLEMENTED/TESTED_INJECTED_INTERFACE",
+      "path": "oracle_research_dataset_turso_adapter.py",
+      "sha256": "316c13aa221b6c3af3f2b6488f06c82d85b4991d61c4b9b24bc7820e0af504db",
+      "execution_status": "NOT_APPROVED_FOR_EXECUTION",
+      "production_use_status": "NEVER_USED",
+      "owns_endpoint_token_session_or_environment": false
+    },
     "atomic_runner": {
       "path": "scripts/apply_atomic_migration.py",
       "sha256": "2a43530c84d7eabd850702f6b053bd938593787ee3b40ac2eee0b6a81acd903f"
@@ -40,7 +56,7 @@
       "status": "IMPLEMENTED/TESTED_INTERFACE",
       "path": "oracle_research_dataset_writer.py",
       "sha256": "0220845dcb870946e38c08055d1ea0a663be8e5cc2232b57b8b237f2eb065adf",
-      "production_adapter_status": "NOT_IMPLEMENTED_OR_APPROVED"
+      "production_adapter_status": "IMPLEMENTED_TESTED_BUT_NOT_APPROVED_FOR_EXECUTION"
     }
   },
   "approval_gates": {
@@ -67,7 +83,7 @@
     "dataset_freeze_executable": false,
     "freeze_blockers": [
       "FREEZE_APPROVAL_MISSING",
-      "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED",
+      "PRODUCTION_TRANSACTION_ADAPTER_NOT_APPROVED_FOR_EXECUTION",
       "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED",
       "SCHEMA_POST_AUDIT_NOT_RECORDED",
       "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED"

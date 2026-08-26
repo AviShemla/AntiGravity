@@ -174,6 +174,8 @@ class ApplicationAuditTests(unittest.TestCase):
                 "dataset_content_reader",
                 "dataset_freeze_writer",
                 "dataset_serializers",
+                "freeze_manifest_builder",
+                "injected_turso_atomic_adapter",
                 "read_only_reader",
                 "schema_migration",
             },
