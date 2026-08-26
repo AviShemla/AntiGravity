@@ -435,6 +435,7 @@ def _reconcile_identity_phase(
     if attempts <= 0 or interval_seconds <= 0:
         raise LifecycleError("Identity reconciliation bounds are invalid.")
     last_absence: CommandResult | None = None
+    saw_unresolved = False
     for attempt in range(attempts):
         observed_at = utc_clock()
         if observed_at.tzinfo is None:
@@ -460,15 +461,17 @@ def _reconcile_identity_phase(
             ):
                 last_absence = branch
             else:
-                raise IdentityContradiction(
-                    "Branch identity evidence contradicts the governed contract."
-                ) from exc
+                saw_unresolved = True
         else:
             branch_result = adapter.results[(CLI, "db", "show", intent.branch_name)]
             return proof, branch_result
         if attempt + 1 < attempts and budget.wait(interval_seconds, sleeper):
             continue
         break
+    if saw_unresolved:
+        raise IdentityContradiction(
+            "Branch identity remained unresolved through bounded propagation checks."
+        )
     if last_absence is not None:
         raise IdentityPropagationPending(
             "Branch identity remained exactly absent through bounded propagation checks."

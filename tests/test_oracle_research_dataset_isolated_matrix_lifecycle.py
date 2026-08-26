@@ -104,6 +104,7 @@ class Cli:
         destroy="success",
         wrong_create_argv=False,
         identity_absent_shows=0,
+        partial_identity_shows=0,
     ):
         self.exists = False
         self.branch_id = "01a-disposable-lifecycle"
@@ -117,6 +118,8 @@ class Cli:
         self.malformed_show = False
         self.wrong_create_argv = wrong_create_argv
         self.identity_absent_shows = identity_absent_shows
+        self.partial_identity_shows = partial_identity_shows
+        self.branch_show_count = 0
 
     def result(self, argv, code=0, stdout=b"", stderr=b"", ambiguous=False):
         return CommandResult(tuple(argv), code, stdout, stderr, ambiguous)
@@ -138,6 +141,7 @@ class Cli:
                 return self.result(argv, code=-1, ambiguous=True)
             return self.result(argv, code=1, stderr=b"create rejected\n")
         if argv == (CLI, "db", "show", intent().branch_name):
+            self.branch_show_count += 1
             if self.exists:
                 if self.identity_absent_shows > 0:
                     self.identity_absent_shows -= 1
@@ -145,6 +149,12 @@ class Cli:
                         argv,
                         code=1,
                         stderr=(NOT_FOUND_TEMPLATE.format(name=intent().branch_name) + "\n").encode(),
+                    )
+                if self.partial_identity_shows > 0:
+                    self.partial_identity_shows -= 1
+                    return self.result(
+                        argv,
+                        stdout=f"Name:               {intent().branch_name}\n".encode(),
                     )
                 if self.malformed_show:
                     return self.result(argv, stdout=b"ambiguous identity\n")
@@ -417,6 +427,16 @@ def test_identity_propagates_on_third_read_without_duplicate_create(tmp_path):
     assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 1, 1)
 
 
+def test_partial_success_identity_materializes_then_proceeds_without_duplicate_create(tmp_path):
+    cli = Cli(partial_identity_shows=2)
+    sleeps = []
+    result = run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
+    assert result.cleanup_verified is True
+    assert sleeps == [5.0, 5.0]
+    assert cli.branch_show_count >= 3
+    assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 1, 1)
+
+
 def test_primary_exhaustion_cleanup_phase_later_binds_and_destroys_once(tmp_path):
     cli = Cli(identity_absent_shows=4)
     sleeps = []
@@ -436,9 +456,13 @@ def test_primary_exhaustion_cleanup_phase_later_binds_and_destroys_once(tmp_path
 def test_contradictory_identity_never_issues_token_or_destroy(tmp_path):
     cli = Cli()
     cli.malformed_show = True
-    with pytest.raises(LifecycleError, match="contradicts"):
-        run(tmp_path, cli)
+    sleeps = []
+    with pytest.raises(LifecycleError, match="unresolved"):
+        run(tmp_path, cli, reconciliation_sleeper=sleeps.append)
     assert (cli.create_count, cli.token_count, cli.destroy_count) == (1, 0, 0)
+    assert cli.branch_show_count == 4
+    assert sleeps == [5.0, 5.0, 5.0]
+    assert sum(sleeps) <= 45.0
     assert cli.exists is True
     assert next((tmp_path / "evidence").glob("*-cleanup-incident.json"))
 
