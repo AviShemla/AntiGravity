@@ -13,6 +13,8 @@ from scripts.rebuild_market_features_to_turso import (
     apply_symbol_lifecycle,
     apply_approved_instrument_registry,
     merge_cross_market_features,
+    normalize_ohlc_envelope,
+    content_checksum,
     missing_sessions,
     recent_nyse_sessions,
     repair_recent_session_gaps,
@@ -55,6 +57,89 @@ class RebuildMarketFeaturesTests(unittest.TestCase):
         latest = result[result["Date"] == result["Date"].max()]
         self.assertEqual(len(latest), 2)
         self.assertFalse(latest[["Sector_Momentum_Score", "VIX_Close", "TNX_Close"]].isna().any().any())
+
+    def test_normalizes_canonical_ohlc_before_checksum_without_mutating_source(self):
+        source = pd.DataFrame({
+            "Ticker": ["DG", "ELV", "OTIS", "TPR"],
+            "Date": pd.to_datetime(["2026-08-25"] * 4),
+            "Open": [100.01, 200.01, 300.01, 400.01],
+            "High": [100.00, 200.00, 300.00, 400.00],
+            "Low": [99.50, 199.50, 299.50, 399.50],
+            "Close": [99.80, 199.80, 299.80, 399.80],
+        })
+        original = source.copy(deep=True)
+
+        normalized = normalize_ohlc_envelope(source)
+
+        pd.testing.assert_frame_equal(source, original)
+        self.assertEqual(normalized["High"].tolist(), source["Open"].tolist())
+        self.assertEqual(normalized["Low"].tolist(), source["Low"].tolist())
+
+    def test_normalizes_high_and_low_simultaneously_from_all_four_values(self):
+        source = pd.DataFrame({
+            "Open": [10.0, 20.0],
+            "High": [9.0, 21.0],
+            "Low": [11.0, 19.0],
+            "Close": [12.0, 18.0],
+        })
+
+        normalized = normalize_ohlc_envelope(source)
+
+        self.assertEqual(normalized["High"].tolist(), [12.0, 21.0])
+        self.assertEqual(normalized["Low"].tolist(), [9.0, 18.0])
+        pd.testing.assert_frame_equal(
+            normalized,
+            normalize_ohlc_envelope(normalized),
+        )
+
+    def test_feature_calculation_uses_canonical_ohlc_without_mutating_provider_frame(self):
+        source = self.raw()
+        position = source.index[-1]
+        source.loc[position, "High"] = source.loc[position, "Open"] - 0.01
+        provider_evidence = source.copy(deep=True)
+
+        calculated = calculate_features(source, ticker="DG", sector="Retail")
+        latest = calculated.iloc[-1]
+
+        pd.testing.assert_frame_equal(source, provider_evidence)
+        provider_row = provider_evidence.loc[position, ["Open", "High", "Low", "Close"]]
+        self.assertEqual(latest["High"], provider_row.max())
+        self.assertEqual(latest["Low"], provider_row.min())
+        self.assertGreaterEqual(latest["High"], latest["Open"])
+        self.assertGreaterEqual(latest["High"], latest["Close"])
+        self.assertLessEqual(latest["Low"], latest["Open"])
+        self.assertLessEqual(latest["Low"], latest["Close"])
+
+    def test_canonical_checksum_is_derived_from_normalized_ohlc(self):
+        raw = self.raw().tail(1).copy()
+        raw["Ticker"] = "DG"
+        raw["Sector"] = "Retail"
+        raw.loc[:, "High"] = raw["Open"] - 0.01
+        for source, _ in __import__(
+            "scripts.stage_market_features_to_turso",
+            fromlist=["COLUMN_MAP"],
+        ).COLUMN_MAP:
+            if source not in raw:
+                raw[source] = "N/A" if source in {
+                    "RAS_Signal", "Analyst_Consensus", "Sector_Regime",
+                    "Market_Fear_Level",
+                } else 0.0
+
+        normalized = normalize_ohlc_envelope(raw)
+
+        self.assertNotEqual(content_checksum(raw), content_checksum(normalized))
+        self.assertEqual(
+            content_checksum(normalized),
+            content_checksum(normalize_ohlc_envelope(raw)),
+        )
+        self.assertGreaterEqual(normalized["High"].iloc[0], normalized["Open"].iloc[0])
+        self.assertLessEqual(normalized["Low"].iloc[0], normalized["Close"].iloc[0])
+
+    def test_normalization_requires_complete_ohlc_columns(self):
+        with self.assertRaisesRegex(ValueError, "missing columns: Low"):
+            normalize_ohlc_envelope(
+                pd.DataFrame({"Open": [1.0], "High": [1.0], "Close": [1.0]})
+            )
 
     def test_rebuild_fails_closed_on_any_universe_ingestion_failure(self):
         with self.assertRaisesRegex(ValueError, "incomplete"):

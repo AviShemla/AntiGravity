@@ -109,7 +109,9 @@ def fetch_ticker(
 
 
 def calculate_features(raw: pd.DataFrame, *, ticker: str, sector: str) -> pd.DataFrame:
-    frame = raw.copy().sort_values("Date").reset_index(drop=True)
+    frame = normalize_ohlc_envelope(
+        raw.copy().sort_values("Date").reset_index(drop=True)
+    )
     frame["Ticker"] = ticker
     frame["Sector"] = sector
     for column in ("Adj Close", "Dividends", "Stock Splits"):
@@ -358,6 +360,26 @@ def apply_approved_instrument_registry(
     return controlled
 
 
+def normalize_ohlc_envelope(frame: pd.DataFrame) -> pd.DataFrame:
+    """Return canonical OHLC rows whose high/low exactly enclose open and close.
+
+    Provider-native frames and their lineage hashes remain unchanged. This
+    normalization applies only to the canonical model-input representation,
+    before its content checksum and staging identity are derived.
+    """
+    required = ["Open", "High", "Low", "Close"]
+    missing = sorted(set(required).difference(frame.columns))
+    if missing:
+        raise ValueError(
+            "Canonical OHLC normalization is missing columns: " + ", ".join(missing)
+        )
+    result = frame.copy()
+    envelope = result[required]
+    result["High"] = envelope.max(axis=1, skipna=False)
+    result["Low"] = envelope.min(axis=1, skipna=False)
+    return result
+
+
 def content_checksum(frame: pd.DataFrame) -> str:
     ordered = frame.sort_values(["Ticker", "Date"])
     values = pd.util.hash_pandas_object(ordered[[source for source, _ in COLUMN_MAP]], index=False)
@@ -459,6 +481,7 @@ def stage_frame(
     provider_lineage: list[list[object]],
     notes: str,
 ) -> str:
+    frame = normalize_ohlc_envelope(frame)
     checksum = content_checksum(frame)
     snapshot_id = f"market_features_{source_session.isoformat()}_{checksum[:16]}"
     expected_rows = len(frame)
@@ -694,7 +717,9 @@ def main() -> int:
     )
     if vix is None or tnx is None:
         raise SystemExit(f"Macro ingestion failed: VIX={vix_error}; TNX={tnx_error}")
-    final = merge_cross_market_features(combined, vix, tnx)
+    final = normalize_ohlc_envelope(
+        merge_cross_market_features(combined, vix, tnx)
+    )
     latest = final[final["Date"].dt.date == source_session]
     if latest.empty or latest[["VIX_Close", "TNX_Close"]].isna().any().any():
         raise SystemExit("Latest rebuilt session has missing macro features.")
