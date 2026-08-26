@@ -135,6 +135,8 @@ def build_completion_checks(
         "fold_purge_covers_max_candidate_lag": fold_purge_valid,
         "no_temporal_overlap": int(folds["temporal_overlap_count"] or 0) == 0,
         "eligibility_count_consistent": 0 <= eligible <= evaluated,
+        "evaluated_metrics_and_baselines_complete": int(results["metric_missing_count"] or 0) == 0,
+        "evaluated_probability_metrics_in_bounds": int(results["metric_bounds_violation_count"] or 0) == 0,
         "no_model_or_prior_outputs": (
             int(downstream["model_runs"]) == 0
             and int(downstream["model_scorecards"]) == 0
@@ -181,7 +183,19 @@ def main() -> int:
                    COALESCE(SUM(eligible),0) AS eligible_count,
                    SUM(CASE WHEN oos_sessions>0 THEN 1 ELSE 0 END) AS evaluated_count,
                    SUM(CASE WHEN oos_sessions=0 THEN 1 ELSE 0 END) AS data_rejection_count,
-                   MIN(oos_sessions) AS min_oos_sessions,MAX(oos_sessions) AS max_oos_sessions
+                   MIN(oos_sessions) AS min_oos_sessions,MAX(oos_sessions) AS max_oos_sessions,
+                   SUM(CASE WHEN oos_sessions>0 AND (
+                       oos_accuracy IS NULL OR brier_score IS NULL OR log_loss IS NULL
+                       OR calibration_error IS NULL OR majority_accuracy IS NULL
+                       OR own_lag_accuracy IS NULL OR own_lag_brier IS NULL
+                   ) THEN 1 ELSE 0 END) AS metric_missing_count,
+                   SUM(CASE WHEN oos_sessions>0 AND (
+                       oos_accuracy<0 OR oos_accuracy>1 OR brier_score<0 OR brier_score>1
+                       OR log_loss<0 OR calibration_error<0 OR calibration_error>1
+                       OR majority_accuracy<0 OR majority_accuracy>1
+                       OR own_lag_accuracy<0 OR own_lag_accuracy>1
+                       OR own_lag_brier<0 OR own_lag_brier>1
+                   ) THEN 1 ELSE 0 END) AS metric_bounds_violation_count
             FROM predictive_screening_results WHERE screening_run_id=?
             """,
             [args.run_id],

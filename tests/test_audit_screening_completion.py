@@ -27,6 +27,8 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
                 "distinct_tickers": 10,
                 "evaluated_count": 8,
                 "eligible_count": 3,
+                "metric_missing_count": 0,
+                "metric_bounds_violation_count": 0,
             },
             "folds": {
                 "fold_count": 32,
@@ -127,6 +129,18 @@ class ScreeningCompletionAuditTests(unittest.TestCase):
         evidence["results"]["eligible_count"] = 9
         checks = build_completion_checks(**evidence)
         self.assertFalse(checks["eligibility_count_consistent"])
+
+    def test_missing_baseline_metric_fails_completion(self):
+        evidence = self.evidence()
+        evidence["results"]["metric_missing_count"] = 1
+        checks = build_completion_checks(**evidence)
+        self.assertFalse(checks["evaluated_metrics_and_baselines_complete"])
+
+    def test_out_of_range_probability_metric_fails_completion(self):
+        evidence = self.evidence()
+        evidence["results"]["metric_bounds_violation_count"] = 1
+        checks = build_completion_checks(**evidence)
+        self.assertFalse(checks["evaluated_probability_metrics_in_bounds"])
 
 
 if __name__ == "__main__":
