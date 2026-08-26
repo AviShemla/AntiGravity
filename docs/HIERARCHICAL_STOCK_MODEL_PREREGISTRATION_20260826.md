@@ -1,6 +1,6 @@
 # Hierarchical stock model preregistration  2026-08-26
 
-Status: **DESIGNED / IMPLEMENTED, not yet TESTED, DEPLOYED, OBSERVED, or VERIFIED**.
+Status: **DESIGNED / IMPLEMENTED / TESTED; not yet DEPLOYED, OBSERVED, or VERIFIED**.
 
 ## Authority and safety boundary
 
