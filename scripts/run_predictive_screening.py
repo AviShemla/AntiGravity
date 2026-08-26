@@ -39,6 +39,13 @@ def main() -> int:
     parser.add_argument("--cutoff-utc", required=True)
     parser.add_argument("--tickers", help="Comma-separated controlled scope; default is all snapshot tickers.")
     parser.add_argument("--code-version", required=True)
+    parser.add_argument(
+        "--screening-run-id",
+        help=(
+            "Optional immutable run identifier. Existing identifiers fail closed "
+            "instead of creating duplicate evidence."
+        ),
+    )
     parser.add_argument("--min-depth", type=int, required=True)
     parser.add_argument("--max-depth", type=int, required=True)
     parser.add_argument(
@@ -124,6 +131,20 @@ def main() -> int:
         raise SystemExit("Turso environment variables are unavailable.")
     endpoint = raw_url.replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
     reader = TursoReadPipeline(endpoint, token, timeout_seconds=30.0)
+    run_id = args.screening_run_id or (
+        f"predictive_screening_{source_session.isoformat()}_{uuid.uuid4().hex[:12]}"
+    )
+    if not run_id.strip() or len(run_id) > 200:
+        raise SystemExit("--screening-run-id must contain 1-200 non-blank characters.")
+    existing = reader.execute(
+        "SELECT status FROM predictive_screening_runs WHERE screening_run_id=?",
+        [run_id],
+    )
+    if existing.rows:
+        raise SystemExit(
+            f"Screening run id already exists with status={existing.rows[0][0]}; refusing duplicate."
+        )
+    print(f"screening_run_id={run_id}", flush=True)
     snapshot = select_validated_snapshot(
         reader,
         dataset_type="MARKET_FEATURES",
@@ -146,7 +167,6 @@ def main() -> int:
 
     config = replace(preflight_config, eligibility_hypotheses=len(tickers))
     config.validate()
-    run_id = f"predictive_screening_{source_session.isoformat()}_{uuid.uuid4().hex[:12]}"
     config_payload = {
         **asdict(config),
         "requested_tickers": tickers,
