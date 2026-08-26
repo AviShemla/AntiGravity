@@ -6,7 +6,12 @@ import pytest
 
 from model_lineage import LineageError
 from normalized_edge_extraction import (
+    COUNT_SQL_BY_TABLE,
     ExpectedArm,
+    OPTIONAL_TABLES,
+    RESULT_SQL,
+    RUN_SQL,
+    SCHEMA_DISCOVERY_SQL,
     TERMINAL_DISPOSITION,
     VALIDATED_20260825_ARMS,
     build_normalized_edge_audit,
@@ -167,6 +172,19 @@ def real_contract_rows():
     return runs, rows
 
 
+def optional_schema_objects(normalized_counts, downstream_counts, *, present=None):
+    present = set(OPTIONAL_TABLES if present is None else present)
+    evidence = {}
+    for name, (category, key) in OPTIONAL_TABLES.items():
+        count = (normalized_counts if category == "normalized" else downstream_counts)[key]
+        evidence[name] = (
+            {"object_type": "table", "presence": "PRESENT", "row_count": count}
+            if name in present
+            else {"object_type": None, "presence": "ABSENT", "row_count": None}
+        )
+    return evidence
+
+
 def build(**overrides):
     values = {
         "run_rows": run_rows(),
@@ -185,6 +203,10 @@ def build(**overrides):
         "expected_code_version": CODE,
     }
     values.update(overrides)
+    if "schema_objects" not in overrides:
+        values["schema_objects"] = optional_schema_objects(
+            values["normalized_counts"], values["downstream_counts"]
+        )
     return build_normalized_edge_audit(**values)
 
 
@@ -344,8 +366,10 @@ class Result:
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, *, schema_rows=(), table_counts=None):
         self.calls = []
+        self.schema_rows = list(schema_rows)
+        self.table_counts = dict(table_counts or {})
 
     def execute(self, sql, args):
         self.calls.append((sql, args))
@@ -353,15 +377,15 @@ class Client:
             return Result(run_rows())
         if "FROM predictive_screening_results" in sql:
             return Result(result_rows())
-        if "predictive_screening_edge_sets_v2" in sql:
-            return Result([{
-                "screening_sets": 0, "screening_edges": 0,
-                "universe_sets": 0, "universe_edges": 0,
-            }])
-        return Result([{"model_runs": 0, "model_scorecards": 0, "etf_priors": 0}])
+        if "FROM sqlite_schema" in sql:
+            return Result(self.schema_rows)
+        for name, count_sql in COUNT_SQL_BY_TABLE.items():
+            if sql == count_sql:
+                return Result([{"row_count": self.table_counts[name]}])
+        raise AssertionError(f"unexpected SQL: {sql}")
 
 
-def test_injected_reader_uses_four_selects_exact_bindings_and_no_mutation():
+def test_injected_reader_all_optional_tables_absent_uses_only_three_selects():
     client = Client()
     evidence = read_normalized_edge_audit(
         client,
@@ -372,11 +396,92 @@ def test_injected_reader_uses_four_selects_exact_bindings_and_no_mutation():
         expected_code_version=CODE,
     )
     assert evidence["coverage"]["normalized_edges_observed"] == 2
-    assert len(client.calls) == 4
+    assert len(client.calls) == 3
     assert all(sql.strip().upper().split(None, 1)[0] == "SELECT" for sql, _ in client.calls)
     assert client.calls[0][1] == ["run-126", "run-60"]
     assert client.calls[1][1] == ["run-126", "run-60"]
-    assert client.calls[2][1] == client.calls[3][1] == []
+    assert client.calls[2] == (SCHEMA_DISCOVERY_SQL, sorted(OPTIONAL_TABLES))
+    assert all(
+        item == {"object_type": None, "presence": "ABSENT", "row_count": None}
+        for item in evidence["optional_schema_objects"].values()
+    )
+
+
+def test_injected_reader_present_empty_tables_are_counted_by_exact_allowlist():
+    schema_rows = [{"name": name, "type": "table"} for name in sorted(OPTIONAL_TABLES)]
+    client = Client(
+        schema_rows=schema_rows,
+        table_counts={name: 0 for name in OPTIONAL_TABLES},
+    )
+    evidence = read_normalized_edge_audit(
+        client,
+        expected_arms=ARMS,
+        expected_snapshot_id=SNAPSHOT,
+        expected_source_session_date=SOURCE_DATE,
+        expected_cutoff_utc=CUTOFF,
+        expected_code_version=CODE,
+    )
+    expected_run_sql = RUN_SQL.format(placeholders="?,?")
+    expected_result_sql = RESULT_SQL.format(placeholders="?,?")
+    assert [sql for sql, _ in client.calls] == [
+        expected_run_sql,
+        expected_result_sql,
+        SCHEMA_DISCOVERY_SQL,
+        *(COUNT_SQL_BY_TABLE[name] for name in sorted(OPTIONAL_TABLES)),
+    ]
+    assert all(not args for _, args in client.calls[3:])
+    assert all(
+        item == {"object_type": "table", "presence": "PRESENT", "row_count": 0}
+        for item in evidence["optional_schema_objects"].values()
+    )
+
+
+@pytest.mark.parametrize(
+    "name,error",
+    [
+        ("model_runs", "downstream"),
+        ("predictive_screening_edges_v2", "not exactly empty"),
+    ],
+)
+def test_injected_reader_present_nonempty_optional_table_fails_closed(name, error):
+    client = Client(
+        schema_rows=[{"name": name, "type": "table"}],
+        table_counts={name: 1},
+    )
+    with pytest.raises(LineageError, match=error):
+        read_normalized_edge_audit(
+            client,
+            expected_arms=ARMS,
+            expected_snapshot_id=SNAPSHOT,
+            expected_source_session_date=SOURCE_DATE,
+            expected_cutoff_utc=CUTOFF,
+            expected_code_version=CODE,
+        )
+
+
+@pytest.mark.parametrize(
+    "schema_rows",
+    [
+        [{"name": "unexpected_table", "type": "table"}],
+        [{"name": "model_runs", "type": "view"}],
+        [
+            {"name": "model_runs", "type": "table"},
+            {"name": "model_runs", "type": "table"},
+        ],
+    ],
+)
+def test_malformed_schema_discovery_evidence_fails_before_count(schema_rows):
+    client = Client(schema_rows=schema_rows, table_counts={"model_runs": 0})
+    with pytest.raises(LineageError, match="schema"):
+        read_normalized_edge_audit(
+            client,
+            expected_arms=ARMS,
+            expected_snapshot_id=SNAPSHOT,
+            expected_source_session_date=SOURCE_DATE,
+            expected_cutoff_utc=CUTOFF,
+            expected_code_version=CODE,
+        )
+    assert len(client.calls) == 3
 
 
 def test_cli_redacts_credentials_and_rejects_wrong_scope(monkeypatch, capsys):

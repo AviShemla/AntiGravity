@@ -55,16 +55,23 @@ FROM predictive_screening_results
 WHERE screening_run_id IN ({placeholders})
 ORDER BY screening_run_id,ticker"""
 
-NORMALIZED_COUNT_SQL = """SELECT
- (SELECT COUNT(*) FROM predictive_screening_edge_sets_v2) AS screening_sets,
- (SELECT COUNT(*) FROM predictive_screening_edges_v2) AS screening_edges,
- (SELECT COUNT(*) FROM stock_universe_edge_sets_v2) AS universe_sets,
- (SELECT COUNT(*) FROM stock_universe_edges_v2) AS universe_edges"""
-
-DOWNSTREAM_COUNT_SQL = """SELECT
- (SELECT COUNT(*) FROM model_runs) AS model_runs,
- (SELECT COUNT(*) FROM model_scorecards) AS model_scorecards,
- (SELECT COUNT(*) FROM etf_prior_lineage) AS etf_priors"""
+OPTIONAL_TABLES = {
+    "etf_prior_lineage": ("downstream", "etf_priors"),
+    "model_runs": ("downstream", "model_runs"),
+    "model_scorecards": ("downstream", "model_scorecards"),
+    "predictive_screening_edge_sets_v2": ("normalized", "screening_sets"),
+    "predictive_screening_edges_v2": ("normalized", "screening_edges"),
+    "stock_universe_edge_sets_v2": ("normalized", "universe_sets"),
+    "stock_universe_edges_v2": ("normalized", "universe_edges"),
+}
+SCHEMA_DISCOVERY_SQL = """SELECT name,type
+FROM sqlite_schema
+WHERE name IN (?,?,?,?,?,?,?)
+ORDER BY name"""
+COUNT_SQL_BY_TABLE = {
+    name: f'SELECT COUNT(*) AS row_count FROM "{name}"'
+    for name in OPTIONAL_TABLES
+}
 
 _FORBIDDEN_SQL = re.compile(
     r"\b(?:INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|TRUNCATE|ATTACH|DETACH|PRAGMA|VACUUM)\b",
@@ -118,10 +125,86 @@ def _select(db, sql: str, args: list[object], label: str):
     return db.execute(statement, args)
 
 
-def _one_count_row(records: list[dict[str, object]], label: str) -> dict[str, int]:
-    if len(records) != 1:
-        raise LineageError(f"{label} did not return exactly one row.")
-    return {key: _integer(value, f"{label} {key}") for key, value in records[0].items()}
+def _discover_optional_table_counts(db) -> tuple[
+    dict[str, int], dict[str, int], dict[str, dict[str, object]]
+]:
+    names = sorted(OPTIONAL_TABLES)
+    records = _result_rows(
+        _select(db, SCHEMA_DISCOVERY_SQL, names, "optional schema discovery"),
+        "optional schema discovery",
+    )
+    discovered = set()
+    for record in records:
+        if set(record) != {"name", "type"}:
+            raise LineageError("Optional schema discovery returned unexpected columns.")
+        name = record.get("name")
+        object_type = record.get("type")
+        if name not in OPTIONAL_TABLES or name in discovered or object_type != "table":
+            raise LineageError("Optional schema evidence is unexpected, duplicated, or not a table.")
+        discovered.add(str(name))
+
+    normalized_counts = {
+        key: 0 for category, key in OPTIONAL_TABLES.values() if category == "normalized"
+    }
+    downstream_counts = {
+        key: 0 for category, key in OPTIONAL_TABLES.values() if category == "downstream"
+    }
+    schema_objects: dict[str, dict[str, object]] = {}
+    for name in names:
+        category, key = OPTIONAL_TABLES[name]
+        if name not in discovered:
+            schema_objects[name] = {
+                "object_type": None,
+                "presence": "ABSENT",
+                "row_count": None,
+            }
+            continue
+        count_records = _result_rows(
+            _select(db, COUNT_SQL_BY_TABLE[name], [], f"{name} count query"),
+            f"{name} count query",
+        )
+        if len(count_records) != 1 or set(count_records[0]) != {"row_count"}:
+            raise LineageError(f"{name} count query returned malformed evidence.")
+        count = _integer(count_records[0]["row_count"], f"{name} row_count")
+        if category == "normalized":
+            normalized_counts[key] = count
+        else:
+            downstream_counts[key] = count
+        schema_objects[name] = {
+            "object_type": "table",
+            "presence": "PRESENT",
+            "row_count": count,
+        }
+    return normalized_counts, downstream_counts, schema_objects
+
+
+def _validate_optional_schema_objects(
+    schema_objects: Mapping[str, Mapping[str, object]],
+    normalized_counts: Mapping[str, int],
+    downstream_counts: Mapping[str, int],
+) -> dict[str, dict[str, object]]:
+    if set(schema_objects) != set(OPTIONAL_TABLES):
+        raise LineageError("Optional schema-object evidence is incomplete or unexpected.")
+    validated = {}
+    for name in sorted(OPTIONAL_TABLES):
+        record = schema_objects[name]
+        if not isinstance(record, Mapping) or set(record) != {
+            "object_type", "presence", "row_count"
+        }:
+            raise LineageError("Optional schema-object evidence is malformed.")
+        category, key = OPTIONAL_TABLES[name]
+        count = (normalized_counts if category == "normalized" else downstream_counts).get(key)
+        if record["presence"] == "ABSENT":
+            if record["object_type"] is not None or record["row_count"] is not None or count != 0:
+                raise LineageError("Absent schema-object evidence is contradictory.")
+        elif record["presence"] == "PRESENT":
+            row_count = _integer(record["row_count"], f"{name} schema row_count")
+            if record["object_type"] != "table" or count != row_count:
+                raise LineageError("Present schema-object evidence is contradictory.")
+        else:
+            raise LineageError("Optional schema-object presence is invalid.")
+        validated[name] = dict(record)
+    return validated
 
 
 def _validate_lineage_date(value: str, label: str) -> None:
@@ -262,6 +345,7 @@ def build_normalized_edge_audit(
     result_rows: Iterable[Mapping[str, object]],
     normalized_counts: Mapping[str, int],
     downstream_counts: Mapping[str, int],
+    schema_objects: Mapping[str, Mapping[str, object]],
     expected_arms: tuple[ExpectedArm, ...],
     expected_snapshot_id: str,
     expected_source_session_date: str,
@@ -357,6 +441,9 @@ def build_normalized_edge_audit(
         })
     if any(tickers != ticker_sets[0] for tickers in ticker_sets[1:]):
         raise LineageError("Validated screening arms do not share the exact ticker universe.")
+    validated_schema_objects = _validate_optional_schema_objects(
+        schema_objects, normalized_counts, downstream_counts
+    )
     expected_zero = {"screening_sets", "screening_edges", "universe_sets", "universe_edges"}
     if set(normalized_counts) != expected_zero or any(normalized_counts.values()):
         raise LineageError("Normalized production edge tables are not exactly empty.")
@@ -393,6 +480,7 @@ def build_normalized_edge_audit(
         "observational_edge_sets": normalized_sets,
         "normalized_table_counts": dict(sorted(normalized_counts.items())),
         "downstream_counts": dict(sorted(downstream_counts.items())),
+        "optional_schema_objects": validated_schema_objects,
         "database_writes": 0,
         "model_fits": 0,
         "etf_prior_outputs": 0,
@@ -420,19 +508,13 @@ def read_normalized_edge_audit(
         _select(db, RESULT_SQL.format(placeholders=placeholders), run_ids, "result query"),
         "result query",
     )
-    normalized_counts = _one_count_row(
-        _result_rows(_select(db, NORMALIZED_COUNT_SQL, [], "normalized count query"), "normalized count query"),
-        "normalized count query",
-    )
-    downstream_counts = _one_count_row(
-        _result_rows(_select(db, DOWNSTREAM_COUNT_SQL, [], "downstream count query"), "downstream count query"),
-        "downstream count query",
-    )
+    normalized_counts, downstream_counts, schema_objects = _discover_optional_table_counts(db)
     return build_normalized_edge_audit(
         run_rows=run_rows,
         result_rows=result_rows,
         normalized_counts=normalized_counts,
         downstream_counts=downstream_counts,
+        schema_objects=schema_objects,
         expected_arms=expected_arms,
         expected_snapshot_id=expected_snapshot_id,
         expected_source_session_date=expected_source_session_date,
