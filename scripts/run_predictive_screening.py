@@ -46,6 +46,10 @@ def main() -> int:
             "instead of creating duplicate evidence."
         ),
     )
+    parser.add_argument(
+        "--expected-market-snapshot-id",
+        help="Fail closed unless validated snapshot selection returns this exact identifier.",
+    )
     parser.add_argument("--min-depth", type=int, required=True)
     parser.add_argument("--max-depth", type=int, required=True)
     parser.add_argument(
@@ -151,6 +155,11 @@ def main() -> int:
         source_session_date=source_session,
         cutoff_utc=cutoff,
     )
+    if (
+        args.expected_market_snapshot_id
+        and snapshot.snapshot_id != args.expected_market_snapshot_id
+    ):
+        raise SystemExit("Validated snapshot selection does not match the pinned identifier.")
     print(f"Reading narrow validated Turso screening snapshot {snapshot.snapshot_id}...", flush=True)
     frame = load_screening_frame(reader, snapshot)
     returns = build_return_matrix(frame)
