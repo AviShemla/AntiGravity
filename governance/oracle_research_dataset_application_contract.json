@@ -2,7 +2,7 @@
   "contract_id": "oracle-research-dataset-application-freeze-v1",
   "contract_status": "REVIEW_ONLY",
   "target_database_id": "theoracle-avishe",
-  "source_git_commit": "183bb8b535a8d503d32cb7e23d390b87926103d0",
+  "source_git_commit": "499daf4a9a061ae8073a110e5629bdb0463976b5",
   "artifacts": {
     "schema_migration": {
       "path": "migrations/20260826_oracle_research_dataset_versions_additive.sql",
@@ -23,6 +23,14 @@
       "sha256": "c4b7621663de01dc5a4a56abe73992ae89f9502612e614b7200c13ed3239eac7",
       "content_encoding": "oracle-market-daily-features-jsonl-v1",
       "ticker_universe_encoding": "oracle-market-ticker-universe-jsonl-v1"
+    },
+    "dataset_content_reader": {
+      "status": "IMPLEMENTED/TESTED_READ_ONLY_INTERFACE",
+      "path": "oracle_research_dataset_content_reader.py",
+      "sha256": "caf92cd75c7399648b9716b7c5ceba30171856ad243d48275fcb1e93e2b1118c",
+      "query_mode": "BOUNDED_KEYSET_SELECT_ONLY_STREAMING",
+      "retained_row_count": 0,
+      "production_digest_readback_status": "NOT_PERFORMED"
     },
     "atomic_runner": {
       "path": "scripts/apply_atomic_migration.py",

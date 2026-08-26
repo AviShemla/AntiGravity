@@ -1,11 +1,11 @@
 # Oracle research dataset production application and freeze runbook
 
 Status: **REVIEW-ONLY / NOT EXECUTABLE**
-Baseline commit: `183bb8b535a8d503d32cb7e23d390b87926103d0`
+Baseline commit: `499daf4a9a061ae8073a110e5629bdb0463976b5`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`dab074a7e23b64923696c486dc4771f744555eac095f64b9db1d70a8ef077581`
+`805757a6b709cde1bf765271a770868330a9e0a044d8b4bdd6a8d2553743a815`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:
@@ -42,6 +42,12 @@ not application authority and does not satisfy the isolated-environment gate.
   `c4b7621663de01dc5a4a56abe73992ae89f9502612e614b7200c13ed3239eac7`.
   It defines versioned canonical content and ticker-universe encodings without
   materializing the full snapshot.
+- `oracle_research_dataset_content_reader.py` is an implemented, tested
+  read-only interface at SHA-256
+  `caf92cd75c7399648b9716b7c5ceba30171856ad243d48275fcb1e93e2b1118c`.
+  It performs bounded keyset `SELECT`-only streaming into the canonical
+  digester and reports zero retained rows; it owns no endpoint, credentials,
+  connection, or production write path.
 - No approved production transaction adapter/application exists, and the
   migration has not been approved or applied.
 - The actual 586,710-row production content/ticker digest computation and
@@ -55,9 +61,10 @@ above or reuse its approval.
 
 ## Locked artifacts
 
-The machine-readable contract pins the migration, read-only dataset reader,
-canonical streaming serializers, pure freeze-writer interface, atomic runner,
-source commit, and target Turso database identity. Before any approved
+The machine-readable contract pins the migration, frozen-dataset read-only
+reader, bounded source-content read-only streaming interface, canonical
+streaming serializers, pure freeze-writer interface, atomic runner, source
+commit, and target Turso database identity. Before any approved
 operation, independently hash the bytes on the execution host and compare every
 value with the contract. Any mismatch stops the operation and creates an
 incident record; do not regenerate hashes during the same approval.
@@ -146,9 +153,11 @@ Before any freeze transaction:
 3. Reconcile exact source snapshot identity, checksum, source session, row/
    ticker/session boundaries, provider rows, and per-symbol checksums.
 4. Independently stream exactly 586,710 ordered rows through the hash-pinned
-   canonical serializers and recompute content, ticker-universe, and provider-
-   lineage hashes. The interface is tested, but this actual production digest
-   and its independent readback remain unperformed and therefore block freeze.
+   bounded keyset `SELECT`-only content reader and canonical serializers, with
+   zero retained rows, and recompute content, ticker-universe, and provider-
+   lineage hashes. The reader and serializer interfaces are implemented and
+   tested, but this actual production digest and its independent readback remain
+   unperformed and therefore block freeze.
 5. Require no existing dataset version ID, frozen identity, or freeze event.
 6. Confirm `FROZEN/RESEARCH` mode; keep `ag-sniper.service`,
    `antigravity-nightly.timer`, and `antigravity-qa-watchdog.timer` inactive and
@@ -167,9 +176,10 @@ manifest reconcile.
 Required authority: explicit **dataset-freeze approval** whose ID differs from
 the schema approval ID.
 
-The pure writer and canonical serializer interfaces are implemented,
-hash-pinned, and tested. This phase remains non-executable until a production
-transaction adapter/application is implemented, hash-pinned, tested, and
+The pure writer, bounded read-only content reader, and canonical serializer
+interfaces are implemented, hash-pinned, and tested. This phase remains
+non-executable until a production transaction adapter/application is
+implemented, hash-pinned, tested, and
 separately approved; the migration is approved and applied; the schema
 post-audit is recorded; the actual 586,710-row digest has independent readback;
 and separate freeze approval is granted. The required transaction contract is:

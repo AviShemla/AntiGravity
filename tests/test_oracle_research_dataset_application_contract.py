@@ -20,6 +20,7 @@ def test_contract_hash_locks_current_reviewed_artifacts():
         "schema_migration",
         "read_only_reader",
         "dataset_serializers",
+        "dataset_content_reader",
         "atomic_runner",
     ):
         artifact = contract["artifacts"][artifact_name]
@@ -131,7 +132,7 @@ def test_freeze_is_blocked_after_pure_writer_interface_boundary():
 
 def test_canonical_serializers_are_hash_locked_but_have_no_production_readback():
     contract = load_contract()
-    assert contract["source_git_commit"] == "183bb8b535a8d503d32cb7e23d390b87926103d0"
+    assert contract["source_git_commit"] == "499daf4a9a061ae8073a110e5629bdb0463976b5"
     serializers = contract["artifacts"]["dataset_serializers"]
     assert serializers == {
         "status": "IMPLEMENTED/TESTED_INTERFACE",
@@ -140,6 +141,23 @@ def test_canonical_serializers_are_hash_locked_but_have_no_production_readback()
         "content_encoding": "oracle-market-daily-features-jsonl-v1",
         "ticker_universe_encoding": "oracle-market-ticker-universe-jsonl-v1",
     }
+    blockers = set(contract["execution_readiness"]["freeze_blockers"])
+    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
+    assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers
+
+
+def test_content_reader_is_hash_locked_read_only_but_actual_readback_is_unperformed():
+    contract = load_contract()
+    reader = contract["artifacts"]["dataset_content_reader"]
+    assert reader == {
+        "status": "IMPLEMENTED/TESTED_READ_ONLY_INTERFACE",
+        "path": "oracle_research_dataset_content_reader.py",
+        "sha256": "caf92cd75c7399648b9716b7c5ceba30171856ad243d48275fcb1e93e2b1118c",
+        "query_mode": "BOUNDED_KEYSET_SELECT_ONLY_STREAMING",
+        "retained_row_count": 0,
+        "production_digest_readback_status": "NOT_PERFORMED",
+    }
+    assert hashlib.sha256((ROOT / reader["path"]).read_bytes()).hexdigest() == reader["sha256"]
     blockers = set(contract["execution_readiness"]["freeze_blockers"])
     assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
     assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers

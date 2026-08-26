@@ -171,6 +171,7 @@ class ApplicationAuditTests(unittest.TestCase):
             {artifact.artifact_name for artifact in result.artifacts},
             {
                 "atomic_runner",
+                "dataset_content_reader",
                 "dataset_freeze_writer",
                 "dataset_serializers",
                 "read_only_reader",
