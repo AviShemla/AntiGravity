@@ -7,7 +7,8 @@ event, or cleanup action was created.
 
 ## Fresh host and production readback
 
-- Canonical Git: `50f4acc7d68040934d65b0fb5baa304257f57b85`, clean at initial inspection.
+- Reviewed source Git: `cf8345c30e2c8264cbb7140bef3b397a7799e488`, clean at the
+  two-phase governance repair preflight.
 - Turso CLI: `/home/codexops/.turso/turso`, version `v1.0.32`; it is not on the
   default PATH.
 - CLI settings: `/home/codexops/.config/turso/settings.json`, mode `600`;
@@ -33,6 +34,11 @@ event, or cleanup action was created.
 `scripts/oracle_research_dataset_isolated_matrix.py` contains no network,
 credential, branch, or database adapter. It:
 
+- creates a hash-pinned `PreBranchIntent` before a branch ID exists, authorizing
+  only the exact create/show/one-day-token vectors for one governed name;
+- binds the actual distinct branch ID and parent readback into the full matrix
+  plan without changing the intent's name, approval, timestamp, artifact, or
+  source-commit scope;
 - rejects a branch name/ID that aliases production;
 - requires the exact parent name/ID and governed branch-name pattern;
 - requires explicit lifecycle approval for branch creation, one-day credential,
@@ -47,8 +53,47 @@ credential, branch, or database adapter. It:
   closed on any missing assertion, object, event, rollback, residue, identity,
   or unchanged-production proof.
 
-The preflight-only CLI prints a redacted JSON plan and `no_changes=true`. It has
-no execute flag.
+The preflight-only CLI prints either a redacted `PRE_BRANCH_INTENT` or a bound
+full JSON plan, always with `no_changes=true`. It has no execute flag.
+
+## Two-phase governed invocation
+
+Phase A must be preserved before creation. Choose the governed name once; do
+not regenerate it after a failed or ambiguous create response.
+
+```text
+/opt/antigravity/venv/bin/python scripts/oracle_research_dataset_isolated_matrix.py \
+  --branch-name <governed-branch-name> \
+  --approval-id <six-action-approval-id> \
+  --source-commit cf8345c30e2c8264cbb7140bef3b397a7799e488
+```
+
+The resulting `PRE_BRANCH_INTENT` must pin its `intent_id`, canonical
+`created_at_utc`, approval ID, branch and production-parent identity, exact
+migration identity, and only these three command purposes: `create_branch`,
+`read_branch_identity`, and `create_one_day_branch_token`. Preserve the
+redacted JSON before running its create vector.
+
+After `db show` returns the distinct branch ID and exact production-parent
+readback, bind that identity using the preserved intent timestamp:
+
+```text
+/opt/antigravity/venv/bin/python scripts/oracle_research_dataset_isolated_matrix.py \
+  --branch-name <same-governed-branch-name> \
+  --branch-id <actual-distinct-branch-id> \
+  --parent-name theoracle \
+  --parent-id 019f09f6-0701-72e9-aad2-c64996ae63e1 \
+  --intent-id <preserved-intent_id> \
+  --intent-created-at-utc <preserved-created_at_utc> \
+  --approval-id <same-six-action-approval-id> \
+  --source-commit cf8345c30e2c8264cbb7140bef3b397a7799e488
+```
+
+The intent ID hashes the approval, branch and parent identity, timestamp,
+source commit, and complete migration identity. Any name, parent, approval,
+timestamp, source commit, migration, or intent-ID drift blocks binding. The
+second output is still a no-change plan, not execution authority or an
+executor.
 
 ## Governed branch identity
 

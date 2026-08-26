@@ -29,6 +29,7 @@ EXPECTED_MIGRATION_ID = "20260826_oracle_research_dataset_versions_additive"
 EXPECTED_SCHEMA_VERSION = 1
 EXPECTED_STATEMENT_COUNT = 26
 EXPECTED_MIGRATION_SHA256 = "d21aa91b356666c6509e234a74f3041130fc1e4ae62455086aa86b2b18e6e01e"
+EXPECTED_SOURCE_COMMIT = "cf8345c30e2c8264cbb7140bef3b397a7799e488"
 EXPECTED_PRODUCTION_NAME = "theoracle"
 EXPECTED_PRODUCTION_ID = "019f09f6-0701-72e9-aad2-c64996ae63e1"
 BRANCH_NAME = re.compile(
@@ -148,6 +149,22 @@ class CommandVector:
     argv: tuple[str, ...]
     sensitive_stdout: bool = False
     destructive: bool = False
+
+
+@dataclass(frozen=True)
+class PreBranchIntent:
+    intent_id: str
+    source_commit: str
+    created_at_utc: str
+    branch_name: str
+    parent_name: str
+    parent_id: str
+    approval: TemporaryBranchApproval
+    migration_sha256: str
+    migration_id: str
+    schema_version: int
+    statement_count: int
+    commands: tuple[CommandVector, ...]
 
 
 @dataclass(frozen=True)
@@ -281,6 +298,129 @@ def _command_vectors(
     )
 
 
+def _pre_branch_command_vectors(branch_name: str) -> tuple[CommandVector, ...]:
+    cli = "/home/codexops/.turso/turso"
+    return (
+        CommandVector("create_branch", (cli, "db", "branch", EXPECTED_PRODUCTION_NAME, branch_name)),
+        CommandVector("read_branch_identity", (cli, "db", "show", branch_name)),
+        CommandVector(
+            "create_one_day_branch_token",
+            (cli, "db", "tokens", "create", branch_name, "--expiration", "1d"),
+            sensitive_stdout=True,
+        ),
+    )
+
+
+def build_pre_branch_intent(
+    *,
+    migration_bytes: bytes,
+    branch_name: str,
+    approval: TemporaryBranchApproval,
+    source_commit: str,
+    created_at: datetime,
+) -> PreBranchIntent:
+    approval.validate()
+    if not BRANCH_NAME.fullmatch(branch_name):
+        raise ValueError("Isolated branch name does not match the governed pattern.")
+    if branch_name == EXPECTED_PRODUCTION_NAME:
+        raise ValueError("Isolated branch name resolves to production.")
+    if source_commit != EXPECTED_SOURCE_COMMIT:
+        raise ValueError("Pre-branch source commit differs from the reviewed baseline.")
+    migration_id, schema_version, statement_count, digest = _artifact_identity(migration_bytes)
+    timestamp = _canonical_utc(created_at)
+    identity = json.dumps(
+        {
+            "approval_id": approval.approval_id,
+            "branch_name": branch_name,
+            "created_at_utc": timestamp,
+            "migration_id": migration_id,
+            "migration_sha256": digest,
+            "parent_id": EXPECTED_PRODUCTION_ID,
+            "parent_name": EXPECTED_PRODUCTION_NAME,
+            "schema_version": schema_version,
+            "source_commit": source_commit,
+            "statement_count": statement_count,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    suffix = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+    return PreBranchIntent(
+        intent_id=f"oracle-rd-pre-branch-intent-{suffix}",
+        source_commit=source_commit,
+        created_at_utc=timestamp,
+        branch_name=branch_name,
+        parent_name=EXPECTED_PRODUCTION_NAME,
+        parent_id=EXPECTED_PRODUCTION_ID,
+        approval=approval,
+        migration_sha256=digest,
+        migration_id=migration_id,
+        schema_version=schema_version,
+        statement_count=statement_count,
+        commands=_pre_branch_command_vectors(branch_name),
+    )
+
+
+def bind_branch_identity(
+    intent: PreBranchIntent,
+    *,
+    migration_bytes: bytes,
+    branch_id: str,
+    parent_name: str,
+    parent_id: str,
+) -> IsolatedMatrixPlan:
+    intent.approval.validate()
+    try:
+        created_at = datetime.strptime(intent.created_at_utc, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=timezone.utc
+        )
+    except ValueError as exc:
+        raise ValueError("Pre-branch intent timestamp is not canonical UTC seconds.") from exc
+    rebuilt_intent = build_pre_branch_intent(
+        migration_bytes=migration_bytes,
+        branch_name=intent.branch_name,
+        approval=intent.approval,
+        source_commit=intent.source_commit,
+        created_at=created_at,
+    )
+    if rebuilt_intent != intent:
+        raise ValueError("Pre-branch intent identity or command scope was modified.")
+    observed_artifact = _artifact_identity(migration_bytes)
+    expected_artifact = (
+        intent.migration_id,
+        intent.schema_version,
+        intent.statement_count,
+        intent.migration_sha256,
+    )
+    if observed_artifact != expected_artifact:
+        raise ValueError("Branch binding artifact differs from the pre-branch intent.")
+    if intent.source_commit != EXPECTED_SOURCE_COMMIT:
+        raise ValueError("Branch binding source commit differs from the reviewed baseline.")
+    branch = IsolatedBranchIdentity(
+        branch_name=intent.branch_name,
+        branch_id=branch_id,
+        parent_name=parent_name,
+        parent_id=parent_id,
+    )
+    branch.validate()
+    plan = build_isolated_matrix_plan(
+        migration_bytes=migration_bytes,
+        branch=branch,
+        approval=intent.approval,
+        source_commit=intent.source_commit,
+        created_at=created_at,
+    )
+    if (
+        plan.branch.branch_name != intent.branch_name
+        or plan.branch.parent_name != intent.parent_name
+        or plan.branch.parent_id != intent.parent_id
+        or plan.approval != intent.approval
+        or plan.created_at_utc != intent.created_at_utc
+    ):
+        raise ValueError("Bound matrix plan changed the approved pre-branch scope.")
+    return plan
+
+
 def build_isolated_matrix_plan(
     *,
     migration_bytes: bytes,
@@ -409,19 +549,44 @@ def _preflight_payload(plan: IsolatedMatrixPlan) -> dict[str, object]:
     }
 
 
+def _pre_branch_payload(intent: PreBranchIntent) -> dict[str, object]:
+    return {
+        "phase": "PRE_BRANCH_INTENT",
+        "intent_id": intent.intent_id,
+        "approval_id": intent.approval.approval_id,
+        "source_commit": intent.source_commit,
+        "created_at_utc": intent.created_at_utc,
+        "branch_name": intent.branch_name,
+        "parent_name": intent.parent_name,
+        "parent_id": intent.parent_id,
+        "migration_id": intent.migration_id,
+        "migration_sha256": intent.migration_sha256,
+        "schema_version": intent.schema_version,
+        "statement_count": intent.statement_count,
+        "commands": [
+            {
+                "purpose": command.purpose,
+                "argv": list(command.argv),
+                "sensitive_stdout": command.sensitive_stdout,
+                "destructive": command.destructive,
+            }
+            for command in intent.commands
+        ],
+        "no_changes": True,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--branch-name", required=True)
-    parser.add_argument("--branch-id", required=True)
+    parser.add_argument("--branch-id")
+    parser.add_argument("--parent-name")
+    parser.add_argument("--parent-id")
+    parser.add_argument("--intent-id")
+    parser.add_argument("--intent-created-at-utc")
     parser.add_argument("--approval-id", required=True)
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
-    branch = IsolatedBranchIdentity(
-        branch_name=args.branch_name,
-        branch_id=args.branch_id,
-        parent_name=EXPECTED_PRODUCTION_NAME,
-        parent_id=EXPECTED_PRODUCTION_ID,
-    )
     approval = TemporaryBranchApproval(
         approval_id=args.approval_id,
         create_branch=True,
@@ -431,12 +596,41 @@ def main() -> int:
         append_logical_rollback=True,
         destroy_branch_after_evidence=True,
     )
-    plan = build_isolated_matrix_plan(
+    if args.intent_created_at_utc:
+        try:
+            created_at = datetime.strptime(
+                args.intent_created_at_utc, "%Y-%m-%dT%H:%M:%SZ"
+            ).replace(tzinfo=timezone.utc)
+        except ValueError as exc:
+            raise SystemExit("--intent-created-at-utc must be canonical UTC seconds.") from exc
+    else:
+        created_at = datetime.now(timezone.utc)
+    intent = build_pre_branch_intent(
         migration_bytes=MIGRATION_PATH.read_bytes(),
-        branch=branch,
+        branch_name=args.branch_name,
         approval=approval,
         source_commit=args.source_commit,
-        created_at=datetime.now(timezone.utc),
+        created_at=created_at,
+    )
+    binding_values = (args.branch_id, args.parent_name, args.parent_id)
+    if not any(binding_values):
+        if args.intent_id or args.intent_created_at_utc:
+            raise SystemExit("Intent identity arguments are valid only during branch binding.")
+        print(json.dumps(_pre_branch_payload(intent), sort_keys=True, separators=(",", ":")))
+        return 0
+    if not all(binding_values) or not args.intent_id or not args.intent_created_at_utc:
+        raise SystemExit(
+            "Binding requires --branch-id, --parent-name, --parent-id, --intent-id, "
+            "and --intent-created-at-utc from the preserved pre-branch intent."
+        )
+    if args.intent_id != intent.intent_id:
+        raise SystemExit("Branch binding does not match the preserved pre-branch intent ID.")
+    plan = bind_branch_identity(
+        intent,
+        migration_bytes=MIGRATION_PATH.read_bytes(),
+        branch_id=args.branch_id,
+        parent_name=args.parent_name,
+        parent_id=args.parent_id,
     )
     print(json.dumps(_preflight_payload(plan), sort_keys=True, separators=(",", ":")))
     return 0
