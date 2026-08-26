@@ -2,7 +2,7 @@
   "contract_id": "oracle-research-dataset-application-freeze-v1",
   "contract_status": "REVIEW_ONLY",
   "target_database_id": "theoracle-avishe",
-  "source_git_commit": "b2f6d25b0fe2a142bca23b96dba5f6b314562292",
+  "source_git_commit": "183bb8b535a8d503d32cb7e23d390b87926103d0",
   "artifacts": {
     "schema_migration": {
       "path": "migrations/20260826_oracle_research_dataset_versions_additive.sql",
@@ -16,6 +16,13 @@
     "read_only_reader": {
       "path": "oracle_research_dataset.py",
       "sha256": "9991c4080260ce1736829c3118ae5e911234ad7f96d86ea295341b8092556a88"
+    },
+    "dataset_serializers": {
+      "status": "IMPLEMENTED/TESTED_INTERFACE",
+      "path": "oracle_research_dataset_serializers.py",
+      "sha256": "c4b7621663de01dc5a4a56abe73992ae89f9502612e614b7200c13ed3239eac7",
+      "content_encoding": "oracle-market-daily-features-jsonl-v1",
+      "ticker_universe_encoding": "oracle-market-ticker-universe-jsonl-v1"
     },
     "atomic_runner": {
       "path": "scripts/apply_atomic_migration.py",
@@ -53,9 +60,10 @@
     "freeze_blockers": [
       "FREEZE_APPROVAL_MISSING",
       "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED",
+      "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED",
       "SCHEMA_POST_AUDIT_NOT_RECORDED",
-      "CANONICAL_CONTENT_SERIALIZER_NOT_IMPLEMENTED",
-      "CANONICAL_TICKER_UNIVERSE_SERIALIZER_NOT_IMPLEMENTED"
+      "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED",
+      "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED"
     ]
   },
   "safety_gates": {

@@ -167,7 +167,16 @@ class ApplicationAuditTests(unittest.TestCase):
             client=client,
         )
         self.assertEqual(result.contract_id, "oracle-research-dataset-application-freeze-v1")
-        self.assertEqual(len(result.artifacts), 4)
+        self.assertEqual(
+            {artifact.artifact_name for artifact in result.artifacts},
+            {
+                "atomic_runner",
+                "dataset_freeze_writer",
+                "dataset_serializers",
+                "read_only_reader",
+                "schema_migration",
+            },
+        )
         self.assertEqual(len(result.queries), 2)
         self.assertEqual(len(client.calls), 2)
         self.assertTrue(all(sql.startswith("SELECT ") for sql, _ in client.calls))

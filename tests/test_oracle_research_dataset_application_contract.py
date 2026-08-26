@@ -16,7 +16,12 @@ def load_contract():
 
 def test_contract_hash_locks_current_reviewed_artifacts():
     contract = load_contract()
-    for artifact_name in ("schema_migration", "read_only_reader", "atomic_runner"):
+    for artifact_name in (
+        "schema_migration",
+        "read_only_reader",
+        "dataset_serializers",
+        "atomic_runner",
+    ):
         artifact = contract["artifacts"][artifact_name]
         digest = hashlib.sha256((ROOT / artifact["path"]).read_bytes()).hexdigest()
         assert digest == artifact["sha256"]
@@ -115,7 +120,26 @@ def test_freeze_is_blocked_after_pure_writer_interface_boundary():
     blockers = set(contract["execution_readiness"]["freeze_blockers"])
     assert "FREEZE_WRITER_NOT_IMPLEMENTED" not in blockers
     assert "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED" in blockers
-    assert "CANONICAL_CONTENT_SERIALIZER_NOT_IMPLEMENTED" in blockers
-    assert "CANONICAL_TICKER_UNIVERSE_SERIALIZER_NOT_IMPLEMENTED" in blockers
+    assert "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED" in blockers
+    assert "CANONICAL_CONTENT_SERIALIZER_NOT_IMPLEMENTED" not in blockers
+    assert "CANONICAL_TICKER_UNIVERSE_SERIALIZER_NOT_IMPLEMENTED" not in blockers
+    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
+    assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers
     assert "SCHEMA_POST_AUDIT_NOT_RECORDED" in blockers
     assert "FREEZE_APPROVAL_MISSING" in blockers
+
+
+def test_canonical_serializers_are_hash_locked_but_have_no_production_readback():
+    contract = load_contract()
+    assert contract["source_git_commit"] == "183bb8b535a8d503d32cb7e23d390b87926103d0"
+    serializers = contract["artifacts"]["dataset_serializers"]
+    assert serializers == {
+        "status": "IMPLEMENTED/TESTED_INTERFACE",
+        "path": "oracle_research_dataset_serializers.py",
+        "sha256": "c4b7621663de01dc5a4a56abe73992ae89f9502612e614b7200c13ed3239eac7",
+        "content_encoding": "oracle-market-daily-features-jsonl-v1",
+        "ticker_universe_encoding": "oracle-market-ticker-universe-jsonl-v1",
+    }
+    blockers = set(contract["execution_readiness"]["freeze_blockers"])
+    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
+    assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers
