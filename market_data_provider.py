@@ -23,6 +23,11 @@ from market_data_guard import validate_daily_bars
 
 HistoryFetcher = Callable[[str, date, str], pd.DataFrame]
 
+# Provider selection must be stricter than any downstream repair. A raw series
+# with even a one-cent OHLC envelope violation is semantically invalid and must
+# fall through to the next provider rather than being silently normalized.
+RAW_PROVIDER_OHLC_RELATIVE_TOLERANCE = 0.0
+
 
 def resolve_tiingo_api_key(token_file: str | Path | None = None) -> str | None:
     """Load a Tiingo token from a secret file or, secondarily, the environment."""
@@ -192,6 +197,7 @@ def fetch_validated_daily_bars(
                 ticker=ticker,
                 source_session_date=source_session,
                 minimum_rows=minimum_rows,
+                ohlc_relative_tolerance=RAW_PROVIDER_OHLC_RELATIVE_TOLERANCE,
             )
             return ticker, validated, "YAHOO_FINANCE", None
         except Exception as exc:
@@ -215,6 +221,7 @@ def fetch_validated_daily_bars(
             ticker=ticker,
             source_session_date=source_session,
             minimum_rows=minimum_rows,
+            ohlc_relative_tolerance=RAW_PROVIDER_OHLC_RELATIVE_TOLERANCE,
         )
         return ticker, validated, "TIINGO_EOD", None
     except Exception as exc:

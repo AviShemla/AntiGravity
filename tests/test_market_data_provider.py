@@ -121,6 +121,71 @@ class MarketDataProviderTests(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(len(bars), 320)
 
+    def test_one_cent_yahoo_ohlc_violations_trigger_full_tiingo_fallback(self):
+        cases = {
+            "DG": (124.77999877929688, 124.7699966430664),
+            "ELV": (402.6700134277344, 402.6600036621094),
+            "OTIS": (72.20999908447266, 72.19999694824219),
+            "TPR": (132.35000610351562, 132.33999633789062),
+        }
+        for ticker, (open_value, high_value) in cases.items():
+            with self.subTest(ticker=ticker):
+                yahoo = valid_bars()
+                yahoo.loc[yahoo.index[-1], ["Open", "High", "Low", "Close"]] = [
+                    open_value,
+                    high_value,
+                    high_value - 1.0,
+                    high_value - 0.5,
+                ]
+                tiingo = valid_bars()
+                tiingo[["Open", "High", "Low", "Close", "Adj Close"]] = (
+                    tiingo[["Open", "High", "Low", "Close", "Adj Close"]] + 10.0
+                )
+                calls = {"tiingo": 0}
+
+                def fetch_tiingo(*_args):
+                    calls["tiingo"] += 1
+                    return tiingo
+
+                _, bars, provider, error = fetch_validated_daily_bars(
+                    ticker,
+                    SOURCE_SESSION,
+                    "2021-08-01",
+                    tiingo_api_key="rotated-test-key",
+                    yahoo_fetcher=lambda *_args: yahoo,
+                    tiingo_fetcher=fetch_tiingo,
+                    yahoo_attempts=1,
+                    sleep_fn=lambda _seconds: None,
+                )
+
+                self.assertEqual(provider, "TIINGO_EOD")
+                self.assertIsNone(error)
+                self.assertEqual(calls["tiingo"], 1)
+                self.assertEqual(len(bars), len(tiingo))
+                pd.testing.assert_series_equal(
+                    bars["Close"], tiingo["Close"], check_names=False
+                )
+
+    def test_strict_ohlc_failure_in_both_providers_fails_closed(self):
+        invalid = valid_bars()
+        invalid.loc[invalid.index[-1], "Open"] = (
+            invalid.loc[invalid.index[-1], "High"] + 0.01
+        )
+        _, bars, provider, error = fetch_validated_daily_bars(
+            "AAA",
+            SOURCE_SESSION,
+            "2021-08-01",
+            tiingo_api_key="rotated-test-key",
+            yahoo_fetcher=lambda *_args: invalid,
+            tiingo_fetcher=lambda *_args: invalid,
+            yahoo_attempts=1,
+            sleep_fn=lambda _seconds: None,
+        )
+        self.assertIsNone(bars)
+        self.assertIsNone(provider)
+        self.assertIn("YAHOO_FINANCE[1]: LineageError", error)
+        self.assertIn("TIINGO: LineageError", error)
+
     def test_missing_tiingo_credential_fails_closed(self):
         ticker, bars, provider, error = fetch_validated_daily_bars(
             "AAA",
