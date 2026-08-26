@@ -2,7 +2,7 @@
   "contract_id": "oracle-research-dataset-application-freeze-v1",
   "contract_status": "REVIEW_ONLY",
   "target_database_id": "theoracle-avishe",
-  "source_git_commit": "499daf4a9a061ae8073a110e5629bdb0463976b5",
+  "source_git_commit": "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381",
   "artifacts": {
     "schema_migration": {
       "path": "migrations/20260826_oracle_research_dataset_versions_additive.sql",
@@ -30,7 +30,7 @@
       "sha256": "caf92cd75c7399648b9716b7c5ceba30171856ad243d48275fcb1e93e2b1118c",
       "query_mode": "BOUNDED_KEYSET_SELECT_ONLY_STREAMING",
       "retained_row_count": 0,
-      "production_digest_readback_status": "NOT_PERFORMED"
+      "production_digest_readback_status": "OBSERVED/VERIFIED_READBACK"
     },
     "atomic_runner": {
       "path": "scripts/apply_atomic_migration.py",
@@ -70,9 +70,18 @@
       "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED",
       "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED",
       "SCHEMA_POST_AUDIT_NOT_RECORDED",
-      "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED",
       "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED"
     ]
+  },
+  "production_evidence": {
+    "actual_586710_row_digest_readback": {
+      "status": "OBSERVED/VERIFIED_READBACK",
+      "path": "docs/evidence/oracle_research_content_audit_20260826.json",
+      "sha256": "a77361be86febdc1ec750a28ba9a989636cb338a1ac52696da4e0ecee426b476",
+      "logical_evidence_sha256": "b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3",
+      "code_git_commit": "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381",
+      "read_only": true
+    }
   },
   "safety_gates": {
     "operating_mode": "FROZEN/RESEARCH",

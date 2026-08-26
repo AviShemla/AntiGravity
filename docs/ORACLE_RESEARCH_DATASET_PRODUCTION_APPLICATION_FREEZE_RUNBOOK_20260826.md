@@ -1,11 +1,11 @@
 # Oracle research dataset production application and freeze runbook
 
 Status: **REVIEW-ONLY / NOT EXECUTABLE**
-Baseline commit: `499daf4a9a061ae8073a110e5629bdb0463976b5`
+Baseline commit: `2cc365de3e1811c9b870e1e7738d5ec3bcd6d381`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`805757a6b709cde1bf765271a770868330a9e0a044d8b4bdd6a8d2553743a815`
+`854a4d17e66a4f00a7192646feb2274d517ad731026740796ba2a52aa61cc447`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:
@@ -50,8 +50,13 @@ not application authority and does not satisfy the isolated-environment gate.
   connection, or production write path.
 - No approved production transaction adapter/application exists, and the
   migration has not been approved or applied.
-- The actual 586,710-row production content/ticker digest computation and
-  independent readback have not been performed.
+- The actual 586,710-row production content/ticker digest is
+  `OBSERVED/VERIFIED_READBACK` in the sanitized canonical evidence record
+  `docs/evidence/oracle_research_content_audit_20260826.json`. The SELECT-only
+  unit retained zero rows; its independently recomputed logical evidence hash
+  is `b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3`.
+  This clears only the content-digest readback blocker and grants no schema or
+  freeze authority.
 - No production dataset freeze or freeze readback has been performed.
 - No separately scoped dataset-freeze approval exists.
 
@@ -152,12 +157,15 @@ Before any freeze transaction:
    immutable manifest.
 3. Reconcile exact source snapshot identity, checksum, source session, row/
    ticker/session boundaries, provider rows, and per-symbol checksums.
-4. Independently stream exactly 586,710 ordered rows through the hash-pinned
-   bounded keyset `SELECT`-only content reader and canonical serializers, with
-   zero retained rows, and recompute content, ticker-universe, and provider-
-   lineage hashes. The reader and serializer interfaces are implemented and
-   tested, but this actual production digest and its independent readback remain
-   unperformed and therefore block freeze.
+4. Reconcile the recorded `OBSERVED/VERIFIED_READBACK` evidence for exactly
+   586,710 ordered rows streamed through the hash-pinned bounded keyset
+   `SELECT`-only content reader and canonical serializers with zero retained
+   rows. Its content SHA-256 is
+   `07735e093c39546276082eba82f53a52d43a71cb1cff2d032b58f1315857a834`
+   and ticker-universe SHA-256 is
+   `267cdd0dba60a55346ba6f8a6e843259eacae924c9ea8740a093ea2cce3d1e26`.
+   This satisfies only the production content/ticker digest readback; provider-
+   lineage reconciliation and every other freeze gate remain independent.
 5. Require no existing dataset version ID, frozen identity, or freeze event.
 6. Confirm `FROZEN/RESEARCH` mode; keep `ag-sniper.service`,
    `antigravity-nightly.timer`, and `antigravity-qa-watchdog.timer` inactive and
@@ -177,12 +185,12 @@ Required authority: explicit **dataset-freeze approval** whose ID differs from
 the schema approval ID.
 
 The pure writer, bounded read-only content reader, and canonical serializer
-interfaces are implemented, hash-pinned, and tested. This phase remains
+interfaces are implemented, hash-pinned, and tested. The actual 586,710-row
+content/ticker digest has an independently matched readback. This phase remains
 non-executable until a production transaction adapter/application is
-implemented, hash-pinned, tested, and
-separately approved; the migration is approved and applied; the schema
-post-audit is recorded; the actual 586,710-row digest has independent readback;
-and separate freeze approval is granted. The required transaction contract is:
+implemented, hash-pinned, tested, and separately approved; the migration is
+approved and applied; the schema post-audit is recorded; and separate freeze
+approval is granted. The required transaction contract is:
 
 1. `BEGIN IMMEDIATE` once and acquire the single freeze-writer identity.
 2. Re-run duplicate checks inside the transaction.

@@ -8,6 +8,9 @@ CONTRACT_PATH = ROOT / "governance" / "oracle_research_dataset_application_contr
 RUNBOOK_PATH = (
     ROOT / "docs" / "ORACLE_RESEARCH_DATASET_PRODUCTION_APPLICATION_FREEZE_RUNBOOK_20260826.md"
 )
+CONTENT_EVIDENCE_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_research_content_audit_20260826.json"
+)
 
 
 def load_contract():
@@ -124,15 +127,15 @@ def test_freeze_is_blocked_after_pure_writer_interface_boundary():
     assert "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED" in blockers
     assert "CANONICAL_CONTENT_SERIALIZER_NOT_IMPLEMENTED" not in blockers
     assert "CANONICAL_TICKER_UNIVERSE_SERIALIZER_NOT_IMPLEMENTED" not in blockers
-    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
+    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" not in blockers
     assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers
     assert "SCHEMA_POST_AUDIT_NOT_RECORDED" in blockers
     assert "FREEZE_APPROVAL_MISSING" in blockers
 
 
-def test_canonical_serializers_are_hash_locked_but_have_no_production_readback():
+def test_canonical_serializers_are_hash_locked_with_observed_production_readback():
     contract = load_contract()
-    assert contract["source_git_commit"] == "499daf4a9a061ae8073a110e5629bdb0463976b5"
+    assert contract["source_git_commit"] == "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381"
     serializers = contract["artifacts"]["dataset_serializers"]
     assert serializers == {
         "status": "IMPLEMENTED/TESTED_INTERFACE",
@@ -142,11 +145,11 @@ def test_canonical_serializers_are_hash_locked_but_have_no_production_readback()
         "ticker_universe_encoding": "oracle-market-ticker-universe-jsonl-v1",
     }
     blockers = set(contract["execution_readiness"]["freeze_blockers"])
-    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
+    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" not in blockers
     assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers
 
 
-def test_content_reader_is_hash_locked_read_only_but_actual_readback_is_unperformed():
+def test_content_reader_is_hash_locked_with_observed_read_only_readback():
     contract = load_contract()
     reader = contract["artifacts"]["dataset_content_reader"]
     assert reader == {
@@ -155,9 +158,85 @@ def test_content_reader_is_hash_locked_read_only_but_actual_readback_is_unperfor
         "sha256": "caf92cd75c7399648b9716b7c5ceba30171856ad243d48275fcb1e93e2b1118c",
         "query_mode": "BOUNDED_KEYSET_SELECT_ONLY_STREAMING",
         "retained_row_count": 0,
-        "production_digest_readback_status": "NOT_PERFORMED",
+        "production_digest_readback_status": "OBSERVED/VERIFIED_READBACK",
     }
     assert hashlib.sha256((ROOT / reader["path"]).read_bytes()).hexdigest() == reader["sha256"]
     blockers = set(contract["execution_readiness"]["freeze_blockers"])
-    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" in blockers
+    assert "ACTUAL_586710_ROW_DIGEST_READBACK_NOT_PERFORMED" not in blockers
     assert "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED" in blockers
+
+
+def test_observed_content_evidence_hash_and_exact_readback_are_reproducible():
+    contract = load_contract()
+    reference = contract["production_evidence"]["actual_586710_row_digest_readback"]
+    assert reference == {
+        "status": "OBSERVED/VERIFIED_READBACK",
+        "path": "docs/evidence/oracle_research_content_audit_20260826.json",
+        "sha256": "a77361be86febdc1ec750a28ba9a989636cb338a1ac52696da4e0ecee426b476",
+        "logical_evidence_sha256": "b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3",
+        "code_git_commit": "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381",
+        "read_only": True,
+    }
+    assert hashlib.sha256(CONTENT_EVIDENCE_PATH.read_bytes()).hexdigest() == reference["sha256"]
+
+    record = json.loads(CONTENT_EVIDENCE_PATH.read_text(encoding="utf-8"))
+    assert record["status"] == "OBSERVED/VERIFIED_READBACK"
+    assert record["runtime_evidence"] == {
+        "unit": "codex-oracle-content-audit-20260826.service",
+        "invocation_id": "9f1c2cd1ed274c66b498550fb89f9314",
+        "code_git_commit": "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381",
+        "started_at_utc": "2026-08-26T15:03:12Z",
+        "terminal_at_utc": "2026-08-26T15:08:28Z",
+        "terminal_state": "deactivated successfully",
+        "wall_duration_seconds": 316.147,
+        "cpu_duration_seconds": 205.17,
+        "peak_memory": "84.2M",
+        "durable_log_path": "/var/cache/antigravity/oracle-content-audit-20260826.log",
+        "durable_log_sha256": "42e1dd787b0e53a167a19a3945a5a593a9657703a5441f5300dac7241e416886",
+    }
+    logical = record["logical_evidence"]
+    claimed_hash = logical.pop("evidence_sha256")
+    canonical = json.dumps(
+        logical,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    recomputed_hash = hashlib.sha256(canonical).hexdigest()
+    assert recomputed_hash == claimed_hash == reference["logical_evidence_sha256"]
+    assert record["independent_readback"] == {
+        "method": "canonical-json-sha256-with-evidence_sha256-omitted",
+        "recomputed_evidence_sha256": recomputed_hash,
+        "matches": True,
+    }
+
+    content = logical["canonical_content"]
+    coverage = logical["coverage"]
+    pagination = logical["pagination"]
+    assert content["content_sha256"] == "07735e093c39546276082eba82f53a52d43a71cb1cff2d032b58f1315857a834"
+    assert content["ticker_universe_sha256"] == "267cdd0dba60a55346ba6f8a6e843259eacae924c9ea8740a093ea2cce3d1e26"
+    assert (content["row_count"], content["ticker_count"]) == (586_710, 474)
+    assert (coverage["row_count"], coverage["ticker_count"]) == (586_710, 474)
+    assert content["first_session_date"] == coverage["first_session_date"] == "2021-09-08"
+    assert content["last_session_date"] == coverage["last_session_date"] == "2026-08-25"
+    assert pagination == {
+        "maximum_page_rows": 4000,
+        "nonempty_page_count": 147,
+        "page_size": 4000,
+        "query_count": 148,
+        "retained_row_count": 0,
+    }
+    assert logical["read_only"] is True
+    assert record["sanitization"] == {
+        "credentials_included": False,
+        "endpoint_included": False,
+        "source_rows_included": False,
+    }
+    assert set(contract["execution_readiness"]["freeze_blockers"]) == {
+        "FREEZE_APPROVAL_MISSING",
+        "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED",
+        "PRODUCTION_SCHEMA_APPLICATION_NOT_APPROVED_OR_APPLIED",
+        "SCHEMA_POST_AUDIT_NOT_RECORDED",
+        "ACTUAL_DATASET_FREEZE_READBACK_NOT_PERFORMED",
+    }
