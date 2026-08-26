@@ -5,6 +5,8 @@ import sqlite3
 import unittest
 from pathlib import Path
 
+from scripts.apply_atomic_migration import parse_atomic_bundle
+
 
 MIGRATION = (
     Path(__file__).resolve().parents[1]
@@ -58,6 +60,46 @@ class OracleResearchDatasetMigrationTests(unittest.TestCase):
 
     def tearDown(self):
         self.db.close()
+
+    def test_reviewed_artifact_is_atomic_runner_compatible(self):
+        migration = parse_atomic_bundle(MIGRATION.read_bytes())
+        self.assertEqual(
+            migration.migration_id,
+            "20260826_oracle_research_dataset_versions_additive",
+        )
+        self.assertEqual(migration.schema_version, 1)
+        self.assertEqual(len(migration.statements), 26)
+        self.assertEqual(
+            [name for name, _sql in migration.statements],
+            [
+                "001_dataset_versions",
+                "002_frozen_identity_index",
+                "003_source_session_index",
+                "004_provider_lineage",
+                "005_provider_binding_index",
+                "006_dataset_events",
+                "007_one_freeze_event_index",
+                "008_dataset_event_order_index",
+                "009_staging_insert_only",
+                "010_frozen_version_no_update",
+                "011_version_no_delete",
+                "012_lineage_no_insert_after_freeze",
+                "013_lineage_no_update",
+                "014_lineage_no_delete",
+                "015_events_no_update",
+                "016_freeze_event_staging_only",
+                "017_revoke_event_frozen_only",
+                "018_events_no_delete",
+                "019_source_metadata_no_update",
+                "020_source_metadata_no_delete",
+                "021_feature_no_insert",
+                "022_feature_no_update",
+                "023_feature_no_delete",
+                "024_source_lineage_no_insert",
+                "025_source_lineage_no_update",
+                "026_source_lineage_no_delete",
+            ],
+        )
 
     def freeze_fixture(self):
         self.db.executemany(

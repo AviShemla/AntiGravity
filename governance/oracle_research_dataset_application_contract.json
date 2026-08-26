@@ -1,0 +1,182 @@
+{
+  "contract_id": "oracle-research-dataset-application-freeze-v1",
+  "contract_status": "REVIEW_ONLY",
+  "target_database_id": "theoracle-avishe",
+  "source_git_commit": "b2f6d25b0fe2a142bca23b96dba5f6b314562292",
+  "artifacts": {
+    "schema_migration": {
+      "path": "migrations/20260826_oracle_research_dataset_versions_additive.sql",
+      "sha256": "d21aa91b356666c6509e234a74f3041130fc1e4ae62455086aa86b2b18e6e01e",
+      "migration_id": "20260826_oracle_research_dataset_versions_additive",
+      "schema_version": 1,
+      "statement_count": 26,
+      "atomic_runner_compatible": true,
+      "blocker": null
+    },
+    "read_only_reader": {
+      "path": "oracle_research_dataset.py",
+      "sha256": "9991c4080260ce1736829c3118ae5e911234ad7f96d86ea295341b8092556a88"
+    },
+    "atomic_runner": {
+      "path": "scripts/apply_atomic_migration.py",
+      "sha256": "2a43530c84d7eabd850702f6b053bd938593787ee3b40ac2eee0b6a81acd903f"
+    },
+    "dataset_freeze_writer": {
+      "status": "IMPLEMENTED/TESTED_INTERFACE",
+      "path": "oracle_research_dataset_writer.py",
+      "sha256": "0220845dcb870946e38c08055d1ea0a663be8e5cc2232b57b8b237f2eb065adf",
+      "production_adapter_status": "NOT_IMPLEMENTED_OR_APPROVED"
+    }
+  },
+  "approval_gates": {
+    "schema_application": {
+      "required": true,
+      "approval_id": null,
+      "scope": "Apply only the exact hash-locked additive schema artifact.",
+      "authorizes_dataset_freeze": false
+    },
+    "dataset_freeze": {
+      "required": true,
+      "approval_id": null,
+      "must_differ_from": "schema_application",
+      "scope": "Stage and atomically freeze one exact reconciled dataset version.",
+      "authorizes_schema_application": false
+    }
+  },
+  "execution_readiness": {
+    "schema_application_executable": false,
+    "schema_blockers": [
+      "SCHEMA_APPROVAL_MISSING",
+      "ISOLATED_TURSO_MATRIX_NOT_RECORDED"
+    ],
+    "dataset_freeze_executable": false,
+    "freeze_blockers": [
+      "FREEZE_APPROVAL_MISSING",
+      "PRODUCTION_TRANSACTION_ADAPTER_NOT_IMPLEMENTED_OR_APPROVED",
+      "SCHEMA_POST_AUDIT_NOT_RECORDED",
+      "CANONICAL_CONTENT_SERIALIZER_NOT_IMPLEMENTED",
+      "CANONICAL_TICKER_UNIVERSE_SERIALIZER_NOT_IMPLEMENTED"
+    ]
+  },
+  "safety_gates": {
+    "operating_mode": "FROZEN/RESEARCH",
+    "required_inactive_disabled_units": [
+      "ag-sniper.service",
+      "antigravity-nightly.timer",
+      "antigravity-qa-watchdog.timer"
+    ],
+    "required_inactive_units": [
+      "codex-market-ingestion-20260826-v1.service"
+    ],
+    "forbidden_concurrent_actions": [
+      "INGESTION_WRITE",
+      "MODEL_FIT",
+      "SNAPSHOT_VALIDATION_OR_PROMOTION",
+      "RECOMMENDATION_OR_ORDER_STAGING",
+      "TRADING_OR_EMAIL",
+      "SECOND_SCHEMA_OR_FREEZE_WRITER"
+    ]
+  },
+  "read_only_audits": {
+    "pre_schema": [
+      {
+        "id": "schema_object_collision",
+        "sql": "SELECT type,name,sql FROM sqlite_schema WHERE name LIKE 'oracle_research_dataset_%' OR name LIKE 'trg_oracle_research_%' ORDER BY type,name",
+        "expected": "No conflicting object definition; exact existing definitions require hash reconciliation."
+      },
+      {
+        "id": "schema_migration_duplicate",
+        "sql": "SELECT event_id,migration_id,artifact_sha256,operation,target_database_id,executed_at_utc FROM schema_migration_events_v2 WHERE migration_id=? ORDER BY executed_at_utc,event_id",
+        "bindings": ["20260826_oracle_research_dataset_versions_additive"],
+        "expected": "Zero rows before first application; an exact prior APPLY row blocks duplicate execution and changes the operation to readback-only."
+      }
+    ],
+    "post_schema": [
+      {
+        "id": "schema_object_readback",
+        "sql": "SELECT type,name,sql FROM sqlite_schema WHERE name LIKE 'oracle_research_dataset_%' OR name LIKE 'trg_oracle_research_%' ORDER BY type,name",
+        "expected": "Exact reviewed tables, indexes, and triggers only; canonical result digest recorded independently."
+      },
+      {
+        "id": "schema_ledger_readback",
+        "sql": "SELECT event_id,migration_id,artifact_sha256,operation,target_database_id,evidence_json,executed_at_utc FROM schema_migration_events_v2 WHERE migration_id=? ORDER BY executed_at_utc,event_id",
+        "bindings": ["20260826_oracle_research_dataset_versions_additive"],
+        "expected": "Exactly one APPLY event matching target database and artifact SHA-256."
+      },
+      {
+        "id": "schema_empty_boundary",
+        "sql": "SELECT (SELECT COUNT(*) FROM oracle_research_dataset_versions) AS versions,(SELECT COUNT(*) FROM oracle_research_dataset_provider_lineage) AS provider_rows,(SELECT COUNT(*) FROM oracle_research_dataset_events) AS events",
+        "expected": "0 versions, 0 provider rows, and 0 events immediately after schema application."
+      }
+    ],
+    "pre_freeze": [
+      {
+        "id": "source_snapshot_identity",
+        "sql": "SELECT snapshot_id,dataset_type,source_session_date,available_at_utc,provider,code_version,source_checksum_sha256,expected_row_count,expected_ticker_count,status FROM model_input_snapshots WHERE snapshot_id=?",
+        "bindings": ["EXPECTED_MARKET_SNAPSHOT_ID"],
+        "expected": "Exactly one VALIDATED MARKET_FEATURES row matching the approved freeze manifest."
+      },
+      {
+        "id": "source_feature_reconciliation",
+        "sql": "SELECT COUNT(*) AS row_count,COUNT(DISTINCT ticker) AS ticker_count,COUNT(DISTINCT date) AS session_count,MIN(date) AS first_session,MAX(date) AS last_session FROM market_daily_features WHERE snapshot_id=?",
+        "bindings": ["EXPECTED_MARKET_SNAPSHOT_ID"],
+        "expected": "Counts and boundaries exactly match the approved freeze manifest."
+      },
+      {
+        "id": "source_provider_lineage",
+        "sql": "SELECT ticker,provider,requested_source_session_date,first_available_date,last_available_date,source_row_count,source_checksum_sha256 FROM market_data_provider_lineage WHERE snapshot_id=? ORDER BY ticker",
+        "bindings": ["EXPECTED_MARKET_SNAPSHOT_ID"],
+        "expected": "One exact row per ticker; canonical provider-lineage digest matches the approved freeze manifest."
+      },
+      {
+        "id": "freeze_duplicate_identity",
+        "sql": "SELECT dataset_version_id,status,market_snapshot_id,content_sha256,ticker_universe_sha256,provider_lineage_sha256,freeze_approval_id,frozen_at_utc FROM oracle_research_dataset_versions WHERE dataset_version_id=? OR (market_snapshot_id=? AND content_sha256=? AND ticker_universe_sha256=? AND provider_lineage_sha256=?) ORDER BY dataset_version_id",
+        "bindings": ["EXPECTED_DATASET_VERSION_ID", "EXPECTED_MARKET_SNAPSHOT_ID", "EXPECTED_CONTENT_SHA256", "EXPECTED_TICKER_UNIVERSE_SHA256", "EXPECTED_PROVIDER_LINEAGE_SHA256"],
+        "expected": "Zero rows for a new freeze; any row blocks duplicate execution and requires incident/readback handling."
+      }
+    ],
+    "post_freeze": [
+      {
+        "id": "frozen_version_readback",
+        "sql": "SELECT dataset_version_id,market_snapshot_id,market_snapshot_checksum_sha256,source_session_date,evidence_cutoff_utc,first_session_date,last_session_date,expected_row_count,expected_ticker_count,expected_session_count,expected_provider_lineage_count,content_sha256,ticker_universe_sha256,provider_lineage_sha256,schema_version,code_version,status,freeze_approval_id,frozen_by,frozen_at_utc FROM oracle_research_dataset_versions WHERE dataset_version_id=?",
+        "bindings": ["EXPECTED_DATASET_VERSION_ID"],
+        "expected": "Exactly one FROZEN row equal to the separately approved manifest."
+      },
+      {
+        "id": "frozen_provider_readback",
+        "sql": "SELECT ticker,provider,requested_source_session_date,first_available_date,last_available_date,source_row_count,source_checksum_sha256 FROM oracle_research_dataset_provider_lineage WHERE dataset_version_id=? ORDER BY ticker",
+        "bindings": ["EXPECTED_DATASET_VERSION_ID"],
+        "expected": "Exact count and canonical digest equal the source and approved manifest."
+      },
+      {
+        "id": "freeze_event_readback",
+        "sql": "SELECT event_id,event_type,market_snapshot_checksum_sha256,content_sha256,ticker_universe_sha256,provider_lineage_sha256,actor,decided_at_utc,evidence_sha256,created_at_utc FROM oracle_research_dataset_events WHERE dataset_version_id=? ORDER BY decided_at_utc,event_id",
+        "bindings": ["EXPECTED_DATASET_VERSION_ID"],
+        "expected": "Exactly one FREEZE event and no REVOKE event at initial freeze readback."
+      }
+    ]
+  },
+  "duplicate_prevention": [
+    "One schema APPLY ledger identity and exact artifact SHA-256.",
+    "One dataset_version_id primary key.",
+    "One frozen snapshot/content/universe/provider identity.",
+    "One FREEZE event per dataset version.",
+    "One provider-lineage row per dataset version and ticker.",
+    "One BEGIN IMMEDIATE transaction; no retry after ambiguous commit without readback."
+  ],
+  "rollback_boundaries": {
+    "before_schema_begin": "Abandon the plan; production state remains unchanged.",
+    "before_schema_commit": "Issue transaction rollback and prove that neither schema objects nor APPLY ledger event exist.",
+    "after_schema_commit_before_freeze": "Disable the unapproved read/write path logically; retain all schema objects and the APPLY event. Never DROP or DELETE evidence.",
+    "before_freeze_commit": "Issue transaction rollback; source snapshot and source lineage remain unchanged and no partial dataset version, provider binding, or FREEZE event may remain.",
+    "after_freeze_commit": "Never mutate, delete, or drop frozen evidence. Disable consumers and, only with separate approval, append one REVOKE event referencing preserved evidence."
+  },
+  "forbidden_rollback_sql": [
+    "DROP",
+    "DELETE",
+    "TRUNCATE",
+    "UPDATE oracle_research_dataset_versions",
+    "UPDATE oracle_research_dataset_provider_lineage",
+    "UPDATE oracle_research_dataset_events"
+  ]
+}

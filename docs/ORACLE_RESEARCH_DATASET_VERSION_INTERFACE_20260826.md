@@ -5,8 +5,10 @@ Stage: **IMPLEMENTED** locally; production schema remains **NOT APPLIED**.
 ## Purpose
 
 `oracle_research_dataset.py` defines a read-only, fail-closed interface for one
-exact frozen Turso research dataset version. It does not create, freeze,
-validate, promote, revoke, or mutate a dataset.
+exact frozen Turso research dataset version. `oracle_research_dataset_writer.py`
+defines a pure, injected transaction contract for staging and freezing. Neither
+module owns a connection, credentials, schema application, validation,
+promotion, revocation, or production execution path.
 
 The caller must provide the expected market snapshot ID, lowercase SHA-256,
 source session, research dataset version ID, and point-in-time cutoff. The
@@ -57,13 +59,28 @@ connection with minimal source-table stubs. This is a test-only Turso-compatible
 DDL/trigger check: it creates no database file, uses no credentials or network,
 and is not an application or production fallback.
 
-## Write-order contract for a future approved writer
+## Implemented write-order contract
 
-A future writer must stage the version and exact provider bindings first, then
-atomically record the freeze event and transition the version to `FROZEN` only
-after all hashes and counts reconcile. It must never update source market rows
-to make a freeze succeed. A later revocation is an append-only event; it does
-not rewrite or delete the frozen artifact.
+The writer accepts only an injected immediate transaction runner. Within that
+boundary it independently verifies the exact validated market snapshot,
+checksum, row/ticker/session coverage, cutoff chronology, and canonical
+provider-lineage digest. Staging can create only `STAGING`, copies exact
+provider bindings without changing any source table, and reads the complete
+result back before commit.
+
+Freezing requires explicit event ID, actor, decision time, evidence checksum,
+and all four matching identity hashes. The event append and conditional
+`STAGING` to `FROZEN` transition occur in one transaction, followed by exact
+readback through that same transaction. Exact retries return the existing
+result; conflicting retries fail closed. If an adapter reports an ambiguous
+commit result, the writer accepts success only after an independent exact
+readback. A later revocation remains an append-only event and is outside this
+writer.
+
+The contract is implemented and dependency-free tested, but no production
+transaction adapter is provided. Connecting it to Turso or another production
+database, applying the schema, staging data, and freezing data each remain
+separately approval-gated operations.
 
 ## Current rollback boundary
 
