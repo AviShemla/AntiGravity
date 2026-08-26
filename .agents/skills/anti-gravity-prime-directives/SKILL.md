@@ -125,6 +125,35 @@ email. Activation requires the mode-transition approval defined in root
 11. **Fresh Quarantine:**
     - Legacy quarantine membership is historical evidence only. The repaired stock and ETF systems start with empty quarantine state; every future entry/release records ticker, scope, reason code, evidence, date, and policy version.
 
+12. **Claim-Evidence Lifecycle:**
+    - Classify every material claim as `DESIGNED`, `IMPLEMENTED`, `TESTED`,
+      `DEPLOYED`, `OBSERVED`, `VERIFIED`, `FAILED`, or `UNVERIFIED`. Never
+      collapse these states into a generic completion claim.
+    - The words `fixed`, `handled`, `complete`, `working`, and `healthy` are
+      reserved for `VERIFIED` claims backed by a manifest that passes
+      `scripts/validate_claim_evidence_manifest.py` against
+      `schemas/claim_evidence_manifest.schema.json`.
+    - `VERIFIED` requires exact artifact identity and version/digest,
+      executable behavioral proof, runtime/deployment identity when applicable,
+      independent readback, observation time, and a non-expired freshness
+      boundary. Missing or contradictory evidence forces `UNVERIFIED` or
+      `FAILED`.
+    - A prior claimed defect also requires a regression that demonstrates the
+      original failure and the repaired behavior, plus execution through the
+      actual production path when applicable. Helper-only and mock-only tests
+      do not satisfy that requirement.
+    - A sub-agent or independent reviewer may gather evidence and attempt to
+      falsify a claim. Its narrative conclusion is not evidence; validate the
+      referenced commands, artifacts, identifiers, results, and timestamps.
+    - Before reporting a strong claim, validate and preserve its manifest. If
+      validation fails, report the exact missing or contradictory fields and
+      use `FAILED` or `UNVERIFIED`, not reassuring language.
+    - For high-risk system status, also load
+      `governance/high_risk_rule_registry.json`, collect each applicable
+      primary evidence item, and run `scripts/validate_high_risk_evidence.py`.
+      Registry classifications are `MACHINE_ENFORCED`, `EVIDENCE_GATED`,
+      `APPROVAL_GATED`, and `ADVISORY`; missing enforced results fail closed.
+
 ---
 
 ## 2. ⚡ INFRASTRUCTURE & DAEMON PROTOCOLS

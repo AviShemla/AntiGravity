@@ -39,7 +39,7 @@ def validate_daily_bars(
     ticker: str,
     source_session_date: date,
     minimum_rows: int = 252,
-    ohlc_relative_tolerance: float = 0.0005,
+    ohlc_relative_tolerance: float = 0.0,
 ) -> pd.DataFrame:
     required = ["Date", "Open", "High", "Low", "Close", "Volume"]
     missing = [column for column in required if column not in frame.columns]

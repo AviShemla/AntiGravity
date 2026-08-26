@@ -109,6 +109,43 @@ an updated rule here.
    authorized bounded technical sub-agents for independent diagnosis and
    verification when parallel work materially shortens an incident; their
    conclusions are not proof until reconciled with direct evidence.
+9. **Claim-evidence promotion gate.** Every material engineering claim must use
+   one of these states: `DESIGNED`, `IMPLEMENTED`, `TESTED`, `DEPLOYED`,
+   `OBSERVED`, `VERIFIED`, `FAILED`, or `UNVERIFIED`. These states are not
+   synonyms and may advance only when the evidence for the next state exists.
+   - Do not say `fixed`, `handled`, `complete`, `working`, or `healthy` unless
+     the claim is `VERIFIED` in a machine-validated evidence manifest. The
+     manifest must identify the exact artifact and version/digest, executable
+     behavioral proof, runtime/deployment identity when applicable,
+     independent readback, observation timestamp, and freshness limit.
+   - A code diff proves at most `IMPLEMENTED`; a passing unit test proves at
+     most `TESTED`; a successful deploy command proves at most `DEPLOYED`; and
+     a live observation proves at most `OBSERVED`. Only the complete evidence
+     chain permits `VERIFIED`.
+   - For a previously claimed defect, verification requires a regression test
+     that reproduces the original failure before the repair and passes after
+     it, plus proof through the actual production code path when that path is
+     applicable. A mock, helper-only test, design note, or sub-agent narrative
+     is not production-path proof.
+   - Any contradiction, failed check, stale observation, artifact/version
+     mismatch, or missing applicable runtime identity forces `FAILED` or
+     `UNVERIFIED`. It must be stated prominently and cannot be averaged away
+     by other passing checks.
+   - Before making a strong completion/health claim, create or update a claim
+     evidence manifest conforming to
+     `schemas/claim_evidence_manifest.schema.json` and run
+     `scripts/validate_claim_evidence_manifest.py`. Preserve the manifest and
+     referenced evidence with the change or incident record.
+   - An independent verifier may collect and challenge evidence, but its prose
+     conclusion is never proof. The primary agent must validate the underlying
+     artifacts and readbacks directly before reporting the claim.
+   - The high-risk controls are indexed in
+     `governance/high_risk_rule_registry.json`. Before a production-readiness,
+     scheduler-health, snapshot-readiness, model-readiness, execution-safety,
+     or recovery-checkpoint claim, collect primary evidence for every
+     applicable registry entry and run
+     `scripts/validate_high_risk_evidence.py`. A missing enforced rule result
+     fails closed.
 
 ### Operating mode and automation authority
 

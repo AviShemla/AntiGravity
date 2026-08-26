@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://antigravity.invalid/schemas/claim_evidence_manifest.schema.json",
+  "title": "AntiGravity claim evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "claim_id", "claim_text", "state", "prior_claim_issue", "artifact", "behavioral_proof", "runtime", "independent_readback", "observed_at", "fresh_until", "contradictions"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "claim_id": {"type": "string", "minLength": 1},
+    "claim_text": {"type": "string", "minLength": 1},
+    "state": {"enum": ["DESIGNED", "IMPLEMENTED", "TESTED", "DEPLOYED", "OBSERVED", "VERIFIED", "FAILED", "UNVERIFIED"]},
+    "prior_claim_issue": {"type": "boolean"},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["identity", "version", "digest"],
+      "properties": {
+        "identity": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "minLength": 1}
+      }
+    },
+    "behavioral_proof": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command", "exit_code", "result", "evidence_ref"],
+      "properties": {
+        "command": {"type": "string"}, "exit_code": {"type": "integer"},
+        "result": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "evidence_ref": {"type": "string"}
+      }
+    },
+    "regression": {
+      "type": "object", "additionalProperties": false,
+      "required": ["original_failure_reproduced", "repaired_behavior_passed", "command", "evidence_ref"],
+      "properties": {
+        "original_failure_reproduced": {"type": "boolean"},
+        "repaired_behavior_passed": {"type": "boolean"},
+        "command": {"type": "string", "minLength": 1},
+        "evidence_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["applicable", "production_path_proven", "identity", "evidence_ref"],
+      "properties": {
+        "applicable": {"type": "boolean"},
+        "production_path_proven": {"type": "boolean"},
+        "identity": {"type": "string"}, "evidence_ref": {"type": "string"}
+      }
+    },
+    "independent_readback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["command", "result", "evidence_ref"],
+      "properties": {
+        "command": {"type": "string"},
+        "result": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "evidence_ref": {"type": "string"}
+      }
+    },
+    "observed_at": {"type": "string", "format": "date-time"},
+    "fresh_until": {"type": "string", "format": "date-time"},
+    "contradictions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "collector": {
+      "type": "object", "additionalProperties": false,
+      "required": ["identity", "narrative_is_proof"],
+      "properties": {"identity": {"type": "string", "minLength": 1}, "narrative_is_proof": {"const": false}}
+    }
+  }
+}

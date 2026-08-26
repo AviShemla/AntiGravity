@@ -57,11 +57,13 @@ def evidence(source):
         snapshot_id="market_features_2026-08-25_1234567890abcdef",
         status="STAGING",
         checksum=content_checksum(source),
+        stored_rows_checksum=content_checksum(source),
         row_count=4,
         ticker_count=4,
         provider_lineage_count=6,
         provider_lineage_sha256="b" * 64,
         rejection_event_id="reject-20260825-ohlc",
+        production_approval_id="approval-20260826-ohlc-repair",
     )
 
 
@@ -145,14 +147,15 @@ def test_build_plan_normalizes_exact_four_rows_and_links_rejected_evidence():
     assert notes["supersedes_rejection_event_id"] == expected.rejection_event_id
     assert notes["normalization_commit"] == NORMALIZATION_COMMIT
     assert notes["production_approval_id"] == "approval-20260826-ohlc-repair"
+    assert notes["stored_rows_checksum_sha256"] == expected.stored_rows_checksum
     assert notes["validation_state"] == "STAGING_NOT_VALIDATED"
 
 
-def test_plan_fails_when_original_rows_do_not_reproduce_checksum():
+def test_plan_fails_when_rows_do_not_reproduce_reviewed_stored_checksum():
     source = frame()
     expected = evidence(source)
     source.loc[0, "Open"] += 1.0
-    with pytest.raises(SnapshotRepairError, match="immutable original checksum"):
+    with pytest.raises(SnapshotRepairError, match="reviewed stored-row checksum"):
         build_plan(
             source,
             expected,
@@ -229,7 +232,15 @@ def test_exact_original_metadata_requires_physical_counts_and_rejection_event():
             expected.row_count, expected.ticker_count,
         ]],
         [[expected.row_count, expected.ticker_count]],
-        [[expected.snapshot_id, "REJECTED", expected.checksum]],
+        [[
+            expected.snapshot_id, "REJECTED", expected.checksum,
+            expected.production_approval_id,
+            json.dumps({
+                "original_checksum_sha256": expected.checksum,
+                "stored_rows_checksum_sha256": expected.stored_rows_checksum,
+                "production_approval_id": expected.production_approval_id,
+            }),
+        ]],
     ])
     require_exact_original_metadata(reader, expected)
 

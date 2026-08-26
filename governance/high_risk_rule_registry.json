@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "rules": [
+    {
+      "id": "claim.language_state",
+      "classification": "MACHINE_ENFORCED",
+      "risk": "CRITICAL",
+      "exact_verifier": "python scripts/validate_claim_evidence_manifest.py <manifest.json>",
+      "required_evidence": ["claim.manifest_valid"],
+      "freshness_seconds": 3600,
+      "blocking_scope": "strong completion, health, and remediation claims",
+      "override_authority": "none; missing evidence must be reported UNVERIFIED",
+      "recovery_action": "collect fresh primary evidence and revalidate"
+    },
+    {
+      "id": "production.forbidden_data_sources",
+      "classification": "MACHINE_ENFORCED",
+      "risk": "CRITICAL",
+      "exact_verifier": "repository production-path scan plus focused tests proving no CSV, Excel, SQLite, or Streamlit runtime source/fallback",
+      "required_evidence": ["source_scan.command", "source_scan.clean", "source_scan.commit", "source_scan.test_result"],
+      "freshness_seconds": 86400,
+      "blocking_scope": "production data ingestion, models, dashboard truth, and reporting",
+      "override_authority": "Avi only for documented read-only legacy recovery; never for production truth",
+      "recovery_action": "remove the forbidden path or isolate it as historical-only, then rerun scan and tests"
+    },
+    {
+      "id": "git.runtime_identity",
+      "classification": "EVIDENCE_GATED",
+      "risk": "CRITICAL",
+      "exact_verifier": "read back canonical worktree root, HEAD, origin, cleanliness, deployed hashes, and applicable systemd WorkingDirectory/ExecStart/EnvironmentFiles",
+      "required_evidence": ["git.root", "git.head", "git.origin", "git.clean", "runtime.identity", "runtime.hash_match"],
+      "freshness_seconds": 900,
+      "blocking_scope": "code edit, test attribution, deployment, and runtime claims",
+      "override_authority": "Avi for a separately identified deployment scope only",
+      "recovery_action": "stop mutation, identify the authoritative tree/version, and reconcile hashes before resuming"
+    },
+    {
+      "id": "snapshot.lifecycle_lineage",
+      "classification": "MACHINE_ENFORCED",
+      "risk": "CRITICAL",
+      "exact_verifier": "independent Turso snapshot audit of identity, immutable checksum, lifecycle events, provider lineage, counts, and downstream outputs",
+      "required_evidence": ["snapshot.id", "snapshot.status", "snapshot.checksum", "snapshot.lifecycle", "snapshot.provider_lineage", "snapshot.counts", "snapshot.no_unauthorized_outputs"],
+      "freshness_seconds": 900,
+      "blocking_scope": "snapshot validation/promotion, model inputs, and downstream recommendations",
+      "override_authority": "none for immutability or lineage; Avi may approve a new replacement snapshot",
+      "recovery_action": "reject or quarantine the snapshot, preserve evidence, and create an idempotent replacement"
+    },
+    {
+      "id": "service.scheduler_liveness",
+      "classification": "EVIDENCE_GATED",
+      "risk": "HIGH",
+      "exact_verifier": "fresh systemd readback of unit state, InvocationID, PID, command, timestamps, durable checkpoint, and representative firing where applicable",
+      "required_evidence": ["service.host", "service.unit", "service.invocation", "service.pid", "service.command", "service.started_at", "service.checkpoint", "service.checkpoint_age"],
+      "freshness_seconds": 300,
+      "blocking_scope": "RUNNING, ACTIVE, healthy scheduler, and completion claims",
+      "override_authority": "none for status claims",
+      "recovery_action": "classify STALLED/NOT RUNNING, preserve logs, diagnose, and perform only bounded in-scope repair"
+    },
+    {
+      "id": "model.validation_readiness",
+      "classification": "MACHINE_ENFORCED",
+      "risk": "CRITICAL",
+      "exact_verifier": "model readiness audit over immutable lineage, spec equivalence, leakage controls, walk-forward results, diagnostics, calibration, costs, drawdown, and baseline comparison",
+      "required_evidence": ["model.snapshot", "model.code", "model.config", "model.spec_equivalent", "model.no_leakage", "model.walk_forward", "model.diagnostics", "model.calibration", "model.costs", "model.drawdown", "model.baseline"],
+      "freshness_seconds": 86400,
+      "blocking_scope": "model promotion, production eligibility, ETF priors, and orders",
+      "override_authority": "Avi may approve further research, never waive failed promotion evidence",
+      "recovery_action": "retain research output, mark ineligible, repair the failed control, and rerun untouched validation"
+    },
+    {
+      "id": "trading.execution_lock",
+      "classification": "APPROVAL_GATED",
+      "risk": "CRITICAL",
+      "exact_verifier": "read back operating mode, explicit approval record, kill switch, service states, plan uniqueness, risk gates, and ledger reconciliation",
+      "required_evidence": ["trading.mode", "trading.approval", "trading.kill_switch", "trading.sniper_state", "trading.risk_gates", "trading.plan_unique", "trading.ledger_reconciled"],
+      "freshness_seconds": 60,
+      "blocking_scope": "recommendation-to-order transition, sniper activation, and any external order",
+      "override_authority": "Avi through an explicit scoped mode transition; hard safety gates remain non-waivable",
+      "recovery_action": "fail closed, stop new execution, preserve plan/evidence, and reconcile before reconsideration"
+    },
+    {
+      "id": "recovery.checkpoint_secret_scan",
+      "classification": "MACHINE_ENFORCED",
+      "risk": "HIGH",
+      "exact_verifier": "verify tested clean diff, staged secret scan, pushed commit readback, and recovery checkpoint readback",
+      "required_evidence": ["recovery.tests", "recovery.secret_scan", "recovery.commit", "recovery.push_readback", "recovery.checkpoint_readback"],
+      "freshness_seconds": 86400,
+      "blocking_scope": "recovery checkpoint and claims that work is safely backed up",
+      "override_authority": "none for secret scan; no-change checkpoint is allowed without a commit",
+      "recovery_action": "remove secrets or unverified changes, retest, rescan, then create and read back the checkpoint"
+    }
+  ]
+}

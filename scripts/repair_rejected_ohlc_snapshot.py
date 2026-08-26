@@ -75,11 +75,13 @@ class OriginalEvidence:
     snapshot_id: str
     status: str
     checksum: str
+    stored_rows_checksum: str
     row_count: int
     ticker_count: int
     provider_lineage_count: int
     provider_lineage_sha256: str
     rejection_event_id: str
+    production_approval_id: str
 
 
 @dataclass(frozen=True)
@@ -110,6 +112,8 @@ def validate_expected_evidence(expected: OriginalEvidence) -> None:
         raise ValueError("Expected original status must be STAGING or REJECTED.")
     if not SHA256.fullmatch(expected.checksum):
         raise ValueError("Original checksum must be a lowercase SHA-256.")
+    if not SHA256.fullmatch(expected.stored_rows_checksum):
+        raise ValueError("Stored-row checksum must be a lowercase SHA-256.")
     if expected.row_count <= 0 or expected.ticker_count <= 0:
         raise ValueError("Expected snapshot counts must be positive.")
     if expected.provider_lineage_count <= 0:
@@ -145,14 +149,31 @@ def require_exact_original_metadata(reader: TursoReadPipeline, expected: Origina
         raise SnapshotRepairError("Original snapshot physical counts do not match metadata.")
 
     rejection = reader.execute(
-        "SELECT snapshot_id,decision,snapshot_checksum_sha256 "
+        "SELECT snapshot_id,decision,snapshot_checksum_sha256,"
+        "source_evidence_id,approval_notes "
         "FROM model_input_approval_events WHERE event_id=?",
         [expected.rejection_event_id],
     ).rows
-    if len(rejection) != 1 or list(rejection[0]) != [
+    if len(rejection) != 1 or list(rejection[0][:4]) != [
         expected.snapshot_id, "REJECTED", expected.checksum,
+        expected.production_approval_id,
     ]:
         raise SnapshotRepairError("Checksum-matched rejection evidence is missing or mismatched.")
+    try:
+        notes = json.loads(str(rejection[0][4]))
+    except (TypeError, ValueError) as exc:
+        raise SnapshotRepairError("Rejection evidence notes are not valid JSON.") from exc
+    wanted_notes = {
+        "original_checksum_sha256": expected.checksum,
+        "stored_rows_checksum_sha256": expected.stored_rows_checksum,
+        "production_approval_id": expected.production_approval_id,
+    }
+    if not isinstance(notes, dict) or any(
+        notes.get(key) != value for key, value in wanted_notes.items()
+    ):
+        raise SnapshotRepairError(
+            "Rejection evidence does not bind the stored-row checksum."
+        )
 
 
 def require_exact_violation_set(rows: list[list[object]]) -> None:
@@ -269,9 +290,9 @@ def build_plan(
     if int(frame["Ticker"].nunique()) != expected.ticker_count:
         raise SnapshotRepairError("In-memory original ticker count differs from reviewed evidence.")
     reconstructed_checksum = content_checksum(frame)
-    if reconstructed_checksum != expected.checksum:
+    if reconstructed_checksum != expected.stored_rows_checksum:
         raise SnapshotRepairError(
-            "Stored original rows cannot reproduce the immutable original checksum."
+            "Stored original rows cannot reproduce the reviewed stored-row checksum."
         )
     normalized = normalize_ohlc_envelope(frame)
     replacement_checksum = content_checksum(normalized)
@@ -286,6 +307,7 @@ def build_plan(
             "supersedes_rejected_snapshot_id": expected.snapshot_id,
             "supersedes_rejection_event_id": expected.rejection_event_id,
             "original_checksum_sha256": expected.checksum,
+            "stored_rows_checksum_sha256": expected.stored_rows_checksum,
             "normalization_commit": NORMALIZATION_COMMIT,
             "repair_code_version": code_version,
             "production_approval_id": production_approval_id,
@@ -541,6 +563,7 @@ def parse_args() -> argparse.Namespace:
         choices=("STAGING", "REJECTED"),
     )
     parser.add_argument("--expected-original-checksum", required=True)
+    parser.add_argument("--expected-stored-rows-checksum", required=True)
     parser.add_argument("--expected-row-count", required=True, type=int)
     parser.add_argument("--expected-ticker-count", required=True, type=int)
     parser.add_argument("--expected-provider-lineage-count", required=True, type=int)
@@ -559,11 +582,13 @@ def main() -> int:
         snapshot_id=args.original_snapshot_id,
         status=args.expected_original_status,
         checksum=args.expected_original_checksum,
+        stored_rows_checksum=args.expected_stored_rows_checksum,
         row_count=args.expected_row_count,
         ticker_count=args.expected_ticker_count,
         provider_lineage_count=args.expected_provider_lineage_count,
         provider_lineage_sha256=args.expected_provider_lineage_sha256,
         rejection_event_id=args.expected_rejection_event_id,
+        production_approval_id=args.production_approval_id,
     )
     validate_expected_evidence(expected)
     require_normalization_ancestry(args.expected_code_version)

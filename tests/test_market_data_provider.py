@@ -6,6 +6,8 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 
+from scripts.rebuild_market_features_to_turso import build_provider_lineage
+
 from market_data_provider import (
     fetch_tiingo_history,
     fetch_tiingo_revision_bars,
@@ -185,6 +187,35 @@ class MarketDataProviderTests(unittest.TestCase):
         self.assertIsNone(provider)
         self.assertIn("YAHOO_FINANCE[1]: LineageError", error)
         self.assertIn("TIINGO: LineageError", error)
+
+    def test_one_cent_yahoo_ohlc_violation_triggers_tiingo_fallback(self):
+        yahoo = valid_bars()
+        yahoo.loc[yahoo.index[-1], "High"] = (
+            yahoo.loc[yahoo.index[-1], "Open"] - 0.01
+        )
+        tiingo = valid_bars()
+
+        ticker, bars, provider, error = fetch_validated_daily_bars(
+            "AAA",
+            SOURCE_SESSION,
+            "2021-08-01",
+            tiingo_api_key="rotated-test-key",
+            yahoo_fetcher=lambda *_args: yahoo,
+            tiingo_fetcher=lambda *_args: tiingo,
+            yahoo_attempts=1,
+            sleep_fn=lambda _seconds: None,
+        )
+
+        self.assertEqual(ticker, "AAA")
+        self.assertEqual(provider, "TIINGO_EOD")
+        self.assertIsNone(error)
+        self.assertEqual(len(bars), 320)
+        self.assertGreaterEqual(bars.iloc[-1]["High"], bars.iloc[-1]["Open"])
+        lineage = build_provider_lineage(
+            {ticker: bars}, {ticker: provider}, source_session=SOURCE_SESSION
+        )
+        self.assertEqual(lineage[0][0], "AAA")
+        self.assertEqual(lineage[0][1], "TIINGO_EOD")
 
     def test_missing_tiingo_credential_fails_closed(self):
         ticker, bars, provider, error = fetch_validated_daily_bars(
