@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 import stat
+import subprocess
+import sys
 from datetime import datetime
 from dataclasses import replace
 import time
@@ -314,3 +316,22 @@ def test_cli_boundary_redacts_arbitrary_exception_text(monkeypatch, capsys, tmp_
     assert secret not in captured.out + captured.err
     assert "token-secret-value" not in captured.out + captured.err
     assert "libsql://" not in captured.out + captured.err
+
+
+def test_absolute_script_invocation_from_unrelated_cwd_bootstraps_repository(tmp_path):
+    script = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "run_oracle_research_dataset_isolated_matrix_lifecycle.py"
+    )
+    completed = subprocess.run(
+        (sys.executable, str(script), "--help"),
+        cwd=tmp_path,
+        shell=False,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert completed.returncode == 0
+    assert "--executor-git-commit" in completed.stdout
+    assert "ModuleNotFoundError" not in completed.stdout + completed.stderr

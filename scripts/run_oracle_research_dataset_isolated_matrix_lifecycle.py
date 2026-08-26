@@ -18,6 +18,10 @@ import sys
 import threading
 from typing import Callable
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from model_lineage import LineageError
 from scripts.oracle_research_dataset_isolated_matrix import execute_with_adapter
 from scripts.oracle_research_dataset_isolated_matrix_execute import (
@@ -38,7 +42,6 @@ from scripts.oracle_research_dataset_isolated_matrix_lifecycle import (
 from turso_read_pipeline import TursoReadPipeline
 
 
-ROOT = Path(__file__).resolve().parents[1]
 MAX_PRODUCTION_ENV_BYTES = 64 * 1024
 MAX_CHECKPOINT_INTERVAL_SECONDS = 300
 

@@ -10,12 +10,16 @@ import argparse
 import hashlib
 import math
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from turso_read_pipeline import TursoReadPipeline, _encode_arg
 

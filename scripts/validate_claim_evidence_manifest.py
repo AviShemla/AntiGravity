@@ -13,6 +13,9 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 from scripts.evidence_binding import load_bound_json
 from scripts.signed_attestation import verify_attestation
 

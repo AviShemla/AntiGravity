@@ -12,11 +12,15 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Protocol
 from urllib.parse import urlparse
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from model_lineage import LineageError
 from scripts.apply_atomic_migration import (
@@ -45,7 +49,6 @@ from scripts.oracle_research_dataset_isolated_matrix import (
 from turso_read_pipeline import PipelineResult, TursoReadPipeline, _encode_arg
 
 
-ROOT = Path(__file__).resolve().parents[1]
 CLI = "/home/codexops/.turso/turso"
 PROOF_SOURCE = "turso-cli-v1.0.32-db-show-text"
 MAX_SHOW_BYTES = 64 * 1024

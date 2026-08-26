@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 from scripts.evidence_binding import load_bound_json
 
 VALID_CLASSIFICATIONS = {"MACHINE_ENFORCED", "EVIDENCE_GATED", "APPROVAL_GATED", "ADVISORY"}
