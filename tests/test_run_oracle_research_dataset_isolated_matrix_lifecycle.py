@@ -21,6 +21,8 @@ from scripts.run_oracle_research_dataset_isolated_matrix_lifecycle import (
     MAX_CHECKPOINT_INTERVAL_SECONDS,
     WorkerConfig,
     WorkerError,
+    _read_turso_settings,
+    ephemeral_turso_home,
     main,
     run_worker,
 )
@@ -51,9 +53,14 @@ def write_inputs(tmp_path):
         encoding="utf-8",
     )
     os.chmod(env_path, 0o600)
+    settings_path = tmp_path / "settings.json"
+    settings_path.write_bytes(b'{"settings":"fixture"}\n')
+    os.chmod(settings_path, 0o600)
     return WorkerConfig(
         intent_path,
         env_path,
+        settings_path,
+        os.geteuid(),
         tmp_path / "evidence",
         tmp_path / "secrets",
         tmp_path / "checkpoint.json",
@@ -67,6 +74,10 @@ class Reader:
 
 
 class Matrix:
+    pass
+
+
+class Fatal(BaseException):
     pass
 
 
@@ -151,7 +162,9 @@ def test_production_env_rejects_symlink_and_hardlink(tmp_path):
     symlink.symlink_to(original)
     for candidate in (symlink,):
         changed = WorkerConfig(
-            config.intent_path, candidate, config.evidence_directory,
+            config.intent_path, candidate,
+            config.turso_settings_path, config.turso_settings_owner_uid,
+            config.evidence_directory,
             config.secret_directory, config.checkpoint_path,
             config.executor_git_commit, config.repository_root,
         )
@@ -200,6 +213,8 @@ def test_cli_requires_explicit_executor_git_commit_before_any_execution(tmp_path
         main([
             "--intent-json", str(tmp_path / "intent.json"),
             "--production-env-file", str(tmp_path / "production.env"),
+            "--turso-settings-file", str(tmp_path / "settings.json"),
+            "--turso-settings-owner-uid", str(os.geteuid()),
             "--evidence-directory", str(tmp_path / "evidence"),
             "--secret-directory", str(tmp_path / "secrets"),
             "--checkpoint-json", str(tmp_path / "checkpoint.json"),
@@ -306,6 +321,8 @@ def test_cli_boundary_redacts_arbitrary_exception_text(monkeypatch, capsys, tmp_
     exit_code = main([
         "--intent-json", str(tmp_path / "intent.json"),
         "--production-env-file", str(tmp_path / "production.env"),
+        "--turso-settings-file", str(tmp_path / "settings.json"),
+        "--turso-settings-owner-uid", str(os.geteuid()),
         "--evidence-directory", str(tmp_path / "evidence"),
         "--secret-directory", str(tmp_path / "secrets"),
         "--checkpoint-json", str(tmp_path / "checkpoint.json"),
@@ -316,6 +333,130 @@ def test_cli_boundary_redacts_arbitrary_exception_text(monkeypatch, capsys, tmp_
     assert secret not in captured.out + captured.err
     assert "token-secret-value" not in captured.out + captured.err
     assert "libsql://" not in captured.out + captured.err
+
+
+@pytest.mark.parametrize("failure", [None, Fatal()])
+def test_ephemeral_turso_home_restores_home_removes_copy_and_preserves_source(
+    tmp_path, monkeypatch, failure
+):
+    config = write_inputs(tmp_path)
+    private_tmp = tmp_path / "private-tmp"
+    private_tmp.mkdir(mode=0o700)
+    original = config.turso_settings_path.read_bytes()
+    original_identity = os.lstat(config.turso_settings_path)
+    monkeypatch.setenv("HOME", "/preserved/home")
+    observed_home = None
+    try:
+        with ephemeral_turso_home(
+            config.turso_settings_path,
+            expected_owner_uid=config.turso_settings_owner_uid,
+            temp_root=private_tmp,
+        ) as home:
+            observed_home = home
+            assert os.environ["HOME"] == str(home)
+            assert stat.S_IMODE(os.lstat(home).st_mode) == 0o700
+            copied = home / ".config" / "turso" / "settings.json"
+            assert copied.read_bytes() == original
+            assert stat.S_IMODE(os.lstat(copied).st_mode) == 0o600
+            assert os.lstat(copied).st_nlink == 1
+            copied.write_bytes(original + b"\n")
+            if failure is not None:
+                raise failure
+    except Fatal:
+        assert failure is not None
+    assert os.environ["HOME"] == "/preserved/home"
+    assert observed_home is not None and not observed_home.exists()
+    assert list(private_tmp.iterdir()) == []
+    assert config.turso_settings_path.read_bytes() == original
+    after = os.lstat(config.turso_settings_path)
+    assert (after.st_dev, after.st_ino, after.st_size) == (
+        original_identity.st_dev,
+        original_identity.st_ino,
+        original_identity.st_size,
+    )
+
+
+def test_turso_settings_rejects_mode_symlink_hardlink_and_open_race(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path)
+    settings = config.turso_settings_path
+    os.chmod(settings, 0o644)
+    with pytest.raises(WorkerError, match="metadata is not exact"):
+        _read_turso_settings(settings, expected_owner_uid=os.geteuid())
+    os.chmod(settings, 0o600)
+    with pytest.raises(WorkerError, match="metadata is not exact"):
+        _read_turso_settings(settings, expected_owner_uid=os.geteuid() + 1)
+    symlink = tmp_path / "settings-link.json"
+    symlink.symlink_to(settings)
+    with pytest.raises(WorkerError, match="symbolic link"):
+        _read_turso_settings(symlink, expected_owner_uid=os.geteuid())
+    hardlink = tmp_path / "settings-hardlink.json"
+    os.link(settings, hardlink)
+    with pytest.raises(WorkerError, match="metadata is not exact"):
+        _read_turso_settings(settings, expected_owner_uid=os.geteuid())
+    os.unlink(hardlink)
+
+    replacement = tmp_path / "replacement-settings.json"
+    replacement.write_bytes(b'{"replacement":true}\n')
+    os.chmod(replacement, 0o600)
+    real_open = os.open
+
+    def raced_open(path, flags, *args, **kwargs):
+        if Path(path) == settings:
+            return real_open(replacement, flags, *args, **kwargs)
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", raced_open)
+    with pytest.raises(WorkerError, match="identity changed"):
+        _read_turso_settings(settings, expected_owner_uid=os.geteuid())
+
+
+def test_worker_exposes_writable_private_home_only_during_lifecycle(tmp_path, monkeypatch):
+    config = write_inputs(tmp_path)
+    monkeypatch.setenv("HOME", "/original-read-only-home")
+    observed = {}
+
+    def lifecycle(**kwargs):
+        home = Path(os.environ["HOME"])
+        copied = home / ".config" / "turso" / "settings.json"
+        copied.write_bytes(copied.read_bytes() + b"\n")
+        observed["home"] = home
+        observed["stderr"] = ""
+        return object()
+
+    run_worker(
+        config,
+        lifecycle=lifecycle,
+        production_reader_factory=lambda endpoint, token: Reader(),
+        matrix_executor_factory=lambda url, token, reader, intent: Matrix(),
+    )
+    assert observed["stderr"] == ""
+    assert os.environ["HOME"] == "/original-read-only-home"
+    assert not observed["home"].exists()
+
+
+def test_ephemeral_home_setup_failure_restores_home_and_removes_temp_tree(
+    tmp_path, monkeypatch
+):
+    import scripts.run_oracle_research_dataset_isolated_matrix_lifecycle as module
+
+    config = write_inputs(tmp_path)
+    private_tmp = tmp_path / "private-tmp"
+    private_tmp.mkdir(mode=0o700)
+    monkeypatch.setenv("HOME", "/preserved/home")
+    monkeypatch.setattr(
+        module,
+        "_write_private_settings",
+        lambda path, raw: (_ for _ in ()).throw(Fatal()),
+    )
+    with pytest.raises(Fatal):
+        with ephemeral_turso_home(
+            config.turso_settings_path,
+            expected_owner_uid=config.turso_settings_owner_uid,
+            temp_root=private_tmp,
+        ):
+            pytest.fail("setup failure must occur before lifecycle entry")
+    assert os.environ["HOME"] == "/preserved/home"
+    assert list(private_tmp.iterdir()) == []
 
 
 def test_absolute_script_invocation_from_unrelated_cwd_bootstraps_repository(tmp_path):

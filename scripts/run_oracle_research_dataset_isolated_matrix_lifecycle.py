@@ -8,6 +8,7 @@ commit and never prints credentials, CLI response bodies, or database rows.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
@@ -15,6 +16,7 @@ import os
 from pathlib import Path
 import stat
 import sys
+import tempfile
 import threading
 from typing import Callable
 
@@ -43,6 +45,7 @@ from turso_read_pipeline import TursoReadPipeline
 
 
 MAX_PRODUCTION_ENV_BYTES = 64 * 1024
+MAX_TURSO_SETTINGS_BYTES = 64 * 1024
 MAX_CHECKPOINT_INTERVAL_SECONDS = 300
 
 
@@ -54,6 +57,8 @@ class WorkerError(RuntimeError):
 class WorkerConfig:
     intent_path: Path
     production_env_path: Path
+    turso_settings_path: Path
+    turso_settings_owner_uid: int
     evidence_directory: Path
     secret_directory: Path
     checkpoint_path: Path
@@ -92,6 +97,195 @@ class ConcreteMatrixExecutor:
         )
         readback = execute_with_adapter(plan, adapter)
         return build_redacted_evidence(plan, readback, intent=self._intent, proof=proof)
+
+
+def _read_turso_settings(
+    path: Path, *, expected_owner_uid: int
+) -> tuple[bytes, tuple[int, int, int, int, int]]:
+    path = Path(path)
+    if expected_owner_uid < 0:
+        raise WorkerError("Expected Turso settings owner is invalid.")
+    try:
+        absolute = path.absolute()
+        resolved = path.resolve(strict=True)
+        before = os.lstat(path)
+    except OSError as exc:
+        raise WorkerError("Turso settings file is unavailable.") from exc
+    if resolved != absolute:
+        raise WorkerError("Turso settings path contains a symbolic link.")
+    if (
+        not stat.S_ISREG(before.st_mode)
+        or before.st_nlink != 1
+        or before.st_uid != expected_owner_uid
+        or stat.S_IMODE(before.st_mode) != 0o600
+        or before.st_size <= 0
+        or before.st_size > MAX_TURSO_SETTINGS_BYTES
+    ):
+        raise WorkerError("Turso settings file metadata is not exact.")
+    try:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    except OSError as exc:
+        raise WorkerError("Turso settings file could not be opened safely.") from exc
+    try:
+        opened = os.fstat(descriptor)
+        if (
+            (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
+            or not stat.S_ISREG(opened.st_mode)
+            or opened.st_nlink != 1
+            or opened.st_uid != expected_owner_uid
+            or stat.S_IMODE(opened.st_mode) != 0o600
+            or opened.st_size != before.st_size
+        ):
+            raise WorkerError("Turso settings file identity changed while opening.")
+        chunks: list[bytes] = []
+        remaining = MAX_TURSO_SETTINGS_BYTES + 1
+        while remaining:
+            chunk = os.read(descriptor, min(4096, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        after_fd = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    raw = b"".join(chunks)
+    try:
+        after_path = os.lstat(path)
+    except OSError as exc:
+        raise WorkerError("Turso settings file disappeared during read.") from exc
+    identity = (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    )
+    if (
+        len(raw) != before.st_size
+        or (
+            after_fd.st_dev,
+            after_fd.st_ino,
+            after_fd.st_size,
+            after_fd.st_mtime_ns,
+            after_fd.st_ctime_ns,
+        ) != identity
+        or (
+            after_path.st_dev,
+            after_path.st_ino,
+            after_path.st_size,
+            after_path.st_mtime_ns,
+            after_path.st_ctime_ns,
+        ) != identity
+        or after_path.st_uid != expected_owner_uid
+        or stat.S_IMODE(after_path.st_mode) != 0o600
+        or after_path.st_nlink != 1
+    ):
+        raise WorkerError("Turso settings file changed during read.")
+    return raw, identity
+
+
+def _write_private_settings(path: Path, raw: bytes) -> None:
+    descriptor = os.open(
+        path,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+        0o600,
+    )
+    try:
+        os.fchmod(descriptor, 0o600)
+        view = memoryview(raw)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise WorkerError("Ephemeral Turso settings copy did not make progress.")
+            view = view[written:]
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    metadata = os.lstat(path)
+    if (
+        not stat.S_ISREG(metadata.st_mode)
+        or metadata.st_nlink != 1
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o600
+        or path.read_bytes() != raw
+    ):
+        raise WorkerError("Ephemeral Turso settings copy metadata or content is not exact.")
+
+
+def _remove_ephemeral_turso_home(home: Path) -> None:
+    metadata = os.lstat(home)
+    if (
+        not stat.S_ISDIR(metadata.st_mode)
+        or stat.S_ISLNK(metadata.st_mode)
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+    ):
+        raise WorkerError("Ephemeral Turso HOME cleanup target is not exact.")
+
+    def remove_tree(directory: Path) -> None:
+        with os.scandir(directory) as entries:
+            children = list(entries)
+        for entry in children:
+            child = Path(entry.path)
+            child_metadata = os.lstat(child)
+            if stat.S_ISDIR(child_metadata.st_mode) and not stat.S_ISLNK(
+                child_metadata.st_mode
+            ):
+                remove_tree(child)
+            else:
+                os.unlink(child)
+        os.rmdir(directory)
+
+    remove_tree(home)
+
+
+@contextmanager
+def ephemeral_turso_home(
+    settings_path: Path,
+    *,
+    expected_owner_uid: int,
+    temp_root: Path = Path("/tmp"),
+):
+    """Provide Turso a private writable HOME while preserving its source settings."""
+
+    raw, source_identity = _read_turso_settings(
+        settings_path, expected_owner_uid=expected_owner_uid
+    )
+    home = Path(tempfile.mkdtemp(prefix="oracle-turso-home-", dir=Path(temp_root)))
+    previous_home = os.environ.get("HOME")
+    had_home = "HOME" in os.environ
+    home_overridden = False
+    try:
+        os.chmod(home, 0o700)
+        config_directory = home / ".config"
+        turso_directory = config_directory / "turso"
+        config_directory.mkdir(mode=0o700)
+        turso_directory.mkdir(mode=0o700)
+        _write_private_settings(turso_directory / "settings.json", raw)
+        os.environ["HOME"] = str(home)
+        home_overridden = True
+        try:
+            yield home
+        finally:
+            if had_home:
+                os.environ["HOME"] = previous_home or ""
+            else:
+                os.environ.pop("HOME", None)
+            home_overridden = False
+    finally:
+        if home_overridden:
+            if had_home:
+                os.environ["HOME"] = previous_home or ""
+            else:
+                os.environ.pop("HOME", None)
+        try:
+            after_raw, after_identity = _read_turso_settings(
+                settings_path, expected_owner_uid=expected_owner_uid
+            )
+            if after_identity != source_identity or after_raw != raw:
+                raise WorkerError("Original Turso settings changed during lifecycle.")
+        finally:
+            _remove_ephemeral_turso_home(home)
 
 
 def _read_production_env(path: Path) -> dict[str, str]:
@@ -259,17 +453,21 @@ def run_worker(
         matrix_executor = matrix_executor_factory(
             production_url, production_token, production_reader, intent
         )
-        result = lifecycle(
-            intent=intent,
-            cli=cli or SubprocessLifecycleCli(),
-            matrix_executor=matrix_executor,
-            git_reader=git_reader or RepositoryGitIdentity(config.repository_root),
-            production_reader=production_reader,
-            evidence_directory=config.evidence_directory,
-            secret_directory=config.secret_directory,
-            now=now,
-            expected_executor_git_commit=config.executor_git_commit,
-        )
+        with ephemeral_turso_home(
+            config.turso_settings_path,
+            expected_owner_uid=config.turso_settings_owner_uid,
+        ):
+            result = lifecycle(
+                intent=intent,
+                cli=cli or SubprocessLifecycleCli(),
+                matrix_executor=matrix_executor,
+                git_reader=git_reader or RepositoryGitIdentity(config.repository_root),
+                production_reader=production_reader,
+                evidence_directory=config.evidence_directory,
+                secret_directory=config.secret_directory,
+                now=now,
+                expected_executor_git_commit=config.executor_git_commit,
+            )
     except BaseException as exc:
         primary = exc
         primary_tb = sys.exc_info()[2]
@@ -297,6 +495,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--intent-json", type=Path, required=True)
     parser.add_argument("--production-env-file", type=Path, required=True)
+    parser.add_argument("--turso-settings-file", type=Path, required=True)
+    parser.add_argument("--turso-settings-owner-uid", type=int, required=True)
     parser.add_argument("--evidence-directory", type=Path, required=True)
     parser.add_argument("--secret-directory", type=Path, required=True)
     parser.add_argument("--checkpoint-json", type=Path, required=True)
@@ -312,6 +512,8 @@ def main(argv: list[str] | None = None) -> int:
     config = WorkerConfig(
         args.intent_json,
         args.production_env_file,
+        args.turso_settings_file,
+        args.turso_settings_owner_uid,
         args.evidence_directory,
         args.secret_directory,
         args.checkpoint_json,
