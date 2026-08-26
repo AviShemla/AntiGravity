@@ -1,9 +1,27 @@
 # Oracle research dataset isolated matrix preflight — 2026-08-26
 
-Stage: **IMPLEMENTED / TESTED LOCALLY; EXTERNAL MATRIX NOT RUN**
+Stage: **EXTERNAL MATRIX OBSERVED / VERIFIED; PRODUCTION NOT APPLIED**
 
-This evidence is read-only. No branch, token, schema object, fixture, rollback
-event, or cleanup action was created.
+This document began as the read-only preflight. The approved disposable-branch
+matrix later ran under executor commit
+`64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf`. Durable sanitized evidence is
+preserved at:
+
+- `docs/evidence/oracle_research_isolated_matrix_checkpoint_20260826.json`;
+- `docs/evidence/oracle_research_isolated_matrix_readback_20260826.json`; and
+- `docs/evidence/oracle_research_isolated_matrix_terminal_20260826.json`.
+
+The run proved all 26 migration statements, all 26 expected schema objects, and
+all 26 behavioral assertions on disposable branch
+`theoracle-codex-oracle-rd-20260826t2009z-64e7bc`. It recorded exactly one
+APPLY and one logical ROLLBACK event, zero failed-DDL/fixture residue, unchanged
+production fingerprint and zero production Oracle research objects. Cleanup
+was independently read back as exact branch absence. The transient systemd
+unit was collected after successful completion; the durable checkpoint and
+evidence hashes, not a retained unit, are the continuing proof.
+
+This clears only the isolated-matrix evidence gate. It grants no production
+schema application or dataset-freeze authority.
 
 ## Fresh host and production readback
 
@@ -107,9 +125,10 @@ The branch readback must identify parent `theoracle`, parent ID
 `019f09f6-0701-72e9-aad2-c64996ae63e1`, and a distinct branch ID. A name alone
 is not identity proof.
 
-## Required external commands — not executed
+## Historical governed command plan — executed by the lifecycle worker
 
-These vectors reflect CLI `v1.0.32` help and are documentation, not authority.
+These vectors remain the reviewed historical plan. They are documentation, not
+fresh authority and must not be replayed.
 
 1. Create from the production parent:
 
@@ -179,11 +198,9 @@ These vectors reflect CLI `v1.0.32` help and are documentation, not authority.
 
 ## Approval sufficiency
 
-Technical platform authority is sufficient for this disposable-branch flow.
-However, the repository evidence independently proves only the earlier
-lag-edge-v2 branch approval. That artifact-specific approval cannot be presumed
-to authorize this Oracle migration. The current harness requires one recorded
-approval ID explicitly covering all six lifecycle actions above. If Avi's
-earlier temporary-branch approval explicitly named this Oracle successor scope,
-it is technically sufficient; otherwise a precise scope confirmation remains
-required. No external action was taken.
+The completed lifecycle is bound to approval ID
+`avi-six-action-matrix-20260826`, exact pre-branch intent
+`oracle-rd-pre-branch-intent-5f944805607361f7`, the six governed actions, and
+the exact disposable branch identity. That approval is exhausted for this
+completed lifecycle and is not reusable authority for production application,
+dataset freezing, a new branch, or a replay.

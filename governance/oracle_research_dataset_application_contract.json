@@ -77,8 +77,7 @@
   "execution_readiness": {
     "schema_application_executable": false,
     "schema_blockers": [
-      "SCHEMA_APPROVAL_MISSING",
-      "ISOLATED_TURSO_MATRIX_NOT_RECORDED"
+      "SCHEMA_APPROVAL_MISSING"
     ],
     "dataset_freeze_executable": false,
     "freeze_blockers": [
@@ -90,6 +89,61 @@
     ]
   },
   "production_evidence": {
+    "isolated_turso_matrix_readback": {
+      "status": "OBSERVED/VERIFIED_READBACK",
+      "artifact_source_git_commit": "cf8345c30e2c8264cbb7140bef3b397a7799e488",
+      "executor_git_commit": "64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf",
+      "target_database_id": "019f09f6-0701-72e9-aad2-c64996ae63e1",
+      "disposable_branch_id": "01a03fb2-0701-77a7-a48a-dcfd04a315d8",
+      "disposable_branch_name": "theoracle-codex-oracle-rd-20260826t2009z-64e7bc",
+      "migration_sha256": "d21aa91b356666c6509e234a74f3041130fc1e4ae62455086aa86b2b18e6e01e",
+      "statement_count": 26,
+      "schema_object_count": 26,
+      "behavioral_assertion_count": 26,
+      "behavioral_assertions_passed": 26,
+      "apply_event_count": 1,
+      "rollback_event_count": 1,
+      "logical_evidence_sha256": "824e54635efc221eaca6ce9548534426d0c4ca749451b0f574c9538c6e4c2488",
+      "failed_ddl_probe_rows": 0,
+      "fixture_event_rows": 0,
+      "fixture_provider_rows": 0,
+      "fixture_version_rows": 0,
+      "production_fingerprint_before": "95cf13e3061f8fcbad798d77d96570de9293e3db8a865a0d73be918c6a5f1523",
+      "production_fingerprint_after": "95cf13e3061f8fcbad798d77d96570de9293e3db8a865a0d73be918c6a5f1523",
+      "production_oracle_object_count_before": 0,
+      "production_oracle_object_count_after": 0,
+      "cleanup_verified": true,
+      "branch_show_readback": "EXACT_OBSERVED_NOT_FOUND",
+      "parent_branch_list_readback": "EXACT_NAME_ABSENCE",
+      "runtime": {
+        "unit": "codex-oracle-matrix-20260826t2009z-64e7bc.service",
+        "invocation_id": "fcb4c33c2ed8434d810dba1785310407",
+        "worker_pid": 914339,
+        "retention_status": "TRANSIENT_UNIT_COLLECTED_AFTER_SUCCESS",
+        "terminal_state": "deactivated successfully",
+        "wall_duration_seconds": 33.128,
+        "cpu_duration_seconds": 1.608,
+        "peak_memory": "28.6M"
+      },
+      "checkpoint": {
+        "path": "docs/evidence/oracle_research_isolated_matrix_checkpoint_20260826.json",
+        "sha256": "1bd7ae41cc6556ff8362858e43a848663bd068c6dbe6b050c8f6016f951462b4"
+      },
+      "matrix_readback": {
+        "path": "docs/evidence/oracle_research_isolated_matrix_readback_20260826.json",
+        "sha256": "3ceb5697e469ae52ad3bfac9d72a29fb3683e9faf30f150063019d2d374232b3"
+      },
+      "terminal_cleanup": {
+        "path": "docs/evidence/oracle_research_isolated_matrix_terminal_20260826.json",
+        "sha256": "e798ec6702dcbb901c7d4acac7fc03bb493b2fd9191abe7dde9692de0236f5a5"
+      },
+      "sanitization": {
+        "credentials_included": false,
+        "database_urls_included": false,
+        "response_bodies_included": false,
+        "source_rows_included": false
+      }
+    },
     "actual_586710_row_digest_readback": {
       "status": "OBSERVED/VERIFIED_READBACK",
       "path": "docs/evidence/oracle_research_content_audit_20260826.json",

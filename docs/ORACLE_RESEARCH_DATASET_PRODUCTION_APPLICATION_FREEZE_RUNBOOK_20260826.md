@@ -1,11 +1,12 @@
 # Oracle research dataset production application and freeze runbook
 
 Status: **REVIEW-ONLY / NOT EXECUTABLE**
-Baseline commit: `eb08ce518a557bf6b772aa66e6bad25e3d681cd3`
+Reviewed artifact baseline: `eb08ce518a557bf6b772aa66e6bad25e3d681cd3`
+Isolated-matrix executor commit: `64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf`
 Machine-readable contract:
 `governance/oracle_research_dataset_application_contract.json`
 Contract SHA-256:
-`02464ca615c4b6ae8c647cd7cfd6e74cfe25e16e412a86d17213906b59d18d63`
+`06febf827d933afa26437db72291d25dacec432826ffa35d727c88c7dfa1dfbb`
 
 This runbook grants no production authority. It separates two operations that
 must never share an implied approval:
@@ -20,9 +21,10 @@ approval IDs must be distinct.
 
 ## Current hard blockers
 
-Both operations are fail-closed today. The additive schema artifact is now
-syntactically compatible with the approved atomic runner, but compatibility is
-not application authority and does not satisfy the isolated-environment gate.
+Both production operations are fail-closed today. The additive schema artifact
+is syntactically compatible with the approved atomic runner and its exact
+disposable Turso matrix is now independently recorded. Neither fact is
+production application authority.
 
 - The marker-compatible migration hash is
   `d21aa91b356666c6509e234a74f3041130fc1e4ae62455086aa86b2b18e6e01e`;
@@ -30,8 +32,12 @@ not application authority and does not satisfy the isolated-environment gate.
   `20260826_oracle_research_dataset_versions_additive`, schema version `1`, and
   exactly 26 named additive statements.
 - No production schema approval exists.
-- The exact hash-pinned isolated Turso application/failure matrix has not been
-  attached to this contract.
+- The exact hash-pinned isolated Turso application/failure matrix is attached
+  to this contract through three sanitized evidence artifacts. It proved 26/26
+  statements, 26/26 schema objects, 26/26 behavioral assertions, one APPLY and
+  one logical ROLLBACK event, zero fixture/failed-DDL residue, unchanged
+  production fingerprint, zero production Oracle objects, and exact branch
+  cleanup readback. This clears only the matrix evidence gate.
 - `oracle_research_dataset_writer.py` is an implemented, tested pure transaction
   interface at SHA-256
   `0220845dcb870946e38c08055d1ea0a663be8e5cc2232b57b8b237f2eb065adf`.
@@ -120,13 +126,13 @@ Passing this audit proves only preconditions. It does not approve application.
 
 Required authority: explicit **schema-application approval** only.
 
-The exact statement-marked bundle is pinned in the contract, but this phase
-remains blocked until it passes the isolated Turso matrix under the exact atomic
-runner and receives schema-specific approval. The future approved action must
-use one `BEGIN IMMEDIATE` transaction containing all additive DDL and one
-append-only schema APPLY event, verify every response, and commit only after
-all responses are `ok`. A failure before commit must issue and verify
-`ROLLBACK`.
+The exact statement-marked bundle is pinned in the contract and has passed the
+isolated Turso matrix under the exact atomic runner. This phase remains blocked
+solely at its explicit production schema-approval gate. A future separately
+approved action must use one `BEGIN IMMEDIATE` transaction containing all
+additive DDL and one append-only schema APPLY event, verify every response, and
+commit only after all responses are `ok`. A failure before commit must issue
+and verify `ROLLBACK`.
 
 Duplicate prevention is mandatory:
 

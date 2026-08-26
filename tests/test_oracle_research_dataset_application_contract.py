@@ -11,6 +11,15 @@ RUNBOOK_PATH = (
 CONTENT_EVIDENCE_PATH = (
     ROOT / "docs" / "evidence" / "oracle_research_content_audit_20260826.json"
 )
+MATRIX_CHECKPOINT_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_research_isolated_matrix_checkpoint_20260826.json"
+)
+MATRIX_READBACK_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_research_isolated_matrix_readback_20260826.json"
+)
+MATRIX_TERMINAL_PATH = (
+    ROOT / "docs" / "evidence" / "oracle_research_isolated_matrix_terminal_20260826.json"
+)
 
 
 def load_contract():
@@ -60,10 +69,73 @@ def test_schema_artifact_is_atomic_runner_compatible_but_not_approved():
     assert artifact["statement_count"] == 26
     assert artifact["migration_id"] == "20260826_oracle_research_dataset_versions_additive"
     blockers = set(contract["execution_readiness"]["schema_blockers"])
-    assert blockers == {
-        "SCHEMA_APPROVAL_MISSING",
-        "ISOLATED_TURSO_MATRIX_NOT_RECORDED",
+    assert blockers == {"SCHEMA_APPROVAL_MISSING"}
+
+
+def test_isolated_turso_matrix_is_hash_locked_complete_and_cleanup_verified():
+    contract = load_contract()
+    reference = contract["production_evidence"]["isolated_turso_matrix_readback"]
+    assert reference["status"] == "OBSERVED/VERIFIED_READBACK"
+    assert reference["artifact_source_git_commit"] == "cf8345c30e2c8264cbb7140bef3b397a7799e488"
+    assert reference["executor_git_commit"] == "64e7bc78fd0612591d7dc8ddd6fa8d8dc255d7bf"
+    assert reference["migration_sha256"] == contract["artifacts"]["schema_migration"]["sha256"]
+    assert reference["statement_count"] == 26
+    assert reference["schema_object_count"] == 26
+    assert reference["behavioral_assertion_count"] == 26
+    assert reference["behavioral_assertions_passed"] == 26
+    assert reference["apply_event_count"] == 1
+    assert reference["rollback_event_count"] == 1
+    assert reference["failed_ddl_probe_rows"] == 0
+    assert reference["fixture_event_rows"] == 0
+    assert reference["fixture_provider_rows"] == 0
+    assert reference["fixture_version_rows"] == 0
+    assert reference["production_fingerprint_before"] == reference["production_fingerprint_after"]
+    assert reference["production_oracle_object_count_before"] == 0
+    assert reference["production_oracle_object_count_after"] == 0
+    assert reference["cleanup_verified"] is True
+    assert reference["branch_show_readback"] == "EXACT_OBSERVED_NOT_FOUND"
+    assert reference["parent_branch_list_readback"] == "EXACT_NAME_ABSENCE"
+    assert reference["sanitization"] == {
+        "credentials_included": False,
+        "database_urls_included": False,
+        "response_bodies_included": False,
+        "source_rows_included": False,
     }
+
+    for key, path in (
+        ("checkpoint", MATRIX_CHECKPOINT_PATH),
+        ("matrix_readback", MATRIX_READBACK_PATH),
+        ("terminal_cleanup", MATRIX_TERMINAL_PATH),
+    ):
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == reference[key]["sha256"]
+
+    checkpoint = json.loads(MATRIX_CHECKPOINT_PATH.read_text(encoding="utf-8"))
+    readback = json.loads(MATRIX_READBACK_PATH.read_text(encoding="utf-8"))
+    terminal = json.loads(MATRIX_TERMINAL_PATH.read_text(encoding="utf-8"))
+    claimed_logical_hash = readback.pop("evidence_sha256")
+    canonical_readback = json.dumps(
+        readback,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    recomputed_logical_hash = hashlib.sha256(canonical_readback).hexdigest()
+    assertions = readback["readback"]["assertion_results"]
+    assert recomputed_logical_hash == claimed_logical_hash == reference["logical_evidence_sha256"]
+    assert checkpoint["state"] == "COMPLETE"
+    assert checkpoint["executor_git_commit"] == reference["executor_git_commit"]
+    assert len(assertions) == reference["behavioral_assertion_count"]
+    assert sum(value is True for value in assertions.values()) == reference["behavioral_assertions_passed"]
+    assert readback["redaction"] == {
+        "branch_url_included": False,
+        "production_url_included": False,
+        "response_bodies_included": False,
+        "token_included": False,
+    }
+    assert terminal["cleanup"]["cleanup_verified"] is True
+    assert terminal["cleanup"]["production_fingerprint_sha256"] == reference["production_fingerprint_after"]
+    assert terminal["matrix_evidence_file_sha256"] == reference["matrix_readback"]["sha256"]
 
 
 def test_every_database_audit_statement_is_read_only():
