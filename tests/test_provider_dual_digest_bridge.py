@@ -76,6 +76,14 @@ class ProviderDualDigestBridgeTests(unittest.TestCase):
         self.assertNotIn("YAHOO_FINANCE", rendered)
         self.assertNotIn("market_features_2026-08-25_fixture", rendered)
 
+    def test_canonical_benchmark_ticker_is_accepted(self):
+        rows = fixture_rows()
+        rows[0][0] = "^VIX"
+        rows.sort(key=lambda row: row[0])
+        reader, evidence = self.valid_audit(RecordingReader(rows))
+        self.assertEqual(evidence["row_count"], 476)
+        self.assertEqual(len(reader.calls), 1)
+
     def test_framing_exactly_matches_both_contracts(self):
         rows = fixture_rows()[:2]
         legacy = legacy_bytes(rows)

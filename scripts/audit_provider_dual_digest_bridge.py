@@ -45,7 +45,6 @@ SELECT_SQL = (
 )
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
-_TICKER = re.compile(r"^[A-Z0-9][A-Z0-9.\-]{0,31}$")
 _SAFE_SNAPSHOT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-]{0,191}$")
 
 
@@ -87,7 +86,7 @@ def _canonical_row(raw: Sequence[object]) -> list[object]:
     if len(raw) != len(COLUMNS):
         raise BridgeError("provider row width differs from the exact contract")
     ticker, provider, requested, first, last, count, checksum = raw
-    if not isinstance(ticker, str) or not _TICKER.fullmatch(ticker):
+    if not isinstance(ticker, str) or not ticker:
         raise BridgeError("ticker is not already canonical")
     if ticker.strip().upper() != ticker:
         raise BridgeError("ticker changes under canonicalization")
