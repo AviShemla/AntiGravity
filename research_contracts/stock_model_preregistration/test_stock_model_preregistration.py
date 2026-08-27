@@ -1,6 +1,6 @@
 import copy
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 import json
 from pathlib import Path
 import unittest
@@ -59,6 +59,13 @@ SHA_D = "d" * 64
 class StockModelPreregistrationTests(unittest.TestCase):
     now = datetime(2026, 8, 27, 0, 0, tzinfo=timezone.utc)
 
+    def calendars(self):
+        full = tuple(
+            (date(2022, 1, 1) + timedelta(days=index)).isoformat()
+            for index in range(1_246)
+        )
+        return full, full[830:]
+
     def model_config(self, **changes):
         values = dict(
             topology=INDEPENDENT_TOPOLOGY,
@@ -81,9 +88,18 @@ class StockModelPreregistrationTests(unittest.TestCase):
         return SamplerConfiguration("pymc-nuts", 4, 1_000, 1_000, 0.9, 20260827)
 
     def audit(self, **changes):
+        full_dates, model_dates = self.calendars()
         values = dict(
             status="VERIFIED",
             baseline_manifest_sha256=SHA_D,
+            snapshot_id="market-features-20260826",
+            snapshot_sha256=SHA_A,
+            universe_id="approved-universe-v1",
+            universe_sha256=SHA_B,
+            full_session_calendar_sha256=canonical_sha(list(full_dates)),
+            model_session_dates_sha256=canonical_sha(list(model_dates)),
+            source_audit_artifact_sha256="5" * 64,
+            embedded_audit_evidence_sha256="6" * 64,
             audit_sha256="0" * 64,
             completed_at_utc=self.now - timedelta(minutes=10),
             observed_at_utc=self.now - timedelta(minutes=5),
@@ -98,6 +114,16 @@ class StockModelPreregistrationTests(unittest.TestCase):
                 "orders": 0,
                 "etf_outputs": 0,
             },
+            downstream_counts={
+                "etf_prior_lineage": 0,
+                "execution_events": 0,
+                "execution_plan_approvals": 0,
+                "execution_plans": 0,
+                "model_runs": 0,
+                "model_scorecards": 0,
+                "stock_prediction_criterion_audits": 0,
+                "stock_prediction_decision_audits": 0,
+            },
         )
         values.update(changes)
         evidence = BaselineAuditEvidence(**values)
@@ -105,15 +131,28 @@ class StockModelPreregistrationTests(unittest.TestCase):
 
     def readback(self, audit=None, **changes):
         audit = audit or self.audit()
+        readback_at = changes.get("readback_at_utc", self.now - timedelta(minutes=1))
         values = dict(
             status="VERIFIED",
             baseline_manifest_sha256=audit.baseline_manifest_sha256,
+            snapshot_id=audit.snapshot_id,
+            snapshot_sha256=audit.snapshot_sha256,
+            universe_id=audit.universe_id,
+            universe_sha256=audit.universe_sha256,
+            full_session_calendar_sha256=audit.full_session_calendar_sha256,
+            model_session_dates_sha256=audit.model_session_dates_sha256,
+            source_audit_artifact_sha256=audit.source_audit_artifact_sha256,
+            embedded_audit_evidence_sha256=audit.embedded_audit_evidence_sha256,
             baseline_audit_sha256=audit.audit_sha256,
-            readback_at_utc=self.now - timedelta(minutes=1),
+            source_readback_artifact_sha256="7" * 64,
+            source_readback_embedded_evidence_sha256="8" * 64,
+            source_readback_observed_at_utc=readback_at,
+            readback_at_utc=readback_at,
             ticker_count=audit.ticker_count,
             fold_count=audit.fold_count,
             oos_observation_count=audit.oos_observation_count,
             side_effects=dict(audit.side_effects),
+            downstream_counts=dict(audit.downstream_counts),
         )
         values.update(changes)
         return BaselineReadbackProof(**values)
@@ -137,6 +176,7 @@ class StockModelPreregistrationTests(unittest.TestCase):
         baseline_audit = self.audit() if audit == "default" else audit
         audit_sha = baseline_audit.audit_sha256 if baseline_audit else "e" * 64
         calendar = tuple(range(416))
+        full_dates, model_dates = self.calendars()
         return PreregistrationRequest(
             run_id="stock-hierarchical-20260827-v1",
             lineage=ImmutableLineage(
@@ -145,7 +185,11 @@ class StockModelPreregistrationTests(unittest.TestCase):
                 universe_id="approved-universe-v1",
                 universe_sha256=SHA_B,
                 session_calendar_sha256=canonical_sha(list(calendar)),
+                full_session_calendar_sha256=canonical_sha(list(full_dates)),
+                model_session_dates_sha256=canonical_sha(list(model_dates)),
                 baseline_manifest_sha256=SHA_D,
+                source_audit_artifact_sha256="5" * 64,
+                embedded_audit_evidence_sha256="6" * 64,
                 baseline_audit_sha256=audit_sha,
                 code_git_commit="1" * 40,
                 config_sha256=canonical_sha(model.__dict__),
@@ -157,6 +201,8 @@ class StockModelPreregistrationTests(unittest.TestCase):
             output_intent=output or ProhibitedOutputIntent(),
             baseline_audit=baseline_audit,
             session_calendar_ordinals=calendar,
+            full_session_calendar_dates=full_dates,
+            model_session_dates=model_dates,
         )
 
     def new_manifest(self, request=None, readback=None):
@@ -170,15 +216,28 @@ class StockModelPreregistrationTests(unittest.TestCase):
 
     def manifest_readback(self, manifest, *, readback_at=None, **changes):
         audit = manifest["baseline_audit"]
+        readback_time = readback_at or self.now - timedelta(minutes=1)
         values = dict(
             status="VERIFIED",
             baseline_manifest_sha256=audit["baseline_manifest_sha256"],
+            snapshot_id=audit["snapshot_id"],
+            snapshot_sha256=audit["snapshot_sha256"],
+            universe_id=audit["universe_id"],
+            universe_sha256=audit["universe_sha256"],
+            full_session_calendar_sha256=audit["full_session_calendar_sha256"],
+            model_session_dates_sha256=audit["model_session_dates_sha256"],
+            source_audit_artifact_sha256=audit["source_audit_artifact_sha256"],
+            embedded_audit_evidence_sha256=audit["embedded_audit_evidence_sha256"],
             baseline_audit_sha256=audit["audit_sha256"],
-            readback_at_utc=readback_at or self.now - timedelta(minutes=1),
+            source_readback_artifact_sha256="7" * 64,
+            source_readback_embedded_evidence_sha256="8" * 64,
+            source_readback_observed_at_utc=readback_time,
+            readback_at_utc=readback_time,
             ticker_count=audit["ticker_count"],
             fold_count=audit["fold_count"],
             oos_observation_count=audit["oos_observation_count"],
             side_effects=dict(audit["side_effects"]),
+            downstream_counts=dict(audit["downstream_counts"]),
         )
         values.update(changes)
         return BaselineReadbackProof(**values)
@@ -549,6 +608,192 @@ class StockModelPreregistrationTests(unittest.TestCase):
         with self.assertRaisesRegex(PreregistrationError, "downstream outputs"):
             self.independent_audit(manifest)
 
+    def test_v4_source_audit_file_and_embedded_evidence_digests_cannot_be_substituted(self):
+        audit = self.audit(source_audit_artifact_sha256="6" * 64)
+        request = self.request(audit=audit)
+        rebound_lineage = replace(
+            request.lineage,
+            source_audit_artifact_sha256="6" * 64,
+            baseline_audit_sha256=audit.audit_sha256,
+        )
+        rebound = replace(request, lineage=rebound_lineage)
+        with self.assertRaisesRegex(PreregistrationError, "identities are conflated"):
+            self.new_manifest(rebound, readback=self.readback(audit))
+
+        manifest = self.new_manifest()
+        manifest["baseline_audit"]["source_audit_artifact_sha256"] = manifest["baseline_audit"]["embedded_audit_evidence_sha256"]
+        manifest["lineage"]["source_audit_artifact_sha256"] = manifest["lineage"]["embedded_audit_evidence_sha256"]
+        self.rebind_audit(manifest)
+        self.resign(manifest)
+        with self.assertRaises(PreregistrationError):
+            self.independent_audit(manifest)
+
+    def test_full_1246_calendar_and_416_model_slice_identities_are_not_interchangeable(self):
+        request = self.request()
+        swapped = replace(
+            request,
+            lineage=replace(
+                request.lineage,
+                full_session_calendar_sha256=request.lineage.model_session_dates_sha256,
+                model_session_dates_sha256=request.lineage.full_session_calendar_sha256,
+            ),
+        )
+        with self.assertRaisesRegex(PreregistrationError, "1246-session calendar lineage mismatch"):
+            self.new_manifest(swapped)
+
+        wrong_slice = replace(
+            request,
+            model_session_dates=request.full_session_calendar_dates[:416],
+            lineage=replace(
+                request.lineage,
+                model_session_dates_sha256=canonical_sha(list(request.full_session_calendar_dates[:416])),
+            ),
+        )
+        with self.assertRaisesRegex(PreregistrationError, "governed slice"):
+            self.new_manifest(wrong_slice)
+
+    def test_fresh_readback_revalidates_every_v4_identity_zero_set_and_cannot_be_retimestamped(self):
+        request = self.request()
+        exact = self.readback(request.baseline_audit)
+        identity_fields = (
+            "snapshot_sha256", "universe_sha256", "full_session_calendar_sha256",
+            "model_session_dates_sha256", "source_audit_artifact_sha256",
+            "embedded_audit_evidence_sha256",
+        )
+        for field in identity_fields:
+            with self.subTest(field=field):
+                bad = replace(exact, **{field: "f" * 64})
+                with self.assertRaisesRegex(PreregistrationError, "source identity mismatch"):
+                    self.new_manifest(request, readback=bad)
+        for field, value in (("ticker_count", 473), ("fold_count", 1_895), ("oos_observation_count", 56_879)):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(PreregistrationError, "partial"):
+                    self.new_manifest(request, readback=replace(exact, **{field: value}))
+        with self.assertRaisesRegex(PreregistrationError, "side effects"):
+            self.new_manifest(request, readback=replace(
+                exact,
+                side_effects={**exact.side_effects, "orders": 1},
+            ))
+        with self.assertRaisesRegex(PreregistrationError, "downstream outputs"):
+            self.new_manifest(request, readback=replace(
+                exact,
+                downstream_counts={**exact.downstream_counts, "execution_plans": 1},
+            ))
+        retimestamped = replace(exact, readback_at_utc=self.now)
+        with self.assertRaisesRegex(PreregistrationError, "retimestamped"):
+            self.new_manifest(request, readback=retimestamped)
+
+    def test_readback_raw_and_embedded_source_identities_are_distinct_and_mandatory(self):
+        request = self.request()
+        exact = self.readback(request.baseline_audit)
+        substitutions = (
+            exact.source_readback_artifact_sha256,
+            request.lineage.source_audit_artifact_sha256,
+            request.lineage.embedded_audit_evidence_sha256,
+            request.lineage.baseline_audit_sha256,
+        )
+        for substituted in substitutions:
+            with self.subTest(substituted=substituted):
+                bad = replace(
+                    exact,
+                    source_readback_embedded_evidence_sha256=substituted,
+                )
+                with self.assertRaisesRegex(PreregistrationError, "identities are conflated"):
+                    self.new_manifest(request, readback=bad)
+        with self.assertRaisesRegex(PreregistrationError, "lowercase SHA-256"):
+            self.new_manifest(request, readback=replace(
+                exact,
+                source_readback_embedded_evidence_sha256="A" * 64,
+            ))
+        missing = dict(exact.__dict__)
+        missing.pop("source_readback_embedded_evidence_sha256")
+        with self.assertRaises(TypeError):
+            BaselineReadbackProof(**missing)
+
+    def test_v4_live_downstream_count_schema_is_exact_in_audit_and_readback(self):
+        exact_keys = {
+            "etf_prior_lineage", "execution_events", "execution_plan_approvals",
+            "execution_plans", "model_runs", "model_scorecards",
+            "stock_prediction_criterion_audits", "stock_prediction_decision_audits",
+        }
+        audit = self.audit()
+        self.assertEqual(set(audit.downstream_counts), exact_keys)
+        old_aliases = {
+            "predictions_created": 0, "recommendations_created": 0,
+            "orders_created": 0, "etf_outputs_created": 0,
+        }
+        audit_variants = (
+            old_aliases,
+            {key: 0 for key in exact_keys if key != "model_runs"},
+            {**{key: 0 for key in exact_keys}, "extra": 0},
+            {**{key: 0 for key in exact_keys}, "model_runs": False},
+            {**{key: 0 for key in exact_keys}, "model_runs": 0.0},
+        )
+        for counts in audit_variants:
+            with self.subTest(lane="audit", counts=counts):
+                with self.assertRaisesRegex(PreregistrationError, "schema differs|must be an integer"):
+                    self.new_manifest(self.request(audit=self.audit(downstream_counts=counts)))
+
+        request = self.request()
+        exact_readback = self.readback(request.baseline_audit)
+        for counts in audit_variants:
+            with self.subTest(lane="readback", counts=counts):
+                with self.assertRaisesRegex(PreregistrationError, "schema differs|must be an integer"):
+                    self.new_manifest(
+                        request,
+                        readback=replace(exact_readback, downstream_counts=counts),
+                    )
+
+    def test_sampler_governed_minimums_and_engine_fail_closed(self):
+        variants = (
+            replace(self.sampler_config(), engine="stan-nuts"),
+            replace(self.sampler_config(), chains=3),
+            replace(self.sampler_config(), draws=999),
+            replace(self.sampler_config(), tune=999),
+            replace(self.sampler_config(), target_accept=0.899),
+            replace(self.sampler_config(), random_seed=-1),
+        )
+        for sampler in variants:
+            with self.subTest(sampler=sampler):
+                with self.assertRaisesRegex(PreregistrationError, "incomplete or unsafe"):
+                    self.new_manifest(self.request(sampler=sampler))
+
+    def test_ready_and_model_fit_authorization_attacks_fail_after_outer_rehash(self):
+        for field, value in (("status", "READY"), ("model_fit_authorized", True)):
+            with self.subTest(field=field):
+                manifest = self.new_manifest()
+                manifest["preflight"][field] = value
+                self.resign(manifest)
+                with self.assertRaisesRegex(PreregistrationError, "preflight evidence"):
+                    self.independent_audit(manifest)
+
+    def test_manifest_missing_extra_fields_and_count_coercions_fail_after_rehash(self):
+        mutators = (
+            lambda manifest: manifest.pop("model_session_dates"),
+            lambda manifest: manifest.update(unexpected_v4_field=True),
+            lambda manifest: manifest["baseline_audit"].pop("source_audit_artifact_sha256"),
+            lambda manifest: manifest["baseline_audit"].update(unexpected=True),
+        )
+        for mutate in mutators:
+            manifest = self.new_manifest()
+            readback = self.manifest_readback(manifest)
+            mutate(manifest)
+            self.resign(manifest)
+            with self.assertRaisesRegex(PreregistrationError, "schema differs|payload is invalid"):
+                self.independent_audit(manifest, readback=readback)
+        request = self.request()
+        for value in (False, 0.0):
+            with self.subTest(value=value):
+                readback = replace(
+                    self.readback(request.baseline_audit),
+                    downstream_counts={
+                        **self.readback(request.baseline_audit).downstream_counts,
+                        "model_runs": value,
+                    },
+                )
+                with self.assertRaisesRegex(PreregistrationError, "must be an integer"):
+                    self.new_manifest(request, readback=readback)
+
     def test_independent_auditor_requires_explicit_current_time_and_readback(self):
         manifest = self.new_manifest()
         with self.assertRaises(TypeError):
@@ -563,7 +808,7 @@ class StockModelPreregistrationTests(unittest.TestCase):
             "stock_model_preregistration.py"
         ).read_text(encoding="utf-8").lower()
         for forbidden in (
-            "turso", "sqlite", "requests", "urllib", "subprocess", "pymc",
+            "turso", "sqlite", "requests", "urllib", "subprocess",
             "fit_hierarchical", "prediction_evidence", "recommendation(", "order(",
         ):
             self.assertNotIn(forbidden, source)

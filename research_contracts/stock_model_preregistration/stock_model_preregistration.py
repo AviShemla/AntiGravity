@@ -17,7 +17,7 @@ import re
 from typing import Mapping, Sequence
 
 
-CONTRACT_ID = "codex-oracle-hierarchical-stock-preregistration-v1"
+CONTRACT_ID = "codex-oracle-hierarchical-stock-preregistration-v2"
 INDEPENDENT_TOPOLOGY = "INDEPENDENT_TICKER_LAG_EDGES"
 CLAIM_SCOPE = "OBSERVATIONAL_PREDICTIVE_ASSOCIATION_NOT_CAUSAL"
 OUTPUT_INTENT = "RESEARCH_MODEL_DIAGNOSTICS_ONLY"
@@ -46,6 +46,18 @@ GOVERNED_TEST_WIDTH_SESSIONS = 30
 GOVERNED_STEP_SESSIONS = 30
 GOVERNED_PURGE_SESSIONS = 7
 GOVERNED_CALENDAR_LENGTH = 416
+GOVERNED_FULL_CALENDAR_LENGTH = 1_246
+GOVERNED_MODEL_SLICE_START_INDEX = 830
+ZERO_DOWNSTREAM_COUNTS = {
+    "etf_prior_lineage": 0,
+    "execution_events": 0,
+    "execution_plan_approvals": 0,
+    "execution_plans": 0,
+    "model_runs": 0,
+    "model_scorecards": 0,
+    "stock_prediction_criterion_audits": 0,
+    "stock_prediction_decision_audits": 0,
+}
 SEMANTIC_VALIDATORS = (
     "lineage",
     "baseline_audit_digest_and_semantics",
@@ -84,7 +96,11 @@ class ImmutableLineage:
     universe_id: str
     universe_sha256: str
     session_calendar_sha256: str
+    full_session_calendar_sha256: str
+    model_session_dates_sha256: str
     baseline_manifest_sha256: str
+    source_audit_artifact_sha256: str
+    embedded_audit_evidence_sha256: str
     baseline_audit_sha256: str
     code_git_commit: str
     config_sha256: str
@@ -95,6 +111,14 @@ class ImmutableLineage:
 class BaselineAuditEvidence:
     status: str
     baseline_manifest_sha256: str
+    snapshot_id: str
+    snapshot_sha256: str
+    universe_id: str
+    universe_sha256: str
+    full_session_calendar_sha256: str
+    model_session_dates_sha256: str
+    source_audit_artifact_sha256: str
+    embedded_audit_evidence_sha256: str
     audit_sha256: str
     completed_at_utc: datetime
     observed_at_utc: datetime
@@ -102,18 +126,31 @@ class BaselineAuditEvidence:
     fold_count: int
     oos_observation_count: int
     side_effects: Mapping[str, int]
+    downstream_counts: Mapping[str, int]
 
 
 @dataclass(frozen=True)
 class BaselineReadbackProof:
     status: str
     baseline_manifest_sha256: str
+    snapshot_id: str
+    snapshot_sha256: str
+    universe_id: str
+    universe_sha256: str
+    full_session_calendar_sha256: str
+    model_session_dates_sha256: str
+    source_audit_artifact_sha256: str
+    embedded_audit_evidence_sha256: str
     baseline_audit_sha256: str
+    source_readback_artifact_sha256: str
+    source_readback_embedded_evidence_sha256: str
+    source_readback_observed_at_utc: datetime
     readback_at_utc: datetime
     ticker_count: int
     fold_count: int
     oos_observation_count: int
     side_effects: Mapping[str, int]
+    downstream_counts: Mapping[str, int]
 
 
 @dataclass(frozen=True)
@@ -173,6 +210,8 @@ class PreregistrationRequest:
     output_intent: ProhibitedOutputIntent
     baseline_audit: BaselineAuditEvidence | None
     session_calendar_ordinals: tuple[int, ...]
+    full_session_calendar_dates: tuple[str, ...]
+    model_session_dates: tuple[str, ...]
 
 
 def _require_sha(value: str, label: str) -> None:
@@ -218,6 +257,14 @@ def _baseline_audit_payload(evidence: BaselineAuditEvidence) -> dict[str, object
     return {
         "status": evidence.status,
         "baseline_manifest_sha256": evidence.baseline_manifest_sha256,
+        "snapshot_id": evidence.snapshot_id,
+        "snapshot_sha256": evidence.snapshot_sha256,
+        "universe_id": evidence.universe_id,
+        "universe_sha256": evidence.universe_sha256,
+        "full_session_calendar_sha256": evidence.full_session_calendar_sha256,
+        "model_session_dates_sha256": evidence.model_session_dates_sha256,
+        "source_audit_artifact_sha256": evidence.source_audit_artifact_sha256,
+        "embedded_audit_evidence_sha256": evidence.embedded_audit_evidence_sha256,
         "completed_at_utc": _utc(
             evidence.completed_at_utc, "baseline audit completion"
         ).isoformat(),
@@ -228,6 +275,7 @@ def _baseline_audit_payload(evidence: BaselineAuditEvidence) -> dict[str, object
         "fold_count": evidence.fold_count,
         "oos_observation_count": evidence.oos_observation_count,
         "side_effects": dict(evidence.side_effects),
+        "downstream_counts": dict(evidence.downstream_counts),
     }
 
 
@@ -249,7 +297,9 @@ def _validate_lineage(request: PreregistrationRequest) -> None:
         raise PreregistrationError("snapshot and universe identities are required")
     for name in (
         "snapshot_sha256", "universe_sha256", "session_calendar_sha256",
-        "baseline_manifest_sha256", "baseline_audit_sha256", "config_sha256",
+        "full_session_calendar_sha256", "model_session_dates_sha256",
+        "baseline_manifest_sha256", "source_audit_artifact_sha256",
+        "embedded_audit_evidence_sha256", "baseline_audit_sha256", "config_sha256",
         "sampler_sha256",
     ):
         _require_sha(getattr(lineage, name), name)
@@ -273,6 +323,37 @@ def _validate_lineage(request: PreregistrationRequest) -> None:
         raise PreregistrationError("session calendar differs from governed ordinals 0 through 415")
     if canonical_sha(list(calendar)) != lineage.session_calendar_sha256:
         raise PreregistrationError("session calendar lineage mismatch")
+    full_dates = request.full_session_calendar_dates
+    model_dates = request.model_session_dates
+    if type(full_dates) is not tuple or len(full_dates) != GOVERNED_FULL_CALENDAR_LENGTH:
+        raise PreregistrationError("full session calendar must contain exactly 1246 dates")
+    if type(model_dates) is not tuple or len(model_dates) != GOVERNED_CALENDAR_LENGTH:
+        raise PreregistrationError("model session calendar must contain exactly 416 dates")
+    for label, dates in (("full", full_dates), ("model", model_dates)):
+        if any(type(value) is not str for value in dates):
+            raise PreregistrationError(f"{label} session calendar dates must be strings")
+        try:
+            parsed = tuple(datetime.strptime(value, "%Y-%m-%d").date() for value in dates)
+        except ValueError as exc:
+            raise PreregistrationError(f"{label} session calendar contains invalid dates") from exc
+        if tuple(sorted(set(parsed))) != parsed:
+            raise PreregistrationError(f"{label} session calendar dates must be increasing and unique")
+    governed_slice = full_dates[
+        GOVERNED_MODEL_SLICE_START_INDEX:
+        GOVERNED_MODEL_SLICE_START_INDEX + GOVERNED_CALENDAR_LENGTH
+    ]
+    if model_dates != governed_slice:
+        raise PreregistrationError("416-session model calendar is not the governed slice of the 1246-session calendar")
+    if canonical_sha(list(full_dates)) != lineage.full_session_calendar_sha256:
+        raise PreregistrationError("full 1246-session calendar lineage mismatch")
+    if canonical_sha(list(model_dates)) != lineage.model_session_dates_sha256:
+        raise PreregistrationError("model 416-session calendar lineage mismatch")
+    if len({
+        lineage.source_audit_artifact_sha256,
+        lineage.embedded_audit_evidence_sha256,
+        lineage.baseline_audit_sha256,
+    }) != 3:
+        raise PreregistrationError("source audit file, embedded evidence, and contract envelope identities are conflated")
 
 
 def _validate_baseline_audit(
@@ -288,6 +369,28 @@ def _validate_baseline_audit(
         raise PreregistrationError("baseline audit is not VERIFIED")
     if evidence.baseline_manifest_sha256 != lineage.baseline_manifest_sha256:
         raise PreregistrationError("baseline audit lineage mismatch")
+    source_pairs = (
+        (evidence.snapshot_id, lineage.snapshot_id),
+        (evidence.snapshot_sha256, lineage.snapshot_sha256),
+        (evidence.universe_id, lineage.universe_id),
+        (evidence.universe_sha256, lineage.universe_sha256),
+        (evidence.full_session_calendar_sha256, lineage.full_session_calendar_sha256),
+        (evidence.model_session_dates_sha256, lineage.model_session_dates_sha256),
+        (evidence.source_audit_artifact_sha256, lineage.source_audit_artifact_sha256),
+        (evidence.embedded_audit_evidence_sha256, lineage.embedded_audit_evidence_sha256),
+    )
+    if any(actual != expected for actual, expected in source_pairs):
+        raise PreregistrationError("baseline audit source identity mismatch")
+    if any(type(value) is not str or not value.strip() for value in (
+        evidence.snapshot_id, evidence.universe_id,
+    )):
+        raise PreregistrationError("baseline audit source identifiers are required")
+    for value in (
+        evidence.snapshot_sha256, evidence.universe_sha256,
+        evidence.full_session_calendar_sha256, evidence.model_session_dates_sha256,
+        evidence.source_audit_artifact_sha256, evidence.embedded_audit_evidence_sha256,
+    ):
+        _require_sha(value, "baseline audit source identity")
     for label, value in (
         ("baseline audit ticker_count", evidence.ticker_count),
         ("baseline audit fold_count", evidence.fold_count),
@@ -297,6 +400,10 @@ def _validate_baseline_audit(
     side_effects = _require_int_mapping(
         evidence.side_effects, set(ZERO_BASELINE_SIDE_EFFECTS),
         "baseline audit side effects",
+    )
+    downstream_counts = _require_int_mapping(
+        evidence.downstream_counts, set(ZERO_DOWNSTREAM_COUNTS),
+        "baseline audit downstream counts",
     )
     _require_sha(evidence.audit_sha256, "baseline audit identity")
     recomputed_audit_sha = compute_baseline_audit_sha256(evidence)
@@ -315,6 +422,8 @@ def _validate_baseline_audit(
         raise PreregistrationError("baseline audit coverage is partial")
     if side_effects != ZERO_BASELINE_SIDE_EFFECTS:
         raise PreregistrationError("baseline audit reports prohibited side effects")
+    if downstream_counts != ZERO_DOWNSTREAM_COUNTS:
+        raise PreregistrationError("baseline audit reports downstream outputs")
 
 
 def _validate_current_readback(
@@ -331,12 +440,54 @@ def _validate_current_readback(
         raise PreregistrationError("current baseline readback is not VERIFIED")
     _require_sha(proof.baseline_manifest_sha256, "readback baseline manifest identity")
     _require_sha(proof.baseline_audit_sha256, "readback baseline audit identity")
+    _require_sha(proof.source_readback_artifact_sha256, "source readback artifact identity")
+    _require_sha(
+        proof.source_readback_embedded_evidence_sha256,
+        "source readback embedded evidence identity",
+    )
+    if len({
+        proof.source_readback_artifact_sha256,
+        proof.source_readback_embedded_evidence_sha256,
+        lineage.source_audit_artifact_sha256,
+        lineage.embedded_audit_evidence_sha256,
+        lineage.baseline_audit_sha256,
+    }) != 5:
+        raise PreregistrationError(
+            "source readback file and embedded evidence identities are conflated"
+        )
     if (
         proof.baseline_manifest_sha256 != lineage.baseline_manifest_sha256
         or proof.baseline_audit_sha256 != lineage.baseline_audit_sha256
     ):
         raise PreregistrationError("current baseline readback lineage mismatch")
     readback_at = _utc(proof.readback_at_utc, "current baseline readback")
+    source_readback_at = _utc(
+        proof.source_readback_observed_at_utc, "source readback observation"
+    )
+    if readback_at != source_readback_at:
+        raise PreregistrationError("current baseline readback was retimestamped without fresh source evidence")
+    source_pairs = (
+        (proof.snapshot_id, lineage.snapshot_id, evidence.snapshot_id),
+        (proof.snapshot_sha256, lineage.snapshot_sha256, evidence.snapshot_sha256),
+        (proof.universe_id, lineage.universe_id, evidence.universe_id),
+        (proof.universe_sha256, lineage.universe_sha256, evidence.universe_sha256),
+        (proof.full_session_calendar_sha256, lineage.full_session_calendar_sha256, evidence.full_session_calendar_sha256),
+        (proof.model_session_dates_sha256, lineage.model_session_dates_sha256, evidence.model_session_dates_sha256),
+        (proof.source_audit_artifact_sha256, lineage.source_audit_artifact_sha256, evidence.source_audit_artifact_sha256),
+        (proof.embedded_audit_evidence_sha256, lineage.embedded_audit_evidence_sha256, evidence.embedded_audit_evidence_sha256),
+    )
+    if any(readback != bound or readback != audited for readback, bound, audited in source_pairs):
+        raise PreregistrationError("current baseline readback source identity mismatch")
+    if any(type(value) is not str or not value.strip() for value in (
+        proof.snapshot_id, proof.universe_id,
+    )):
+        raise PreregistrationError("current baseline readback source identifiers are required")
+    for value in (
+        proof.snapshot_sha256, proof.universe_sha256,
+        proof.full_session_calendar_sha256, proof.model_session_dates_sha256,
+        proof.source_audit_artifact_sha256, proof.embedded_audit_evidence_sha256,
+    ):
+        _require_sha(value, "current baseline readback source identity")
     immutable_evidence_at = max(
         _utc(evidence.completed_at_utc, "baseline audit completion"),
         _utc(evidence.observed_at_utc, "baseline audit observation"),
@@ -355,6 +506,10 @@ def _validate_current_readback(
         proof.side_effects, set(ZERO_BASELINE_SIDE_EFFECTS),
         "current readback side effects",
     )
+    readback_downstream = _require_int_mapping(
+        proof.downstream_counts, set(ZERO_DOWNSTREAM_COUNTS),
+        "current readback downstream counts",
+    )
     if {
         "tickers": proof.ticker_count,
         "folds": proof.fold_count,
@@ -363,11 +518,14 @@ def _validate_current_readback(
         raise PreregistrationError("current baseline readback coverage is partial")
     if readback_side_effects != ZERO_BASELINE_SIDE_EFFECTS:
         raise PreregistrationError("current baseline readback reports prohibited side effects")
+    if readback_downstream != ZERO_DOWNSTREAM_COUNTS:
+        raise PreregistrationError("current baseline readback reports downstream outputs")
     if (
         proof.ticker_count != evidence.ticker_count
         or proof.fold_count != evidence.fold_count
         or proof.oos_observation_count != evidence.oos_observation_count
         or readback_side_effects != dict(evidence.side_effects)
+        or readback_downstream != dict(evidence.downstream_counts)
     ):
         raise PreregistrationError("current baseline readback differs from immutable evidence")
 
@@ -420,9 +578,9 @@ def _validate_model_contract(request: PreregistrationRequest) -> None:
     ):
         raise PreregistrationError("sampler target_accept must be finite")
     if (
-        not isinstance(sampler.engine, str) or not sampler.engine.strip()
-        or sampler.chains < 2 or sampler.draws <= 0 or sampler.tune <= 0
-        or not 0.5 <= sampler.target_accept < 1.0 or sampler.random_seed < 0
+        sampler.engine != "pymc-nuts"
+        or sampler.chains < 4 or sampler.draws < 1_000 or sampler.tune < 1_000
+        or not 0.90 <= sampler.target_accept < 1.0 or sampler.random_seed < 0
     ):
         raise PreregistrationError("sampler configuration is incomplete or unsafe")
 
@@ -517,6 +675,8 @@ def _manifest_payload(
         "run_id": request.run_id,
         "lineage": asdict(request.lineage),
         "session_calendar_ordinals": request.session_calendar_ordinals,
+        "full_session_calendar_dates": request.full_session_calendar_dates,
+        "model_session_dates": request.model_session_dates,
         "model_config": asdict(request.model_config),
         "sampler_config": asdict(request.sampler_config),
         "folds": [asdict(fold) for fold in request.folds],
@@ -553,11 +713,15 @@ def _request_from_manifest(manifest: Mapping[str, object]) -> PreregistrationReq
         sampler_raw = manifest["sampler_config"]
         folds_raw = manifest["folds"]
         calendar_raw = manifest["session_calendar_ordinals"]
+        full_calendar_raw = manifest["full_session_calendar_dates"]
+        model_dates_raw = manifest["model_session_dates"]
         intent_raw = manifest["output_intent"]
         audit_raw = dict(manifest["baseline_audit"])
         if not all(isinstance(value, Mapping) for value in (
             lineage_raw, model_raw, sampler_raw, intent_raw,
-        )) or not isinstance(folds_raw, Sequence) or not isinstance(calendar_raw, Sequence):
+        )) or not isinstance(folds_raw, Sequence) or not isinstance(calendar_raw, Sequence) \
+            or not isinstance(full_calendar_raw, Sequence) or isinstance(full_calendar_raw, (str, bytes)) \
+            or not isinstance(model_dates_raw, Sequence) or isinstance(model_dates_raw, (str, bytes)):
             raise TypeError("nested manifest type")
         model_raw["candidate_lags"] = tuple(model_raw["candidate_lags"])
         model_raw["candidate_depths"] = tuple(model_raw["candidate_depths"])
@@ -579,6 +743,8 @@ def _request_from_manifest(manifest: Mapping[str, object]) -> PreregistrationReq
             output_intent=ProhibitedOutputIntent(**dict(intent_raw)),
             baseline_audit=audit,
             session_calendar_ordinals=tuple(calendar_raw),
+            full_session_calendar_dates=tuple(full_calendar_raw),
+            model_session_dates=tuple(model_dates_raw),
         )
     except (KeyError, TypeError, ValueError, AttributeError) as exc:
         raise PreregistrationError("preregistration manifest payload is invalid") from exc
@@ -652,6 +818,7 @@ def audit_preregistration_manifest(
     """Independently replay every semantic validator and reject any bypass."""
     expected = {
         "contract_id", "run_id", "lineage", "session_calendar_ordinals",
+        "full_session_calendar_dates", "model_session_dates",
         "model_config", "sampler_config",
         "folds", "baseline_audit", "output_intent", "execution",
         "checkpoint_identity_sha256", "preflight",

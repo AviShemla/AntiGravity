@@ -1,30 +1,74 @@
-# Successor hierarchical stock model preflight
+# Governed successor stock-model preregistration v2
 
-This isolated package is a fixture-only preregistration contract. It does not
-read Turso, fit a model, or emit predictions, recommendations, orders, or ETF
-artifacts.
+This package freezes and independently audits a research-only preregistration.
+It performs no filesystem, network, Turso, model-fit, prediction,
+recommendation, order, ETF, or trading operation.
 
-Integration sequence after review:
+## Evidence boundary
 
-1. Import the module into the canonical repository as an additive artifact.
-2. Replace fixture identities with independently read, immutable snapshot,
-   universe, full-baseline audit, Git, model-config, and sampler identities.
-3. Generate and persist the preregistration once, before any fit is authorized.
-4. Independently recompute the baseline-audit evidence digest, then replay all
-   semantic validators (not merely the outer manifest digest).
-5. Freeze the governed four-fold geometry: 289-session training intervals,
-   30-session outer tests, 30-session steps, seven-session purge, and a
-   126-observation minimum. The exact calendar ordinals `0..415` are content-hashed;
-   every supplied fold must equal the resulting geometry and outer tests may
-   never overlap.
-6. Use explicit `NEW_RUN` or `RESUME` mode. A resume must present both the
-   unchanged prior manifest and its identical checkpoint identity; any restart
-   or deployment mismatch fails closed. Immutable audit provenance remains in
-   that identity, while every new audit or resume must separately provide a
-   fresh readback proof matching the immutable audit and baseline identities;
-   its timestamp must follow both immutable audit completion and observation.
-7. Keep all prediction, recommendation, order, trading, and ETF paths disabled
-   until their separately governed evidence stages are approved.
+The contract keeps these identities separate and rejects substitution among
+them:
 
-The wording is intentionally observational: independent ticker/lag edges are
-predictive-association hypotheses, never causal proof.
+- the immutable baseline final-manifest file SHA-256;
+- the immutable v4 independent-audit file SHA-256;
+- the embedded v4 audit-evidence SHA-256;
+- the preregistration contract-envelope SHA-256;
+- a new fresh-readback file SHA-256; and
+- that readback's embedded audit-evidence SHA-256.
+
+Both immutable and fresh audit evidence must reconcile exactly:
+
+- 474 tickers;
+- 1,896 folds;
+- 56,880 out-of-sample observations;
+- six zero baseline side-effect counters; and
+- all eight exact zero downstream-table counters emitted by the v4 auditor.
+
+A fresh readback must be independently produced, cannot be retimestamped, must
+follow the immutable audit, and must be no more than one hour old when the
+contract is created or re-audited.
+
+## Frozen research geometry
+
+- topology: independent ticker/lag edges;
+- candidate lags: 1 through 7;
+- candidate depths: 1 through 5;
+- claim: observational predictive association, never causal proof;
+- full input calendar: exact 1,246-session date sequence;
+- model calendar: exact last 416-session slice of that sequence;
+- training width: 289 sessions;
+- four non-overlapping 30-session outer tests;
+- 30-session step;
+- seven-session purge; and
+- minimum fit observations: 126.
+
+The governed sampler is PyMC NUTS with at least four chains, 1,000 posterior
+draws, 1,000 tuning draws, target acceptance at least 0.90, and a fixed
+nonnegative integer seed. The exact selected sampler configuration is
+content-hashed in every preregistration.
+
+## Required integration sequence
+
+1. Independently read the immutable baseline artifacts and verify their raw
+   file identities, canonical embedded digests, executor commit, exact schemas,
+   artifact closure, chronology, coverage, and zero-output evidence.
+2. Independently reread the validated baseline lineage and exact 1,246-session
+   calendar from Turso using SELECT-only access.
+3. Produce a fresh independent v4 completion audit and preserve both its raw
+   file SHA-256 and embedded evidence SHA-256.
+4. Build the preregistration through the pure binding adapter using the exact
+   current model-code Git commit, immutable audit, fresh readback, universe,
+   calendars, configuration, and sampler identities.
+5. Persist the preregistration exactly once in a root-owned, mode-0600,
+   single-link artifact before any model fit may be considered.
+6. Produce a second fresh readback and independently replay every semantic
+   preregistration validator against the persisted artifact.
+7. Treat `PASS` only as a preregistration result. The manifest always records
+   `fixture_only=true`, `model_fit_authorized=false`, `model_fit_started=false`,
+   and zero downstream outputs. It has no `READY` state.
+8. Any later model runner requires a separate, reviewed execution contract and
+   must reproduce the frozen identity, chronology, purge, calendar, sampler,
+   output, and safety gates before starting computation.
+
+Prediction persistence, recommendations, orders, trading, snapshot promotion,
+and ETF-prior generation remain outside this package and unauthorized.
