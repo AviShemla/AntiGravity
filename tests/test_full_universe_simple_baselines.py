@@ -160,6 +160,59 @@ class GuardTests(unittest.TestCase):
         self.assertNotIn("token", rendered.lower())
         self.assertNotIn("password", rendered.lower())
 
+    def test_run_cli_normalizes_production_libsql_endpoint(self):
+        client_factory = mock.Mock(return_value=object())
+        runner = mock.Mock()
+        with tempfile.TemporaryDirectory(dir=ROOT) as folder:
+            root = Path(folder).resolve()
+            checkpoint_dir = root / "checkpoints"
+            manifest_dir = root / "manifest"
+            checkpoint_dir.mkdir()
+            manifest_dir.mkdir()
+            args = ["--env-file", str(root / "env"),
+                    "--checkpoint-dir", str(checkpoint_dir),
+                    "--final-manifest", str(manifest_dir / "final.json"),
+                    "--executor-manifest", str(root / "executor.json")]
+            with mock.patch.object(subject, "require_root_output_directory",
+                                   side_effect=lambda path, label: path.resolve()):
+                self.assertEqual(subject.run_cli(
+                    args,
+                    effective_uid=lambda: 0,
+                    credentials_loader=lambda path: ("libsql://oracle.example", "placeholder"),
+                    executor_loader=lambda *unused: "a" * 40,
+                    client_factory=client_factory,
+                    runner=runner,
+                    module_path=root / "module.py",
+                    entrypoint_path=root / "entrypoint.py",
+                ), 0)
+        client_factory.assert_called_once_with(
+            "https://oracle.example/v2/pipeline", "placeholder", 120.0)
+        runner.assert_called_once()
+
+    def test_endpoint_normalization_is_strict_and_idempotent(self):
+        self.assertEqual(subject.normalize_turso_pipeline_endpoint(
+            "https://oracle.example/v2/pipeline"),
+            "https://oracle.example/v2/pipeline")
+        self.assertEqual(subject.normalize_turso_pipeline_endpoint(
+            "libsql://oracle.example"),
+            "https://oracle.example/v2/pipeline")
+        for value in (
+                "http://oracle.example", "libsql://user@oracle.example",
+                "libsql://oracle.example/not-pipeline", " libsql://oracle.example",
+                "https://oracle.example:443", "https://oracle.example:abc",
+                "https://oracle.example\\evil", "https://user%40oracle.example",
+                "https://oracle.example?query=1", "https://oracle.example#fragment",
+                "https://oracle.example?", "https://oracle.example#",
+                "https://oracle.example/v2/pipeline?",
+                "libsql://oracle.example/v2/pipeline#",
+                "https://oracle.example\n.evil", "https://oracle.example\r.evil",
+                "https://oracle.example\t.evil", "https://oracle.example\x00.evil",
+                "https://ORACLE.example", "https://-oracle.example",
+                "https://oracle-.example",
+        ):
+            with self.assertRaises(subject.BaselineContractError):
+                subject.normalize_turso_pipeline_endpoint(value)
+
     @unittest.skipUnless(os.name == "posix", "root directory contract is POSIX deployment behavior")
     def test_output_directory_must_be_root_owned_mode_700(self):
         with tempfile.TemporaryDirectory() as folder:
