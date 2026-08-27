@@ -49,6 +49,16 @@ content-hashed in every preregistration.
 
 ## Required integration sequence
 
+`stock_model_preregistration_binding.py` is the pure one-time adapter for the
+already verified baseline deployment v4. It pins the exact v4 manifest, audit,
+executor, checkpoint-set, deterministic, lineage, universe, and model-calendar
+identities. It accepts decoded objects plus caller-computed raw file hashes,
+performs no I/O, and rejects any substituted identity or semantic drift. The
+v4 completion auditor itself has an intentional one-hour completion window;
+after that window, continuing runtime liveness requires a separate governed
+SELECT-only readback contract and must not weaken or repurpose the immutable
+completion audit.
+
 1. Independently read the immutable baseline artifacts and verify their raw
    file identities, canonical embedded digests, executor commit, exact schemas,
    artifact closure, chronology, coverage, and zero-output evidence.
