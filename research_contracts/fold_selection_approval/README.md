@@ -10,6 +10,12 @@ model, prediction, recommendation, order, or database write.
 auditor. It supplies no execution or authorization API; possessing a result is
 insufficient without complete panel-bound source-evidence replay.
 
+`s08_signal_panel_materializer.py` is an inert, injected-input materialization
+proposal with no authority surface. Its injected authenticity identities remain
+claimed and unverified, every output has `execution_authorized = false`, and a
+future external approval envelope must verify the exact claims before any
+execution gate.
+
 `training_fold_selection_approval_v5.py` is the reviewed public proposal
 surface. Its trust root is deliberately absent, so every preflight returns
 `APPROVAL_REQUIRED` with zero selections. The v4 module is retained only as an
