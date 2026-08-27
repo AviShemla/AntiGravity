@@ -1,0 +1,17 @@
+[Unit]
+Description=Codex Oracle ingestion continuity liveness verifier
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/python /opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/continuity_controller.py --monitor --config /etc/codex-oracle/nightly-continuity.json
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/etc/codex-oracle/nightly-continuity.json
+ReadOnlyPaths=/opt/codex-oracle/releases
+ReadOnlyPaths=/var/lib/codex-oracle/market-ingestion
+ReadWritePaths=/var/lib/codex-oracle/nightly-continuity

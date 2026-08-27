@@ -65,7 +65,7 @@ class CanonicalPlanIntegrationTests(unittest.TestCase):
     def test_current_preregistration_commit_and_test_scope_are_recorded(self) -> None:
         stage = self.by_stage["S07"]
         self.assertEqual(stage["progress"], {
-            "numerator": 3,
+            "numerator": 5,
             "denominator": 5,
             "unit": "preregistration runtime evidence gates",
         })

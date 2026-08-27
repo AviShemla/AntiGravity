@@ -115,7 +115,7 @@ The machine-readable source of the exact fields below is `CODEX_ORACLE_STAGE_REG
 ### S01 — Close the 2026-08-26 ingestion and successor-baseline incidents
 
 **Dependencies:** `S00`.
-**Current evidence state:** ingestion false-red cause `TESTED_NOT_DEPLOYED`; baseline v1 endpoint-shape defect `DIAGNOSED_AND_SUPERSEDED`; immutable baseline v4 `VERIFIED_HISTORICAL`.
+**Current evidence state:** ingestion exact-set repair `OBSERVED` from immutable commit `ca73c6570a5ae30a85a8b8bd4c25b3a91ac2d7ca` with 28/28 focused tests and a SELECT-only readback of the recovered `STAGING` snapshot; baseline v1 endpoint-shape defect `DIAGNOSED_AND_SUPERSEDED`; immutable baseline v4 `VERIFIED_HISTORICAL`. The next complete timer-to-handoff runtime is still required for final S01 verification.
 
 **Entry gates**
 
@@ -151,7 +151,7 @@ The machine-readable source of the exact fields below is `CODEX_ORACLE_STAGE_REG
 ### S02 — Temporary guarded nightly continuity
 
 **Dependencies:** `S00`; incident hardening from `S01` must be deployed before the next runtime.
-**Current evidence state:** `IMPLEMENTED_PARTIAL`; a temporary continuity concept exists, but each new unit/date must be freshly verified.
+**Current evidence state:** `TESTED_NOT_RECURRINGLY_OBSERVED`; the reusable fail-closed controller, immutable renderer, terminal ingestion-to-postflight-to-handoff topology, five-minute watchdog, collision/capacity gates, NYSE calendar horizon, and secure handoff contract passed 62/62 tests as root on Vultr. The first recurring controller runtime and independent readback remain required; each session still requires fresh evidence.
 
 **Entry gates**
 
@@ -282,7 +282,7 @@ The machine-readable source of the exact fields below is `CODEX_ORACLE_STAGE_REG
 ### S07 — Stock-model preregistration and runtime authorization envelope
 
 **Dependencies:** `S03`, `S05`, `S06`.
-**Current evidence state:** canonical runtime commit/push and tests are `TESTED` at `af5cb30c8b4ed3d19a90c0151ec20b30edff4761`; immutable deploy/observe/verify remain pending.
+**Current evidence state:** `VERIFIED_FIXTURE_ONLY` at canonical commit `af5cb30c8b4ed3d19a90c0151ec20b30edff4761`. Immutable deployment v2 passed 69/69 tests; fresh SELECT-only Turso evidence produced a root-owned write-once preregistration manifest, and an independent audit bound the manifest, deployment, baseline, code, and zero-write evidence. The explicit decision remains `model_fit_authorized=false`, so this stage does not authorize S08 fitting.
 
 **Entry gates:** fresh SELECT-only baseline readback; immutable final/audit identities; exact model code/config/dependencies; frozen hypotheses, hierarchy, lags 1–7, depth 1–5, folds, sampler, seeds, thresholds, outputs, resource limits, and side-effect prohibitions.
 

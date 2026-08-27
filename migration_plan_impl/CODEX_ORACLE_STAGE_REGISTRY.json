@@ -140,8 +140,10 @@
       "approval_events": 0,
       "screening_runs": 0,
       "failure": "Primary unit exited nonzero during postflight because the legacy contract compared 476 lineage entries with 474 feature tickers.",
-      "repair_maturity": "TESTED_NOT_DEPLOYED",
-      "focused_tests": 6
+      "repair_maturity": "DEPLOYED_AND_MANUALLY_OBSERVED_FUTURE_CHAIN_PENDING",
+      "focused_tests": 28,
+      "deployed_commit": "ca73c6570a5ae30a85a8b8bd4c25b3a91ac2d7ca",
+      "observed_handoff_sha256": "7c67131b6f6ba1f3bc9c3f22c77b3fc1f34cb5020d0ec92d23897036cce2dc79"
     },
     "baseline_v1_failure": {
       "invocation_id": "d19062f22c4b4be1ba39424e8aed2c8a",
@@ -389,9 +391,9 @@
       ],
       "parallel_group": "incident",
       "current_evidence_state": {
-        "state": "TESTED",
-        "qualifier": "INGESTION_REPAIR_NOT_DEPLOYED_BASELINE_V4_HISTORICALLY_VERIFIED",
-        "evidence": "Exact-set postflight repair has six focused tests; baseline v1 endpoint defect is diagnosed and baseline v4 successor passed."
+        "state": "OBSERVED",
+        "qualifier": "DEPLOYED_MANUAL_STAGING_READBACK_FUTURE_CHAIN_PENDING",
+        "evidence": "Exact-set postflight/handoff is committed at ca73c6570a5ae30a85a8b8bd4c25b3a91ac2d7ca, passed 28/28 focused tests, and was observed SELECT-only against the 2026-08-26 STAGING snapshot; the next full timer-to-handoff runtime remains pending."
       },
       "entry_gates": [
         "Preserve failed InvocationIDs, units, commands, immutable identities, journals, environment metadata, logs/checkpoints, Turso rows, and timestamps.",
@@ -442,9 +444,9 @@
       "title": "Close the 2026-08-26 ingestion and successor-baseline incidents",
       "owner": "codex-oracle-s01-owner",
       "action_class": "SAFE_NOW",
-      "evidence_stage": "TESTED",
+      "evidence_stage": "OBSERVED",
       "progress": {
-        "numerator": 2,
+        "numerator": 3,
         "denominator": 4,
         "unit": "incident closure proof groups"
       },
@@ -492,8 +494,10 @@
         },
         "observe": {
           "required": true,
-          "satisfied": false,
-          "evidence_refs": []
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s01/observation/market_features_2026-08-26_911350a3784e5b1d"
+          ]
         },
         "readback": {
           "required": true,
@@ -616,9 +620,9 @@
       ],
       "parallel_group": "continuity",
       "current_evidence_state": {
-        "state": "IMPLEMENTED",
-        "qualifier": "PARTIAL_REQUIRES_POST_HARDENING_RUNTIME",
-        "evidence": "Temporary continuity exists conceptually; every session and unit requires fresh proof."
+        "state": "TESTED",
+        "qualifier": "REUSABLE_CONTROLLER_TESTED_RUNTIME_OBSERVATION_PENDING",
+        "evidence": "The reusable fail-closed continuity controller, immutable renderer, exact terminal topology, liveness watchdog, collision/capacity gates, calendar horizon, and secure handoff contract passed 62/62 tests as root on Vultr; the first recurring controller runtime and independent readback remain pending."
       },
       "entry_gates": [
         "Derive latest completed NYSE session using NYSE calendar and America/New_York.",
@@ -663,9 +667,9 @@
       "title": "Temporary guarded nightly continuity",
       "owner": "codex-oracle-s02-owner",
       "action_class": "SAFE_NOW",
-      "evidence_stage": "IMPLEMENTED",
+      "evidence_stage": "TESTED",
       "progress": {
-        "numerator": 1,
+        "numerator": 2,
         "denominator": 3,
         "unit": "continuity evidence gates"
       },
@@ -706,8 +710,10 @@
       "evidence_gates": {
         "test": {
           "required": true,
-          "satisfied": false,
-          "evidence_refs": []
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s02/tests/root-vultr-62-of-62-controller-sha256-333f115b439021a305c112978e2eb5a8957d42bc3163eaec2c4af9f89e5a23dc"
+          ]
         },
         "observe": {
           "required": true,
@@ -1703,9 +1709,9 @@
         "W4"
       ],
       "current_evidence_state": {
-        "state": "TESTED",
-        "qualifier": "CANONICAL_COMMIT_PUSHED_NOT_DEPLOYED",
-        "evidence": "Runtime is committed and pushed at af5cb30c8b4ed3d19a90c0151ec20b30edff4761; 69/69 focused tests passed in two Vultr import modes, and the full suite passed 831 tests plus two separately credential-bounded read-only ledger tests, with one unrelated skip and 152 subtests. Immutable deployment, observation, and independent verification remain."
+        "state": "VERIFIED",
+        "qualifier": "VERIFIED_FIXTURE_ONLY_MODEL_FIT_NOT_AUTHORIZED",
+        "evidence": "Canonical code is committed at af5cb30c8b4ed3d19a90c0151ec20b30edff4761; immutable deployment v2 passed 69/69 tests, a fresh SELECT-only Turso readback produced a write-once preregistration manifest, and an independent audit verified exact hashes and zero writes with model_fit_authorized=false."
       },
       "entry_gates": [
         "Fresh SELECT-only baseline readback and exact immutable manifest/audit/model/dependency/config identities.",
@@ -1743,9 +1749,9 @@
       "title": "Stock-model preregistration and runtime authorization envelope",
       "owner": "codex-oracle-s07-owner",
       "action_class": "SAFE_NOW",
-      "evidence_stage": "TESTED",
+      "evidence_stage": "VERIFIED",
       "progress": {
-        "numerator": 3,
+        "numerator": 5,
         "denominator": 5,
         "unit": "preregistration runtime evidence gates"
       },
@@ -1793,13 +1799,17 @@
         },
         "observe": {
           "required": true,
-          "satisfied": false,
-          "evidence_refs": []
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s07/observation/stock-prereg-20260827T060555Z-88df524e"
+          ]
         },
         "readback": {
           "required": true,
-          "satisfied": false,
-          "evidence_refs": []
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s07/readback/9512e499495234bfd0290ac21ffa4207ade70ed2c4b6e9bc49aabc8f1fcf594e"
+          ]
         }
       },
       "autofix": {

@@ -1,0 +1,22 @@
+[Unit]
+Description=Codex Oracle guarded market ingestion for NYSE session %i
+After=network-online.target
+Wants=network-online.target
+OnSuccess=codex-market-ingestion-postflight@%i.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+CPUWeight=900
+IOWeight=900
+Nice=-5
+ExecStart=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@/run-market-ingestion --source-session %i
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@
+ReadOnlyPaths=/etc/codex-oracle/market-ingestion.env
+ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i
