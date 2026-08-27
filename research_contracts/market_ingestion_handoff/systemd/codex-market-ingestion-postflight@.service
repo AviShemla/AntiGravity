@@ -1,0 +1,18 @@
+[Unit]
+Description=Codex Oracle SELECT-only market-ingestion postflight for %i
+After=network-online.target codex-market-ingestion@%i.service
+OnSuccess=codex-market-ingestion-handoff@%i.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+EnvironmentFile=/etc/codex-oracle/market-ingestion-readonly.env
+ExecStart=/opt/codex-oracle/market-ingestion/current/python /opt/codex-oracle/market-ingestion/current/market_ingestion_postflight_cli.py --source-session %i --expected-code-version ${CODE_VERSION_SHA256} --handoff-output /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --attempts 6 --retry-seconds 5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/etc/codex-oracle/market-ingestion-readonly.env
+ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i

@@ -1,0 +1,19 @@
+{
+  "baseline_on_success_owner": "codex-market-ingestion-handoff@.service",
+  "baseline_successor": "codex-stock-baseline@%i.service",
+  "contract_id": "codex-market-ingestion-handoff-topology-v1",
+  "required_transitions": [
+    {
+      "owner": "codex-market-ingestion@.service",
+      "target": "codex-market-ingestion-postflight@%i.service"
+    },
+    {
+      "owner": "codex-market-ingestion-postflight@.service",
+      "target": "codex-market-ingestion-handoff@%i.service"
+    },
+    {
+      "owner": "codex-market-ingestion-handoff@.service",
+      "target": "codex-stock-baseline@%i.service"
+    }
+  ]
+}
