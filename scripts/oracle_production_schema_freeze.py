@@ -14,6 +14,7 @@ import os
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -71,9 +72,24 @@ def _canonical_utc_now() -> datetime:
 
 
 def _endpoint(raw_url: str) -> str:
-    if not raw_url or not raw_url.startswith("libsql://"):
-        raise LineageError("Production Turso URL is missing or not libsql.")
-    return raw_url.replace("libsql://", "https://", 1).rstrip("/") + "/v2/pipeline"
+    if raw_url.startswith("libsql://"):
+        normalized = raw_url.replace("libsql://", "https://", 1)
+    elif raw_url.startswith("https://"):
+        normalized = raw_url
+    else:
+        raise LineageError("Production Turso URL scheme is missing or invalid.")
+    parsed = urlsplit(normalized)
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+        or parsed.path not in {"", "/"}
+    ):
+        raise LineageError("Production Turso URL shape is invalid.")
+    return normalized.rstrip("/") + "/v2/pipeline"
 
 
 class AtomicPipelineTransport:

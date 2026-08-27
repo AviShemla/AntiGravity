@@ -83,6 +83,24 @@ class ProductionLauncherBehaviorTests(unittest.TestCase):
                     Path("."), self.Reader(supplied), Path("authorization.json")
                 )
 
+    def test_endpoint_accepts_only_bare_turso_https_or_libsql_origin(self):
+        self.assertEqual(
+            runtime_subject._endpoint("libsql://theoracle.example.turso.io"),
+            "https://theoracle.example.turso.io/v2/pipeline",
+        )
+        self.assertEqual(
+            runtime_subject._endpoint("https://theoracle.example.turso.io/"),
+            "https://theoracle.example.turso.io/v2/pipeline",
+        )
+        for invalid in (
+            "http://theoracle.example.turso.io",
+            "https://user:secret@theoracle.example.turso.io",
+            "https://theoracle.example.turso.io/other",
+            "https://theoracle.example.turso.io?token=secret",
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(runtime_subject.LineageError):
+                runtime_subject._endpoint(invalid)
+
 
 if __name__ == "__main__":
     unittest.main()
