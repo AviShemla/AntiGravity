@@ -353,19 +353,34 @@ def build_pymc_model(pm: Any, packed: PackedDesign, config: NumericModelConfig) 
 
 
 def _flatten_diagnostic(dataset: Any) -> np.ndarray:
-    values = np.asarray(dataset.to_array().values, dtype=float)
+    if hasattr(dataset, "to_array"):
+        values = np.asarray(dataset.to_array().values, dtype=float).reshape(-1)
+    elif hasattr(dataset, "to_dataset"):
+        # ArviZ 1.2 / PyMC 6 may return DataTree diagnostics. Convert only
+        # the selected node and never traverse unrelated inference groups.
+        node = dataset.to_dataset()
+        if not getattr(node, "data_vars", None):
+            raise PyMCBackendError("sampler diagnostic DataTree node is empty")
+        values = np.asarray(node.to_array().values, dtype=float).reshape(-1)
+    elif hasattr(dataset, "values"):
+        values = np.asarray(dataset.values, dtype=float).reshape(-1)
+    else:
+        values = np.asarray(dataset, dtype=float).reshape(-1)
     return values[np.isfinite(values)]
 
 
 def extract_sampler_diagnostics(az: Any, idata: Any, config: SamplerConfig) -> SamplerDiagnosticsEvidence:
     variables = list(_DIRECTION_VARS + _RETURN_VARS)
-    rhat_values = _flatten_diagnostic(az.rhat(idata, var_names=variables))
-    bulk_values = _flatten_diagnostic(az.ess(idata, var_names=variables, method="bulk"))
-    tail_values = _flatten_diagnostic(az.ess(idata, var_names=variables, method="tail"))
-    bfmi_values = np.asarray(az.bfmi(idata), dtype=float).reshape(-1)
+    posterior = idata.posterior
+    stats = idata.sample_stats
+    if "energy" not in stats:
+        raise PyMCBackendError("NUTS energy evidence is missing")
+    rhat_values = _flatten_diagnostic(az.rhat(posterior, var_names=variables))
+    bulk_values = _flatten_diagnostic(az.ess(posterior, var_names=variables, method="bulk"))
+    tail_values = _flatten_diagnostic(az.ess(posterior, var_names=variables, method="tail"))
+    bfmi_values = _flatten_diagnostic(az.bfmi(stats["energy"]))
     if not all(len(values) for values in (rhat_values, bulk_values, tail_values, bfmi_values)):
         raise PyMCBackendError("sampler diagnostic extraction returned no evidence")
-    stats = idata.sample_stats
     divergences = int(np.asarray(stats["diverging"]).sum())
     if "reached_max_treedepth" in stats:
         depth_fraction = float(np.asarray(stats["reached_max_treedepth"], dtype=float).mean())

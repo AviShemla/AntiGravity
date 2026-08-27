@@ -34,6 +34,7 @@ try:
         NumericModelConfig,
         PyMCBackendError,
         SamplerConfig,
+        _flatten_diagnostic,
         extract_posterior,
         extract_sampler_diagnostics,
         freeze_backend_config,
@@ -47,6 +48,7 @@ except ImportError:  # isolated workspace execution
         NumericModelConfig,
         PyMCBackendError,
         SamplerConfig,
+        _flatten_diagnostic,
         extract_posterior,
         extract_sampler_diagnostics,
         freeze_backend_config,
@@ -155,19 +157,29 @@ class _DiagnosticArray(_Array):
         return self
 
 
+class _DiagnosticTree:
+    def __init__(self, value):
+        self._dataset = _DiagnosticArray(value)
+
+    def to_dataset(self):
+        self._dataset.data_vars = {"diagnostic": self._dataset}
+        return self._dataset
+
+
 class _FakeAz:
     @staticmethod
-    def rhat(_idata, var_names):
-        assert var_names
+    def rhat(posterior, var_names):
+        assert var_names and "prediction_probability_up" in posterior
         return _DiagnosticArray([1.001, 1.002])
 
     @staticmethod
-    def ess(_idata, var_names, method):
-        assert var_names and method in {"bulk", "tail"}
+    def ess(posterior, var_names, method):
+        assert var_names and method in {"bulk", "tail"} and "prediction_probability_up" in posterior
         return _DiagnosticArray([900, 800])
 
     @staticmethod
-    def bfmi(_idata):
+    def bfmi(energy):
+        assert np.asarray(energy).shape == (4, 1000)
         return np.asarray([0.8, 0.85, 0.82, 0.81])
 
 
@@ -180,6 +192,7 @@ class _FakeIData:
             "return_sigma": _Array(rng.uniform(0.5, 1.5, (4, draws, targets))),
         }
         self.sample_stats = {
+            "energy": _Array(np.ones((4, draws), dtype=float)),
             "diverging": _Array(np.zeros((4, draws), dtype=int)),
             "tree_depth": _Array(np.full((4, draws), 8, dtype=int)),
         }
@@ -365,6 +378,21 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(evidence.divergences, 0)
         self.assertLess(evidence.max_rhat, 1.01)
         self.assertGreater(evidence.min_bulk_ess, 400)
+
+    def test_diagnostics_are_scoped_to_posterior_and_energy_groups(self):
+        idata = _FakeIData(2)
+        evidence = extract_sampler_diagnostics(_FakeAz(), idata, SamplerConfig())
+        self.assertEqual(evidence.chains, 4)
+
+    def test_rejects_missing_energy_group_before_bfmi(self):
+        idata = _FakeIData(2)
+        del idata.sample_stats["energy"]
+        with self.assertRaisesRegex(PyMCBackendError, "energy evidence is missing"):
+            extract_sampler_diagnostics(_FakeAz(), idata, SamplerConfig())
+
+    def test_flattens_arviz_datatree_diagnostic_nodes(self):
+        values = _flatten_diagnostic(_DiagnosticTree([1.001, 1.002]))
+        np.testing.assert_allclose(values, [1.001, 1.002])
 
     def test_extracts_canonical_percent_posteriors(self):
         packed = pack_design(_request())
