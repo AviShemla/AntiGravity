@@ -29,6 +29,7 @@ sys.path.insert(0, str(ROOT))
 from market_data_provider import fetch_validated_daily_bars, resolve_tiingo_api_key
 from scripts.stage_market_features_to_turso import COLUMN_MAP, clean, post_statements
 from turso_read_pipeline import TursoReadPipeline
+from market_staging_content import ENCODING, STAGING_COLUMNS, digest_rows
 
 
 GapFallback = Callable[
@@ -361,12 +362,7 @@ def apply_approved_instrument_registry(
 
 
 def normalize_ohlc_envelope(frame: pd.DataFrame) -> pd.DataFrame:
-    """Return canonical OHLC rows whose high/low exactly enclose open and close.
-
-    Provider-native frames and their lineage hashes remain unchanged. This
-    normalization applies only to the canonical model-input representation,
-    before its content checksum and staging identity are derived.
-    """
+    """Assert that validated OHLC is already canonical; never silently repair."""
     required = ["Open", "High", "Low", "Close"]
     missing = sorted(set(required).difference(frame.columns))
     if missing:
@@ -374,16 +370,25 @@ def normalize_ohlc_envelope(frame: pd.DataFrame) -> pd.DataFrame:
             "Canonical OHLC normalization is missing columns: " + ", ".join(missing)
         )
     result = frame.copy()
-    envelope = result[required]
-    result["High"] = envelope.max(axis=1, skipna=False)
-    result["Low"] = envelope.min(axis=1, skipna=False)
+    numeric = result[required].apply(pd.to_numeric, errors="coerce")
+    if numeric.isna().any().any():
+        raise ValueError("Canonical OHLC contains null or non-numeric values.")
+    expected_high = numeric.max(axis=1, skipna=False)
+    expected_low = numeric.min(axis=1, skipna=False)
+    if not numeric["High"].equals(expected_high) or not numeric["Low"].equals(expected_low):
+        raise ValueError("Validated provider OHLC would change under canonical normalization.")
     return result
 
 
 def content_checksum(frame: pd.DataFrame) -> str:
-    ordered = frame.sort_values(["Ticker", "Date"])
-    values = pd.util.hash_pandas_object(ordered[[source for source, _ in COLUMN_MAP]], index=False)
-    return hashlib.sha256(values.to_numpy().tobytes()).hexdigest()
+    if tuple(target for _, target in COLUMN_MAP) != STAGING_COLUMNS:
+        raise ValueError("Staging checksum column contract differs from writer COLUMN_MAP.")
+    ordered = frame.sort_values(["Ticker", "Date"], kind="mergesort")
+    clean_rows = (
+        tuple(clean(value) for value in row)
+        for row in ordered[[source for source, _ in COLUMN_MAP]].itertuples(index=False, name=None)
+    )
+    return digest_rows(clean_rows)
 
 
 def provider_source_checksum(frame: pd.DataFrame) -> str:
@@ -495,7 +500,7 @@ def stage_frame(
          source_checksum_sha256,expected_row_count,expected_ticker_count,status,validation_notes,created_at_utc)
         VALUES (?,'MARKET_FEATURES',?,?,?,?,?,?,?,'STAGING',?,?)""",
         [snapshot_id, source_session.isoformat(), created_at, provider, code_hash, checksum,
-         expected_rows, expected_tickers, notes, created_at],
+         expected_rows, expected_tickers, f"checksum_encoding={ENCODING}; {notes}", created_at],
     )])
     lineage_prefix = (
         "INSERT OR IGNORE INTO market_data_provider_lineage "
