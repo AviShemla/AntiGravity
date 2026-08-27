@@ -1,0 +1,70 @@
+{
+  "artifact_type": "codex_oracle_canonical_regression_evidence",
+  "observed_at_utc": "2026-08-27T15:58:25Z",
+  "git_commit_tested": "9cd3b174aae04612fc4126b7db2c9e1e26f55db6",
+  "full_suite": {
+    "unit": "codex-oracle-canonical-regression-9cd3b17-v2.service",
+    "invocation_id": "ea7a71d1835e4bcab2407144c1ff2f39",
+    "started_at_utc": "2026-08-27T15:54:46Z",
+    "elapsed_seconds": 79.28,
+    "passed": 888,
+    "failed": 5,
+    "skipped": 1,
+    "subtests_passed": 184,
+    "failure_classification": "LIVE_INTEGRATION_DEPENDENCY_UNAVAILABLE_IN_ISOLATED_WORKER",
+    "failed_tests": [
+      "tests/test_api.py::test_neutral_holdings_api",
+      "tests/test_api.py::test_olympic_api",
+      "tests/test_ledgers.py::test_ledger_continuity",
+      "tests/test_ledgers.py::test_no_intraday_dangling_trades",
+      "tests/test_regressions.py::test_regression_3am_hardcode_bug"
+    ],
+    "observed_failure_reasons": [
+      "AF_INET and AF_INET6 were intentionally unavailable under RestrictAddressFamilies=AF_UNIX",
+      "Turso credentials were intentionally absent from the isolated test environment"
+    ]
+  },
+  "offline_suite": {
+    "unit": "codex-oracle-offline-regression-9cd3b17-v1.service",
+    "invocation_id": "9149693d7e4a4535b1442f1cd847dbeb",
+    "started_at_utc": "2026-08-27T15:57:10Z",
+    "elapsed_seconds": 72.30,
+    "passed": 888,
+    "failed": 0,
+    "skipped": 1,
+    "subtests_passed": 184,
+    "excluded_live_integration_files": [
+      "tests/test_api.py",
+      "tests/test_ledgers.py",
+      "tests/test_regressions.py"
+    ]
+  },
+  "focused_migration_suite": {
+    "passed": 50,
+    "failed": 0,
+    "elapsed_seconds": 150.67,
+    "scope": [
+      "PyMC diagnostics and posterior extraction",
+      "SELECT-only source adapter",
+      "injected 474-by-4 materializer",
+      "freeze-to-fit dependency gate"
+    ]
+  },
+  "resource_contract_suite": {
+    "git_commit_tested": "db2264d577fa785f27ef8602df48f4ba40905326",
+    "passed": 26,
+    "failed": 0,
+    "elapsed_seconds": 0.50
+  },
+  "claim_boundary": {
+    "full_suite_clean": false,
+    "offline_code_baseline_clean": true,
+    "live_integration_verified": false,
+    "database_writes": 0,
+    "model_fits": 0,
+    "predictions": 0,
+    "recommendations": 0,
+    "orders": 0,
+    "trading_actions": 0
+  }
+}
