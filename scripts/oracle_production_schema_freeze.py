@@ -330,11 +330,12 @@ def main() -> int:
     parser.add_argument("phase", choices=("preflight", "schema", "freeze", "readback"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--authorization", type=Path)
+    parser.add_argument("--env-file", type=Path)
     parser.add_argument("--actor", default="avi-shemla")
     args = parser.parse_args()
     from dotenv import load_dotenv
     import requests
-    load_dotenv(args.root / ".env")
+    load_dotenv(args.env_file if args.env_file is not None else args.root / ".env")
     token = os.environ.get("TURSO_AUTH_TOKEN", "")
     endpoint = _endpoint(os.environ.get("TURSO_DATABASE_URL", ""))
     if not token:
