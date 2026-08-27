@@ -1,0 +1,3955 @@
+{
+  "registry_version": "1.0.0",
+  "plan_id": "codex-oracle-migration-v1",
+  "plan_status": "CANONICAL_BASELINE",
+  "target": "Fully Codex-controlled, Turso-backed Oracle research and paper/shadow system",
+  "legacy_scope": "AntiGravity/AG is inherited code, rules, units, and artifacts only; it is not the target agent or architecture.",
+  "evidence_states": [
+    "DESIGNED",
+    "IMPLEMENTED",
+    "TESTED",
+    "DEPLOYED",
+    "OBSERVED",
+    "VERIFIED"
+  ],
+  "blocked_states": [
+    "FAILED",
+    "STALLED",
+    "BLOCKED",
+    "NO_QUALIFYING_OUTPUT"
+  ],
+  "successor_classes": [
+    "SAFE_NOW",
+    "DEPENDENCY_BLOCKED",
+    "APPROVAL_REQUIRED"
+  ],
+  "global_invariants": [
+    "Turso is the production source of truth.",
+    "CSV, Excel, SQLite, and Streamlit are prohibited production sources, caches, write targets, and fallbacks.",
+    "No recommendation, approval event, order, trading action, email, sniper activation, snapshot validation or promotion, production schema application, or weakened safeguard occurs without Avi's explicit scoped approval.",
+    "A shell exit, producer log, or prior conversation is insufficient completion proof.",
+    "Every long job has a unit, InvocationID, PID, exact command, immutable code identity, start time, root-owned durable checkpoint, declared maximum checkpoint interval, resources, and Turso readback.",
+    "Every failed, stalled, blocked, or no-qualifying-output event preserves evidence, prevents duplicate or deterministic retry, and launches all independent SAFE_NOW successors.",
+    "Guarded ingestion owns resource priority over research workers.",
+    "One writer is allowed per idempotency key and output namespace.",
+    "Observational lead-lag screening is not called causal proof; independent edges use lags 1-7 and depth 1-5 without a forced chain.",
+    "Research advances to backtest and paper/shadow only through documented evidence; live use is outside this plan."
+  ],
+  "forbidden_without_avi_approval": [
+    "production_schema_application",
+    "snapshot_validation_or_promotion",
+    "destructive_data_or_filesystem_change",
+    "new_credentials_or_broader_secret_scope",
+    "safeguard_weakening",
+    "model_or_sampler_semantic_change_after_preregistration",
+    "production_recommendation_or_approval_event_creation",
+    "order_creation_or_trading",
+    "email_or_external_notification",
+    "sniper_activation",
+    "broker_connection_or_live_phase",
+    "destructive_legacy_retirement"
+  ],
+  "fixed_workstreams": [
+    {
+      "id": "W1",
+      "name": "Historical stock dataset coverage and quality audit",
+      "denominator": 1,
+      "unit": "independently_verified_audit_manifest",
+      "stages": [
+        "S04"
+      ]
+    },
+    {
+      "id": "W2",
+      "name": "Immutable Turso research dataset/version",
+      "denominator": 1,
+      "unit": "independently_verified_immutable_dataset",
+      "stages": [
+        "S05"
+      ]
+    },
+    {
+      "id": "W3",
+      "name": "Simple baselines",
+      "denominator": 1,
+      "unit": "independently_audited_full_universe_baseline",
+      "stages": [
+        "S06"
+      ]
+    },
+    {
+      "id": "W4",
+      "name": "Variable predictive lead-lag stock model",
+      "denominator": 3,
+      "unit": "implementation_plus_governed_tests_plus_accepted_fit",
+      "stages": [
+        "S07",
+        "S08"
+      ]
+    },
+    {
+      "id": "W5",
+      "name": "Rolling windows 30, 60, 126, and 252",
+      "denominator": 4,
+      "unit": "window_contract_or_formally_governed_resolution",
+      "stages": [
+        "S06",
+        "S09"
+      ]
+    },
+    {
+      "id": "W6",
+      "name": "Full stock statistical evaluation",
+      "denominator": 5,
+      "unit": "walk_forward_plus_convergence_plus_calibration_plus_costs_plus_drawdown",
+      "stages": [
+        "S10"
+      ]
+    },
+    {
+      "id": "W7",
+      "name": "Per-prediction evidence table",
+      "denominator": 474,
+      "unit": "schema_valid_lineage_bound_research_evidence_row",
+      "stages": [
+        "S11"
+      ]
+    },
+    {
+      "id": "W8",
+      "name": "ETF posterior priors",
+      "denominator": 1,
+      "unit": "independently_audited_stock_to_etf_prior_artifact",
+      "stages": [
+        "S12"
+      ]
+    }
+  ],
+  "incident_evidence_snapshot": {
+    "freshness_rule": "Historical evidence must be re-read before runtime use; this section does not prove continuity.",
+    "ingestion_2026_08_26": {
+      "snapshot_id": "market_features_2026-08-26_911350a3784e5b1d",
+      "status": "STAGING",
+      "rows": 587184,
+      "feature_tickers": 474,
+      "provider_lineage_entries": 476,
+      "required_macro_tickers": [
+        "^TNX",
+        "^VIX"
+      ],
+      "approval_events": 0,
+      "screening_runs": 0,
+      "failure": "Primary unit exited nonzero during postflight because the legacy contract compared 476 lineage entries with 474 feature tickers.",
+      "repair_maturity": "TESTED_NOT_DEPLOYED",
+      "focused_tests": 6
+    },
+    "baseline_v1_failure": {
+      "invocation_id": "d19062f22c4b4be1ba39424e8aed2c8a",
+      "interval_utc": "00:53:52-00:53:54",
+      "exit_code": 1,
+      "durable_files_created": 0,
+      "root_cause": "Bare HTTPS Turso URL passed to client requiring /v2/pipeline.",
+      "prevention": "Shared endpoint normalizer and exact production credential-loader-to-client preflight for producer and auditor."
+    },
+    "baseline_v4_successor": {
+      "producer_invocation_id": "a1323c841529468abfb1b66078181700",
+      "tickers": 474,
+      "folds": 1896,
+      "oos_rows": 56880,
+      "audit_raw_sha256": "46ea3bf6e8526f802de4d39000c8201c091fbb2cf1c2f33e5dce8381701ebaff",
+      "final_manifest_raw_sha256": "54746936464af077886908bf818b7e0703c06685997ac501167b755470ad4a7e",
+      "unauthorized_downstream_outputs": 0,
+      "maturity": "VERIFIED_HISTORICAL"
+    }
+  },
+  "stages": [
+    {
+      "id": "S00",
+      "name": "Governance, authoritative inventory, and evidence ledger",
+      "dependencies": [],
+      "parallel_group": "governance",
+      "current_evidence_state": {
+        "state": "IMPLEMENTED",
+        "qualifier": "PARTIAL",
+        "evidence": "Repository AGENTS.md and Codex Oracle autonomy skill define boundaries; a fresh complete evidence ledger is pending."
+      },
+      "entry_gates": [
+        "Read repository AGENTS.md and applicable Codex skill completely.",
+        "Read Git HEAD, upstream, worktree, systemd, immutable deployments, durable jobs, Turso schema/data, secret metadata, and Drive checkpoint.",
+        "Prove research/paper mode, capital_at_risk=false, and forbidden services inactive/disabled."
+      ],
+      "actions": [
+        "Create append-only stage/run evidence ledger with artifact identity, timestamp, contradiction, owner, liveness, and successor decision.",
+        "Inventory every legacy CSV, Excel, SQLite, Streamlit, Windows path, scheduler, service, credential reference, and data/model boundary.",
+        "Freeze registry hash and fixed progress denominators."
+      ],
+      "tests": [
+        "Registry schema and required-field validation.",
+        "Unique stage IDs, resolved references, and acyclic dependency graph.",
+        "Forbidden-action tests for trading, orders, email, promotion, sniper, and unapproved schema writes."
+      ],
+      "runtime_observations": [
+        "Exact safety-unit LoadState, ActiveState, SubState, UnitFileState.",
+        "Git and deployment identity plus worktree cleanliness."
+      ],
+      "independent_readback": [
+        "Second reader recomputes Git/deployment hashes and re-reads systemd, Turso, and Drive metadata.",
+        "Reject every completion claim lacking a referenced proof artifact."
+      ],
+      "auto_heal": [
+        "Demote stale or contradictory claims, preserve prior evidence, and open a precise incident.",
+        "Missing worker identity immediately changes ACTIVE to STALLED and launches independent safe inventory/tests."
+      ],
+      "rollback_fail_safe": [
+        "Evidence ledger is append-only/write-once.",
+        "Restore prior hash-bound registry while retaining incident evidence and keeping production writes disabled."
+      ],
+      "successor_transition": [
+        "Launch S01, safe S04 inventory, fixture-only S07-S13 work, and read-only S14 work within capacity."
+      ],
+      "exit_proof": [
+        "Immutable inventory and ledger manifest.",
+        "Clean Git readback and safety-unit readback.",
+        "Independent registry audit PASS."
+      ],
+      "avi_approval_required": [
+        "Operating-rule amendment, safeguard weakening, new credential, or material external commitment."
+      ],
+      "title": "Governance, authoritative inventory, and evidence ledger",
+      "owner": "codex-oracle-s00-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "IMPLEMENTED",
+      "progress": {
+        "numerator": 1,
+        "denominator": 3,
+        "unit": "governance proof groups"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s00",
+          "/opt/codex-oracle/s00"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s00-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Governance, authoritative inventory, and evidence ledger.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s00-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Governance, authoritative inventory, and evidence ledger.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s00-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Governance, authoritative inventory, and evidence ledger.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s00-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Governance, authoritative inventory, and evidence ledger deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s00/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s00-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Governance, authoritative inventory, and evidence ledger run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S01",
+        "on_failure": "S00",
+        "on_stalled": "S00"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S01",
+      "name": "Close the 2026-08-26 ingestion and successor-baseline incidents",
+      "dependencies": [
+        "S00"
+      ],
+      "parallel_group": "incident",
+      "current_evidence_state": {
+        "state": "TESTED",
+        "qualifier": "INGESTION_REPAIR_NOT_DEPLOYED_BASELINE_V4_HISTORICALLY_VERIFIED",
+        "evidence": "Exact-set postflight repair has six focused tests; baseline v1 endpoint defect is diagnosed and baseline v4 successor passed."
+      },
+      "entry_gates": [
+        "Preserve failed InvocationIDs, units, commands, immutable identities, journals, environment metadata, logs/checkpoints, Turso rows, and timestamps.",
+        "Confirm the snapshot is unique STAGING, unpromoted, and has zero unauthorized downstream rows."
+      ],
+      "actions": [
+        "Reproduce the 474 feature plus two macro lineage false-red.",
+        "Deploy exact-set reconciliation with duplicate/missing/extra/wrong-date/code/status/downstream rejection.",
+        "Bind baseline v1 endpoint failure and prove shared endpoint normalizer plus production credential-loader-to-client preflight for producer and auditor.",
+        "Read back baseline v4 immutable identities.",
+        "Create independently verified ingestion-to-baseline handoff artifact."
+      ],
+      "tests": [
+        "Exact-set positive and negative reconciliation.",
+        "Shell wrapper and systemd ordering.",
+        "Bare endpoint rejection and normalized /v2/pipeline acceptance.",
+        "Delayed Turso visibility, duplicate snapshot, stale checkpoint, missing deployment, and nonzero-child fault injection.",
+        "Focused and full regression suites."
+      ],
+      "runtime_observations": [
+        "Next guarded runtime immutable identity, InvocationID/PID/command, durable terminal marker, resource telemetry, and successor decision."
+      ],
+      "independent_readback": [
+        "Query exact snapshot metadata, feature count/set, provider lineage set, session, checksums, code, and downstream counts.",
+        "Verify handoff and baseline v4 artifacts without trusting producer stdout."
+      ],
+      "auto_heal": [
+        "Use bounded read-only visibility polling for declared transient delay.",
+        "Stop deterministic retries, preserve evidence, repair/test/deploy, and resume same idempotent operation.",
+        "Never change STAGING lifecycle state."
+      ],
+      "rollback_fail_safe": [
+        "Restore prior immutable deployment and unit/drop-in.",
+        "Keep snapshot quarantined STAGING and retain all evidence."
+      ],
+      "successor_transition": [
+        "After verified reconciliation launch S02 and eligible S06 recovery.",
+        "If data is unavailable preserve the gap and schedule the next guarded extraction; continue independent fixture lanes."
+      ],
+      "exit_proof": [
+        "Incident report with exact evidence for both failures.",
+        "Committed, pushed, deployed repair with regression tests.",
+        "Observed controlled runtime/full rehearsal and independent no-contradiction readback."
+      ],
+      "avi_approval_required": [
+        "Production schema/data change, destructive snapshot repair, new credential, validation/promotion, or weakened contract."
+      ],
+      "title": "Close the 2026-08-26 ingestion and successor-baseline incidents",
+      "owner": "codex-oracle-s01-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "TESTED",
+      "progress": {
+        "numerator": 2,
+        "denominator": 4,
+        "unit": "incident closure proof groups"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s01",
+          "/opt/codex-oracle/s01"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s01-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Close 2026-08-26 ingestion and baseline incidents.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s01-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Close 2026-08-26 ingestion and baseline incidents.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s01/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s01-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Close 2026-08-26 ingestion and baseline incidents.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s01-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Close 2026-08-26 ingestion and baseline incidents deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s01/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s01-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Close 2026-08-26 ingestion and baseline incidents run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S02",
+        "on_failure": "S01",
+        "on_stalled": "S01"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S02",
+      "name": "Temporary guarded nightly continuity",
+      "dependencies": [
+        "S00",
+        "S01"
+      ],
+      "parallel_group": "continuity",
+      "current_evidence_state": {
+        "state": "IMPLEMENTED",
+        "qualifier": "PARTIAL_REQUIRES_POST_HARDENING_RUNTIME",
+        "evidence": "Temporary continuity exists conceptually; every session and unit requires fresh proof."
+      },
+      "entry_gates": [
+        "Derive latest completed NYSE session using NYSE calendar and America/New_York.",
+        "Prove no existing unique session snapshot, approved universe lineage, credential presence/permissions, resource headroom, immutable code, and safety units."
+      ],
+      "actions": [
+        "Maintain one reusable guarded timer/service using a source-session idempotency key.",
+        "Write only a STAGING market-input snapshot.",
+        "Apply strict Yahoo raw-OHLC validation and ticker-scoped Tiingo fallback with complete provider lineage.",
+        "Create a write-once reconciled successor handoff.",
+        "Retire this job only in S16."
+      ],
+      "tests": [
+        "NYSE calendar, DST, holiday, duplicate-session, idempotency, provider fallback, one-cent OHLC inconsistency, checksum reconstruction, provider lineage, partial write, crash/restart, and resource-priority tests."
+      ],
+      "runtime_observations": [
+        "Unit, InvocationID, PID, exact command, immutable identity, start, checkpoint marker/age, CPU/memory, and journal."
+      ],
+      "independent_readback": [
+        "Exactly one STAGING snapshot with exact ticker/row/checksum/session/provider reconciliation.",
+        "Zero validation, promotion, approval, screening, recommendation, and order side effects."
+      ],
+      "auto_heal": [
+        "Bounded transient provider retry and ticker-level Tiingo failover only after strict Yahoo validation failure.",
+        "Deterministic failure opens incident; same session/idempotency key resumes without duplicates.",
+        "Research yields resources to ingestion."
+      ],
+      "rollback_fail_safe": [
+        "Disable affected timer/service, quarantine partial/rejected data, restore prior immutable deployment, and preserve evidence."
+      ],
+      "successor_transition": [
+        "Verified handoff starts eligible S04-S06 work.",
+        "Failure starts S01-style recovery while independent fixture/testing lanes continue."
+      ],
+      "exit_proof": [
+        "At least one post-hardening runtime OBSERVED and independently VERIFIED.",
+        "Recurring timer and next trigger read back; final retirement proven in S16."
+      ],
+      "avi_approval_required": [
+        "New credential, provider semantic/cost commitment, schema application, validation/promotion, or destructive cleanup."
+      ],
+      "title": "Temporary guarded nightly continuity",
+      "owner": "codex-oracle-s02-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "IMPLEMENTED",
+      "progress": {
+        "numerator": 1,
+        "denominator": 3,
+        "unit": "continuity evidence gates"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s02",
+          "/opt/codex-oracle/s02"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s02-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Temporary guarded nightly continuity.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s02-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Temporary guarded nightly continuity.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s02-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Temporary guarded nightly continuity.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s02-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Temporary guarded nightly continuity deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 1800,
+        "progress_marker": "/var/lib/codex-oracle/s02/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s02-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Temporary guarded nightly continuity run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S03",
+        "on_failure": "S02",
+        "on_stalled": "S02"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S03",
+      "name": "Claim enforcement, secrets, and change-control pipeline",
+      "dependencies": [
+        "S00"
+      ],
+      "parallel_group": "governance",
+      "current_evidence_state": {
+        "state": "IMPLEMENTED",
+        "qualifier": "PARTIAL",
+        "evidence": "Rules exist; mechanical enforcement across every path remains to be verified."
+      },
+      "entry_gates": [
+        "Inventory claim rules, CI hooks, secret scanner, commit/push/deploy path, and signing/attestation capability."
+      ],
+      "actions": [
+        "Mechanically enforce evidence vocabulary and proof fields.",
+        "Reject unsupported fixed/healthy/complete/verified claims.",
+        "Gate commits/deployments on forbidden-source, secret, unsafe-action, identity, rollback, and test evidence.",
+        "Require immutable executor manifests and independent deployed readback."
+      ],
+      "tests": [
+        "Positive/negative claim fixtures, forward tests, tamper/stale tests, secret canaries, forbidden imports, unit contradictions, wrong hashes, and clean deploy rehearsal."
+      ],
+      "runtime_observations": [
+        "At least one accepted and one rejected change observed under deployed enforcement."
+      ],
+      "independent_readback": [
+        "Separate checker recomputes hashes and transitions from source evidence and rejects producer self-attestation."
+      ],
+      "auto_heal": [
+        "Demote unsupported claims, quarantine offending artifacts, prevent deploy, open repair, and continue unrelated safe work."
+      ],
+      "rollback_fail_safe": [
+        "Fail closed; hook removal requires reviewed revert if the hook itself is defective."
+      ],
+      "successor_transition": [
+        "Enforcement is a mandatory gate for S04-S16."
+      ],
+      "exit_proof": [
+        "Three independent forward-test classes pass and clean commit is read back from origin."
+      ],
+      "avi_approval_required": [
+        "Relaxing any claim, evidence, secret, or safety gate."
+      ],
+      "title": "Claim enforcement, secrets, and change-control pipeline",
+      "owner": "codex-oracle-s03-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "IMPLEMENTED",
+      "progress": {
+        "numerator": 1,
+        "denominator": 3,
+        "unit": "enforcement evidence gates"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s03",
+          "/opt/codex-oracle/s03"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s03-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Claim enforcement, secrets, and change-control pipeline.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s03-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Claim enforcement, secrets, and change-control pipeline.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s03-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Claim enforcement, secrets, and change-control pipeline.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s03-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Claim enforcement, secrets, and change-control pipeline deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s03/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s03-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Claim enforcement, secrets, and change-control pipeline run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S04",
+        "on_failure": "S03",
+        "on_stalled": "S03"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S04",
+      "name": "Historical stock dataset coverage and quality audit",
+      "dependencies": [
+        "S00",
+        "S01"
+      ],
+      "parallel_group": "research_input",
+      "workstreams": [
+        "W1"
+      ],
+      "current_evidence_state": {
+        "state": "OBSERVED",
+        "qualifier": "HISTORICAL_FRESH_READBACK_REQUIRED",
+        "evidence": "Prior audit reported historical coverage; immutable binding and freshness must be re-read."
+      },
+      "entry_gates": [
+        "SELECT-only Turso access and exact snapshot, universe, session, provider, schema, and code identities.",
+        "No CSV or SQLite fallback."
+      ],
+      "actions": [
+        "Audit NYSE sessions, ticker coverage, duplicates, nulls, OHLC invariants, non-finite values, corporate actions, provider lineage, freshness, schema, and cutoffs."
+      ],
+      "tests": [
+        "Pure quality-rule fixtures and full-universe persistent audit with deterministic totals and declared checkpoint interval."
+      ],
+      "runtime_observations": [
+        "Persistent audit worker liveness and monotonic ticker/session progress."
+      ],
+      "independent_readback": [
+        "Recompute aggregate counts, exceptions, dataset hash/manifest, and cutoff evidence from Turso."
+      ],
+      "auto_heal": [
+        "Automatically repair only additive code/metadata defects; source data defects create a new quarantined version and require approval to mutate."
+      ],
+      "rollback_fail_safe": [
+        "Never mutate source; quarantine invalid candidates and retain prior verified version."
+      ],
+      "successor_transition": [
+        "Accepted exact dataset starts S05; blockage does not stop downstream fixture-only implementation."
+      ],
+      "exit_proof": [
+        "W1 1/1 write-once audit manifest independently verified with exceptions and uncertainty."
+      ],
+      "avi_approval_required": [
+        "Source-data mutation, provider-semantic change, schema change, or weakened exception acceptance."
+      ],
+      "title": "Historical stock dataset coverage and quality audit",
+      "owner": "codex-oracle-s04-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "OBSERVED",
+      "progress": {
+        "numerator": 0,
+        "denominator": 1,
+        "unit": "fresh independently verified audit"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s04",
+          "/opt/codex-oracle/s04"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s04-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Historical stock dataset coverage and quality audit.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s04-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Historical stock dataset coverage and quality audit.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s04/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s04/observe/current"
+          ]
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s04-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Historical stock dataset coverage and quality audit.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s04-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Historical stock dataset coverage and quality audit deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s04/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s04-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Historical stock dataset coverage and quality audit run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S05",
+        "on_failure": "S04",
+        "on_stalled": "S04"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S05",
+      "name": "Immutable Turso research dataset/version",
+      "dependencies": [
+        "S03",
+        "S04"
+      ],
+      "parallel_group": "research_input",
+      "workstreams": [
+        "W2"
+      ],
+      "current_evidence_state": {
+        "state": "DESIGNED",
+        "qualifier": "UNVERIFIED_0_OF_1",
+        "evidence": "Current replacement research version is not yet proven."
+      },
+      "entry_gates": [
+        "Verified historical audit, approved existing research schema, exact append-only writer scope, run authorization, and idempotency key."
+      ],
+      "actions": [
+        "Freeze snapshot, sessions, universe, providers, schema, counts, checksums, cutoffs, code/config/dependencies, and write-once manifest."
+      ],
+      "tests": [
+        "Canonical hash, duplicate idempotency, partial write, mutation rejection, lineage, no-lookahead, permission-scope, and checkpoint tests."
+      ],
+      "runtime_observations": [
+        "Persistent writer identity, progress, checkpoints, and resource telemetry."
+      ],
+      "independent_readback": [
+        "SELECT-only reconstruction of exact identity, counts, and checksums from Turso."
+      ],
+      "auto_heal": [
+        "Resume incomplete append-only write using the same run/key; checksum mismatch quarantines candidate and blocks consumers."
+      ],
+      "rollback_fail_safe": [
+        "Keep candidate unaccepted and consumers pinned to prior verified version; no destructive cleanup."
+      ],
+      "successor_transition": [
+        "Launch S06 and finalize S07 immutable inputs after verification."
+      ],
+      "exit_proof": [
+        "W2 1/1 immutable version independently verified with zero contradictions and unauthorized outputs."
+      ],
+      "avi_approval_required": [
+        "Schema application, broader writer scope, data repair, validation/promotion, or new external commitment."
+      ],
+      "title": "Immutable Turso research dataset/version",
+      "owner": "codex-oracle-s05-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "DESIGNED",
+      "progress": {
+        "numerator": 0,
+        "denominator": 1,
+        "unit": "immutable research version"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s05",
+          "/opt/codex-oracle/s05"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s05-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Immutable Turso research dataset/version.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s05-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Immutable Turso research dataset/version.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s05-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Immutable Turso research dataset/version.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s05-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Immutable Turso research dataset/version deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s05/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s05-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Immutable Turso research dataset/version run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S06",
+        "on_failure": "S05",
+        "on_stalled": "S05"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S06",
+      "name": "Simple baselines and rolling-window baseline contracts",
+      "dependencies": [
+        "S01",
+        "S05"
+      ],
+      "parallel_group": "research_compute",
+      "workstreams": [
+        "W3",
+        "W5"
+      ],
+      "current_evidence_state": {
+        "state": "VERIFIED",
+        "qualifier": "HISTORICAL_V4_FRESH_READBACK_REQUIRED",
+        "evidence": "Baseline v4 has 474 tickers, 1896 folds, 56880 OOS rows, immutable audit/final hashes, and zero downstream outputs."
+      },
+      "entry_gates": [
+        "Immutable dataset, verified run preregistration, exact fold/purge/lag contract, zero overlap, resources, unique run ID, and zero downstream model/ETF outputs."
+      ],
+      "actions": [
+        "Run preregistered simple baselines and governed 60/126/252 windows.",
+        "Record 30-window feasibility without weakening sample safeguards."
+      ],
+      "tests": [
+        "Fold/purge/no-lookahead, deterministic fixture, idempotent restart, resource limits, checkpoints, and full reconciliation.",
+        "Production credential loader to normalized endpoint/client preflight for producer and auditor."
+      ],
+      "runtime_observations": [
+        "Unit identity, live PID, monotonic ticker/fold/OOS checkpoint, and resources."
+      ],
+      "independent_readback": [
+        "Audit run ID, 474 coverage, folds/purges/lags, lineage, and zero unauthorized outputs."
+      ],
+      "auto_heal": [
+        "Additively repair artifact/environment/race defects and resume same run/checkpoint.",
+        "No qualifying result remains a valid scientific outcome; never relax thresholds."
+      ],
+      "rollback_fail_safe": [
+        "Stop unit, preserve partial/failed artifacts, restore prior deployment, and keep fitting gated."
+      ],
+      "successor_transition": [
+        "Audited baseline supplies S07 evidence.",
+        "Statistically impossible 30-window receives only a formally governed resolution."
+      ],
+      "exit_proof": [
+        "W3 1/1 and separate proof for every accepted W5 window."
+      ],
+      "avi_approval_required": [
+        "Model/window semantic change, minimum-sample weakening, or data/schema scope change."
+      ],
+      "title": "Simple baselines and rolling-window baseline contracts",
+      "owner": "codex-oracle-s06-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "VERIFIED",
+      "progress": {
+        "numerator": 1,
+        "denominator": 1,
+        "unit": "independently audited baseline"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s06",
+          "/opt/codex-oracle/s06"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s06-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Simple baselines and baseline window contracts.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s06-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Simple baselines and baseline window contracts.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "artifact://baseline-v4/tests"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "systemd-invocation://a1323c841529468abfb1b66078181700"
+          ]
+        },
+        "readback": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "sha256://46ea3bf6e8526f802de4d39000c8201c091fbb2cf1c2f33e5dce8381701ebaff",
+            "sha256://54746936464af077886908bf818b7e0703c06685997ac501167b755470ad4a7e"
+          ]
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s06-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Simple baselines and baseline window contracts.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s06-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Simple baselines and baseline window contracts deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 3600,
+        "progress_marker": "/var/lib/codex-oracle/s06/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s06-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Simple baselines and baseline window contracts run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S07",
+        "on_failure": "S06",
+        "on_stalled": "S06"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S07",
+      "name": "Stock-model preregistration and runtime authorization envelope",
+      "dependencies": [
+        "S03",
+        "S05",
+        "S06"
+      ],
+      "parallel_group": "research_governance",
+      "workstreams": [
+        "W4"
+      ],
+      "current_evidence_state": {
+        "state": "TESTED",
+        "qualifier": "CANONICAL_COMMIT_PUSHED_NOT_DEPLOYED",
+        "evidence": "Runtime is committed and pushed at af5cb30c8b4ed3d19a90c0151ec20b30edff4761; 69/69 focused tests passed in two Vultr import modes, and the full suite passed 831 tests plus two separately credential-bounded read-only ledger tests, with one unrelated skip and 152 subtests. Immutable deployment, observation, and independent verification remain."
+      },
+      "entry_gates": [
+        "Fresh SELECT-only baseline readback and exact immutable manifest/audit/model/dependency/config identities.",
+        "Frozen hypotheses, hierarchy, lags, depth, folds, sampler, seeds, thresholds, outputs, resources, and side-effect prohibitions."
+      ],
+      "actions": [
+        "Deploy the committed secret-free runtime as an immutable closure.",
+        "Produce current baseline readback, write preregistration once, independently audit, and create a separate fit-authorization decision."
+      ],
+      "tests": [
+        "Contract, binding, runtime, reader, and auditor tests.",
+        "Malformed, tampered, stale, wrong-hash/owner/mode inputs; SELECT allowlist/no write SQL; immutable closure/import; write-once 0600."
+      ],
+      "runtime_observations": [
+        "Immutable readback and preregistration units with InvocationIDs, commands, artifact modes/hashes, and freshness."
+      ],
+      "independent_readback": [
+        "Auditor uses actual raw hashes and current Turso evidence, verifies zero side effects and explicit model_fit_authorized state."
+      ],
+      "auto_heal": [
+        "Regenerate only stale readback; deterministic code/deploy repair gets a new immutable identity; never bind caller-invented hashes."
+      ],
+      "rollback_fail_safe": [
+        "Retain prior deployment, invalidate failed authorization, stop candidate, and preserve manifest/audit."
+      ],
+      "successor_transition": [
+        "Launch S08 fixture tests immediately; fit only when separate authorization is true and resources pass."
+      ],
+      "exit_proof": [
+        "Canonical commit/push, immutable deploy, current readback, write-once manifest, independent audit, and authorization decision bound together."
+      ],
+      "avi_approval_required": [
+        "New model family/semantics, production schema, broader writes, safeguard changes, or model-to-order use."
+      ],
+      "title": "Stock-model preregistration and runtime authorization envelope",
+      "owner": "codex-oracle-s07-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "TESTED",
+      "progress": {
+        "numerator": 3,
+        "denominator": 5,
+        "unit": "preregistration runtime evidence gates"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s07",
+          "/opt/codex-oracle/s07"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s07-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Stock-model preregistration and runtime authorization envelope.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s07-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Stock-model preregistration and runtime authorization envelope.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s07/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s07-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Stock-model preregistration and runtime authorization envelope.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s07-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Stock-model preregistration and runtime authorization envelope deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s07/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s07-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Stock-model preregistration and runtime authorization envelope run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S08",
+        "on_failure": "S07",
+        "on_stalled": "S07"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S08",
+      "name": "Variable predictive lead-lag stock model",
+      "dependencies": [
+        "S07"
+      ],
+      "parallel_group": "research_compute",
+      "workstreams": [
+        "W4"
+      ],
+      "current_evidence_state": {
+        "state": "TESTED",
+        "qualifier": "2_OF_3_GOVERNED_FIT_PENDING",
+        "evidence": "Implementation and behavioral tests reported; accepted governed fit is pending."
+      },
+      "entry_gates": [
+        "Independent edges lags 1-7, depth 1-5, training-only selection, multiple-testing control, frozen hierarchy, immutable data, run authorization, and sampler/resource/output contracts."
+      ],
+      "actions": [
+        "Fit only preregistered model and persist append-only checkpoints/posteriors under approved schema and run ID."
+      ],
+      "tests": [
+        "Synthetic lag recovery, null/no-signal, hierarchy, training-only selection, lookahead, multiple testing, seeds, diagnostics, crash/restart, resources, and checkpoint freshness."
+      ],
+      "runtime_observations": [
+        "Sampling progress, divergences, ESS/R-hat telemetry, checkpoint age, PID, code/config identity, and resources."
+      ],
+      "independent_readback": [
+        "Posterior count and ticker/edge/lag/depth coverage, full lineage/cutoffs, and zero model-to-order/ETF outputs."
+      ],
+      "auto_heal": [
+        "Transient worker resumes same run/checkpoint; stale marker triggers smallest repair.",
+        "Numerical/convergence failure remains scientific evidence and never silently changes model/sampler/threshold."
+      ],
+      "rollback_fail_safe": [
+        "Stop worker, quarantine partial posterior, retain inputs/checkpoints, and prohibit downstream use."
+      ],
+      "successor_transition": [
+        "Accepted posterior starts S09/S10; failed/no-output result requires separately preregistered successor research."
+      ],
+      "exit_proof": [
+        "W4 3/3 after terminal fit reconciliation, diagnostics, and independent audit."
+      ],
+      "avi_approval_required": [
+        "Unpreregistered model/sampler/threshold/hypothesis change or nonresearch use."
+      ],
+      "title": "Variable predictive lead-lag stock model",
+      "owner": "codex-oracle-s08-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "TESTED",
+      "progress": {
+        "numerator": 2,
+        "denominator": 3,
+        "unit": "implementation tests and accepted fit"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s08",
+          "/opt/codex-oracle/s08"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s08-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Variable predictive lead-lag stock model.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s08-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Variable predictive lead-lag stock model.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s08/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s08-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Variable predictive lead-lag stock model.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s08-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Variable predictive lead-lag stock model deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 3600,
+        "progress_marker": "/var/lib/codex-oracle/s08/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s08-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Variable predictive lead-lag stock model run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S09",
+        "on_failure": "S08",
+        "on_stalled": "S08"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S09",
+      "name": "Rolling-window comparison",
+      "dependencies": [
+        "S06",
+        "S08"
+      ],
+      "parallel_group": "research_compute",
+      "workstreams": [
+        "W5"
+      ],
+      "current_evidence_state": {
+        "state": "OBSERVED",
+        "qualifier": "3_OF_4_30_STATISTICALLY_BLOCKED",
+        "evidence": "60, 126, and 252 reported passed; 30 cannot currently meet fixed sample safeguards."
+      },
+      "entry_gates": [
+        "Per-window preregistration, same immutable dataset/cutoff, minimum pairs/folds, comparable metrics/costs, and unchanged 126-session safeguard."
+      ],
+      "actions": [
+        "Audit 60/126/252 and formally determine 30 feasibility.",
+        "If impossible, produce an infeasibility proof and specification decision rather than fabricated completion."
+      ],
+      "tests": [
+        "Sample/fold boundary, overlap, universe comparability, metric schema, restart/idempotency, and resource tests."
+      ],
+      "runtime_observations": [
+        "Window-specific run progress, checkpoints, code/data identity, and resource telemetry."
+      ],
+      "independent_readback": [
+        "Exact run IDs, counts, folds, purges, cutoffs, metrics, lineage, and infeasibility evidence."
+      ],
+      "auto_heal": [
+        "Technical failure resumes exact window/run; statistical infeasibility blocks only that window."
+      ],
+      "rollback_fail_safe": [
+        "Preserve rejected outputs; no threshold or sample change without governance."
+      ],
+      "successor_transition": [
+        "Accepted windows feed S10; unresolved 30 does not block independent evaluation components."
+      ],
+      "exit_proof": [
+        "W5 numerator names each accepted result or explicitly governed resolution; denominator remains 4."
+      ],
+      "avi_approval_required": [
+        "Redefining 30-window completion or weakening minimum samples."
+      ],
+      "title": "Rolling-window comparison",
+      "owner": "codex-oracle-s09-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "OBSERVED",
+      "progress": {
+        "numerator": 3,
+        "denominator": 4,
+        "unit": "governed rolling windows"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s09",
+          "/opt/codex-oracle/s09"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s09-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Rolling-window comparison.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s09-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Rolling-window comparison.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s09/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s09/observe/current"
+          ]
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s09-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Rolling-window comparison.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s09-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Rolling-window comparison deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 3600,
+        "progress_marker": "/var/lib/codex-oracle/s09/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s09-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Rolling-window comparison run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S10",
+        "on_failure": "S09",
+        "on_stalled": "S09"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S10",
+      "name": "Full stock statistical evaluation",
+      "dependencies": [
+        "S08",
+        "S09"
+      ],
+      "parallel_group": "research_evaluation",
+      "workstreams": [
+        "W6"
+      ],
+      "current_evidence_state": {
+        "state": "TESTED",
+        "qualifier": "3_OF_5_HARNESSES_POSTERIOR_COMPONENTS_PENDING",
+        "evidence": "Calibration, costs/slippage, and drawdown harnesses reported tested; walk-forward posterior evaluation and convergence pending."
+      },
+      "entry_gates": [
+        "Accepted posteriors, frozen evaluation, baselines/windows, thresholds, cost/slippage assumptions, and adverse scenarios."
+      ],
+      "actions": [
+        "Run walk-forward OOS, convergence, calibration, costs/slippage, drawdown/adverse scenarios, and baseline comparison with uncertainty."
+      ],
+      "tests": [
+        "Metric fixtures, leakage, uncertainty, R-hat/ESS/divergence, calibration bins, cost monotonicity, drawdown, adverse cases, non-finite rejection, crash/restart, and checkpoints."
+      ],
+      "runtime_observations": [
+        "Five-component progress, exact run/model identity, checkpoint age, and resources."
+      ],
+      "independent_readback": [
+        "Recompute all five summaries from immutable raw outputs and verify lineage/cutoffs."
+      ],
+      "auto_heal": [
+        "Retry transient computation; deterministic metric defect gets a new code identity; scientific failure blocks acceptance without threshold changes."
+      ],
+      "rollback_fail_safe": [
+        "Quarantine failed evaluation, keep model unaccepted, preserve raw outputs."
+      ],
+      "successor_transition": [
+        "Accepted evidence feeds S11; failed evidence requires separately preregistered research while independent migration continues."
+      ],
+      "exit_proof": [
+        "W6 5/5 independently verified and acceptance decision reproducible."
+      ],
+      "avi_approval_required": [
+        "Post-preregistration metric/threshold/cost changes or promotion beyond research."
+      ],
+      "title": "Full stock statistical evaluation",
+      "owner": "codex-oracle-s10-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "TESTED",
+      "progress": {
+        "numerator": 3,
+        "denominator": 5,
+        "unit": "statistical evaluation components"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s10",
+          "/opt/codex-oracle/s10"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s10-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Full stock statistical evaluation.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s10-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Full stock statistical evaluation.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s10/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s10-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Full stock statistical evaluation.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s10-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Full stock statistical evaluation deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 3600,
+        "progress_marker": "/var/lib/codex-oracle/s10/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s10-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Full stock statistical evaluation run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S11",
+        "on_failure": "S10",
+        "on_stalled": "S10"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S11",
+      "name": "Per-prediction evidence table",
+      "dependencies": [
+        "S08",
+        "S10"
+      ],
+      "parallel_group": "research_evaluation",
+      "workstreams": [
+        "W7"
+      ],
+      "current_evidence_state": {
+        "state": "TESTED",
+        "qualifier": "SCHEMA_READY_0_OF_474_POPULATED",
+        "evidence": "Schema/policy tests reported; no governed posterior prediction rows exist."
+      },
+      "entry_gates": [
+        "Accepted posterior evidence, exact 474 universe, frozen schema, audited inherited AG logic, Codex research policy, hard gates, and sizing policy."
+      ],
+      "actions": [
+        "Create one research-only evidence row per ticker with raw output, AG comparison, Codex research decision/reasons, hard gates, sizing, lineage, uncertainty, and rejection."
+      ],
+      "tests": [
+        "474 cardinality, schema/completeness, deterministic reason codes, gate precedence, stale/missing no-action, sizing bounds, non-finite rejection, lineage/cutoff, idempotency, and forbidden writes."
+      ],
+      "runtime_observations": [
+        "Monotonic populated/474 progress, checkpoint age, unique run identity, and resources."
+      ],
+      "independent_readback": [
+        "Query 474 rows, reconstruct decisions/reasons, verify unique IDs, and prove zero orders/approvals/publication."
+      ],
+      "auto_heal": [
+        "Resume missing rows under same key; quarantine/recompute inconsistent row; never default missing posterior fields."
+      ],
+      "rollback_fail_safe": [
+        "Keep candidate research-only/unaccepted and all consumers disabled."
+      ],
+      "successor_transition": [
+        "Only 474/474 accepted rows plus S10 acceptance unlock S12."
+      ],
+      "exit_proof": [
+        "W7 474/474 rows pass field, decision, lineage, and side-effect audit."
+      ],
+      "avi_approval_required": [
+        "Production recommendation exposure, approval/order integration, or capital sizing."
+      ],
+      "title": "Per-prediction evidence table",
+      "owner": "codex-oracle-s11-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "TESTED",
+      "progress": {
+        "numerator": 0,
+        "denominator": 474,
+        "unit": "prediction evidence rows"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s11",
+          "/opt/codex-oracle/s11"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s11-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Per-prediction evidence table.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s11-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Per-prediction evidence table.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s11/test/current"
+          ]
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s11-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Per-prediction evidence table.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s11-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Per-prediction evidence table deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 3600,
+        "progress_marker": "/var/lib/codex-oracle/s11/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s11-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Per-prediction evidence table run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S12",
+        "on_failure": "S11",
+        "on_stalled": "S11"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S12",
+      "name": "Auditable ETF posterior priors and ETF research",
+      "dependencies": [
+        "S10",
+        "S11"
+      ],
+      "parallel_group": "research_etf",
+      "workstreams": [
+        "W8"
+      ],
+      "current_evidence_state": {
+        "state": "DESIGNED",
+        "qualifier": "DEPENDENCY_BLOCKED_0_OF_1",
+        "evidence": "Correctly gated until stock evidence is proven."
+      },
+      "entry_gates": [
+        "Proven stock model, 474/474 table, frozen ETF universe/constituents/weights/cutoffs, no legacy fundamentals CSV, and stock availability before ETF cutoff."
+      ],
+      "actions": [
+        "Derive ETF priors/features with contributing stock IDs, weights, source/available timestamps, transformations, roles, and model version.",
+        "Evaluate dynamic replacement only under a preregistered rule."
+      ],
+      "tests": [
+        "Weight reconciliation, cutoff/no-lookahead, missing/stale constituent, deterministic transformation, sensitivity, replacement boundaries, Turso-only source, restart/idempotency, and forbidden writes."
+      ],
+      "runtime_observations": [
+        "ETF/run progress, checkpoint age, stock evidence identity, and resources."
+      ],
+      "independent_readback": [
+        "Reconstruct every ETF prior from stock/constituent evidence and verify lineage, cutoff, weights, and research-only side effects."
+      ],
+      "auto_heal": [
+        "Block affected ETF on missing/stale stock data; resume technical failure under same run; never use CSV or unproven evidence."
+      ],
+      "rollback_fail_safe": [
+        "Quarantine candidate ETF artifacts and retain prior verified research; no production consumer."
+      ],
+      "successor_transition": [
+        "Accepted ETF research feeds S15; failures require separately preregistered ETF successors."
+      ],
+      "exit_proof": [
+        "W8 1/1 independently verified stock-to-ETF artifact plus governed ETF evaluation."
+      ],
+      "avi_approval_required": [
+        "Post-preregistration model/rule changes, production schema, dynamic-universe production use, or order/recommendation integration."
+      ],
+      "title": "Auditable ETF posterior priors and ETF research",
+      "owner": "codex-oracle-s12-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "DESIGNED",
+      "progress": {
+        "numerator": 0,
+        "denominator": 1,
+        "unit": "audited ETF-prior artifact"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s12",
+          "/opt/codex-oracle/s12"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s12-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Auditable ETF posterior priors and ETF research.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s12-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Auditable ETF posterior priors and ETF research.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s12-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Auditable ETF posterior priors and ETF research.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s12-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Auditable ETF posterior priors and ETF research deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 3600,
+        "progress_marker": "/var/lib/codex-oracle/s12/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s12-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Auditable ETF posterior priors and ETF research run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S13",
+        "on_failure": "S12",
+        "on_stalled": "S12"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S13",
+      "name": "Turso-only production boundary and application/API migration",
+      "dependencies": [
+        "S00",
+        "S03"
+      ],
+      "parallel_group": "architecture",
+      "current_evidence_state": {
+        "state": "IMPLEMENTED",
+        "qualifier": "PARTIAL_UNVERIFIED",
+        "evidence": "Target is Turso plus FastAPI/frontend; legacy paths remain to be exhaustively mapped."
+      },
+      "entry_gates": [
+        "Full source/deployment path swipe, exact table/API/UI map, approved schema or approval, and unique dashboard process/port owner."
+      ],
+      "actions": [
+        "Remove production-path CSV/Excel/SQLite/Streamlit/Windows dependencies through reversible changes.",
+        "Enforce Turso repositories, align API/UI, and eliminate duplicate schedulers/process ownership while preserving historical artifacts pending review."
+      ],
+      "tests": [
+        "Forbidden path/import scans, repository contracts, isolated Turso integration, API schema, frontend contracts, process/port ownership, Turso outage fail-closed, and rollback rehearsal."
+      ],
+      "runtime_observations": [
+        "Single service/port owner, immutable deploy identity, API health/schema, Turso connectivity, and no local fallback creation."
+      ],
+      "independent_readback": [
+        "Second full-path scan and live deployment/process/API/Turso evidence."
+      ],
+      "auto_heal": [
+        "Additive code/config repair and atomic redeploy; Turso outage remains read-only/no-action with no local fallback."
+      ],
+      "rollback_fail_safe": [
+        "Atomic switch to prior immutable deploy; dashboard read-only; no DB mutation or duplicate server."
+      ],
+      "successor_transition": [
+        "Verified boundary feeds S15; reviewed legacy inventory feeds S16."
+      ],
+      "exit_proof": [
+        "No production path can use forbidden sources; API/frontend and single ownership independently verified."
+      ],
+      "avi_approval_required": [
+        "Production schema, destructive legacy removal, execution/risk/model behavior change, or new credential."
+      ],
+      "title": "Turso-only production boundary and application/API migration",
+      "owner": "codex-oracle-s13-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "IMPLEMENTED",
+      "progress": {
+        "numerator": 1,
+        "denominator": 3,
+        "unit": "Turso application boundary proof groups"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s13",
+          "/opt/codex-oracle/s13"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s13-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Turso-only application and API boundary.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s13-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Turso-only application and API boundary.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s13-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Turso-only application and API boundary.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s13-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Turso-only application and API boundary deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s13/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s13-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Turso-only application and API boundary run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S14",
+        "on_failure": "S13",
+        "on_stalled": "S13"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S14",
+      "name": "Operational resilience, observability, and autonomous recovery",
+      "dependencies": [
+        "S01",
+        "S02",
+        "S03"
+      ],
+      "parallel_group": "operations",
+      "current_evidence_state": {
+        "state": "IMPLEMENTED",
+        "qualifier": "PARTIAL_FAILURE_MATRIX_PENDING",
+        "evidence": "Individual units/checkpoints exist; the full recovery matrix is not yet proven."
+      },
+      "entry_gates": [
+        "Catalog every worker, timer, lock, key, checkpoint, retry class, max interval, resource limit, and successor."
+      ],
+      "actions": [
+        "Standardize persistent systemd templates, durable checkpoints, liveness, resource admission, ingestion priority, retries, successor dispatcher, incident artifacts, and read-only monitors."
+      ],
+      "tests": [
+        "Kill/restart, stale checkpoint, missing PID, hang, OOM/denial, network/Turso timeout, provider failure, duplicate launch, partial write, corrupt artifact, DST, and garbage-collected transient-unit tests."
+      ],
+      "runtime_observations": [
+        "Independent monitor records actual unit/PID/command/deploy/checkpoint/resources and Turso progress."
+      ],
+      "independent_readback": [
+        "Monitor does not trust producer logs and proves no duplicate writes or unsafe action."
+      ],
+      "auto_heal": [
+        "Transient gets bounded retry; deterministic gets preserve/repair/test/resume; scientific no-output transitions; dependency starts safe successors; approval blocks only its edge."
+      ],
+      "rollback_fail_safe": [
+        "Stop only affected unit, maintain locks, restore immutable deploy, preserve checkpoints, and keep production/trading disabled."
+      ],
+      "successor_transition": [
+        "Demonstrate automatic safe-successor launch for FAILED, STALLED, BLOCKED, and NO_QUALIFYING_OUTPUT."
+      ],
+      "exit_proof": [
+        "Full fault-injection matrix passes with independent no-duplicate/no-unsafe-action proof."
+      ],
+      "avi_approval_required": [
+        "Reboot/OS change, destruction, credential, schema/data change, or weakened recovery gate."
+      ],
+      "title": "Operational resilience, observability, and autonomous recovery",
+      "owner": "codex-oracle-s14-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "IMPLEMENTED",
+      "progress": {
+        "numerator": 1,
+        "denominator": 3,
+        "unit": "resilience proof groups"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s14",
+          "/opt/codex-oracle/s14"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s14-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Operational resilience, observability, and autonomous recovery.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s14-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Operational resilience, observability, and autonomous recovery.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s14-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Operational resilience, observability, and autonomous recovery.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s14-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Operational resilience, observability, and autonomous recovery deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s14/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s14-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Operational resilience, observability, and autonomous recovery run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S15",
+        "on_failure": "S14",
+        "on_stalled": "S14"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S15",
+      "name": "Integrated paper/shadow readiness and end-to-end rehearsal",
+      "dependencies": [
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14"
+      ],
+      "parallel_group": "acceptance",
+      "current_evidence_state": {
+        "state": "DESIGNED",
+        "qualifier": "NOT_STARTED",
+        "evidence": "Upstream research and architecture gates are incomplete."
+      },
+      "entry_gates": [
+        "Accepted research artifacts, verified Turso-only boundary, no live broker, tested kill switch/risk gates, and exact market session."
+      ],
+      "actions": [
+        "Run research/paper-only end-to-end rehearsal to quarantined paper plan without publication, production orders, email, or sniper."
+      ],
+      "tests": [
+        "End-to-end lineage, calendar/DST, stale/missing no-action, risk, kill switch, idempotency, reconciliation, rollback, API/UI read-only, and capital_at_risk=false."
+      ],
+      "runtime_observations": [
+        "Every stage/unit identity and exact paper-only output namespace."
+      ],
+      "independent_readback": [
+        "Only authorized paper/shadow artifacts exist; zero live orders, approvals, email, or sniper consumption; outputs reproducible."
+      ],
+      "auto_heal": [
+        "Resume technical failure by rehearsal ID; any risk/lineage/reconciliation contradiction stops downstream and opens incident."
+      ],
+      "rollback_fail_safe": [
+        "Disable rehearsal consumers, quarantine candidates, keep kill switch, restore prior deploy, and keep execution off."
+      ],
+      "successor_transition": [
+        "Verified rehearsal feeds S16; live trading is never an automatic successor."
+      ],
+      "exit_proof": [
+        "Hash-bound rehearsal report and independent proof capital was never at risk."
+      ],
+      "avi_approval_required": [
+        "Production recommendations/pending orders, sniper, broker connection, or live phase."
+      ],
+      "title": "Integrated paper/shadow readiness and end-to-end rehearsal",
+      "owner": "codex-oracle-s15-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "DESIGNED",
+      "progress": {
+        "numerator": 0,
+        "denominator": 1,
+        "unit": "integrated rehearsal"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s15",
+          "/opt/codex-oracle/s15"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s15-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Integrated paper/shadow readiness rehearsal.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s15-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Integrated paper/shadow readiness rehearsal.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s15-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Integrated paper/shadow readiness rehearsal.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s15-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Integrated paper/shadow readiness rehearsal deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s15/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s15-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Integrated paper/shadow readiness rehearsal run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": "S16",
+        "on_failure": "S15",
+        "on_stalled": "S15"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S16",
+      "name": "Final acceptance, temporary-job cancellation, and legacy retirement",
+      "dependencies": [
+        "S00",
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14",
+        "S15"
+      ],
+      "parallel_group": "acceptance",
+      "current_evidence_state": {
+        "state": "DESIGNED",
+        "qualifier": "NOT_STARTED",
+        "evidence": "All upstream exit proofs are required."
+      },
+      "entry_gates": [
+        "Every required exit proof current, no critical contradiction, Git/deploy/Turso/Drive synchronized, and rollback retained."
+      ],
+      "actions": [
+        "Run final requirement audit, freeze architecture/runbooks, verify monitoring, retire temporary nightly, disable/mask legacy units, archive only through approved manifest, and update Drive checkpoint."
+      ],
+      "tests": [
+        "Full regression/integration, three plan verification passes, secret/forbidden scans, Turso readback, API/UI smoke, unit/timer/process/port inventory, restart/idempotency/failover, and side-effect audit."
+      ],
+      "runtime_observations": [
+        "Final service/timer states and absence of retired next triggers."
+      ],
+      "independent_readback": [
+        "Origin commit, deploy hashes, Drive content/metadata, Turso identities/counts, systemd states, timer absence, and archive manifest."
+      ],
+      "auto_heal": [
+        "Any contradiction reopens owning stage; temporary continuity stays until acceptance if still safe."
+      ],
+      "rollback_fail_safe": [
+        "Restore only last verified temporary continuity if acceptance is revoked; never auto-enable legacy nightly/QA/sniper."
+      ],
+      "successor_transition": [
+        "Transition to ongoing Codex Oracle operations; live trading requires a separate approved plan."
+      ],
+      "exit_proof": [
+        "All 17 stage proofs, no critical contradiction, temporary continuity retired, legacy units retired as specified, GitHub/Drive match, and completion audit passes."
+      ],
+      "avi_approval_required": [
+        "Destructive legacy archive/deletion, final schema/service semantic change, or phase beyond paper/shadow."
+      ],
+      "title": "Final acceptance, temporary-job cancellation, and legacy retirement",
+      "owner": "codex-oracle-s16-owner",
+      "action_class": "SAFE_NOW",
+      "evidence_stage": "DESIGNED",
+      "progress": {
+        "numerator": 0,
+        "denominator": 1,
+        "unit": "final acceptance"
+      },
+      "data_sources": [
+        {
+          "kind": "TURSO",
+          "scope": "RESEARCH"
+        },
+        {
+          "kind": "ISOLATED_FIXTURE",
+          "scope": "ISOLATED_TEST"
+        }
+      ],
+      "filesystem_boundary": {
+        "allowed_write_roots": [
+          "/var/lib/codex-oracle/s16",
+          "/opt/codex-oracle/s16"
+        ],
+        "resolved_targets_verified": true,
+        "broad_recursive_actions_forbidden": true
+      },
+      "operations": [
+        {
+          "id": "s16-inspect",
+          "capability": "READ_ONLY_INSPECTION",
+          "description": "Re-read authoritative evidence for Final acceptance, temporary-job cancellation, and legacy retirement.",
+          "automatic": true,
+          "approval_ref": null
+        },
+        {
+          "id": "s16-safe-advance",
+          "capability": "REVERSIBLE_CODE_REPAIR",
+          "description": "Perform only approved additive or reversible SAFE_NOW work for Final acceptance, temporary-job cancellation, and legacy retirement.",
+          "automatic": true,
+          "approval_ref": null
+        }
+      ],
+      "evidence_gates": {
+        "test": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "observe": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        },
+        "readback": {
+          "required": true,
+          "satisfied": false,
+          "evidence_refs": []
+        }
+      },
+      "autofix": {
+        "enabled": true,
+        "reversible": true,
+        "idempotent": true,
+        "max_attempts": 1,
+        "preconditions": [
+          "Failure evidence is durable.",
+          "No duplicate writer exists.",
+          "Safety invariants and original operation authorization still hold."
+        ],
+        "actions": [
+          {
+            "id": "s16-repair",
+            "capability": "REVERSIBLE_CODE_REPAIR",
+            "description": "Apply the smallest reversible in-scope repair for Final acceptance, temporary-job cancellation, and legacy retirement.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "post_fix_tests": [
+          "Reproduce the historical or current failure.",
+          "Run focused and affected regression tests.",
+          "Perform independent output and lineage readback."
+        ]
+      },
+      "rollback": {
+        "trigger": "Any post-fix test, deployment observation, safety gate, or independent readback fails.",
+        "actions": [
+          {
+            "id": "s16-rollback",
+            "capability": "REVERSIBLE_ROLLBACK",
+            "description": "Stop the candidate and restore the prior immutable Final acceptance, temporary-job cancellation, and legacy retirement deployment while preserving evidence.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ],
+        "verification": [
+          "Prior immutable artifact identity is restored.",
+          "No duplicate writer or unauthorized downstream output exists.",
+          "Safety services remain inactive and disabled."
+        ],
+        "data_loss_allowed": false
+      },
+      "liveness": {
+        "max_checkpoint_age_seconds": 900,
+        "progress_marker": "/var/lib/codex-oracle/s16/checkpoint.json",
+        "stalled_state": "STALLED",
+        "preserve_evidence": true,
+        "prevent_duplicate_retry": true,
+        "resume_from_checkpoint": true,
+        "actions": [
+          {
+            "id": "s16-resume",
+            "capability": "IDEMPOTENT_RESUME",
+            "description": "Resume the same Final acceptance, temporary-job cancellation, and legacy retirement run from its durable checkpoint after gates pass.",
+            "automatic": true,
+            "approval_ref": null
+          }
+        ]
+      },
+      "successors": {
+        "on_success": null,
+        "on_failure": "S16",
+        "on_stalled": "S16"
+      },
+      "successor_gates": {
+        "on_success": {
+          "condition": "Terminal state, exact reconciliation, and independent completion audit pass.",
+          "required_evidence": [
+            "Terminal state.",
+            "Exact output/count reconciliation.",
+            "Immutable lineage and side-effect audit."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold",
+            "completion_independently_read_back"
+          ]
+        },
+        "on_failure": {
+          "condition": "Failure is durably preserved and classified before repair or successor routing.",
+          "required_evidence": [
+            "Failed InvocationID or deterministic error identity.",
+            "Journal/checkpoint and immutable code identity."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        },
+        "on_stalled": {
+          "condition": "Live worker identity is missing or checkpoint age exceeds the declared maximum.",
+          "required_evidence": [
+            "Unit/PID/command identity.",
+            "Newest progress marker and measured age."
+          ],
+          "safety_checks": [
+            "evidence_preserved",
+            "no_duplicate_writer",
+            "safety_invariants_hold"
+          ]
+        }
+      }
+    }
+  ],
+  "universal_test_auto_fix_protocol": [
+    "Preflight authoritative state and resource/safety gates.",
+    "Freeze exact run envelope, idempotency key, liveness, safety assertions, and rollback.",
+    "Run focused reproduction tests.",
+    "Run negative/property and historical-defect tests.",
+    "Run affected and full regression suites with exact counts/skips.",
+    "Run static, secret, forbidden-source/action, SQL, path, and dependency scans.",
+    "Deploy immutable closure atomically and read it back.",
+    "Observe persistent live identity, progress, checkpoint age, resources, and journal.",
+    "Independently reconstruct output and lineage from immutable files/Turso.",
+    "Fault-inject the declared stage failure matrix in an isolated safe scope.",
+    "Classify transient, deterministic technical, scientific/no-output, dependency, approval, or contradiction.",
+    "Preserve evidence, prevent duplicates, apply smallest reversible repair, retest, create new immutable identity, and resume same operation if authorized.",
+    "Rollback candidate and retain quarantine evidence on failed observation/verification.",
+    "Start every independent SAFE_NOW successor and attach long work to persistent units.",
+    "Append exact evidence state, counts, hashes, timestamps, unknowns, and required Avi action."
+  ],
+  "plan_verification": {
+    "pass_a_structural": {
+      "required": [
+        "JSON parses.",
+        "Every stage has every required field and nonempty value.",
+        "IDs/references are unique and resolved.",
+        "Dependency graph is acyclic.",
+        "All eight workstreams are mapped."
+      ],
+      "result": "PASS_2026-08-27_LOCAL_VALIDATOR_0_ISSUES_AND_48_OF_48_VALIDATOR_TESTS"
+    },
+    "pass_b_safety_fault_model": {
+      "required": [
+        "Forbidden actions are only prohibition, negative test, or explicit approval boundary.",
+        "Scenario walk covers ingestion false-red, endpoint mismatch, delayed visibility, duplicate run, stale checkpoint, checksum/provider failure, no-output, and resource contention.",
+        "Every scenario preserves evidence, prevents duplicate retry, preserves gates, starts safe successors, and names rollback."
+      ],
+      "result": "PASS_2026-08-27_AUTHOR_SCENARIO_AND_SAFETY_CROSSCHECK_14_OF_14"
+    },
+    "pass_c_independent_completeness": {
+      "required": [
+        "Independent reviewer cross-checks Markdown, JSON, repository rules, and skill.",
+        "Every exit proof is independently observable and stronger than shell exit.",
+        "Approval boundaries are precise and safe recovery is autonomous.",
+        "Final stage retires continuity and legacy only after all prerequisites."
+      ],
+      "result": "PENDING_INDEPENDENT_REVIEW_BY_NONAUTHOR"
+    }
+  },
+  "contract_version": "codex-oracle-migration-plan/v1",
+  "target_architecture": "CODEX_CONTROLLED_TURSO_BACKED_ORACLE",
+  "safety": {
+    "production_source_of_truth": "TURSO",
+    "forbidden_production_sources": [
+      "CSV",
+      "EXCEL",
+      "SQLITE",
+      "STREAMLIT"
+    ],
+    "forbidden_automatic_capabilities": [
+      "EMAIL_SEND",
+      "ORDER_CREATION",
+      "PRODUCTION_SCHEMA_APPLICATION",
+      "RECOMMENDATION_CREATION",
+      "SAFEGUARD_WEAKENING",
+      "SNAPSHOT_PROMOTION",
+      "SNAPSHOT_VALIDATION",
+      "SNIPER_ACTIVATION",
+      "TRADING"
+    ],
+    "approval_required_capabilities": [
+      "EMAIL_SEND",
+      "ORDER_CREATION",
+      "PRODUCTION_SCHEMA_APPLICATION",
+      "RECOMMENDATION_CREATION",
+      "SAFEGUARD_WEAKENING",
+      "SNAPSHOT_PROMOTION",
+      "SNAPSHOT_VALIDATION",
+      "SNIPER_ACTIVATION",
+      "TRADING"
+    ],
+    "hard_gates_not_waivable": true,
+    "service_invariants": [
+      {
+        "name": "ag-sniper.service",
+        "active_state": "inactive",
+        "enabled": false
+      },
+      {
+        "name": "antigravity-nightly.timer",
+        "active_state": "inactive",
+        "enabled": false
+      },
+      {
+        "name": "antigravity-qa-watchdog.timer",
+        "active_state": "inactive",
+        "enabled": false
+      }
+    ]
+  },
+  "successor_ownership": {
+    "S01": "codex-oracle-s01-owner",
+    "S00": "codex-oracle-s00-owner",
+    "S02": "codex-oracle-s02-owner",
+    "S03": "codex-oracle-s03-owner",
+    "S04": "codex-oracle-s04-owner",
+    "S05": "codex-oracle-s05-owner",
+    "S06": "codex-oracle-s06-owner",
+    "S07": "codex-oracle-s07-owner",
+    "S08": "codex-oracle-s08-owner",
+    "S09": "codex-oracle-s09-owner",
+    "S10": "codex-oracle-s10-owner",
+    "S11": "codex-oracle-s11-owner",
+    "S12": "codex-oracle-s12-owner",
+    "S13": "codex-oracle-s13-owner",
+    "S14": "codex-oracle-s14-owner",
+    "S15": "codex-oracle-s15-owner",
+    "S16": "codex-oracle-s16-owner"
+  }
+}
