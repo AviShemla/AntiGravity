@@ -153,6 +153,31 @@ class PayloadAuditTests(ContractFixture):
         self.assertEqual(result["coverage"], {"tickers": 2, "folds": 8,
                                               "oos_observations": 240})
 
+    def test_metric_replay_matches_producer_sum_semantics(self):
+        accumulator = {
+            "observations": 30,
+            "correct": 11,
+            "brier_sum": 8.109626859271767,
+            "log_loss_sum": 22.112937594641153,
+            "calibration_bins": [
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+                {"count": 1, "truth_sum": 1,
+                 "probability_sum": 0.22422876341251763},
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+                {"count": 6, "truth_sum": 4,
+                 "probability_sum": 2.854537575260739},
+                {"count": 23, "truth_sum": 9,
+                 "probability_sum": 12.63540442243939},
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+                {"count": 0, "truth_sum": 0, "probability_sum": 0.0},
+            ],
+        }
+        self.assertEqual(subject._metrics(accumulator)["calibration_error"],
+                         0.18522126945887105)
+
     def test_checkpoint_digest_tamper_is_rejected(self):
         self.checkpoints["AAA"]["input"]["row_count"] = 1
         with self.assertRaisesRegex(subject.AuditError, "checkpoint digest"):

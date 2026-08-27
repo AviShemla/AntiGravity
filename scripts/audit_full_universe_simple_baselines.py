@@ -269,12 +269,10 @@ def _metrics(accumulator: Mapping[str, object]) -> dict[str, float]:
     observations = int(accumulator["observations"])
     if observations <= 0:
         raise AuditError("metric accumulator is empty")
-    calibration = 0.0
-    for item in accumulator["calibration_bins"]:  # type: ignore[index]
-        count = int(item["count"])
-        if count:
-            calibration += (count / observations) * abs(
-                int(item["truth_sum"]) / count - float(item["probability_sum"]) / count)
+    calibration = sum((int(item["count"]) / observations) * abs(
+        int(item["truth_sum"]) / int(item["count"])
+        - float(item["probability_sum"]) / int(item["count"]))
+        for item in accumulator["calibration_bins"] if int(item["count"]))
     return {
         "accuracy": int(accumulator["correct"]) / observations,
         "brier": float(accumulator["brier_sum"]) / observations,
