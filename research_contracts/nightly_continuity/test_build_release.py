@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from build_release import build_release
-from release_layout import ReleaseLayoutError, verify_release
+from release_layout import REQUIRED_ARTIFACTS, ReleaseLayoutError, verify_release
 
 
 HERE = Path(__file__).resolve().parent
@@ -59,7 +59,16 @@ def write_source(root: Path, kind: str) -> Path:
             payload = payload_dir / name
             payload.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8", newline="\n")
     (source / "release_layout.py").write_text("# verifier\n", encoding="utf-8")
+    fill_required(source, kind)
     return source
+
+
+def fill_required(source: Path, kind: str) -> None:
+    for relative in REQUIRED_ARTIFACTS[kind]:
+        path = source / relative
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# required fixture\n", encoding="utf-8")
 
 
 class BuildReleaseTests(unittest.TestCase):
@@ -147,6 +156,7 @@ class BuildReleaseTests(unittest.TestCase):
             ingestion_payload = ingestion_source / "payload/run-market-ingestion-impl"
             ingestion_payload.parent.mkdir()
             ingestion_payload.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8", newline="\n")
+            fill_required(ingestion_source, "market-ingestion")
             ingestion_id, ingestion_release = build_release(
                 ingestion_source, releases, "market-ingestion", require_root=False,
             )
@@ -161,6 +171,7 @@ class BuildReleaseTests(unittest.TestCase):
             payload_dir.mkdir()
             for name in ("run-market-ingestion-postflight-impl", "run-market-ingestion-handoff-impl"):
                 (payload_dir / name).write_text("#!/bin/sh\nexit 0\n", encoding="utf-8", newline="\n")
+            fill_required(handoff_source, "market-ingestion-handoff")
             handoff_id, handoff_release = build_release(
                 handoff_source, releases, "market-ingestion-handoff", require_root=False,
             )

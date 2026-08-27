@@ -69,7 +69,7 @@ ALLOWED_MODES = {
     "CALENDAR": 0o600,
     "CONTROLLER_CONFIG": 0o600,
     "PREFLIGHT_ENTRYPOINT": 0o555,
-    "CONTROLLER_ENTRYPOINT": 0o555,
+    "CONTROLLER_ENTRYPOINT": 0o700,
     **{f"SYSTEMD_UNIT:{name}": 0o644 for name in RECURRING_UNITS},
 }
 
@@ -170,11 +170,17 @@ def _absolute_target(value: object) -> PurePosixPath:
     return path
 
 
-def _validate_entrypoint_target(role: str, target: str, sha256: str) -> None:
+def _validate_entrypoint_target(
+    role: str, target: str, sha256: str, release_sha256: object
+) -> None:
     if role == "PREFLIGHT_ENTRYPOINT":
+        if release_sha256 is not None:
+            raise InstallerContractError("standalone preflight cannot claim a release ID")
         pattern = rf"^/opt/codex-oracle/releases/market-ingestion-preflight-{sha256}/run-select-only-preflight$"
     else:
-        pattern = rf"^/opt/codex-oracle/releases/nightly-continuity-{sha256}/run-nightly-continuity$"
+        if not isinstance(release_sha256, str) or not SHA256_RE.fullmatch(release_sha256):
+            raise InstallerContractError("controller entrypoint release ID is invalid")
+        pattern = rf"^/opt/codex-oracle/releases/nightly-continuity-{release_sha256}/run-nightly-continuity$"
     if not re.fullmatch(pattern, target):
         raise InstallerContractError(f"{role} target does not bind its release hash")
 
@@ -222,7 +228,9 @@ def validate_deployment_manifest(raw: Mapping[str, object]) -> None:
         if role in EXACT_ROLE_TARGETS and target != EXACT_ROLE_TARGETS[str(role)]:
             raise InstallerContractError("artifact target does not match its role")
         if role in {"PREFLIGHT_ENTRYPOINT", "CONTROLLER_ENTRYPOINT"}:
-            _validate_entrypoint_target(str(role), target, expected_hash)
+            _validate_entrypoint_target(
+                str(role), target, expected_hash, item.get("release_sha256")
+            )
     if seen_roles != REQUIRED_ROLES:
         raise InstallerContractError("deployment manifest does not cover every required role")
     unit_states = raw.get("required_unit_states")

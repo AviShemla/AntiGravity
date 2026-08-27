@@ -85,8 +85,12 @@ class DisabledOnlyInstallerTests(unittest.TestCase):
             source = self.source / source_name
             source.write_bytes((role + "\n").encode())
             digest = subject.sha256_file(source)
-            target = f"/opt/codex-oracle/releases/{release_name}-{digest}/{executable}"
-            artifacts.append(self._artifact(role, source_name, target))
+            release_id = "a" * 64 if role == "CONTROLLER_ENTRYPOINT" else digest
+            target = f"/opt/codex-oracle/releases/{release_name}-{release_id}/{executable}"
+            artifact = self._artifact(role, source_name, target)
+            if role == "CONTROLLER_ENTRYPOINT":
+                artifact["release_sha256"] = release_id
+            artifacts.append(artifact)
         for unit in sorted(subject.RECURRING_UNITS):
             role = f"SYSTEMD_UNIT:{unit}"
             source_name = f"units/{unit}"

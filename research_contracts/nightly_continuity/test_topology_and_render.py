@@ -67,15 +67,28 @@ def create_release_set(root: Path) -> tuple[str, str, str]:
         "run-market-ingestion": (b"#!/bin/sh\nexit 0\n", 0o700),
         "stage_runner.py": (b"# supervisor\n", 0o600),
         "release_layout.py": (b"# verifier\n", 0o600),
+        "payload_adapter_contract.py": (b"# adapter contract\n", 0o600),
         "payload/run-market-ingestion-impl": (b"#!/bin/sh\nexit 0\n", 0o700),
+        "implementation/scripts/rebuild_market_features_to_turso.py": (b"# rebuild\n", 0o600),
+        "implementation/scripts/stage_market_features_to_turso.py": (b"# stage\n", 0o600),
+        "implementation/market_data_provider.py": (b"# provider\n", 0o600),
+        "implementation/market_data_guard.py": (b"# guard\n", 0o600),
+        "implementation/turso_read_pipeline.py": (b"# read\n", 0o600),
+        "implementation/model_lineage.py": (b"# lineage\n", 0o600),
     })
     handoff = create_release(root, "market-ingestion-handoff", {
         "run-market-ingestion-postflight": (b"#!/bin/sh\nexit 0\n", 0o700),
         "run-market-ingestion-handoff": (b"#!/bin/sh\nexit 0\n", 0o700),
         "stage_runner.py": (b"# supervisor\n", 0o600),
         "release_layout.py": (b"# verifier\n", 0o600),
+        "payload_adapter_contract.py": (b"# adapter contract\n", 0o600),
         "payload/run-market-ingestion-postflight-impl": (b"#!/bin/sh\nexit 0\n", 0o700),
         "payload/run-market-ingestion-handoff-impl": (b"#!/bin/sh\nexit 0\n", 0o700),
+        "implementation/market_ingestion_postflight_cli.py": (b"# postflight\n", 0o600),
+        "implementation/market_ingestion_postflight.py": (b"# reconcile\n", 0o600),
+        "implementation/verify_postflight_handoff.py": (b"# verify\n", 0o600),
+        "implementation/turso_read_pipeline.py": (b"# read\n", 0o600),
+        "implementation/model_lineage.py": (b"# lineage\n", 0o600),
     })
     return controller, ingestion, handoff
 
@@ -235,6 +248,24 @@ class MutationTests(unittest.TestCase):
         with writable_directory() as tmp:
             output = self.copy_rendered(Path(tmp))
             self.mutate(output, "codex-market-ingestion@.service", "IOSchedulingClass=best-effort", "IOSchedulingClass=idle")
+            with self.assertRaises(TopologyError): audit(output)
+
+    def test_missing_ingestion_environment_binding_rejected(self):
+        with writable_directory() as tmp:
+            output = self.copy_rendered(Path(tmp))
+            self.mutate(
+                output, "codex-market-ingestion@.service",
+                "EnvironmentFile=/etc/codex-oracle/market-ingestion.env", "# removed",
+            )
+            with self.assertRaises(TopologyError): audit(output)
+
+    def test_missing_tiingo_token_boundary_rejected(self):
+        with writable_directory() as tmp:
+            output = self.copy_rendered(Path(tmp))
+            self.mutate(
+                output, "codex-market-ingestion@.service",
+                "ReadOnlyPaths=/etc/antigravity/tiingo.token", "# removed",
+            )
             with self.assertRaises(TopologyError): audit(output)
 
     def test_missing_progress_marker_binding_rejected(self):

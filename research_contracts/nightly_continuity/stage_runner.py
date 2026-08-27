@@ -180,13 +180,20 @@ def run_stage_main(
     stage: str, relative_payload: str, argv: Sequence[str] | None = None,
     *, release_root: Path | None = None,
 ) -> int:
+    raw_argv = list(argv or ())
+    if raw_argv.count("--source-session") != 1:
+        raise StageRunnerError("exactly one source session argument is required")
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--source-session", required=True)
     parser.add_argument("--progress-marker", type=Path, required=True)
     parser.add_argument("--code-version", required=True)
     parser.add_argument("--heartbeat-seconds", type=float, default=60.0)
     parser.add_argument("--total-units", type=int, default=1)
-    args, payload_args = parser.parse_known_args(argv)
+    args, payload_args = parser.parse_known_args(raw_argv)
+    # The supervisor owns the session identity for marker integrity, but the
+    # reviewed payload also needs that same identity.  Re-inject the parsed
+    # value so it cannot be omitted or independently overridden downstream.
+    payload_args = ["--source-session", args.source_session, *payload_args]
     root = release_root or Path(__file__).resolve().parent
     release_kind = "market-ingestion" if stage == "INGESTION" else "market-ingestion-handoff"
     verify_release(

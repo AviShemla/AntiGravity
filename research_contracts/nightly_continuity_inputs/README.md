@@ -73,3 +73,20 @@ contact Turso, alter snapshot lifecycle state, or modify tonight's units.
 Windows fixture mode emulates only the writable/read-only bit because Windows
 cannot represent full POSIX modes; production audit is Linux-only and requires
 exact POSIX modes plus UID/GID 0.
+
+## Concrete release/deployment assembly
+
+`release_deployment_assembly.py` is the deterministic join contract for the
+disabled deployment. It independently re-reads three canonical immutable
+release manifests, the controller implementation, all five runtime runners,
+the calendar/ruleset, SELECT-only preflight, controller configuration, and the
+exact seven rendered units. Runner targets are bound to release-manifest IDs;
+unit bodies must reference those exact targets and may not contain mutable
+aliases, unresolved placeholders, or systemd activation commands.
+
+The resulting canonical assembly embeds a hash-pinned manifest accepted by the
+disabled-only installer and cross-binds its deployment ID and hash to the exact
+rollback and audit contract identities. Assembly itself has no subprocess or
+network surface. Its only write operation is optional canonical write-once
+evidence. Immutable release directories must already have been built and
+independently verified; assembly does not deploy them or authorize activation.

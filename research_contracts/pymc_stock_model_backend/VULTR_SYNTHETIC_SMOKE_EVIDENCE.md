@@ -35,3 +35,27 @@ the active PyMC API. It does **not** prove convergence, scientific validity,
 canonical real 474-target/four-fold input completion, immutable release
 identity, four-chain convergence, or real-fit authorization. Those remain
 explicit gates.
+
+## Linux lock/resource/convergence follow-up
+
+- Immutable dependency identity, four-chain synthetic convergence evidence,
+  resource/ingestion guard, durable quarantine, and independent terminal audit
+  contracts are implemented fixture-only.
+- Complete isolated Linux contract suite: 108/108 passed in 38.963 seconds,
+  including all POSIX durability and ingestion-yield tests. UUID root
+  `/tmp/codex-s08-pymc-fixture-df3d8e5b23a3426a84c8e83ca4f5716f`
+  was removed; independent process/root audit found no residue.
+- The first actual four-chain 1,000-tune/1,000-draw rehearsal did **not** return
+  before its 900-second client bound. No diagnostic or convergence claim is
+  accepted from that attempt.
+- Failure evidence: the client timeout removed UUID root
+  `/tmp/codex-s08-pymc-fixture-5a41addc62d540aa8d1d50357ef71711`
+  but initially left exact PID/PGID/SID `1007404` and its forkserver/workers.
+  After exact cmdline and process-group validation, only PGID `1007404` was
+  terminated. Independent readback then found no matching worker and both the
+  failed and tests-only UUID roots absent.
+- Harness repair: the remote sampler is now wrapped by a server-side 1,800
+  second TERM boundary with a 15-second KILL-after bound; the client bound is
+  longer at 1,860 seconds, so file cleanup follows server termination.
+- Production effects remain zero: no real data, Turso, database writes,
+  persisted posterior, recommendation, order, ETF, trading, or deployment.

@@ -73,6 +73,14 @@ It also records and enforces CPU-load, available-memory, and free-disk gates.
    `build_release.py` constructs releases through a same-filesystem staging
    directory, fsyncs their contents, publishes with one atomic rename, and
    independently re-verifies the result.
+   `assemble_payload_release_source.py` first copies the reviewed ingestion,
+   provider fallback, SELECT-only postflight, and terminal handoff sources byte
+   for byte into an allowlisted release source tree.  The additive payload
+   adapters reject unknown arguments, re-bind the controller-owned source
+   session, and expose no validation or promotion option.  The ingestion
+   environment must explicitly pin `CODEX_MARKET_UNIVERSE_SNAPSHOT`,
+   `CODEX_MARKET_REQUIRED_TICKERS` (normally `SPY`), and optionally
+   `CODEX_MARKET_WORKERS` (1-12); the Tiingo token remains a read-only file.
 3. Render units with `render_units.py --release-root ...`; rendering first
    independently resolves and verifies all three immutable releases, then
    rejects non-SHA release IDs, an existing output directory, unresolved

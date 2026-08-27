@@ -181,5 +181,49 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(marker["status"], "FAILED")
 
 
+class StageMainTests(unittest.TestCase):
+    def test_source_session_is_forwarded_once_to_reviewed_payload(self):
+        captured = {}
+
+        def fake_supervise(**kwargs):
+            captured.update(kwargs)
+            return 0
+
+        argv = [
+            "--source-session", "2026-08-27",
+            "--progress-marker", "progress.json",
+            "--code-version", "a" * 64,
+            "--expected-code-version", "b" * 64,
+        ]
+        with patch("stage_runner.verify_release"), patch(
+            "stage_runner.supervise", side_effect=fake_supervise
+        ), patch.dict(os.environ, {"INVOCATION_ID": "fixture"}, clear=False):
+            result = stage_runner.run_stage_main(
+                "POSTFLIGHT", "payload/run-test-impl", argv,
+                release_root=HERE,
+            )
+        self.assertEqual(result, 0)
+        self.assertEqual(captured["source_session"], "2026-08-27")
+        self.assertEqual(
+            captured["payload_args"],
+            ["--source-session", "2026-08-27", "--expected-code-version", "b" * 64],
+        )
+
+    def test_duplicate_source_session_is_rejected_before_verification(self):
+        argv = [
+            "--source-session", "2026-08-27",
+            "--source-session", "2026-08-28",
+            "--progress-marker", "progress.json",
+            "--code-version", "a" * 64,
+        ]
+        with patch("stage_runner.verify_release") as verify:
+            with self.assertRaises(StageRunnerError):
+                stage_runner.run_stage_main(
+                    "INGESTION", "payload/run-test-impl", argv,
+                    release_root=HERE,
+                )
+        verify.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

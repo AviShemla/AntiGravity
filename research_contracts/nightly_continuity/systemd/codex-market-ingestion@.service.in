@@ -10,6 +10,7 @@ User=root
 Group=root
 UMask=0077
 Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=/etc/codex-oracle/market-ingestion.env
 CPUWeight=900
 IOWeight=900
 Nice=-5
@@ -22,4 +23,5 @@ ProtectSystem=strict
 ProtectHome=true
 ReadOnlyPaths=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@
 ReadOnlyPaths=/etc/codex-oracle/market-ingestion.env
+ReadOnlyPaths=/etc/antigravity/tiingo.token
 ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i

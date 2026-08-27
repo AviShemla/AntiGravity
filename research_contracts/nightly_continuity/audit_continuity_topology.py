@@ -70,6 +70,13 @@ def audit(directory: Path) -> dict[str, object]:
         "IOSchedulingClass=best-effort", "IOSchedulingPriority=0",
     )):
         raise TopologyError("guarded ingestion priority controls are missing")
+    for token in (
+        "EnvironmentFile=/etc/codex-oracle/market-ingestion.env",
+        "ReadOnlyPaths=/etc/codex-oracle/market-ingestion.env",
+        "ReadOnlyPaths=/etc/antigravity/tiingo.token",
+    ):
+        if token not in units["ingestion"]:
+            raise TopologyError("guarded ingestion credential/config boundary is missing")
     marker = "/var/lib/codex-oracle/market-ingestion/%i/progress.json"
     for key in ("ingestion", "postflight", "handoff"):
         if f"--progress-marker {marker}" not in units[key]:

@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Immutable adapter to the reviewed Yahoo->Tiingo guarded ingestion."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "implementation"))
+
+from payload_adapter_contract import ingestion_arguments, invoke_noarg_main
+from scripts.rebuild_market_features_to_turso import main as reviewed_main
+
+
+if __name__ == "__main__":
+    raise SystemExit(invoke_noarg_main(reviewed_main, ingestion_arguments(sys.argv[1:])))

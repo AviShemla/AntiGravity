@@ -32,6 +32,16 @@ tests reject overlap, tamper, incomplete or duplicate coverage, stale S07
 evidence, non-finite values, and time-of-check/time-of-use source mutation.
 It has no filesystem, network, database, or Turso client.
 
+The Linux rehearsal boundary additionally content-addresses the Python
+executable, PyMC, PyTensor, ArviZ, NumPy, BLAS identity, and distribution
+records. Synthetic convergence evidence requires the unchanged frozen sampler:
+four chains, at least 1,000 tune and 1,000 draws, unique preregistered seeds,
+and every existing R-hat/ESS/BFMI/divergence/tree-depth gate. A low-priority
+filesystem runner scaffold rechecks fresh resources and guarded-ingestion
+buffer both before and after execution, quarantines any yielded result, and has
+an independent exact-terminal auditor. The scaffold contains no process
+launcher and cannot authorize real data.
+
 This is **IMPLEMENTED, fixture-tested, and graph/API smoke-observed** under
 the current Vultr dependency closure. It is not deployed or authorized for real
 data. The smoke used one chain with five tune/five draws solely to prove graph
