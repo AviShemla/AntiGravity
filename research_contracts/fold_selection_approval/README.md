@@ -1,8 +1,14 @@
 # Fold-selection approval proposal
 
 This package produces a deterministic, reviewable proposal for the governed
-four-fold stock edge-selection evaluation. It cannot authorize or execute any
-selection, model, prediction, recommendation, order, or database write.
+four-fold stock edge-selection evaluation. It can deterministically compute
+research selections only from a complete, injected, panel-bound evidence
+stream. It cannot authorize, deploy, persist, or initiate a selection run,
+model, prediction, recommendation, order, or database write.
+
+`s08_selector_v7.py` is an inert, selection-only research proposal and replay
+auditor. It supplies no execution or authorization API; possessing a result is
+insufficient without complete panel-bound source-evidence replay.
 
 `training_fold_selection_approval_v5.py` is the reviewed public proposal
 surface. Its trust root is deliberately absent, so every preflight returns
