@@ -25,6 +25,28 @@ REQUIRED_ENTRYPOINTS: Mapping[str, tuple[str, ...]] = {
         "run-market-ingestion-handoff",
     ),
 }
+REQUIRED_ARTIFACTS: Mapping[str, Mapping[str, int]] = {
+    "nightly-continuity": {
+        "run-nightly-continuity": 0o700,
+        "run-nightly-continuity-watchdog": 0o700,
+        "continuity_controller.py": 0o600,
+        "release_layout.py": 0o600,
+    },
+    "market-ingestion": {
+        "run-market-ingestion": 0o700,
+        "stage_runner.py": 0o600,
+        "release_layout.py": 0o600,
+        "payload/run-market-ingestion-impl": 0o700,
+    },
+    "market-ingestion-handoff": {
+        "run-market-ingestion-postflight": 0o700,
+        "run-market-ingestion-handoff": 0o700,
+        "stage_runner.py": 0o600,
+        "release_layout.py": 0o600,
+        "payload/run-market-ingestion-postflight-impl": 0o700,
+        "payload/run-market-ingestion-handoff-impl": 0o700,
+    },
+}
 
 
 class ReleaseLayoutError(RuntimeError):
@@ -114,10 +136,10 @@ def verify_release(
     }
     if actual != listed | {"release-manifest.json"}:
         raise ReleaseLayoutError("release contains unmanifested or missing files")
-    if not set(REQUIRED_ENTRYPOINTS[release_kind]).issubset(listed):
-        raise ReleaseLayoutError("release is missing a required executable entrypoint")
-    for relative in REQUIRED_ENTRYPOINTS[release_kind]:
-        _secure(directory / relative, 0o700, require_root=require_root)
+    if not set(REQUIRED_ARTIFACTS[release_kind]).issubset(listed):
+        raise ReleaseLayoutError("release is missing a required runtime artifact")
+    for relative, mode in REQUIRED_ARTIFACTS[release_kind].items():
+        _secure(directory / relative, mode, require_root=require_root)
     return directory
 
 

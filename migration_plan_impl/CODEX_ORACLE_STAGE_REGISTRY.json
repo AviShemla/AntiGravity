@@ -621,8 +621,8 @@
       "parallel_group": "continuity",
       "current_evidence_state": {
         "state": "TESTED",
-        "qualifier": "REUSABLE_CONTROLLER_AND_DEPLOYMENT_INPUTS_TESTED_RUNNER_RELEASES_PENDING",
-        "evidence": "The fail-closed controller now verifies content-addressed release layouts, exact entrypoints, root-owned 0600 data versus root-owned 0700 executables, canonical stage progress bound to live PID and InvocationID, and installed CPU/IO priority before dispatch. It passed 77/77 tests as root on Vultr. The SELECT-only Turso preflight and official-source NYSE 2026 calendar passed 32/32 additional tests; the calendar contains 251 sessions, ten closures, only the November 27 and December 24 early closes, and treats July 2 as a regular session. Five concrete runner executables and manifests, no-dispatch deployment rehearsal, recurring deployment, and independent runtime readback remain pending."
+        "qualifier": "REUSABLE_CONTROLLER_RUNNERS_AND_DISABLED_INSTALLER_TESTED_PAYLOAD_RELEASES_PENDING",
+        "evidence": "The fail-closed controller verifies content-addressed release layouts, exact entrypoints, root-owned 0600 data versus root-owned 0700 executables, canonical stage progress bound to live PID and InvocationID, and installed CPU/IO priority before dispatch. Five actual self-verifying runners now execute release-local allowlisted payloads, atomically maintain stage progress, forward signals, and preserve terminal failures; 94/94 canonical Vultr tests pass after repairing bytecode-cache mutation. The official-source NYSE calendar, SELECT-only Turso preflight, and disabled-only rollback-first installer/auditor pass 45/45 tests. Reviewed real payload bindings, actual root release builds, render/systemd verification, no-dispatch rehearsal, deployment, and runtime readback remain pending."
       },
       "entry_gates": [
         "Derive latest completed NYSE session using NYSE calendar and America/New_York.",
@@ -712,8 +712,8 @@
           "required": true,
           "satisfied": true,
           "evidence_refs": [
-            "evidence://s02/tests/root-vultr-77-of-77-controller-sha256-ca3f9f5af379f28e83232b8a74f79d01c2f557a4a21d0a11dc3d51a7218abf1b",
-            "evidence://s02/tests/root-vultr-32-of-32-calendar-sha256-ac02ecb58e488f1e671308548edd60768afd6676bd7156ba2ff762a8f6f1ee1d"
+            "evidence://s02/tests/root-vultr-94-of-94-runner-release-suite",
+            "evidence://s02/tests/root-vultr-45-of-45-calendar-preflight-disabled-installer-sha256-ac02ecb58e488f1e671308548edd60768afd6676bd7156ba2ff762a8f6f1ee1d"
           ]
         },
         "observe": {
@@ -1056,9 +1056,9 @@
         "W1"
       ],
       "current_evidence_state": {
-        "state": "OBSERVED",
-        "qualifier": "HISTORICAL_FRESH_READBACK_REQUIRED",
-        "evidence": "Prior audit reported historical coverage; immutable binding and freshness must be re-read."
+        "state": "VERIFIED",
+        "qualifier": "FRESH_SELECT_ONLY_TURSO_READBACK_20260827",
+        "evidence": "A fresh SELECT-only Turso audit verified snapshot market_features_2026-08-25_5b1044ee45605a3d with 586710 rows, 474 tickers, 1246 NYSE sessions from 2021-09-08 through 2026-08-25, and 476 provider-lineage rows. All ten exact metadata, coverage, duplicate, missingness, OHLC, grid, calendar, per-session, provider-lineage, and primary-key checks passed. The write-once root-owned mode-0600 evidence has SHA-256 b79205b36fd6ecd7754863823f227de7a14c1d94d5931a988095900c3609fd04."
       },
       "entry_gates": [
         "SELECT-only Turso access and exact snapshot, universe, session, provider, schema, and code identities.",
@@ -1094,9 +1094,9 @@
       "title": "Historical stock dataset coverage and quality audit",
       "owner": "codex-oracle-s04-owner",
       "action_class": "SAFE_NOW",
-      "evidence_stage": "OBSERVED",
+      "evidence_stage": "VERIFIED",
       "progress": {
-        "numerator": 0,
+        "numerator": 1,
         "denominator": 1,
         "unit": "fresh independently verified audit"
       },
@@ -1151,8 +1151,10 @@
         },
         "readback": {
           "required": true,
-          "satisfied": false,
-          "evidence_refs": []
+          "satisfied": true,
+          "evidence_refs": [
+            "evidence://s04/readback/20260827-b79205b36fd6ecd7754863823f227de7a14c1d94d5931a988095900c3609fd04"
+          ]
         }
       },
       "autofix": {
@@ -1931,8 +1933,8 @@
       ],
       "current_evidence_state": {
         "state": "TESTED",
-        "qualifier": "2_OF_3_CONCRETE_PYMC_FIXTURE_SAMPLING_TESTED_GOVERNED_FIT_PENDING",
-        "evidence": "Independent lag-1-7/depth-1-5 hierarchy, content-addressed execution authorization, a concrete PyMC joint Bernoulli-logit plus Student-t-percent backend, and a fixture-only durable checkpoint/quarantine store are implemented. 74/74 combined tests pass on Vultr. A real PyMC 6.1.0 synthetic rehearsal ran 5 tune plus 5 draws for 2 targets and 3 independent edges, wrote two hash-linked checkpoints and a terminal fixture marker, independently read them back, and removed its isolated temporary root. Exact S07 hash reconciliation, normalized 474-by-4 input proof, immutable four-chain convergence rehearsal, real-fit runner/auditor, explicit one-run authorization, and accepted governed fit remain pending."
+        "qualifier": "2_OF_3_CONCRETE_PYMC_AND_474_BY_4_INPUT_CONTRACT_TESTED_GOVERNED_FIT_PENDING",
+        "evidence": "Independent lag-1-7/depth-1-5 hierarchy, content-addressed execution authorization, concrete PyMC backend, fixture-only durable checkpoint/quarantine store, and exact normalized-edge immutable input boundary are implemented. The boundary binds S07 identities and requires exactly 474 targets by 4 folds (1896 payloads), 416 sessions, train 289/test 30/purge 7, independent lags 1-7/depth 1-5, and zero overlap; 93/93 Linux tests reject tamper, incompleteness, stale evidence, and source mutation. A real PyMC 6.1.0 fixture rehearsal also reached a hash-bound terminal state with no scientific or downstream claim. Canonical Turso input instantiation/readback, immutable four-chain convergence rehearsal, real-fit runner/auditor, explicit one-run authorization, and accepted governed fit remain pending."
       },
       "entry_gates": [
         "Independent edges lags 1-7, depth 1-5, training-only selection, multiple-testing control, frozen hierarchy, immutable data, run authorization, and sampler/resource/output contracts."
@@ -2013,8 +2015,8 @@
           "required": true,
           "satisfied": true,
           "evidence_refs": [
-            "evidence://s08/test/combined-74-of-74-backend-sha256-4318bc050f13a67ac8466227738ebd168de517a77696807f58c12a6d9c75100a",
-            "evidence://s08/test/pymc-6.1.0-synthetic-sampling-terminal-sha256-292e9945665f006537a1bf2e95196723439dc6bc6f26e1f1f210d4b0a63a46cf"
+            "evidence://s08/test/linux-93-of-93-normalized-edge-reader-sha256-746923e0cf4731a7959138e8f8fdd120fca4641a541620c6f6bd409c39c4b69d",
+            "evidence://s08/test/pymc-6.1.0-synthetic-sampling-terminal-sha256-f62b50e7b27173badc858ed1f499fb8c5e6dc01443376cd018953c87f01bc21c"
           ]
         },
         "observe": {

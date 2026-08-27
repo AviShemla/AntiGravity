@@ -17,9 +17,14 @@ Evidence stage: **OBSERVED for fixture graph/API compatibility only**.
 - Posterior shapes: direction `(1, 5, 2)` and return `(1, 5, 2)`.
 - Durable rehearsal: two hash-linked checkpoints and one
   `TERMINAL_FIXTURE_SMOKE` readback; terminal SHA-256
-  `292e9945665f006537a1bf2e95196723439dc6bc6f26e1f1f210d4b0a63a46cf`.
-- Fixture contract tests on Linux: 39/39 passed, including tamper rejection,
-  terminal immutability, exact-coverage enforcement, and failure quarantine.
+  `f62b50e7b27173badc858ed1f499fb8c5e6dc01443376cd018953c87f01bc21c`.
+- Complete isolated S08 contract tests on Linux: 93/93 passed in 37.915
+  seconds. This includes the upstream execution and hierarchy contracts, the
+  backend/runner, checkpoint/quarantine behavior, and the normalized-edge
+  immutable reader with exact 474-target × 4-fold synthetic coverage.
+- Normalized-edge negative cases reject payload/selection/manifest tamper,
+  incomplete or duplicate coverage, purge overlap, stale or mismatched S07
+  proof, unsafe keys, non-finite values, and later source mutation.
 - Remote isolation: UUID-scoped `/tmp/codex-s08-pymc-fixture-*`; exact directory
   removed after the test.
 - Production effects: zero database writes, zero persisted predictions, zero
@@ -27,5 +32,6 @@ Evidence stage: **OBSERVED for fixture graph/API compatibility only**.
 
 This smoke proves that the concrete graph constructs, compiles, and traverses
 the active PyMC API. It does **not** prove convergence, scientific validity,
-474-target/four-fold completion, immutable release identity, or real-fit
-authorization. Those remain explicit gates.
+canonical real 474-target/four-fold input completion, immutable release
+identity, four-chain convergence, or real-fit authorization. Those remain
+explicit gates.

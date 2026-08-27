@@ -2,8 +2,11 @@
 
 1. Reconcile the exact S07 preregistered model/sampler payload serialization
    with this backend's numeric payloads. A hash mismatch fails closed.
-2. Bind the request builder to the governed normalized-edge Turso reader and
-   independently prove all 474 targets and four leakage-free folds.
+2. Instantiate the now synthetic-contract-tested immutable input bundle from
+   the canonical normalized-edge Turso SSOT under a current S07 proof, then
+   independently read back all 474 targets and four leakage-free folds. The
+   injection-only reader and exact 1,896-payload coverage/tamper/overlap
+   contract are implemented and Linux-tested; no Turso access occurred.
 3. Freeze a Linux dependency lock containing exact compatible PyMC, PyTensor,
    ArviZ, NumPy, BLAS, and Python identities; run a governed four-chain
    synthetic convergence test from that immutable closure. A five-draw graph

@@ -76,6 +76,8 @@ def audit(directory: Path) -> dict[str, object]:
             raise TopologyError(f"{key} lacks the exact durable progress-marker binding")
         if "ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i" not in units[key]:
             raise TopologyError(f"{key} cannot atomically persist its progress marker")
+        if "--code-version " not in units[key] or "--heartbeat-seconds " not in units[key]:
+            raise TopologyError(f"{key} lacks immutable heartbeat identity/interval")
     expected_entrypoints = {
         "controller": "/run-nightly-continuity --config ",
         "watchdog": "/run-nightly-continuity-watchdog --config ",

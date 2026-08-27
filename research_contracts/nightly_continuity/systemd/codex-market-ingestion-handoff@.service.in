@@ -8,7 +8,7 @@ User=root
 Group=root
 UMask=0077
 Environment=PYTHONDONTWRITEBYTECODE=1
-ExecStart=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/run-market-ingestion-handoff --source-session %i --artifact /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --progress-marker /var/lib/codex-oracle/market-ingestion/%i/progress.json --max-age-seconds 300
+ExecStart=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/run-market-ingestion-handoff --source-session %i --progress-marker /var/lib/codex-oracle/market-ingestion/%i/progress.json --code-version @HANDOFF_RELEASE_SHA256@ --heartbeat-seconds 30 --total-units 1 --artifact /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --max-age-seconds 300
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

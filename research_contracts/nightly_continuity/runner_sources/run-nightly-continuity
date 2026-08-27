@@ -1,0 +1,17 @@
+#!/opt/antigravity/venv/bin/python
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+
+from continuity_controller import main
+from release_layout import verify_release
+
+
+if __name__ == "__main__":
+    release = Path(__file__).resolve().parent
+    release_id = release.name.removeprefix("nightly-continuity-")
+    verify_release(release.parent, "nightly-continuity", release_id)
+    raise SystemExit(main(sys.argv[1:]))

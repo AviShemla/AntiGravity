@@ -151,7 +151,7 @@ The machine-readable source of the exact fields below is `CODEX_ORACLE_STAGE_REG
 ### S02 — Temporary guarded nightly continuity
 
 **Dependencies:** `S00`; incident hardening from `S01` must be deployed before the next runtime.
-**Current evidence state:** `TESTED_NOT_DEPLOYED`; the fail-closed controller now verifies content-addressed release layouts and exact entrypoints, distinguishes root-owned 0600 data from root-owned 0700 executables, binds canonical stage progress to the live PID and InvocationID, and rejects installed CPU/IO priority downgrades before dispatch. It passed 77/77 tests as root on Vultr. The SELECT-only Turso preflight and the official-source NYSE 2026 calendar passed another 32/32 tests; the calendar contains 251 sessions, ten closures, only the November 27 and December 24 early closes, and correctly treats July 2 as a regular session. Five concrete runner executables and manifests, a no-dispatch deployment rehearsal, the first recurring runtime, and independent readback remain required; each session still requires fresh evidence.
+**Current evidence state:** `TESTED_NOT_DEPLOYED`; the fail-closed controller verifies content-addressed release layouts and exact entrypoints, root-owned 0600 data versus root-owned 0700 executables, canonical progress bound to live PID and InvocationID, and installed CPU/IO priority before dispatch. Five actual self-verifying runners execute only release-local allowlisted payloads, atomically maintain progress, forward signals, and preserve terminal failures. After canonical Linux testing exposed and repaired bytecode-cache mutation, 94/94 Vultr tests pass. The official-source NYSE calendar, SELECT-only Turso preflight, and disabled-only rollback-first installer/auditor pass 45/45 tests. Reviewed real payload bindings, actual root release builds, render/systemd verification, a no-dispatch rehearsal, deployment, and runtime readback remain required; each session still requires fresh evidence.
 
 **Entry gates**
 
@@ -213,7 +213,7 @@ The machine-readable source of the exact fields below is `CODEX_ORACLE_STAGE_REG
 ### S04 — Historical stock dataset coverage and quality audit (workstream 1)
 
 **Dependencies:** `S00`, source lineage from `S01` or an already verified immutable historical source.
-**Current evidence state:** prior audit evidence indicates 1,244 sessions and the governed universe; freshness and immutable binding must be re-read.
+**Current evidence state:** `VERIFIED`, 1/1. A fresh SELECT-only Turso audit on 2026-08-27 verified snapshot `market_features_2026-08-25_5b1044ee45605a3d`: 586,710 rows, 474 tickers, 1,246 NYSE sessions from 2021-09-08 through 2026-08-25, and 476 provider-lineage rows. All ten metadata, coverage, duplicate, missingness, OHLC, grid, calendar, per-session, provider-lineage, and primary-key checks passed. The write-once root-owned mode-0600 evidence is bound by SHA-256 `b79205b36fd6ecd7754863823f227de7a14c1d94d5931a988095900c3609fd04`.
 
 **Entry gates:** SELECT-only Turso access; exact snapshot/universe/session/provider/schema/code identities; no CSV/SQLite fallback.
 
@@ -305,7 +305,7 @@ The machine-readable source of the exact fields below is `CODEX_ORACLE_STAGE_REG
 ### S08 — Variable predictive lead-lag stock model (workstream 4)
 
 **Dependencies:** implementation can start after `S03`; governed fitting requires `S07`.
-**Current evidence state:** `TESTED`, 2/3. The independent hierarchy, content-addressed execution authorization, concrete PyMC joint Bernoulli-logit plus Student-t-percent backend, and fixture-only durable checkpoint/quarantine store passed 74/74 combined tests on Vultr. Real PyMC 6.1.0 then executed a bounded synthetic rehearsal with five tune and five draws for two targets and three independent edges, persisted two hash-linked checkpoints plus a terminal fixture marker, independently read them back, and removed the isolated temporary root. Exact S07 hash reconciliation, normalized 474-by-4 input proof, immutable four-chain convergence rehearsal, real-fit runner/auditor, explicit one-run authorization, and the accepted governed fit remain pending.
+**Current evidence state:** `TESTED`, 2/3. The independent hierarchy, content-addressed execution authorization, concrete PyMC backend, fixture-only durable checkpoint/quarantine store, and exact normalized-edge immutable input boundary are implemented. The input boundary binds all S07 identities and requires exactly 474 targets by four folds (1,896 payloads), 416 sessions, train 289/test 30/purge 7, independent lags 1–7/depth 1–5, and zero overlap; 93/93 Linux tests reject tamper, incompleteness, stale evidence, and source mutation. A real PyMC 6.1.0 fixture rehearsal reached a hash-bound terminal state without scientific or downstream claims. Canonical Turso input instantiation/readback, immutable four-chain convergence rehearsal, real-fit runner/auditor, explicit one-run authorization, and the accepted governed fit remain pending.
 
 **Entry gates:** independent edges lags 1–7, depth 1–5; training-only selection; multiple-testing control; frozen hierarchy; immutable dataset; authorized run; sampler/resource/output contracts.
 

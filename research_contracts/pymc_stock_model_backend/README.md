@@ -23,6 +23,15 @@ exception is re-raised after a terminal quarantine marker is durably recorded.
 Fixture terminals always declare `scientific_evidence=false` and
 `convergence_claimed=false`.
 
+The normalized-edge input boundary is also isolated and injection-only. It
+binds every manifest to the S07 preregistration and readback hashes, requires
+exactly 474 targets by four leakage-free folds, verifies the fixed purge and
+fold geometry, content-addresses each canonical independent-edge selection,
+and rehashes compact binary fold payloads on every read. Synthetic contract
+tests reject overlap, tamper, incomplete or duplicate coverage, stale S07
+evidence, non-finite values, and time-of-check/time-of-use source mutation.
+It has no filesystem, network, database, or Turso client.
+
 This is **IMPLEMENTED, fixture-tested, and graph/API smoke-observed** under
 the current Vultr dependency closure. It is not deployed or authorized for real
 data. The smoke used one chain with five tune/five draws solely to prove graph

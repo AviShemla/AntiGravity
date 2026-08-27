@@ -65,7 +65,14 @@ It also records and enforces CPU-load, available-memory, and free-disk gates.
    are forbidden, and no unmanifested file is allowed. Concrete entrypoints are
    `run-nightly-continuity`, `run-nightly-continuity-watchdog`,
    `run-market-ingestion`, `run-market-ingestion-postflight`, and
-   `run-market-ingestion-handoff`.
+   `run-market-ingestion-handoff`. Each entrypoint independently verifies its
+   complete release manifest before doing work. Pipeline entrypoints supervise
+   a release-local, mode-0700 payload without a shell, preserve its exact exit
+   status, forward termination signals, and atomically persist ACTIVE plus
+   terminal SUCCEEDED/FAILED progress evidence. The generic builder
+   `build_release.py` constructs releases through a same-filesystem staging
+   directory, fsyncs their contents, publishes with one atomic rename, and
+   independently re-verifies the result.
 3. Render units with `render_units.py --release-root ...`; rendering first
    independently resolves and verifies all three immutable releases, then
    rejects non-SHA release IDs, an existing output directory, unresolved

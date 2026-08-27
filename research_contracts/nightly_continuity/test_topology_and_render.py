@@ -61,14 +61,21 @@ def create_release_set(root: Path) -> tuple[str, str, str]:
         "run-nightly-continuity": (b"#!/bin/sh\nexit 0\n", 0o700),
         "run-nightly-continuity-watchdog": (b"#!/bin/sh\nexit 0\n", 0o700),
         "continuity_controller.py": (b"# controller\n", 0o600),
+        "release_layout.py": (b"# verifier\n", 0o600),
     })
     ingestion = create_release(root, "market-ingestion", {
         "run-market-ingestion": (b"#!/bin/sh\nexit 0\n", 0o700),
+        "stage_runner.py": (b"# supervisor\n", 0o600),
+        "release_layout.py": (b"# verifier\n", 0o600),
+        "payload/run-market-ingestion-impl": (b"#!/bin/sh\nexit 0\n", 0o700),
     })
     handoff = create_release(root, "market-ingestion-handoff", {
         "run-market-ingestion-postflight": (b"#!/bin/sh\nexit 0\n", 0o700),
         "run-market-ingestion-handoff": (b"#!/bin/sh\nexit 0\n", 0o700),
-        "implementation.py": (b"# handoff\n", 0o600),
+        "stage_runner.py": (b"# supervisor\n", 0o600),
+        "release_layout.py": (b"# verifier\n", 0o600),
+        "payload/run-market-ingestion-postflight-impl": (b"#!/bin/sh\nexit 0\n", 0o700),
+        "payload/run-market-ingestion-handoff-impl": (b"#!/bin/sh\nexit 0\n", 0o700),
     })
     return controller, ingestion, handoff
 
@@ -146,7 +153,7 @@ class RenderTests(unittest.TestCase):
             release_root = Path(tmp) / "releases"
             release_root.mkdir()
             release_id = create_release(release_root, "market-ingestion", {
-                "implementation.py": (b"# no runner\n", 0o600),
+                "implementation.py": (b"# no runtime\n", 0o600),
             })
             with self.assertRaises(ReleaseLayoutError):
                 verify_release(release_root, "market-ingestion", release_id, require_root=False)

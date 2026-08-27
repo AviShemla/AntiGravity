@@ -48,3 +48,28 @@ evidence, weekends, ten holidays, both early closes, both 2026 DST
 transitions, exact 251-session coverage, horizon enforcement, deterministic
 rebuild, hash/tamper rejection, explicit July-2 normal-close regression, and
 direct continuity-controller loading.
+
+## Disabled-only recurring deployment contract
+
+`disabled_only_installer.py` defines the root-owned production contract for a
+future deployment of the verified calendar, SELECT-only preflight, controller,
+configuration, and seven recurring unit files. It is intentionally not a unit
+activator. Its manifest pins every artifact by SHA-256, binds executable
+release paths to that hash, requires exact root-owned production paths/modes,
+and declares every recurring and inherited safety unit `inactive` and
+`disabled`.
+
+The installer first inspects all ten guarded units and verifies and backs up
+every input. It then writes a canonical, write-once rollback manifest before
+any deployment-target mutation, atomically installs artifacts, and re-reads
+every artifact and unit state. A separate write-once completion record
+distinguishes prepared rollback evidence from a completed install. The only
+systemd command implemented is read-only `systemctl show`; no enable, start,
+restart, stop, or daemon-reload command exists. The CLI additionally requires
+an explicit `--apply-disabled-only` flag and Linux root execution.
+
+All automated coverage uses workspace-owned fixture roots. It does not deploy,
+contact Turso, alter snapshot lifecycle state, or modify tonight's units.
+Windows fixture mode emulates only the writable/read-only bit because Windows
+cannot represent full POSIX modes; production audit is Linux-only and requires
+exact POSIX modes plus UID/GID 0.
