@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import sys
 import time
 from datetime import datetime, timezone
@@ -106,6 +107,16 @@ def normalize_turso_endpoint(value: str) -> str:
 def _read_env_file(path: Path, wanted: set[str]) -> dict[str, str]:
     if not path.is_file():
         raise PostflightRuntimeError("environment file is unavailable")
+    info = path.stat()
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise PostflightRuntimeError(
+            "environment file must be a single-link regular file"
+        )
+    if os.name != "nt":
+        if info.st_uid != 0 or info.st_gid != 0:
+            raise PostflightRuntimeError("environment file must be root-owned")
+        if stat.S_IMODE(info.st_mode) != 0o600:
+            raise PostflightRuntimeError("environment file mode must be 0600")
     values: dict[str, str] = {}
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()

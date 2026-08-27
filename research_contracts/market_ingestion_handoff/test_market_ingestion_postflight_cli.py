@@ -2,29 +2,35 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 try:
+    from . import market_ingestion_postflight_cli as cli_module
     from .market_ingestion_postflight import VisibilityPending
     from .market_ingestion_postflight_cli import (
         ALL_SELECTS,
         PostflightRuntimeError,
         PostflightVisibilityTimeout,
         build_handoff,
+        load_runtime_values,
         normalize_turso_endpoint,
         read_and_reconcile_once,
         reconcile_with_bounded_retry,
         write_handoff_once,
     )
 except ImportError:
+    import market_ingestion_postflight_cli as cli_module  # type: ignore
     from market_ingestion_postflight import VisibilityPending  # type: ignore
     from market_ingestion_postflight_cli import (  # type: ignore
         ALL_SELECTS,
         PostflightRuntimeError,
         PostflightVisibilityTimeout,
         build_handoff,
+        load_runtime_values,
         normalize_turso_endpoint,
         read_and_reconcile_once,
         reconcile_with_bounded_retry,
@@ -157,6 +163,32 @@ class RuntimeBoundaryTests(unittest.TestCase):
     def test_non_https_endpoint_fails_closed(self):
         with self.assertRaises(PostflightRuntimeError):
             normalize_turso_endpoint("http://example.invalid")
+
+    def test_env_file_requires_root_owned_mode_0600_on_posix(self):
+        info = SimpleNamespace(
+            st_mode=stat.S_IFREG | 0o640,
+            st_nlink=1,
+            st_uid=0,
+            st_gid=0,
+        )
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch.object(cli_module.os, "name", "posix"),
+            patch.object(Path, "is_file", return_value=True),
+            patch.object(Path, "stat", return_value=info),
+            patch.object(
+                Path,
+                "read_text",
+                return_value="TURSO_DATABASE_URL=libsql://example.turso.io\n"
+                "TURSO_AUTH_TOKEN=not-a-real-token\n",
+            ),
+        ):
+            with self.assertRaisesRegex(PostflightRuntimeError, "mode must be 0600"):
+                load_runtime_values(
+                    endpoint_env="TURSO_DATABASE_URL",
+                    token_env="TURSO_AUTH_TOKEN",
+                    env_file=Path("ignored"),
+                )
 
     def test_handoff_is_hash_bound_and_uses_create_once_mode_0600(self):
         result = {
