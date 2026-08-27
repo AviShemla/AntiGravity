@@ -1,0 +1,15 @@
+# Preserve byte-for-byte identities for hash-bound provider-freeze rebound artifacts.
+/corrected_freeze_manifest.py text eol=lf
+/governance/provider_freeze_rebound/corrected_freeze_manifest.json text eol=lf
+/governance/provider_freeze_rebound/canonical_integration_map.json text eol=lf
+/governance/corrected_application_contract_v2.json text eol=lf
+/governance/oracle_research_dataset_application_contract_v2.json text eol=lf
+/governance/authorization_envelopes/oracle-production-envelope-456179cd/envelope.json text eol=lf
+/governance/runtime_authorization_templates/provider_freeze_rebound.json text eol=lf
+/scripts/oracle_production_schema_freeze_provider_rebound.py text eol=lf
+/docs/evidence/provider_freeze_rebound/approval_package.json text eol=lf
+/docs/evidence/provider_freeze_rebound/INDEPENDENT_REVIEW.md text eol=lf
+/docs/evidence/provider_freeze_rebound/superseded_envelope_665fe03c.json text eol=lf
+/docs/evidence/provider_freeze_rebound/superseded_runtime_authorization.json text eol=lf
+/tests/test_provider_freeze_rebound_integration.py text eol=lf
+/oracle_production_authorization_envelope.py text eol=lf
