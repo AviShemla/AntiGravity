@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -130,13 +131,43 @@ def _one(reader, sql: str, args: list[object]) -> dict[str, object]:
     return dict(zip(result.columns, result.rows[0]))
 
 
-def verify_schema_readback(reader) -> dict[str, object]:
+def _expected_schema_objects(root: Path) -> dict[str, str]:
+    migration_path = root / "migrations/20260826_oracle_research_dataset_versions_additive.sql"
+    migration = parse_atomic_bundle(migration_path.read_bytes())
+    verify_expected_hash(migration, SCHEMA_SHA256)
+    expected: dict[str, str] = {}
+    pattern = re.compile(
+        r"^CREATE\s+(?:UNIQUE\s+)?(TABLE|INDEX|TRIGGER)\s+IF\s+NOT\s+EXISTS\s+([A-Za-z_][A-Za-z0-9_]*)",
+        re.IGNORECASE,
+    )
+    for _statement_id, statement in migration.statements:
+        match = pattern.match(statement.strip())
+        if match:
+            object_type, name = match.groups()
+            expected[name] = object_type.lower()
+    if len(expected) != 26:
+        raise LineageError("Hash-verified Oracle migration did not define exactly 26 named objects.")
+    return expected
+
+
+def verify_schema_readback(root: Path, reader) -> dict[str, object]:
+    expected = _expected_schema_objects(root)
     objects = reader.execute(
         "SELECT type,name,sql FROM sqlite_schema WHERE name LIKE 'oracle_research_dataset_%' "
-        "OR name LIKE 'trg_oracle_research_%' ORDER BY type,name", []
+        "OR name LIKE 'idx_oracle_research_%' OR name LIKE 'trg_oracle_research_%' "
+        "ORDER BY type,name", []
     )
-    if len(objects.rows) != 26:
-        raise LineageError("Oracle schema readback did not contain exactly 26 objects.")
+    actual = {row[1]: row[0] for row in objects.rows if row[2] is not None}
+    if actual != expected:
+        missing = sorted(set(expected) - set(actual))
+        extra = sorted(set(actual) - set(expected))
+        wrong_type = sorted(
+            name for name in set(expected) & set(actual) if expected[name] != actual[name]
+        )
+        raise LineageError(
+            "Oracle schema readback identity differs from the hash-verified migration: "
+            f"missing={missing!r}, extra={extra!r}, wrong_type={wrong_type!r}."
+        )
     ledger = reader.execute(
         "SELECT event_id,migration_id,artifact_sha256,operation,target_database_id,evidence_json,executed_at_utc "
         "FROM schema_migration_events_v2 WHERE migration_id=? ORDER BY executed_at_utc,event_id",
@@ -156,7 +187,9 @@ def verify_schema_readback(reader) -> dict[str, object]:
         "(SELECT COUNT(*) FROM oracle_research_dataset_events) AS events",
         [],
     )
-    return {"object_count": 26, "apply_event_count": 1, "empty_boundary": boundary}
+    if any(int(boundary[key]) != 0 for key in ("versions", "provider_rows", "events")):
+        raise LineageError("Oracle schema boundary is not empty before the approved dataset freeze.")
+    return {"object_count": len(expected), "apply_event_count": 1, "empty_boundary": boundary}
 
 
 def verify_pre_schema(root: Path, reader, authorization_path: Path) -> dict[str, object]:
@@ -164,7 +197,8 @@ def verify_pre_schema(root: Path, reader, authorization_path: Path) -> dict[str,
     verify_envelope_approval(root, authorization_path, _canonical_utc_now())
     objects = reader.execute(
         "SELECT type,name,sql FROM sqlite_schema WHERE name LIKE 'oracle_research_dataset_%' "
-        "OR name LIKE 'trg_oracle_research_%' ORDER BY type,name", []
+        "OR name LIKE 'idx_oracle_research_%' OR name LIKE 'trg_oracle_research_%' "
+        "ORDER BY type,name", []
     )
     ledger = reader.execute(
         "SELECT event_id,migration_id,artifact_sha256,operation,target_database_id,executed_at_utc "
@@ -277,7 +311,7 @@ def apply_schema(
         "SELECT event_id FROM schema_migration_events_v2 WHERE migration_id=?", [MIGRATION_ID]
     )
     if existing.rows:
-        return verify_schema_readback(reader)
+        return verify_schema_readback(root, reader)
     apply_atomic_migration(
         session, endpoint, token, migration,
         event_id=SCHEMA_APPROVAL_ID,
@@ -286,7 +320,7 @@ def apply_schema(
         evidence={"authorization_envelope_sha256": ENVELOPE_SHA256, "schema_approval_id": SCHEMA_APPROVAL_ID},
         executed_at_utc=_canonical_utc_now().isoformat().replace("+00:00", "Z"),
     )
-    return verify_schema_readback(reader)
+    return verify_schema_readback(root, reader)
 
 
 def freeze_dataset(root: Path, reader, session, endpoint: str, token: str, authorization_path: Path, *, actor: str) -> dict:

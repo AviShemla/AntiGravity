@@ -83,6 +83,14 @@ class ProductionLauncherBehaviorTests(unittest.TestCase):
                     Path("."), self.Reader(supplied), Path("authorization.json")
                 )
 
+    def test_expected_schema_identity_is_derived_from_hash_verified_migration(self):
+        expected = runtime_subject._expected_schema_objects(ROOT)
+        self.assertEqual(len(expected), 26)
+        self.assertEqual(expected["oracle_research_dataset_versions"], "table")
+        self.assertEqual(expected["idx_oracle_research_dataset_frozen_identity"], "index")
+        self.assertEqual(expected["idx_oracle_research_one_freeze_event"], "index")
+        self.assertEqual(expected["trg_oracle_research_feature_no_update"], "trigger")
+
     def test_endpoint_accepts_only_bare_turso_https_or_libsql_origin(self):
         self.assertEqual(
             runtime_subject._endpoint("libsql://theoracle.example.turso.io"),
