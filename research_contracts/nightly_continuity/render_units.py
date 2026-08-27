@@ -9,15 +9,24 @@ from pathlib import Path
 from typing import Sequence
 
 from audit_continuity_topology import audit
+from release_layout import verify_release_set
 
 
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
-def render(template_dir: Path, output_dir: Path, *, controller_sha: str, ingestion_sha: str, handoff_sha: str) -> None:
+def render(
+    template_dir: Path, output_dir: Path, *, controller_sha: str,
+    ingestion_sha: str, handoff_sha: str, release_root: Path,
+    require_root: bool = True,
+) -> None:
     for value in (controller_sha, ingestion_sha, handoff_sha):
         if not SHA_RE.fullmatch(value):
             raise ValueError("release identity must be a lowercase SHA-256")
+    verify_release_set(
+        release_root, controller_id=controller_sha, ingestion_id=ingestion_sha,
+        handoff_id=handoff_sha, require_root=require_root,
+    )
     output_dir.mkdir(parents=True, exist_ok=False)
     replacements = {
         "@CONTROLLER_RELEASE_SHA256@": controller_sha,
@@ -43,8 +52,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--controller-sha", required=True)
     parser.add_argument("--ingestion-sha", required=True)
     parser.add_argument("--handoff-sha", required=True)
+    parser.add_argument("--release-root", type=Path, required=True)
     args = parser.parse_args(argv)
-    render(args.templates, args.output, controller_sha=args.controller_sha, ingestion_sha=args.ingestion_sha, handoff_sha=args.handoff_sha)
+    render(
+        args.templates, args.output, controller_sha=args.controller_sha,
+        ingestion_sha=args.ingestion_sha, handoff_sha=args.handoff_sha,
+        release_root=args.release_root,
+    )
     return 0
 
 

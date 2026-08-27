@@ -7,10 +7,12 @@ Type=oneshot
 User=root
 Group=root
 UMask=0077
-ExecStart=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/python /opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/verify_postflight_handoff.py --source-session %i --artifact /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --max-age-seconds 300
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/run-market-ingestion-handoff --source-session %i --artifact /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --progress-marker /var/lib/codex-oracle/market-ingestion/%i/progress.json --max-age-seconds 300
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadOnlyPaths=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@
 ReadOnlyPaths=/var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json
+ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i

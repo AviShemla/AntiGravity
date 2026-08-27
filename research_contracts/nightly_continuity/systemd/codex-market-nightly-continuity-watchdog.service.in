@@ -6,12 +6,13 @@ Type=oneshot
 User=root
 Group=root
 UMask=0077
-ExecStart=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/python /opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/continuity_controller.py --monitor --config /etc/codex-oracle/nightly-continuity.json
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/run-nightly-continuity-watchdog --config /etc/codex-oracle/nightly-continuity.json
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadOnlyPaths=/etc/codex-oracle/nightly-continuity.json
-ReadOnlyPaths=/opt/codex-oracle/releases
+ReadOnlyPaths=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@
 ReadOnlyPaths=/var/lib/codex-oracle/market-ingestion
 ReadWritePaths=/var/lib/codex-oracle/nightly-continuity

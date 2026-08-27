@@ -8,14 +8,15 @@ Type=oneshot
 User=root
 Group=root
 UMask=0077
+Environment=PYTHONDONTWRITEBYTECODE=1
 EnvironmentFile=/etc/codex-oracle/market-ingestion-readonly.env
-ExecStart=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/python /opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/continuity_controller.py --config /etc/codex-oracle/nightly-continuity.json
+ExecStart=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/run-nightly-continuity --config /etc/codex-oracle/nightly-continuity.json
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadOnlyPaths=/etc/codex-oracle/nightly-continuity.json
 ReadOnlyPaths=/etc/codex-oracle/market-ingestion-readonly.env
-ReadOnlyPaths=/opt/codex-oracle/releases
+ReadOnlyPaths=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@
 ReadWritePaths=/var/lib/codex-oracle/nightly-continuity
 ReadWritePaths=/var/lib/codex-oracle/market-ingestion

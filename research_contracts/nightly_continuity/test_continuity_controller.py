@@ -2,18 +2,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import unittest
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from continuity_controller import (
     Action,
     ContractError,
     Session,
     SnapshotState,
+    PriorityState,
     UnitState,
     append_event,
     assess_capacity,
@@ -24,7 +27,11 @@ from continuity_controller import (
     latest_fully_completed_session,
     load_calendar,
     validate_snapshot_evidence,
+    validate_priority,
     verify_handoff,
+    verify_progress_marker,
+    _secure_regular,
+    _verify_installed_ingestion_priority,
 )
 
 
@@ -236,6 +243,62 @@ class EvidenceTests(unittest.TestCase):
                     minimum_future_horizon=timedelta(days=7),
                 )
 
+    def test_progress_marker_binds_live_pid_invocation_and_stage(self):
+        with writable_directory() as tmp:
+            path = Path(tmp) / "progress.json"
+            raw = {
+                "contract_id": "codex-market-ingestion-progress-v1",
+                "source_session": "2026-08-26", "stage": "INGESTION",
+                "status": "ACTIVE", "main_pid": 1234, "invocation_id": "abc",
+                "code_version": "a" * 64, "completed_units": 20,
+                "total_units": 474, "observed_at": "2026-08-27T01:00:00Z",
+            }
+            path.write_bytes(canonical_bytes(raw))
+            path.chmod(0o600)
+            marker = verify_progress_marker(
+                path, source_session="2026-08-26", stage="INGESTION",
+                unit=ACTIVE, now=datetime(2026, 8, 27, 1, 1, tzinfo=timezone.utc),
+                max_age_seconds=300,
+            )
+            self.assertEqual((marker.completed_units, marker.total_units), (20, 474))
+
+    def test_progress_marker_pid_mismatch_rejected(self):
+        with writable_directory() as tmp:
+            path = Path(tmp) / "progress.json"
+            raw = {
+                "contract_id": "codex-market-ingestion-progress-v1",
+                "source_session": "2026-08-26", "stage": "INGESTION",
+                "status": "ACTIVE", "main_pid": 9999, "invocation_id": "abc",
+                "code_version": "a" * 64, "completed_units": 20,
+                "total_units": 474, "observed_at": "2026-08-27T01:00:00Z",
+            }
+            path.write_bytes(canonical_bytes(raw))
+            path.chmod(0o600)
+            with self.assertRaises(ContractError):
+                verify_progress_marker(
+                    path, source_session="2026-08-26", stage="INGESTION",
+                    unit=ACTIVE, now=datetime(2026, 8, 27, 1, 1, tzinfo=timezone.utc),
+                    max_age_seconds=300,
+                )
+
+    def test_noncanonical_progress_marker_rejected(self):
+        with writable_directory() as tmp:
+            path = Path(tmp) / "progress.json"
+            path.write_text(json.dumps({
+                "contract_id": "codex-market-ingestion-progress-v1",
+                "source_session": "2026-08-26", "stage": "INGESTION",
+                "status": "ACTIVE", "main_pid": 1234, "invocation_id": "abc",
+                "code_version": "a" * 64, "completed_units": 1,
+                "total_units": 2, "observed_at": "2026-08-27T01:00:00Z",
+            }, indent=2), encoding="utf-8")
+            path.chmod(0o600)
+            with self.assertRaises(ContractError):
+                verify_progress_marker(
+                    path, source_session="2026-08-26", stage="INGESTION",
+                    unit=ACTIVE, now=datetime(2026, 8, 27, 1, 1, tzinfo=timezone.utc),
+                    max_age_seconds=300,
+                )
+
 
 class DecisionTests(unittest.TestCase):
     def call(self, snap, **updates):
@@ -388,6 +451,47 @@ class CapacityTests(unittest.TestCase):
             (),
         )
 
+    def test_guarded_priority_exact_contract_passes(self):
+        validate_priority(PriorityState(900, 900, -5, 2, 0))
+
+    def test_guarded_priority_downgrade_rejected(self):
+        for state in (
+            PriorityState(899, 900, -5, 2, 0),
+            PriorityState(900, 899, -5, 2, 0),
+            PriorityState(900, 900, -4, 2, 0),
+            PriorityState(900, 900, -5, 3, 0),
+            PriorityState(900, 900, -5, 2, 1),
+        ):
+            with self.subTest(state=state), self.assertRaises(ContractError):
+                validate_priority(state)
+
+    @patch("continuity_controller.subprocess.run")
+    def test_installed_priority_readback_passes(self, run):
+        run.return_value = Mock(
+            returncode=0,
+            stdout=(
+                "CPUWeight=900\nIOWeight=900\nNice=-5\n"
+                "IOSchedulingClass=2\nIOSchedulingPriority=0\n"
+            ),
+        )
+        _verify_installed_ingestion_priority(
+            "/usr/bin/systemctl", "codex-market-ingestion@2026-08-26.service"
+        )
+
+    @patch("continuity_controller.subprocess.run")
+    def test_installed_priority_readback_downgrade_fails(self, run):
+        run.return_value = Mock(
+            returncode=0,
+            stdout=(
+                "CPUWeight=20\nIOWeight=100\nNice=10\n"
+                "IOSchedulingClass=3\nIOSchedulingPriority=7\n"
+            ),
+        )
+        with self.assertRaises(ContractError):
+            _verify_installed_ingestion_priority(
+                "/usr/bin/systemctl", "codex-market-ingestion@2026-08-26.service"
+            )
+
 
 class JournalTests(unittest.TestCase):
     def test_append_event_is_append_only(self):
@@ -410,6 +514,26 @@ class JournalTests(unittest.TestCase):
                 self.skipTest("symlinks are unavailable")
             with self.assertRaises(ContractError):
                 append_event(root, {"sequence": 1})
+
+
+class SecureArtifactModeTests(unittest.TestCase):
+    @unittest.skipIf(os.name == "nt", "POSIX ownership/mode contract")
+    def test_preflight_executable_requires_0700_not_0600(self):
+        with writable_directory() as tmp:
+            path = Path(tmp) / "preflight"
+            path.write_bytes(b"#!/bin/sh\nexit 0\n")
+            path.chmod(0o700)
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            _secure_regular(path, digest, expected_mode=0o700)
+            with self.assertRaises(ContractError):
+                _secure_regular(path, digest)
+
+    def test_unapproved_secure_mode_policy_is_rejected(self):
+        with writable_directory() as tmp:
+            path = Path(tmp) / "artifact"
+            path.write_text("x", encoding="utf-8")
+            with self.assertRaises(ContractError):
+                _secure_regular(path, expected_mode=0o755)
 
 
 if __name__ == "__main__":

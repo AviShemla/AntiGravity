@@ -9,10 +9,13 @@ Type=oneshot
 User=root
 Group=root
 UMask=0077
+Environment=PYTHONDONTWRITEBYTECODE=1
 CPUWeight=900
 IOWeight=900
 Nice=-5
-ExecStart=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@/run-market-ingestion --source-session %i
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
+ExecStart=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@/run-market-ingestion --source-session %i --progress-marker /var/lib/codex-oracle/market-ingestion/%i/progress.json --max-progress-interval-seconds 900
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

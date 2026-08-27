@@ -54,7 +54,10 @@ def audit(directory: Path) -> dict[str, object]:
         raise TopologyError("safety cannot be inferred from unit-file absence")
     if "/current/" in all_text or "@RELEASE_SHA256@" in all_text:
         raise TopologyError("unit set is not bound to an immutable rendered release")
-    if "OnUnitActiveSec=5min" not in units["watchdog_timer"] or "--monitor" not in units["watchdog"]:
+    if (
+        "OnUnitActiveSec=5min" not in units["watchdog_timer"]
+        or "/run-nightly-continuity-watchdog --config " not in units["watchdog"]
+    ):
         raise TopologyError("five-minute durable liveness monitoring is missing")
     for directive in (
         "EnvironmentFile=/etc/codex-oracle/market-ingestion-readonly.env",
@@ -62,11 +65,33 @@ def audit(directory: Path) -> dict[str, object]:
     ):
         if directive not in units["controller"]:
             raise TopologyError("controller lacks the root-only SELECT credential boundary")
-    if not all(token in units["ingestion"] for token in ("CPUWeight=900", "IOWeight=900", "Nice=-5")):
+    if not all(token in units["ingestion"] for token in (
+        "CPUWeight=900", "IOWeight=900", "Nice=-5",
+        "IOSchedulingClass=best-effort", "IOSchedulingPriority=0",
+    )):
         raise TopologyError("guarded ingestion priority controls are missing")
+    marker = "/var/lib/codex-oracle/market-ingestion/%i/progress.json"
+    for key in ("ingestion", "postflight", "handoff"):
+        if f"--progress-marker {marker}" not in units[key]:
+            raise TopologyError(f"{key} lacks the exact durable progress-marker binding")
+        if "ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i" not in units[key]:
+            raise TopologyError(f"{key} cannot atomically persist its progress marker")
+    expected_entrypoints = {
+        "controller": "/run-nightly-continuity --config ",
+        "watchdog": "/run-nightly-continuity-watchdog --config ",
+        "ingestion": "/run-market-ingestion --source-session %i ",
+        "postflight": "/run-market-ingestion-postflight --source-session %i ",
+        "handoff": "/run-market-ingestion-handoff --source-session %i ",
+    }
+    for key, token in expected_entrypoints.items():
+        if token not in units[key]:
+            raise TopologyError(f"{key} is not bound to its concrete immutable entrypoint")
     for key in ("controller", "watchdog", "ingestion", "postflight", "handoff"):
         body = units[key]
-        for directive in ("User=root", "UMask=0077", "NoNewPrivileges=true", "ProtectSystem=strict", "ProtectHome=true"):
+        for directive in (
+            "User=root", "UMask=0077", "Environment=PYTHONDONTWRITEBYTECODE=1",
+            "NoNewPrivileges=true", "ProtectSystem=strict", "ProtectHome=true",
+        ):
             if directive not in body:
                 raise TopologyError(f"{key} lacks {directive}")
     for forbidden_unit in ("ag-sniper.service", "antigravity-nightly.timer", "antigravity-qa-watchdog.timer"):

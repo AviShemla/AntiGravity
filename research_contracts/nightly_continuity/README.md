@@ -37,9 +37,15 @@ must remain disabled and inactive; runtime checks enforce this before dispatch.
 
 ## Liveness and guarded priority
 
-The ingestion unit receives CPU/IO weight 900 and nice -5. A separate five-
+The ingestion unit receives CPU/IO weight 900, best-effort I/O priority 0, and
+nice -5. The controller independently reads the installed unit's runtime
+properties before dispatch and fails closed on any downgrade. A separate five-
 minute watchdog requires one live pipeline unit, a nonzero MainPID, and a fresh
-durable `progress.json` within the declared 900-second maximum interval. It
+canonical, root-owned mode-0600 `progress.json` within the declared 900-second
+maximum interval. The marker binds source session, exact pipeline stage, live
+PID, systemd InvocationID, immutable code version, completed/total units, and a
+fresh UTC observation time. Every ingestion, postflight, and handoff entrypoint
+receives the exact marker path and must update it atomically. It
 records append-only local JSONL evidence. Missing/stale progress, a failed unit,
 or contradictory active stages exits nonzero and never restarts or duplicates
 the writer. Before any dispatch, the controller enumerates every active
@@ -49,12 +55,21 @@ It also records and enforces CPU-load, available-memory, and free-disk gates.
 ## Immutable deployment procedure
 
 1. Review and hash the controller, ingestion, handoff, preflight, and NYSE
-   calendar artifacts.
-2. Place executable releases in root-owned, non-mutable
-   `/opt/codex-oracle/releases/<name>-<sha256>/` directories.
-3. Render units with `render_units.py`; rendering rejects non-SHA release IDs,
-   an existing output directory, unresolved placeholders, and any topology
-   audit failure.
+   calendar artifacts. The SELECT-only preflight executable must be a
+   root-owned, single-link regular file with mode 0700; data/config/evidence
+   artifacts remain root-owned mode 0600.
+2. Place executable releases in root-owned, mode-0700, non-mutable
+   `/opt/codex-oracle/releases/<name>-<sha256>/` directories. Each directory
+   contains canonical `release-manifest.json`; the directory SHA is the
+   manifest SHA-256, every file hash/mode is enumerated, symlinks and hard links
+   are forbidden, and no unmanifested file is allowed. Concrete entrypoints are
+   `run-nightly-continuity`, `run-nightly-continuity-watchdog`,
+   `run-market-ingestion`, `run-market-ingestion-postflight`, and
+   `run-market-ingestion-handoff`.
+3. Render units with `render_units.py --release-root ...`; rendering first
+   independently resolves and verifies all three immutable releases, then
+   rejects non-SHA release IDs, an existing output directory, unresolved
+   placeholders, or any topology audit failure.
 4. Create `/etc/codex-oracle/nightly-continuity.json` as root:root mode 0600,
    replacing every example placeholder with reviewed hashes. The separate
    read-only Turso environment file must also be root:root mode 0600.

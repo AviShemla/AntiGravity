@@ -8,8 +8,9 @@ Type=oneshot
 User=root
 Group=root
 UMask=0077
+Environment=PYTHONDONTWRITEBYTECODE=1
 EnvironmentFile=/etc/codex-oracle/market-ingestion-readonly.env
-ExecStart=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/python /opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/market_ingestion_postflight_cli.py --source-session %i --expected-code-version @INGESTION_RELEASE_SHA256@ --handoff-output /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --env-file /etc/codex-oracle/market-ingestion-readonly.env --attempts 6 --retry-seconds 5
+ExecStart=/opt/codex-oracle/releases/market-ingestion-handoff-@HANDOFF_RELEASE_SHA256@/run-market-ingestion-postflight --source-session %i --expected-code-version @INGESTION_RELEASE_SHA256@ --handoff-output /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --progress-marker /var/lib/codex-oracle/market-ingestion/%i/progress.json --attempts 6 --retry-seconds 5
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

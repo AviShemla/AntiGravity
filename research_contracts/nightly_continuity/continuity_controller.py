@@ -107,6 +107,29 @@ class Capacity:
     reason: str
 
 
+@dataclass(frozen=True)
+class ProgressMarker:
+    source_session: str
+    stage: str
+    status: str
+    main_pid: int
+    invocation_id: str
+    code_version: str
+    completed_units: int
+    total_units: int
+    observed_at: datetime
+    age_seconds: float
+
+
+@dataclass(frozen=True)
+class PriorityState:
+    cpu_weight: int
+    io_weight: int
+    nice: int
+    io_scheduling_class: int
+    io_scheduling_priority: int
+
+
 def canonical_bytes(value: object) -> bytes:
     return (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
 
@@ -258,6 +281,50 @@ def verify_handoff(
     return True
 
 
+def verify_progress_marker(
+    path: Path, *, source_session: str, stage: str, unit: UnitState,
+    now: datetime, max_age_seconds: int,
+) -> ProgressMarker:
+    if max_age_seconds <= 0 or unit.main_pid <= 0 or not unit.invocation_id:
+        raise ContractError("progress-marker liveness inputs are invalid")
+    _secure_regular(path)
+    encoded = path.read_bytes()
+    raw = json.loads(encoded.decode("utf-8"))
+    if encoded != canonical_bytes(raw):
+        raise ContractError("progress marker is not canonical JSON")
+    if raw.get("contract_id") != "codex-market-ingestion-progress-v1":
+        raise ContractError("progress-marker contract identity mismatch")
+    if raw.get("source_session") != source_session or raw.get("stage") != stage:
+        raise ContractError("progress-marker source/stage mismatch")
+    if raw.get("status") != "ACTIVE":
+        raise ContractError("progress marker does not describe active work")
+    if int(raw.get("main_pid", 0)) != unit.main_pid or raw.get("invocation_id") != unit.invocation_id:
+        raise ContractError("progress marker does not bind the live systemd process")
+    code_version = str(raw.get("code_version", ""))
+    if not SHA256_RE.fullmatch(code_version):
+        raise ContractError("progress-marker code identity is invalid")
+    completed = int(raw.get("completed_units", -1))
+    total = int(raw.get("total_units", -1))
+    if total <= 0 or completed < 0 or completed > total:
+        raise ContractError("progress-marker counters are invalid")
+    observed = parse_utc(str(raw.get("observed_at", "")))
+    age = (now.astimezone(timezone.utc) - observed).total_seconds()
+    if age < 0 or age > max_age_seconds:
+        raise ContractError("progress marker is future-dated or stale")
+    return ProgressMarker(
+        source_session, stage, "ACTIVE", unit.main_pid, unit.invocation_id,
+        code_version, completed, total, observed, age,
+    )
+
+
+def validate_priority(state: PriorityState) -> None:
+    if (
+        state.cpu_weight < 900 or state.io_weight < 900 or state.nice > -5
+        or state.io_scheduling_class != 2 or state.io_scheduling_priority != 0
+    ):
+        raise ContractError("installed ingestion unit violates guarded-priority policy")
+
+
 def decide(
     *, source_session: str, snapshot: SnapshotState, ingestion: UnitState,
     postflight: UnitState, handoff: UnitState, handoff_verified: bool,
@@ -351,14 +418,21 @@ def foreign_pipeline_units(active_units: Sequence[str], *, source_session: str) 
     return tuple(sorted(foreign))
 
 
-def _secure_regular(path: Path, expected_sha256: str | None = None) -> None:
+def _secure_regular(
+    path: Path,
+    expected_sha256: str | None = None,
+    *,
+    expected_mode: int = 0o600,
+) -> None:
+    if expected_mode not in {0o600, 0o700}:
+        raise ContractError("secure regular-file mode policy is invalid")
     if path.is_symlink():
         raise ContractError(f"{path} must not be a symlink")
     info = path.stat()
     if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
         raise ContractError(f"{path} must be a single-link regular file")
-    if os.name != "nt" and (info.st_uid != 0 or stat.S_IMODE(info.st_mode) != 0o600):
-        raise ContractError(f"{path} must be root-owned mode 0600")
+    if os.name != "nt" and (info.st_uid != 0 or stat.S_IMODE(info.st_mode) != expected_mode):
+        raise ContractError(f"{path} must be root-owned mode {expected_mode:04o}")
     if expected_sha256 is not None and sha256_file(path) != expected_sha256:
         raise ContractError(f"{path} hash mismatch")
 
@@ -410,6 +484,31 @@ def _unit_state(systemctl: str, unit: str) -> UnitState:
         main_pid=int(values.get("MainPID", "0") or 0),
         invocation_id=values.get("InvocationID", ""),
     )
+
+
+def _verify_installed_ingestion_priority(systemctl: str, unit: str) -> None:
+    if not UNIT_RE.fullmatch(unit) or not unit.startswith("codex-market-ingestion@"):
+        raise ContractError("priority audit target is outside the ingestion allowlist")
+    result = subprocess.run(
+        [systemctl, "show", unit, "--no-page", "--property=CPUWeight,IOWeight,Nice,IOSchedulingClass,IOSchedulingPriority"],
+        check=False, capture_output=True, text=True, timeout=20,
+    )
+    if result.returncode != 0:
+        raise ContractError("installed ingestion priority inspection failed")
+    values = {}
+    for line in result.stdout.splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            values[key] = value
+    try:
+        state = PriorityState(
+            cpu_weight=int(values["CPUWeight"]), io_weight=int(values["IOWeight"]),
+            nice=int(values["Nice"]), io_scheduling_class=int(values["IOSchedulingClass"]),
+            io_scheduling_priority=int(values["IOSchedulingPriority"]),
+        )
+    except (KeyError, ValueError) as exc:
+        raise ContractError("installed ingestion priority evidence is incomplete") from exc
+    validate_priority(state)
 
 
 def _forbidden_units_safe(systemctl: str) -> bool:
@@ -512,7 +611,11 @@ def append_event(state_root: Path, event: Mapping[str, object]) -> None:
 
 def _run_preflight(config: Mapping[str, object], session: str, now: datetime) -> SnapshotState:
     executable = Path(str(config["preflight_executable"]))
-    _secure_regular(executable, str(config["preflight_sha256"]))
+    _secure_regular(
+        executable,
+        str(config["preflight_sha256"]),
+        expected_mode=0o700,
+    )
     state_root = Path(str(config["state_root"]))
     evidence_dir = state_root / "preflight" / session
     evidence_dir.mkdir(parents=True, mode=0o700, exist_ok=True)
@@ -580,6 +683,8 @@ def run(config_path: Path, *, now: datetime) -> Decision:
             capacity = _read_capacity(config, state_root)
             if not capacity.safe:
                 raise ContractError(f"guarded ingestion capacity gate failed: {capacity.reason}")
+            if decision.action is Action.START_INGESTION:
+                _verify_installed_ingestion_priority(systemctl, decision.unit)
             event["capacity"] = {
                 "load_per_cpu": capacity.load_per_cpu,
                 "available_memory_mb": capacity.available_memory_mb,
@@ -635,10 +740,23 @@ def monitor(config_path: Path, *, now: datetime) -> Liveness:
             max_age_seconds=int(config["max_handoff_age_seconds"]),
         )
         marker = Path(str(config["progress_marker_template"]).format(source_session=source))
+        active = [(name, unit) for name, unit in units.items() if unit.is_active]
         marker_exists = marker.is_file()
         marker_age = None
-        if marker_exists:
-            marker_age = max(0.0, now.timestamp() - marker.stat().st_mtime)
+        if len(active) == 1:
+            name, active_unit = active[0]
+            if not marker_exists:
+                marker_age = None
+            else:
+                stage = {
+                    "ingestion": "INGESTION",
+                    "ingestion-postflight": "POSTFLIGHT",
+                    "ingestion-handoff": "HANDOFF",
+                }[name]
+                marker_age = verify_progress_marker(
+                    marker, source_session=source, stage=stage, unit=active_unit,
+                    now=now, max_age_seconds=int(config["max_checkpoint_age_seconds"]),
+                ).age_seconds
         result = assess_liveness(
             units=units, handoff_verified=handoff_ok,
             checkpoint_exists=marker_exists, checkpoint_age_seconds=marker_age,
