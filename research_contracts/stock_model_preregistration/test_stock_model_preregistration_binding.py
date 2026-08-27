@@ -267,7 +267,10 @@ class V4BindingTests(unittest.TestCase):
     def test_no_callable_or_dataclass_exposes_operational_boundary(self):
         forbidden = {"ready", "order", "recommendation", "trade", "etf"}
         self.assertTrue(forbidden.isdisjoint(binding.__all__))
-        self.assertEqual(binding.__all__, ["bind_verified_v4_baseline"])
+        self.assertEqual(binding.__all__, [
+            "bind_verified_v4_baseline",
+            "bind_verified_v4_baseline_with_current_readback",
+        ])
 
 
 if __name__ == "__main__":

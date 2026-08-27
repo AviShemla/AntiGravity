@@ -437,4 +437,101 @@ def bind_verified_v4_baseline(
         request, observed_at_utc=observed, mode=RUN_MODE_NEW, current_readback=readback)
 
 
-__all__ = ["bind_verified_v4_baseline"]
+def bind_verified_v4_baseline_with_current_readback(
+    *, final_manifest: Mapping[str, object], immutable_audit: Mapping[str, object],
+    lineage_mapping: Mapping[str, object], final_manifest_file_sha256: str,
+    immutable_audit_file_sha256: str, current_readback: BaselineReadbackProof,
+    current_model_git_commit: str, observed_at_utc: datetime, run_id: str,
+) -> dict[str, object]:
+    """Bind immutable v4 evidence using a separate perpetual current proof.
+
+    Unlike :func:`bind_verified_v4_baseline`, this path does not pretend that
+    the v4 completion auditor can be rerun after its one-hour evidence window.
+    The caller must independently validate a fresh SELECT-only readback and
+    supply the resulting ``BaselineReadbackProof``.  The core preregistration
+    validator then replays its freshness, lineage, coverage, zero-output, and
+    raw-versus-embedded identity gates before returning a fixture-only manifest.
+    """
+    final_raw = _sha(final_manifest_file_sha256, "final manifest raw identity")
+    immutable_raw = _sha(immutable_audit_file_sha256, "immutable audit raw identity")
+    model_commit = _git(current_model_git_commit, "current model Git commit")
+    if type(run_id) is not str or not run_id.strip() or run_id != run_id.strip():
+        _fail("run_id is required and must be normalized")
+    if type(current_readback) is not BaselineReadbackProof:
+        _fail("current readback must use the exact BaselineReadbackProof type")
+    if not isinstance(observed_at_utc, datetime) or observed_at_utc.tzinfo is None:
+        _fail("binding observation must be timezone-aware")
+    observed = observed_at_utc.astimezone(timezone.utc)
+    if (final_raw != PINNED_FINAL_MANIFEST_RAW_SHA256 or
+            immutable_raw != PINNED_IMMUTABLE_AUDIT_RAW_SHA256):
+        _fail("v4 immutable raw artifact identity differs")
+
+    lineage, tickers, sessions = _validate_lineage(lineage_mapping)
+    executor_commit, completion = _validate_final_manifest(
+        final_manifest, raw_sha256=final_raw, lineage=lineage, tickers=tickers)
+    deterministic_sha = final_manifest["deterministic_evidence_sha256"]
+    immutable, immutable_at = _validate_audit(
+        immutable_audit, raw_sha256=immutable_raw, final_raw_sha256=final_raw,
+        deterministic_sha256=deterministic_sha, executor_commit=executor_commit,
+        completion=completion, sessions_sha256=lineage["sessions_sha256"],
+        immutable=True)
+    immutable_embedded = immutable["audit_evidence_sha256"]
+    if len({
+        final_raw, deterministic_sha, immutable_raw, immutable_embedded,
+        current_readback.source_readback_artifact_sha256,
+        current_readback.source_readback_embedded_evidence_sha256,
+    }) != 6:
+        _fail("immutable and current readback identities are conflated")
+
+    universe_sha = lineage["ticker_universe_sha256"]
+    universe_id = f"codex-oracle-stock-universe-v1:{SNAPSHOT_ID}:{universe_sha}"
+    model_dates = sessions[-416:]
+    if canonical_sha(list(model_dates)) != PINNED_MODEL_SLICE_SHA256:
+        _fail("v4 governed 416-session model slice identity differs")
+    audit_evidence = BaselineAuditEvidence(
+        status="VERIFIED", baseline_manifest_sha256=final_raw,
+        snapshot_id=SNAPSHOT_ID, snapshot_sha256=SNAPSHOT_SHA256,
+        universe_id=universe_id, universe_sha256=universe_sha,
+        full_session_calendar_sha256=lineage["sessions_sha256"],
+        model_session_dates_sha256=canonical_sha(list(model_dates)),
+        source_audit_artifact_sha256=immutable_raw,
+        embedded_audit_evidence_sha256=immutable_embedded,
+        audit_sha256="0" * 64, completed_at_utc=completion,
+        observed_at_utc=immutable_at, ticker_count=474, fold_count=1_896,
+        oos_observation_count=56_880, side_effects=dict(ZERO_SIDE_EFFECTS),
+        downstream_counts=dict(ZERO_DOWNSTREAM),
+    )
+    audit_evidence = replace(
+        audit_evidence, audit_sha256=compute_baseline_audit_sha256(audit_evidence))
+    model_config = _model_configuration()
+    sampler = SamplerConfiguration("pymc-nuts", 4, 1_000, 1_000, 0.9, 20260827)
+    request = PreregistrationRequest(
+        run_id=run_id,
+        lineage=ImmutableLineage(
+            snapshot_id=SNAPSHOT_ID, snapshot_sha256=SNAPSHOT_SHA256,
+            universe_id=universe_id, universe_sha256=universe_sha,
+            session_calendar_sha256=canonical_sha(list(range(416))),
+            full_session_calendar_sha256=lineage["sessions_sha256"],
+            model_session_dates_sha256=canonical_sha(list(model_dates)),
+            baseline_manifest_sha256=final_raw,
+            source_audit_artifact_sha256=immutable_raw,
+            embedded_audit_evidence_sha256=immutable_embedded,
+            baseline_audit_sha256=audit_evidence.audit_sha256,
+            code_git_commit=model_commit,
+            config_sha256=canonical_sha(asdict(model_config)),
+            sampler_sha256=canonical_sha(asdict(sampler)),
+        ),
+        model_config=model_config, sampler_config=sampler, folds=_folds(),
+        output_intent=ProhibitedOutputIntent(), baseline_audit=audit_evidence,
+        session_calendar_ordinals=tuple(range(416)),
+        full_session_calendar_dates=sessions, model_session_dates=model_dates,
+    )
+    return preregister_model_run(
+        request, observed_at_utc=observed, mode=RUN_MODE_NEW,
+        current_readback=current_readback)
+
+
+__all__ = [
+    "bind_verified_v4_baseline",
+    "bind_verified_v4_baseline_with_current_readback",
+]
