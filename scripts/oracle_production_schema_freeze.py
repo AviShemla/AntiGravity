@@ -143,6 +143,23 @@ def verify_schema_readback(reader) -> dict[str, object]:
     return {"object_count": 26, "apply_event_count": 1, "empty_boundary": boundary}
 
 
+def verify_pre_schema(root: Path, reader, authorization_path: Path) -> dict[str, object]:
+    """Read-only collision/duplicate check after all immutable approvals validate."""
+    verify_envelope_approval(root, authorization_path, _canonical_utc_now())
+    objects = reader.execute(
+        "SELECT type,name,sql FROM sqlite_schema WHERE name LIKE 'oracle_research_dataset_%' "
+        "OR name LIKE 'trg_oracle_research_%' ORDER BY type,name", []
+    )
+    ledger = reader.execute(
+        "SELECT event_id,migration_id,artifact_sha256,operation,target_database_id,executed_at_utc "
+        "FROM schema_migration_events_v2 WHERE migration_id=? ORDER BY executed_at_utc,event_id",
+        [MIGRATION_ID],
+    )
+    if objects.rows or ledger.rows:
+        raise LineageError("Production pre-schema readback found an existing object or APPLY identity.")
+    return {"schema_object_count": 0, "migration_event_count": 0}
+
+
 def _intent(created_at: datetime) -> OracleResearchDatasetStageIntent:
     return OracleResearchDatasetStageIntent(
         dataset_version_id=DATASET_VERSION_ID,
@@ -310,7 +327,7 @@ def freeze_dataset(root: Path, reader, session, endpoint: str, token: str, autho
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("phase", choices=("schema", "freeze", "readback"))
+    parser.add_argument("phase", choices=("preflight", "schema", "freeze", "readback"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--authorization", type=Path)
     parser.add_argument("--actor", default="avi-shemla")
@@ -324,7 +341,11 @@ def main() -> int:
         raise SystemExit("Production Turso token is missing.")
     session = requests.Session()
     reader = TursoReadPipeline(endpoint, token, session=session)
-    if args.phase == "schema":
+    if args.phase == "preflight":
+        if args.authorization is None:
+            raise SystemExit("Preflight phase requires --authorization.")
+        result = verify_pre_schema(args.root, reader, args.authorization)
+    elif args.phase == "schema":
         if args.authorization is None:
             raise SystemExit("Schema phase requires --authorization.")
         result = apply_schema(
