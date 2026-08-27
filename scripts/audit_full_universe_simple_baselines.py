@@ -21,6 +21,7 @@ import re
 import stat
 import sys
 from typing import Iterable, Mapping, Sequence
+from urllib.parse import urlsplit
 
 
 class AuditError(RuntimeError):
@@ -111,6 +112,36 @@ def canonical_bytes(value: object) -> bytes:
 
 def canonical_sha(value: object) -> str:
     return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def normalize_turso_pipeline_endpoint(raw: str) -> str:
+    """Normalize an exact Turso database URL to its HTTPS pipeline endpoint."""
+    if (not isinstance(raw, str) or raw != raw.strip() or not raw or
+            any(ord(character) < 0x21 or ord(character) > 0x7e for character in raw) or
+            "\\" in raw or "%" in raw or "?" in raw or "#" in raw):
+        raise AuditError("Turso database URL is invalid")
+    if raw.startswith("libsql://"):
+        endpoint = "https://" + raw[len("libsql://"):]
+    elif raw.startswith("https://"):
+        endpoint = raw
+    else:
+        raise AuditError("Turso database URL scheme is invalid")
+    try:
+        parsed = urlsplit(endpoint)
+    except ValueError as exc:
+        raise AuditError("Turso database URL shape is invalid") from exc
+    hostname = parsed.hostname
+    if (parsed.scheme != "https" or not hostname or parsed.username is not None or
+            parsed.password is not None or parsed.query or parsed.fragment or
+            parsed.path not in ("", "/", "/v2/pipeline") or
+            parsed.netloc != hostname or
+            re.fullmatch(
+                r"(?=.{1,253}\Z)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*"
+                r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?",
+                hostname,
+            ) is None):
+        raise AuditError("Turso database URL shape is invalid")
+    return endpoint.rstrip("/") if parsed.path == "/v2/pipeline" else endpoint.rstrip("/") + "/v2/pipeline"
 
 
 def checkpoint_name(ticker: str) -> str:
@@ -734,6 +765,7 @@ def run_cli(argv: list[str] | None = None, *, effective_uid=_effective_uid,
         raise AuditError("timeout is out of range")
     runtime_verifier(args.executor_manifest)
     endpoint, token = credentials_loader(args.env_file)
+    endpoint = normalize_turso_pipeline_endpoint(endpoint)
     if client_factory is None:
         executor_root = Path(__file__).resolve(strict=True).parents[1]
         if str(executor_root) not in sys.path:

@@ -365,6 +365,30 @@ class ExecutorAndJsonTests(unittest.TestCase):
             with self.assertRaisesRegex(subject.AuditError, "root-owned mode-0600"):
                 subject.production_credentials(path)
 
+    def test_endpoint_normalization_is_strict_and_idempotent(self):
+        self.assertEqual(subject.normalize_turso_pipeline_endpoint(
+            "libsql://oracle.example"),
+            "https://oracle.example/v2/pipeline")
+        self.assertEqual(subject.normalize_turso_pipeline_endpoint(
+            "https://oracle.example/v2/pipeline"),
+            "https://oracle.example/v2/pipeline")
+        for value in (
+                "http://oracle.example", "libsql://user@oracle.example",
+                "libsql://oracle.example/not-pipeline", " libsql://oracle.example",
+                "https://oracle.example:443", "https://oracle.example:abc",
+                "https://oracle.example\\evil", "https://user%40oracle.example",
+                "https://oracle.example?query=1", "https://oracle.example#fragment",
+                "https://oracle.example?", "https://oracle.example#",
+                "https://oracle.example/v2/pipeline?",
+                "libsql://oracle.example/v2/pipeline#",
+                "https://oracle.example\n.evil", "https://oracle.example\r.evil",
+                "https://oracle.example\t.evil", "https://oracle.example\x00.evil",
+                "https://ORACLE.example", "https://-oracle.example",
+                "https://oracle-.example",
+        ):
+            with self.assertRaises(subject.AuditError):
+                subject.normalize_turso_pipeline_endpoint(value)
+
 
 class FileSetTests(ContractFixture):
     def test_extra_checkpoint_file_is_rejected_before_payload_acceptance(self):
@@ -430,7 +454,7 @@ class CliTests(unittest.TestCase):
         writer = mock.Mock()
         runtime_verifier = mock.Mock()
         credentials = mock.Mock(return_value=(
-            "https://example.invalid/v2/pipeline", "unit-test-placeholder"))
+            "libsql://example.invalid", "unit-test-placeholder"))
         db = object()
         client_factory = mock.Mock(return_value=db)
         root = Path.cwd().resolve()
