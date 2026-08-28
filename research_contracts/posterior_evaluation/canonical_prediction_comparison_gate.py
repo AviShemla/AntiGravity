@@ -95,6 +95,57 @@ class CanonicalPredictionComparisonEnvelope:
     envelope_sha256: str
 
 
+@dataclass(frozen=True)
+class BlockedPredictionComparisonAuditRow:
+    """One explicit audit-only view of every requested comparison field.
+
+    The embedded canonical row carries raw Bayesian output, inherited-AG and
+    proposed-Codex decisions/reasons, hard safety gates, and sizing
+    adjustments.  The remaining fields bind that row to its complete fixture
+    artifact, canonical lineage, and independently validated derivation
+    evidence.  This type has no accepted/population state.
+    """
+
+    prediction_id: str
+    canonical_prediction_evidence_row: PredictionEvidenceRow
+    canonical_fixture_artifact_sha256: str
+    canonical_lineage_sha256: str
+    posterior_record_sha256: str
+    old_ag_output_sha256: str
+    codex_output_sha256: str
+    hard_safety_gates_sha256: str
+    decision_derivation_evidence_sha256: str
+    review_only: bool
+    operationally_eligible: bool
+    audit_row_sha256: str
+
+
+@dataclass(frozen=True)
+class BlockedPredictionComparisonAuditManifest:
+    """Rebuildable fixture-QA manifest that can never populate W7 rows."""
+
+    contract_id: str
+    status: ComparisonGateStatus
+    blocker_codes: tuple[str, ...]
+    canonical_request_sha256: str
+    canonical_fixture_artifact_sha256: str
+    canonical_lineage_sha256: str
+    decision_derivation_set_sha256: str
+    audit_rows: tuple[BlockedPredictionComparisonAuditRow, ...]
+    accepted_prediction_count: int
+    population_authorized: bool
+    boundary: OperationalBoundary
+    observed_at_utc: datetime
+    manifest_sha256: str
+
+
+@dataclass(frozen=True)
+class BlockedPredictionComparisonAuditResult:
+    passed: bool
+    checked_audit_rows: int
+    manifest_sha256: str
+
+
 def _envelope_sha256(payload: dict[str, object]) -> str:
     """Use the canonical contract's JSON semantics, without a parallel codec."""
     return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
@@ -283,6 +334,122 @@ def validate_independent_decision_derivations(
 
     normalized = tuple(sorted(evidence, key=lambda item: item.prediction_id))
     return hashlib.sha256(canonical_json(normalized).encode("utf-8")).hexdigest()
+
+
+def _canonical_lineage_sha256(artifact: PosteriorEvaluationArtifact) -> str:
+    return hashlib.sha256(canonical_json(artifact.lineage).encode("utf-8")).hexdigest()
+
+
+def _hard_safety_gates_sha256(row: PredictionEvidenceRow) -> str:
+    payload = {
+        "prediction_id": row.prediction_id,
+        "hard_safety_gates": row.hard_safety_gates,
+    }
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+
+
+def build_blocked_fixture_comparison_audit_manifest(
+    request: PosteriorEvaluationRequest,
+    artifact: PosteriorEvaluationArtifact,
+    decision_derivations: tuple[IndependentDecisionDerivationEvidence, ...],
+    *,
+    observed_at_utc: datetime,
+) -> BlockedPredictionComparisonAuditManifest:
+    """Expose a hash-bound per-row fixture QA view without accepting rows.
+
+    This is deliberately not the future non-fixture population builder.  It
+    first runs the canonical semantic fixture audit and decision-derivation
+    validator, then binds every requested comparison field through the exact
+    canonical ``PredictionEvidenceRow``.  The result is always review-only,
+    fixture-only, non-operational, and population-ineligible.
+    """
+
+    envelope = gate_canonical_fixture_comparisons(request, artifact)
+    observed = _utc(observed_at_utc, "Blocked comparison manifest observation")
+    derivation_set_sha256 = validate_independent_decision_derivations(
+        artifact.prediction_evidence_rows,
+        decision_derivations,
+        envelope_observed_at_utc=observed,
+    )
+    derivation_by_id = {item.prediction_id: item for item in decision_derivations}
+    source_artifact_sha256 = artifact_sha256(artifact)
+    lineage_sha256 = _canonical_lineage_sha256(artifact)
+    audit_rows: list[BlockedPredictionComparisonAuditRow] = []
+    for row in sorted(artifact.prediction_evidence_rows, key=lambda item: item.prediction_id):
+        if row.review_only is not True or row.operationally_eligible is not False:
+            raise ContractError("Canonical comparison source row is not strictly review-only.")
+        derivation = derivation_by_id[row.prediction_id]
+        row_payload: dict[str, object] = {
+            "prediction_id": row.prediction_id,
+            "canonical_prediction_evidence_row": row,
+            "canonical_fixture_artifact_sha256": source_artifact_sha256,
+            "canonical_lineage_sha256": lineage_sha256,
+            "posterior_record_sha256": canonical_posterior_record_sha256(row),
+            "old_ag_output_sha256": canonical_old_ag_output_sha256(
+                row, derivation.old_ag_provenance
+            ),
+            "codex_output_sha256": canonical_codex_output_sha256(row),
+            "hard_safety_gates_sha256": _hard_safety_gates_sha256(row),
+            "decision_derivation_evidence_sha256": hashlib.sha256(
+                canonical_json(derivation).encode("utf-8")
+            ).hexdigest(),
+            "review_only": True,
+            "operationally_eligible": False,
+        }
+        audit_rows.append(BlockedPredictionComparisonAuditRow(
+            **row_payload,
+            audit_row_sha256=_envelope_sha256(row_payload),
+        ))
+
+    payload: dict[str, object] = {
+        "contract_id": f"{CONTRACT_ID}-blocked-audit-v1",
+        "status": envelope.status,
+        "blocker_codes": envelope.blocker_codes,
+        "canonical_request_sha256": envelope.canonical_request_sha256,
+        "canonical_fixture_artifact_sha256": source_artifact_sha256,
+        "canonical_lineage_sha256": lineage_sha256,
+        "decision_derivation_set_sha256": derivation_set_sha256,
+        "audit_rows": tuple(audit_rows),
+        "accepted_prediction_count": 0,
+        "population_authorized": False,
+        "boundary": OperationalBoundary(),
+        "observed_at_utc": observed,
+    }
+    return BlockedPredictionComparisonAuditManifest(
+        **payload,
+        manifest_sha256=_envelope_sha256(payload),
+    )
+
+
+def audit_blocked_fixture_comparison_manifest(
+    request: PosteriorEvaluationRequest,
+    artifact: PosteriorEvaluationArtifact,
+    decision_derivations: tuple[IndependentDecisionDerivationEvidence, ...],
+    manifest: BlockedPredictionComparisonAuditManifest,
+) -> BlockedPredictionComparisonAuditResult:
+    """Independently rebuild and byte-compare the complete blocked manifest."""
+
+    if type(manifest) is not BlockedPredictionComparisonAuditManifest:
+        raise ContractError("Blocked comparison manifest type differs.")
+    if (
+        manifest.accepted_prediction_count != 0
+        or manifest.population_authorized is not False
+        or manifest.boundary != OperationalBoundary()
+    ):
+        raise ContractError("Blocked comparison manifest weakens the zero-operational boundary.")
+    expected = build_blocked_fixture_comparison_audit_manifest(
+        request,
+        artifact,
+        decision_derivations,
+        observed_at_utc=manifest.observed_at_utc,
+    )
+    if canonical_json(manifest) != canonical_json(expected):
+        raise ContractError("Blocked comparison manifest semantics differ from independent rebuild.")
+    return BlockedPredictionComparisonAuditResult(
+        passed=True,
+        checked_audit_rows=len(expected.audit_rows),
+        manifest_sha256=expected.manifest_sha256,
+    )
 
 
 def gate_canonical_fixture_comparisons(

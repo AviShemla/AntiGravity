@@ -13,6 +13,16 @@ The canonical source artifact retains its existing inherited-AG and
 proposed-Codex comparison fields for fixture QA, while no row crosses the real
 accepted-comparison boundary.
 
+The additive blocked-audit manifest makes those fixture-QA rows independently
+rebuildable one prediction at a time. Each row embeds the exact canonical
+comparison row (raw Bayesian output, inherited-AG decision/reasons, proposed
+Codex decision/reasons, hard safety gates, and sizing adjustments) and binds it
+to the complete fixture artifact, canonical lineage, posterior record,
+decision outputs, hard-gate digest, and validated derivation evidence. The
+manifest always records zero accepted predictions, `population_authorized`
+false, and the exact fixture-only zero-operational boundary. It is audit
+scaffolding, not a substitute for the missing accepted posterior artifact.
+
 The candidate also supplies the prerequisite validator for future accepted
 rows. It binds each exact canonical row to its posterior-record digest,
 immutable AG and Codex evaluator releases, immutable policy artifacts,

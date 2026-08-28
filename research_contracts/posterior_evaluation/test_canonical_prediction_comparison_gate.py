@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import timedelta
+import ast
 import hashlib
+import inspect
 import unittest
 
+import canonical_prediction_comparison_gate as comparison_gate
 from posterior_evaluation_contract import (
     ContractError,
     OperationalBoundary,
@@ -16,12 +19,15 @@ from posterior_evaluation_contract import (
 from test_posterior_evaluation_contract import PosteriorEvaluationContractTests
 
 from canonical_prediction_comparison_gate import (
+    BlockedPredictionComparisonAuditManifest,
     CONTRACT_ID,
     CanonicalPredictionComparisonEnvelope,
     ComparisonGateStatus,
     IndependentPosteriorAcceptanceReference,
     IndependentDecisionDerivationEvidence,
     OldAGDecisionProvenance,
+    audit_blocked_fixture_comparison_manifest,
+    build_blocked_fixture_comparison_audit_manifest,
     canonical_codex_output_sha256,
     canonical_cutoff_safe_input_bundle_sha256,
     canonical_old_ag_output_sha256,
@@ -332,6 +338,194 @@ class CanonicalPredictionComparisonGateTests(unittest.TestCase):
                 tuple(evidence),
                 envelope_observed_at_utc=max(item.independently_audited_at_utc for item in evidence),
             )
+
+    def blocked_manifest(self):
+        evidence = self.derivations()
+        observed = max(item.independently_audited_at_utc for item in evidence)
+        return build_blocked_fixture_comparison_audit_manifest(
+            self.request,
+            self.artifact,
+            evidence,
+            observed_at_utc=observed,
+        ), evidence
+
+    def test_blocked_manifest_exposes_every_requested_field_but_accepts_zero_rows(self):
+        manifest, _ = self.blocked_manifest()
+        self.assertIs(type(manifest), BlockedPredictionComparisonAuditManifest)
+        self.assertEqual(len(manifest.audit_rows), len(self.artifact.prediction_evidence_rows))
+        self.assertEqual(manifest.accepted_prediction_count, 0)
+        self.assertFalse(manifest.population_authorized)
+        self.assertEqual(manifest.boundary, OperationalBoundary())
+        source = self.artifact.prediction_evidence_rows[0]
+        audited = next(row for row in manifest.audit_rows if row.prediction_id == source.prediction_id)
+        self.assertEqual(audited.canonical_prediction_evidence_row.raw_bayesian_output, source.raw_bayesian_output)
+        self.assertEqual(audited.canonical_prediction_evidence_row.old_ag_decision, source.old_ag_decision)
+        self.assertEqual(audited.canonical_prediction_evidence_row.old_ag_reasons, source.old_ag_reasons)
+        self.assertEqual(
+            audited.canonical_prediction_evidence_row.proposed_codex_decision,
+            source.proposed_codex_decision,
+        )
+        self.assertEqual(
+            audited.canonical_prediction_evidence_row.proposed_codex_reasons,
+            source.proposed_codex_reasons,
+        )
+        self.assertEqual(audited.canonical_prediction_evidence_row.hard_safety_gates, source.hard_safety_gates)
+        self.assertEqual(audited.canonical_prediction_evidence_row.sizing_adjustments, source.sizing_adjustments)
+        self.assertTrue(audited.review_only)
+        self.assertFalse(audited.operationally_eligible)
+
+    def test_blocked_manifest_independent_rebuild_passes(self):
+        manifest, evidence = self.blocked_manifest()
+        result = audit_blocked_fixture_comparison_manifest(
+            self.request,
+            self.artifact,
+            evidence,
+            manifest,
+        )
+        self.assertTrue(result.passed)
+        self.assertEqual(result.checked_audit_rows, len(self.artifact.prediction_evidence_rows))
+        self.assertEqual(result.manifest_sha256, manifest.manifest_sha256)
+
+    def test_blocked_manifest_rejects_tampered_requested_field_even_if_rehashed(self):
+        manifest, evidence = self.blocked_manifest()
+        first = manifest.audit_rows[0]
+        tampered_source = replace(
+            first.canonical_prediction_evidence_row,
+            proposed_codex_reasons=("FORGED_REASON",),
+        )
+        tampered_payload = {
+            "prediction_id": first.prediction_id,
+            "canonical_prediction_evidence_row": tampered_source,
+            "canonical_fixture_artifact_sha256": first.canonical_fixture_artifact_sha256,
+            "canonical_lineage_sha256": first.canonical_lineage_sha256,
+            "posterior_record_sha256": first.posterior_record_sha256,
+            "old_ag_output_sha256": first.old_ag_output_sha256,
+            "codex_output_sha256": canonical_codex_output_sha256(tampered_source),
+            "hard_safety_gates_sha256": first.hard_safety_gates_sha256,
+            "decision_derivation_evidence_sha256": first.decision_derivation_evidence_sha256,
+            "review_only": True,
+            "operationally_eligible": False,
+        }
+        forged_row = replace(
+            first,
+            canonical_prediction_evidence_row=tampered_source,
+            codex_output_sha256=tampered_payload["codex_output_sha256"],
+            audit_row_sha256=hashlib.sha256(
+                canonical_json(tampered_payload).encode("utf-8")
+            ).hexdigest(),
+        )
+        forged_rows = (forged_row, *manifest.audit_rows[1:])
+        forged_manifest_payload = {
+            "contract_id": manifest.contract_id,
+            "status": manifest.status,
+            "blocker_codes": manifest.blocker_codes,
+            "canonical_request_sha256": manifest.canonical_request_sha256,
+            "canonical_fixture_artifact_sha256": manifest.canonical_fixture_artifact_sha256,
+            "canonical_lineage_sha256": manifest.canonical_lineage_sha256,
+            "decision_derivation_set_sha256": manifest.decision_derivation_set_sha256,
+            "audit_rows": forged_rows,
+            "accepted_prediction_count": manifest.accepted_prediction_count,
+            "population_authorized": manifest.population_authorized,
+            "boundary": manifest.boundary,
+            "observed_at_utc": manifest.observed_at_utc,
+        }
+        forged = replace(
+            manifest,
+            audit_rows=forged_rows,
+            manifest_sha256=hashlib.sha256(
+                canonical_json(forged_manifest_payload).encode("utf-8")
+            ).hexdigest(),
+        )
+        with self.assertRaisesRegex(ContractError, "semantics differ"):
+            audit_blocked_fixture_comparison_manifest(
+                self.request,
+                self.artifact,
+                evidence,
+                forged,
+            )
+
+    def test_blocked_manifest_explicit_hard_gate_digest_rejects_gate_tamper(self):
+        manifest, evidence = self.blocked_manifest()
+        first = manifest.audit_rows[0]
+        gates = first.canonical_prediction_evidence_row.hard_safety_gates
+        tampered_gate = replace(gates[0], reason_code="FORGED_GATE_REASON")
+        forged_source = replace(
+            first.canonical_prediction_evidence_row,
+            hard_safety_gates=(tampered_gate, *gates[1:]),
+        )
+        forged_row = replace(
+            first,
+            canonical_prediction_evidence_row=forged_source,
+            hard_safety_gates_sha256="f" * 64,
+            audit_row_sha256="e" * 64,
+        )
+        forged = replace(manifest, audit_rows=(forged_row, *manifest.audit_rows[1:]))
+        with self.assertRaisesRegex(ContractError, "semantics differ"):
+            audit_blocked_fixture_comparison_manifest(
+                self.request,
+                self.artifact,
+                evidence,
+                forged,
+            )
+
+    def test_blocked_manifest_cannot_be_forged_into_population_authority(self):
+        manifest, evidence = self.blocked_manifest()
+        forged = replace(manifest, accepted_prediction_count=1, population_authorized=True)
+        with self.assertRaisesRegex(ContractError, "zero-operational boundary"):
+            audit_blocked_fixture_comparison_manifest(
+                self.request,
+                self.artifact,
+                evidence,
+                forged,
+            )
+
+    def test_blocked_manifest_rejects_incomplete_derivation_coverage(self):
+        evidence = self.derivations()
+        observed = max(item.independently_audited_at_utc for item in evidence)
+        with self.assertRaisesRegex(ContractError, "coverage differs"):
+            build_blocked_fixture_comparison_audit_manifest(
+                self.request,
+                self.artifact,
+                evidence[:-1],
+                observed_at_utc=observed,
+            )
+
+    def test_comparison_gate_has_no_io_model_fit_or_operational_dependencies(self):
+        tree = ast.parse(inspect.getsource(comparison_gate))
+        imported_roots = {
+            alias.name.split(".")[0]
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Import)
+            for alias in node.names
+        }
+        imported_roots.update(
+            node.module.split(".")[0]
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom) and node.module is not None
+        )
+        self.assertLessEqual(
+            imported_roots,
+            {
+                "__future__",
+                "dataclasses",
+                "datetime",
+                "enum",
+                "hashlib",
+                "posterior_evaluation_contract",
+            },
+        )
+        function_names = {
+            node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+        }
+        self.assertFalse(function_names & {
+            "connect",
+            "execute",
+            "fit",
+            "predict",
+            "recommend",
+            "create_order",
+            "write",
+        })
 
 
 if __name__ == "__main__":
