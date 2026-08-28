@@ -12,13 +12,13 @@
     {"name":"SKILL.md","sha256":"afed56ec76d8989f02d11d632dcd6555c3c369662f50de12d24fca1dca05f98e","drive_id":"15MMFvxXw1DKumUR-BT8-iLcbejOsJcS6"},
     {"name":"incident-learning-library.md","sha256":"4374178b66def60c0241e5072f67d1a854dc06c9bbaf850c42385da1fd8b7f1f","drive_id":"17Pxbi4COquNWxXtKOnAcaHQt8fl5UM_A"},
     {"name":"incident-index.json","sha256":"fbada33bfcad2a11cd6a95304db0dee3265adf32b0f4c0d4712f12667ea0b018","drive_id":"1PFAia9kRcEEKeH8DSiyEXQh-RA6OAd7F"},
-    {"name":"incident-occurrences.jsonl","sha256":"e1a7cf216ffb95048004dab9db5d536493f76aa9e2a4733add6f1d049365d930","drive_id":"1GeG_VgwMc44s7vbXBYvCsUmJ_WTCRenv"},
+    {"name":"incident-occurrences.jsonl","sha256":"4e0393c4867e65b2320bdbe0e4f93aba2c70d242f4a841dd7af445fdc1f12ec2","drive_id":"1GeG_VgwMc44s7vbXBYvCsUmJ_WTCRenv"},
     {"name":"qa-forward-test-20260828.json","sha256":"273761b112e13e195bc895598510765a978cfe74d0a950faab23480a5e5760a0","drive_id":"18eVdnV_-W7ckPkvVeznWA1SgqJs2Uc_n"},
     {"name":"validate_incident_library.py","sha256":"20fa829a4592da3a8288468aa707cd7db34bc5b3df9664d8cbedd16883cb7ce8","drive_id":"12-LdgWo81HTDcODl6eKQQQDJyT0gE60A"},
     {"name":"test_incident_validator.py","sha256":"1b4e5593af7559a5df955c21b70c15ef9cb12d06ee47afa3ab711d58d20d870f","drive_id":"1lJmhRJKnbQM2jNsINKr1_WN-26OHxNtO"}
   ],
   "verification": {
-    "library_validator": "INCIDENT_LIBRARY_VALID incidents=13 occurrences=1 schema_version=1 qa=qa-forward-test-20260828.json",
+    "library_validator": "INCIDENT_LIBRARY_VALID incidents=13 occurrences=2 schema_version=1 qa=qa-forward-test-20260828.json",
     "adversarial_tests": "INCIDENT_VALIDATOR_TESTS_PASS cases=7",
     "blind_review": "CONDITIONAL_FAIL_REPAIRED_NOT_YET_LEARNED_VERIFIED"
   },
