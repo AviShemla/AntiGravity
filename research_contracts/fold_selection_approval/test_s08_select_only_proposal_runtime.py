@@ -137,10 +137,10 @@ def fixture():
             "ticker_universe_sha256": content.ticker_universe_sha256,
             "row_count": len(rows), "ticker_count": 474,
             "first_session_date": dates[0], "last_session_date": dates[-1],
-            "snapshot_id": snapshot,
         },
         "read_only": True,
         "snapshot": {
+            "snapshot_id": snapshot,
             "source_checksum_sha256": "a" * 64,
             "source_session_date": dates[-1],
             "available_at_utc": "2026-08-26T06:44:37+00:00",
@@ -155,7 +155,8 @@ def fixture():
     completion = {
         "status": "VERIFIED_SELECT_ONLY",
         "fresh_readback": {
-            **logical_core["canonical_content"], "evidence_sha256": evidence_sha,
+            **logical_core["canonical_content"], "snapshot_id": snapshot,
+            "evidence_sha256": evidence_sha,
             "read_only": True, "retained_row_count": 0,
         },
     }

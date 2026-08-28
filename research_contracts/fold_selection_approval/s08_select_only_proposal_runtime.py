@@ -498,9 +498,11 @@ def assemble_v5_proposal(
         raise SelectOnlyAssemblyError("content audit embedded evidence digest differs")
     fresh = completion["fresh_readback"]
     for key in ("content_sha256", "ticker_universe_sha256", "row_count", "ticker_count",
-                "first_session_date", "last_session_date", "snapshot_id"):
+                "first_session_date", "last_session_date"):
         if fresh.get(key) != canonical.get(key):
             raise SelectOnlyAssemblyError(f"fresh content completion differs: {key}")
+    if fresh.get("snapshot_id") != snapshot_meta.get("snapshot_id"):
+        raise SelectOnlyAssemblyError("fresh content completion differs: snapshot_id")
     if (fresh.get("evidence_sha256") != logical_claim or fresh.get("read_only") is not True
             or fresh.get("retained_row_count") != 0):
         raise SelectOnlyAssemblyError("fresh readback identity/read-only boundary differs")
