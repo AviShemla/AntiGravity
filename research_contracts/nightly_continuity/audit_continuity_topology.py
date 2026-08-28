@@ -59,6 +59,13 @@ def audit(directory: Path) -> dict[str, object]:
         or "/run-nightly-continuity-watchdog --config " not in units["watchdog"]
     ):
         raise TopologyError("five-minute durable liveness monitoring is missing")
+    for key in ("controller", "watchdog"):
+        if not all(token in units[key] for token in (
+            "StateDirectory=codex-oracle/nightly-continuity",
+            "StateDirectoryMode=0700",
+            "ReadWritePaths=/var/lib/codex-oracle/nightly-continuity",
+        )):
+            raise TopologyError(f"{key} lacks the self-materializing protected state directory")
     for directive in (
         "EnvironmentFile=/etc/codex-oracle/market-ingestion-readonly.env",
         "ReadOnlyPaths=/etc/codex-oracle/market-ingestion-readonly.env",

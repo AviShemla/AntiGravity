@@ -7,6 +7,8 @@ User=root
 Group=root
 UMask=0077
 Environment=PYTHONDONTWRITEBYTECODE=1
+StateDirectory=codex-oracle/nightly-continuity
+StateDirectoryMode=0700
 ExecStart=/opt/codex-oracle/releases/nightly-continuity-@CONTROLLER_RELEASE_SHA256@/run-nightly-continuity-watchdog --config /etc/codex-oracle/nightly-continuity.json
 NoNewPrivileges=true
 PrivateTmp=true

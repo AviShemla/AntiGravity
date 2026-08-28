@@ -283,6 +283,22 @@ class MutationTests(unittest.TestCase):
             (output / "codex-market-nightly-continuity-watchdog.timer").unlink()
             with self.assertRaises(TopologyError): audit(output)
 
+    def test_missing_self_materializing_state_directory_rejected(self):
+        for name in (
+            "codex-market-nightly-continuity.service",
+            "codex-market-nightly-continuity-watchdog.service",
+        ):
+            with self.subTest(name=name), writable_directory() as tmp:
+                output = self.copy_rendered(Path(tmp))
+                self.mutate(
+                    output,
+                    name,
+                    "StateDirectory=codex-oracle/nightly-continuity",
+                    "# removed",
+                )
+                with self.assertRaises(TopologyError):
+                    audit(output)
+
     def test_missing_controller_env_boundary_rejected(self):
         with writable_directory() as tmp:
             output = self.copy_rendered(Path(tmp))
