@@ -68,7 +68,10 @@ EXACT_ROLE_TARGETS = {
 ALLOWED_MODES = {
     "CALENDAR": 0o600,
     "CONTROLLER_CONFIG": 0o600,
-    "PREFLIGHT_ENTRYPOINT": 0o555,
+    # Match the continuity controller's independently enforced executable
+    # boundary; the credential-bearing preflight must never be group/world
+    # executable.
+    "PREFLIGHT_ENTRYPOINT": 0o700,
     "CONTROLLER_ENTRYPOINT": 0o700,
     **{f"SYSTEMD_UNIT:{name}": 0o644 for name in RECURRING_UNITS},
 }

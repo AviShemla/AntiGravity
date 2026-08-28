@@ -323,7 +323,7 @@ def assemble(
             "source": preflight_source,
             "target": expected_config_bindings["preflight_executable"],
             "sha256": preflight_sha256,
-            "mode": "0555",
+            "mode": "0700",
         },
         {
             "role": "CONTROLLER_ENTRYPOINT",

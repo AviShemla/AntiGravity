@@ -184,6 +184,11 @@ class AssemblyTests(unittest.TestCase):
         self.assertEqual(raw["rollback"]["contract_id"], installer.ROLLBACK_CONTRACT_ID)
         self.assertEqual(raw["audit"]["contract_id"], installer.AUDIT_CONTRACT_ID)
         self.assertEqual(raw["activation"], "EXPLICITLY_OUT_OF_SCOPE")
+        artifacts = {
+            row["role"]: row
+            for row in raw["disabled_installation"]["manifest"]["artifacts"]
+        }
+        self.assertEqual(artifacts["PREFLIGHT_ENTRYPOINT"]["mode"], "0700")
 
     def test_nested_manifest_is_accepted_and_fixture_installs_then_audits(self):
         raw = self.assemble()
