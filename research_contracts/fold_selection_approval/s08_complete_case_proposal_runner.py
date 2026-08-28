@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict
+from dataclasses import fields, is_dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -67,6 +67,23 @@ def _proposal_summary(proposal) -> dict[str, object]:
     }
 
 
+def _assembly_summary(assembly) -> dict[str, object]:
+    """Serialize only non-proposal fields without recursively copying proposal.
+
+    ``ApprovalProposal`` deliberately contains immutable ``mappingproxy``
+    members.  ``dataclasses.asdict`` deep-copies every field before a caller can
+    exclude one, and therefore fails on that immutable type.  The proposal has
+    its own narrow serializer above, so do not traverse it here.
+    """
+    if not is_dataclass(assembly):
+        raise SelectOnlyRunnerError("assembly must be an exact dataclass instance")
+    return {
+        field.name: getattr(assembly, field.name)
+        for field in fields(assembly)
+        if field.name != "proposal"
+    }
+
+
 def run(
     *, client: object, repository_root: Path, s07_directory: Path,
     preregistration_manifest_path: Path, output_path: Path,
@@ -103,10 +120,7 @@ def run(
             Path(__file__).with_name("s08_complete_case_proposal_runtime.py").read_bytes()
         ).hexdigest(),
         "runner_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "assembly": {
-            key: value for key, value in asdict(assembly).items()
-            if key != "proposal"
-        },
+        "assembly": _assembly_summary(assembly),
         "proposal": _proposal_summary(assembly.proposal),
         "boundary": {
             "database_writes": 0, "selection_runs": 0, "model_runs": 0,

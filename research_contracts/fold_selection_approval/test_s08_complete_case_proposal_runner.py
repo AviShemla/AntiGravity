@@ -9,6 +9,9 @@ import unittest
 from unittest.mock import Mock, patch
 
 from research_contracts.fold_selection_approval import s08_complete_case_proposal_runner as runner
+from research_contracts.fold_selection_approval.s08_complete_case_proposal_runtime import (
+    SelectOnlyProposalAssembly,
+)
 
 
 def assembly(*, fresh=True, execution=False):
@@ -18,7 +21,7 @@ def assembly(*, fresh=True, execution=False):
         approval_record_sha256="b" * 64,
         artifact_sha256=MappingProxyType({"proposal_core": "c" * 64}),
     )
-    return SimpleNamespace(
+    return SelectOnlyProposalAssembly(
         contract_id="runtime", status="AUDIT_ONLY_PROPOSAL_ASSEMBLED_AUTHORITY_PENDING",
         canonical_git_head="d" * 40, runtime_git_commit="e" * 40,
         frozen_dataset_version="dataset", snapshot_id="snapshot",
@@ -55,7 +58,6 @@ class RunnerTests(unittest.TestCase):
              patch.object(runner, "load_canonical_artifacts", return_value=object()), \
              patch.object(runner, "load_installed_s07_artifacts", return_value=object()), \
              patch.object(runner, "assemble_v6_proposal", return_value=result), \
-             patch.object(runner, "asdict", side_effect=lambda value: dict(value.__dict__)), \
              patch.object(runner, "_write_once", side_effect=write_once):
             payload, digest = runner.run(
                 client=object(), repository_root=Path("repo"),
@@ -77,6 +79,16 @@ class RunnerTests(unittest.TestCase):
             if key != "execution_authorized"
         ))
         self.assertEqual(len(digest), 64)
+
+    def test_real_immutable_mapping_proposal_is_not_deepcopied(self):
+        result = assembly()
+        summary = runner._assembly_summary(result)
+        self.assertNotIn("proposal", summary)
+        self.assertEqual(summary["panel_shape"], (472, 416))
+        self.assertEqual(
+            runner._proposal_summary(result.proposal)["artifact_sha256"],
+            {"proposal_core": "c" * 64},
+        )
 
     def test_stale_or_authorized_assembly_never_writes(self):
         for result in (assembly(fresh=False), assembly(execution=True)):
