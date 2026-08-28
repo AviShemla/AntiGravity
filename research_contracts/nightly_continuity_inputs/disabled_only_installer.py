@@ -103,11 +103,16 @@ class SystemctlShowInspector:
     def inspect(self, unit: str) -> UnitState:
         if unit not in ALL_GUARDED_UNITS:
             raise InstallerContractError("unit escaped the guarded allowlist")
+        query_unit = (
+            unit.replace("@.service", "@codex-install-probe.service")
+            if unit.endswith("@.service")
+            else unit
+        )
         result = subprocess.run(
             [
                 self._systemctl,
                 "show",
-                unit,
+                query_unit,
                 "--property=LoadState",
                 "--property=ActiveState",
                 "--property=UnitFileState",

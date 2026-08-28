@@ -322,6 +322,20 @@ class DisabledOnlyInstallerTests(unittest.TestCase):
         self.assertIn("--property=LoadState", argv)
         self.assertNotIn("--value", argv)
 
+    def test_systemctl_inspector_uses_exact_inert_instance_for_templates(self):
+        inspector = subject.SystemctlShowInspector()
+        missing = mock.Mock(
+            returncode=0,
+            stdout="LoadState=not-found\nActiveState=inactive\nUnitFileState=\n",
+        )
+        with mock.patch.object(subject.subprocess, "run", return_value=missing) as run:
+            state = inspector.inspect("codex-market-ingestion@.service")
+        self.assertEqual(state, subject.UnitState("inactive", "", "not-found"))
+        self.assertEqual(
+            run.call_args.args[0][2],
+            "codex-market-ingestion@codex-install-probe.service",
+        )
+
     def test_require_disabled_units_rejects_missing_legacy_but_accepts_recurring(self):
         overrides = {
             unit: subject.UnitState("inactive", "", "not-found")
