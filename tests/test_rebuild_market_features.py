@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 
 from scripts.rebuild_market_features_to_turso import (
+    COLUMN_MAP,
+    TURSO_TIMEOUT_SECONDS,
     build_controlled_universe,
     build_provider_lineage,
     provider_lineage_checksum,
@@ -15,6 +17,7 @@ from scripts.rebuild_market_features_to_turso import (
     merge_cross_market_features,
     normalize_ohlc_envelope,
     content_checksum,
+    diagnose_persisted_frame,
     missing_sessions,
     recent_nyse_sessions,
     repair_recent_session_gaps,
@@ -24,6 +27,39 @@ from scripts.rebuild_market_features_to_turso import (
 
 
 class RebuildMarketFeaturesTests(unittest.TestCase):
+    def test_writer_turso_timeout_matches_guarded_preflight_contract(self):
+        self.assertEqual(TURSO_TIMEOUT_SECONDS, 120.0)
+
+    def test_persisted_field_diagnostic_identifies_exact_column(self):
+        text = {"ticker": "AAA", "sector": "Tech", "ras_signal": None,
+                "analyst_consensus": None, "sector_regime": None,
+                "market_fear_level": None}
+        values = {
+            source: (pd.Timestamp("2026-08-27") if target == "date"
+                     else text[target] if target in text else 1.0)
+            for source, target in COLUMN_MAP
+        }
+        frame = pd.DataFrame([values])
+        columns = [target for _, target in COLUMN_MAP]
+        row = [
+            ("2026-08-27" if target == "date" else text[target]
+             if target in text else 1.0)
+            for _, target in COLUMN_MAP
+        ]
+        row[columns.index("close_price")] = 2.0
+
+        class Result:
+            def __init__(self, rows): self.rows = rows
+
+        class DB:
+            def __init__(self): self.calls = 0
+            def execute(self, *_args):
+                self.calls += 1
+                return Result([row] if self.calls == 1 else [])
+
+        result = diagnose_persisted_frame(DB(), "snapshot", frame, page_size=1)
+        self.assertEqual(result["mismatch_counts"], {"close_price": 1})
+
     def raw(self, ticker_shift=0.0):
         rows = 320
         dates = pd.bdate_range(end="2026-08-20", periods=rows)
@@ -58,7 +94,7 @@ class RebuildMarketFeaturesTests(unittest.TestCase):
         self.assertEqual(len(latest), 2)
         self.assertFalse(latest[["Sector_Momentum_Score", "VIX_Close", "TNX_Close"]].isna().any().any())
 
-    def test_normalizes_canonical_ohlc_before_checksum_without_mutating_source(self):
+    def test_rejects_noncanonical_ohlc_without_mutating_source(self):
         source = pd.DataFrame({
             "Ticker": ["DG", "ELV", "OTIS", "TPR"],
             "Date": pd.to_datetime(["2026-08-25"] * 4),
@@ -69,48 +105,37 @@ class RebuildMarketFeaturesTests(unittest.TestCase):
         })
         original = source.copy(deep=True)
 
-        normalized = normalize_ohlc_envelope(source)
-
+        with self.assertRaisesRegex(ValueError, "would change"):
+            normalize_ohlc_envelope(source)
         pd.testing.assert_frame_equal(source, original)
-        self.assertEqual(normalized["High"].tolist(), source["Open"].tolist())
-        self.assertEqual(normalized["Low"].tolist(), source["Low"].tolist())
 
-    def test_normalizes_high_and_low_simultaneously_from_all_four_values(self):
+    def test_accepts_canonical_high_and_low_as_noop(self):
         source = pd.DataFrame({
             "Open": [10.0, 20.0],
-            "High": [9.0, 21.0],
-            "Low": [11.0, 19.0],
+            "High": [12.0, 21.0],
+            "Low": [9.0, 18.0],
             "Close": [12.0, 18.0],
         })
 
         normalized = normalize_ohlc_envelope(source)
 
-        self.assertEqual(normalized["High"].tolist(), [12.0, 21.0])
-        self.assertEqual(normalized["Low"].tolist(), [9.0, 18.0])
+        pd.testing.assert_frame_equal(normalized, source)
         pd.testing.assert_frame_equal(
             normalized,
             normalize_ohlc_envelope(normalized),
         )
 
-    def test_feature_calculation_uses_canonical_ohlc_without_mutating_provider_frame(self):
+    def test_feature_calculation_rejects_invalid_provider_ohlc_without_mutation(self):
         source = self.raw()
         position = source.index[-1]
         source.loc[position, "High"] = source.loc[position, "Open"] - 0.01
         provider_evidence = source.copy(deep=True)
 
-        calculated = calculate_features(source, ticker="DG", sector="Retail")
-        latest = calculated.iloc[-1]
-
+        with self.assertRaisesRegex(ValueError, "would change"):
+            calculate_features(source, ticker="DG", sector="Retail")
         pd.testing.assert_frame_equal(source, provider_evidence)
-        provider_row = provider_evidence.loc[position, ["Open", "High", "Low", "Close"]]
-        self.assertEqual(latest["High"], provider_row.max())
-        self.assertEqual(latest["Low"], provider_row.min())
-        self.assertGreaterEqual(latest["High"], latest["Open"])
-        self.assertGreaterEqual(latest["High"], latest["Close"])
-        self.assertLessEqual(latest["Low"], latest["Open"])
-        self.assertLessEqual(latest["Low"], latest["Close"])
 
-    def test_canonical_checksum_is_derived_from_normalized_ohlc(self):
+    def test_checksum_refuses_noncanonical_ohlc_at_normalization_gate(self):
         raw = self.raw().tail(1).copy()
         raw["Ticker"] = "DG"
         raw["Sector"] = "Retail"
@@ -125,15 +150,29 @@ class RebuildMarketFeaturesTests(unittest.TestCase):
                     "Market_Fear_Level",
                 } else 0.0
 
-        normalized = normalize_ohlc_envelope(raw)
+        with self.assertRaisesRegex(ValueError, "would change"):
+            normalize_ohlc_envelope(raw)
 
-        self.assertNotEqual(content_checksum(raw), content_checksum(normalized))
-        self.assertEqual(
-            content_checksum(normalized),
-            content_checksum(normalize_ohlc_envelope(raw)),
-        )
-        self.assertGreaterEqual(normalized["High"].iloc[0], normalized["Open"].iloc[0])
-        self.assertLessEqual(normalized["Low"].iloc[0], normalized["Close"].iloc[0])
+    def test_checksum_matches_exact_clean_persisted_row_contract(self):
+        from market_staging_content import digest_rows
+        from scripts.stage_market_features_to_turso import COLUMN_MAP, clean
+
+        frame = self.raw().tail(2).copy()
+        frame["Ticker"] = "DG"
+        frame["Sector"] = "Retail"
+        text_columns = {
+            "RAS_Signal", "Analyst_Consensus", "Sector_Regime",
+            "Market_Fear_Level",
+        }
+        for source, _ in COLUMN_MAP:
+            if source not in frame:
+                frame[source] = "N/A" if source in text_columns else 0.0
+        ordered = frame.sort_values(["Ticker", "Date"], kind="mergesort")
+        persisted_rows = [
+            tuple(clean(value) for value in row)
+            for row in ordered[[source for source, _ in COLUMN_MAP]].itertuples(index=False, name=None)
+        ]
+        self.assertEqual(content_checksum(frame), digest_rows(persisted_rows))
 
     def test_normalization_requires_complete_ohlc_columns(self):
         with self.assertRaisesRegex(ValueError, "missing columns: Low"):

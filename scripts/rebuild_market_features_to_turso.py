@@ -29,11 +29,19 @@ sys.path.insert(0, str(ROOT))
 from market_data_provider import fetch_validated_daily_bars, resolve_tiingo_api_key
 from scripts.stage_market_features_to_turso import COLUMN_MAP, clean, post_statements
 from turso_read_pipeline import TursoReadPipeline
+from market_staging_content import (
+    ENCODING,
+    STAGING_COLUMNS,
+    canonical_row_bytes,
+    digest_rows,
+)
 
 
 GapFallback = Callable[
     [str], tuple[pd.DataFrame | None, str | None, str | None]
 ]
+
+TURSO_TIMEOUT_SECONDS = 120.0
 
 
 def recent_nyse_sessions(source_session: date, *, rows: int = 130) -> list[date]:
@@ -361,12 +369,7 @@ def apply_approved_instrument_registry(
 
 
 def normalize_ohlc_envelope(frame: pd.DataFrame) -> pd.DataFrame:
-    """Return canonical OHLC rows whose high/low exactly enclose open and close.
-
-    Provider-native frames and their lineage hashes remain unchanged. This
-    normalization applies only to the canonical model-input representation,
-    before its content checksum and staging identity are derived.
-    """
+    """Assert that validated OHLC is already canonical; never silently repair."""
     required = ["Open", "High", "Low", "Close"]
     missing = sorted(set(required).difference(frame.columns))
     if missing:
@@ -374,16 +377,25 @@ def normalize_ohlc_envelope(frame: pd.DataFrame) -> pd.DataFrame:
             "Canonical OHLC normalization is missing columns: " + ", ".join(missing)
         )
     result = frame.copy()
-    envelope = result[required]
-    result["High"] = envelope.max(axis=1, skipna=False)
-    result["Low"] = envelope.min(axis=1, skipna=False)
+    numeric = result[required].apply(pd.to_numeric, errors="coerce")
+    if numeric.isna().any().any():
+        raise ValueError("Canonical OHLC contains null or non-numeric values.")
+    expected_high = numeric.max(axis=1, skipna=False)
+    expected_low = numeric.min(axis=1, skipna=False)
+    if not numeric["High"].equals(expected_high) or not numeric["Low"].equals(expected_low):
+        raise ValueError("Validated provider OHLC would change under canonical normalization.")
     return result
 
 
 def content_checksum(frame: pd.DataFrame) -> str:
-    ordered = frame.sort_values(["Ticker", "Date"])
-    values = pd.util.hash_pandas_object(ordered[[source for source, _ in COLUMN_MAP]], index=False)
-    return hashlib.sha256(values.to_numpy().tobytes()).hexdigest()
+    if tuple(target for _, target in COLUMN_MAP) != STAGING_COLUMNS:
+        raise ValueError("Staging checksum column contract differs from writer COLUMN_MAP.")
+    ordered = frame.sort_values(["Ticker", "Date"], kind="mergesort")
+    clean_rows = (
+        tuple(clean(value) for value in row)
+        for row in ordered[[source for source, _ in COLUMN_MAP]].itertuples(index=False, name=None)
+    )
+    return digest_rows(clean_rows)
 
 
 def provider_source_checksum(frame: pd.DataFrame) -> str:
@@ -495,7 +507,7 @@ def stage_frame(
          source_checksum_sha256,expected_row_count,expected_ticker_count,status,validation_notes,created_at_utc)
         VALUES (?,'MARKET_FEATURES',?,?,?,?,?,?,?,'STAGING',?,?)""",
         [snapshot_id, source_session.isoformat(), created_at, provider, code_hash, checksum,
-         expected_rows, expected_tickers, notes, created_at],
+         expected_rows, expected_tickers, f"checksum_encoding={ENCODING}; {notes}", created_at],
     )])
     lineage_prefix = (
         "INSERT OR IGNORE INTO market_data_provider_lineage "
@@ -548,6 +560,74 @@ def stage_frame(
     return snapshot_id
 
 
+def diagnose_persisted_frame(db, snapshot_id: str, frame: pd.DataFrame, *, page_size: int = 2000) -> dict[str, object]:
+    """Compare the in-memory writer rows with SELECT-only persisted readback."""
+    if not 1 <= page_size <= 5000:
+        raise ValueError("Diagnostic page size differs from bounded contract.")
+    ordered = frame.sort_values(["Ticker", "Date"], kind="mergesort")
+    expected = (
+        tuple(clean(value) for value in row)
+        for row in ordered[[source for source, _ in COLUMN_MAP]].itertuples(index=False, name=None)
+    )
+    mismatch_counts = {column: 0 for column in STAGING_COLUMNS}
+    first_mismatch = None
+    actual_rows = 0
+    last_ticker = ""
+    last_date = ""
+    query = (
+        "SELECT " + ",".join(STAGING_COLUMNS) + " FROM market_daily_features "
+        "WHERE snapshot_id=? AND (ticker>? OR (ticker=? AND date>?)) "
+        "ORDER BY ticker,date LIMIT ?"
+    )
+    while True:
+        page = db.execute(
+            query, [snapshot_id, last_ticker, last_ticker, last_date, page_size]
+        ).rows
+        if not page:
+            break
+        for actual in page:
+            try:
+                wanted = next(expected)
+            except StopIteration as exc:
+                raise RuntimeError("Persisted diagnostic has unexpected extra rows.") from exc
+            actual_tuple = tuple(actual)
+            if canonical_row_bytes(wanted) != canonical_row_bytes(actual_tuple):
+                wanted_cells = json.loads(canonical_row_bytes(wanted))
+                actual_cells = json.loads(canonical_row_bytes(actual_tuple))
+                for index, column in enumerate(STAGING_COLUMNS):
+                    if wanted_cells[index] != actual_cells[index]:
+                        mismatch_counts[column] += 1
+                        if first_mismatch is None:
+                            first_mismatch = {
+                                "ticker": str(actual_tuple[0]),
+                                "date": str(actual_tuple[1]),
+                                "column": column,
+                                "expected_cell": wanted_cells[index],
+                                "actual_cell": actual_cells[index],
+                            }
+            actual_rows += 1
+        last_ticker = str(page[-1][0])
+        last_date = str(page[-1][1])
+        if actual_rows % 100000 < page_size:
+            print(f"field_diagnostic_rows={actual_rows}/{len(frame)}", flush=True)
+    try:
+        next(expected)
+    except StopIteration:
+        pass
+    else:
+        raise RuntimeError("Persisted diagnostic is missing expected rows.")
+    result = {
+        "actual_rows": actual_rows,
+        "expected_rows": len(frame),
+        "mismatch_counts": {
+            column: count for column, count in mismatch_counts.items() if count
+        },
+        "first_mismatch": first_mismatch,
+    }
+    print("PERSISTED_FIELD_DIAGNOSTIC " + json.dumps(result, sort_keys=True), flush=True)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-session", required=True)
@@ -565,6 +645,11 @@ def main() -> int:
         action="store_true",
         help="Fetch, validate, and calculate the complete snapshot without Turso writes.",
     )
+    parser.add_argument(
+        "--diagnose-persisted-content",
+        action="store_true",
+        help="After staging, compare the in-memory canonical rows with SELECT-only readback.",
+    )
     args = parser.parse_args()
     source_session = date.fromisoformat(args.source_session)
     if not 1 <= args.workers <= 12:
@@ -575,7 +660,11 @@ def main() -> int:
     token = os.environ["TURSO_AUTH_TOKEN"]
     tiingo_api_key = resolve_tiingo_api_key(args.tiingo_token_file)
     endpoint = raw_url.replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
-    db = TursoReadPipeline(endpoint, token, timeout_seconds=30.0)
+    # The guarded wrapper proves Turso reachability with a 120-second timeout.
+    # Keep the writer on the same contract: a cold replica/clone can require
+    # more than 30 seconds for its first pinned-universe read even though the
+    # database is reachable and the identical preflight succeeds.
+    db = TursoReadPipeline(endpoint, token, timeout_seconds=TURSO_TIMEOUT_SECONDS)
     stock_universe = db.execute(
         "SELECT ticker,MAX(sector) AS sector FROM market_daily_features "
         "WHERE snapshot_id=? GROUP BY ticker ORDER BY ticker",
@@ -770,7 +859,7 @@ def main() -> int:
             "lineage_comparison": lineage_comparison,
         }, indent=2, sort_keys=True), flush=True)
         return 0
-    stage_frame(
+    snapshot_id = stage_frame(
         db,
         endpoint,
         token,
@@ -785,6 +874,8 @@ def main() -> int:
             f"Tiingo fallback tickers={fallback_tickers}. Independent QA required before validation."
         ),
     )
+    if args.diagnose_persisted_content:
+        diagnose_persisted_frame(db, snapshot_id, final)
     return 0
 
 
