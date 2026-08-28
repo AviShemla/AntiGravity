@@ -85,6 +85,7 @@ class InstallerContractError(RuntimeError):
 class UnitState:
     active_state: str
     unit_file_state: str
+    load_state: str = "loaded"
 
 
 class UnitInspector(Protocol):
@@ -107,9 +108,9 @@ class SystemctlShowInspector:
                 self._systemctl,
                 "show",
                 unit,
+                "--property=LoadState",
                 "--property=ActiveState",
                 "--property=UnitFileState",
-                "--value",
                 "--no-pager",
             ],
             check=False,
@@ -119,10 +120,20 @@ class SystemctlShowInspector:
         )
         if result.returncode != 0:
             raise InstallerContractError("read-only systemd inspection failed")
-        rows = result.stdout.splitlines()
-        if len(rows) != 2:
+        expected = {"LoadState", "ActiveState", "UnitFileState"}
+        parsed: dict[str, str] = {}
+        for row in result.stdout.splitlines():
+            if "=" not in row:
+                raise InstallerContractError("systemd inspection result is malformed")
+            key, value = row.split("=", 1)
+            if key not in expected or key in parsed:
+                raise InstallerContractError("systemd inspection keys are invalid")
+            parsed[key] = value.strip()
+        if set(parsed) != expected:
             raise InstallerContractError("systemd inspection result shape is invalid")
-        return UnitState(rows[0].strip(), rows[1].strip())
+        return UnitState(
+            parsed["ActiveState"], parsed["UnitFileState"], parsed["LoadState"]
+        )
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -263,11 +274,21 @@ def _require_disabled_units(inspector: UnitInspector) -> dict[str, dict[str, str
     evidence: dict[str, dict[str, str]] = {}
     for unit in sorted(ALL_GUARDED_UNITS):
         state = inspector.inspect(unit)
-        if state.active_state != "inactive" or state.unit_file_state != "disabled":
-            raise InstallerContractError(f"{unit} is not inactive and disabled")
+        if unit in LEGACY_SAFETY_UNITS:
+            if state != UnitState("inactive", "disabled", "loaded"):
+                raise InstallerContractError(f"{unit} legacy safety state is not loaded/inactive/disabled")
+            disposition = "INSTALLED_DISABLED"
+        elif state == UnitState("inactive", "disabled", "loaded"):
+            disposition = "INSTALLED_DISABLED"
+        elif state == UnitState("inactive", "", "not-found"):
+            disposition = "ALLOWLISTED_RECURRING_NOT_FOUND"
+        else:
+            raise InstallerContractError(f"{unit} recurring state is not safely disabled or absent")
         evidence[unit] = {
+            "load_state": state.load_state,
             "active_state": state.active_state,
             "unit_file_state": state.unit_file_state,
+            "disposition": disposition,
         }
     return evidence
 

@@ -307,6 +307,73 @@ class DisabledOnlyInstallerTests(unittest.TestCase):
         ]
         self.assertEqual(len(run_calls), 1)
 
+    def test_systemctl_inspector_accepts_only_missing_allowlisted_recurring_units(self):
+        inspector = subject.SystemctlShowInspector()
+        missing = mock.Mock(
+            returncode=0,
+            stdout="UnitFileState=\nActiveState=inactive\nLoadState=not-found\n",
+        )
+        with mock.patch.object(subject.subprocess, "run", return_value=missing) as run:
+            self.assertEqual(
+                inspector.inspect("codex-market-nightly-continuity.timer"),
+                subject.UnitState("inactive", "", "not-found"),
+            )
+        argv = run.call_args.args[0]
+        self.assertIn("--property=LoadState", argv)
+        self.assertNotIn("--value", argv)
+
+    def test_require_disabled_units_rejects_missing_legacy_but_accepts_recurring(self):
+        overrides = {
+            unit: subject.UnitState("inactive", "", "not-found")
+            for unit in subject.RECURRING_UNITS
+        }
+        evidence = subject._require_disabled_units(FakeInspector(overrides))
+        self.assertTrue(
+            all(
+                evidence[unit]["disposition"] == "ALLOWLISTED_RECURRING_NOT_FOUND"
+                for unit in subject.RECURRING_UNITS
+            )
+        )
+        overrides["ag-sniper.service"] = subject.UnitState(
+            "inactive", "", "not-found"
+        )
+        with self.assertRaisesRegex(
+            subject.InstallerContractError, "legacy safety state"
+        ):
+            subject._require_disabled_units(FakeInspector(overrides))
+
+    def test_systemctl_inspector_rejects_unsafe_or_malformed_missing_state(self):
+        inspector = subject.SystemctlShowInspector()
+        for stdout in (
+            "LoadState=not-found\nActiveState=inactive\n",
+            "LoadState=not-found\nActiveState=inactive\nUnitFileState=\nExtra=x\n",
+            "LoadState=not-found\nActiveState=inactive\nActiveState=inactive\nUnitFileState=\n",
+            "LoadState:not-found\nActiveState=inactive\nUnitFileState=\n",
+        ):
+            with self.subTest(stdout=stdout), mock.patch.object(
+                subject.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout=stdout),
+            ):
+                with self.assertRaises(subject.InstallerContractError):
+                    inspector.inspect("codex-market-nightly-continuity.timer")
+
+    def test_require_disabled_units_rejects_every_unsafe_recurring_state(self):
+        unsafe = (
+            subject.UnitState("active", "", "not-found"),
+            subject.UnitState("inactive", "enabled", "not-found"),
+            subject.UnitState("inactive", "disabled", "not-found"),
+            subject.UnitState("inactive", "enabled", "loaded"),
+            subject.UnitState("failed", "disabled", "loaded"),
+            subject.UnitState("inactive", "masked", "loaded"),
+        )
+        unit = "codex-market-nightly-continuity.timer"
+        for state in unsafe:
+            with self.subTest(state=state), self.assertRaises(
+                subject.InstallerContractError
+            ):
+                subject._require_disabled_units(FakeInspector({unit: state}))
+
     def test_cli_requires_explicit_apply_flag(self):
         manifest_path = self.root / "manifest.json"
         manifest_path.write_bytes(subject.canonical_bytes(self.manifest))
