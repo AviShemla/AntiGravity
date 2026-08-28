@@ -63,6 +63,7 @@ CANONICAL_PREREGISTRATION_MANIFEST_SHA256 = (
 )
 MAX_S07_READBACK_AGE_SECONDS = 300
 _SHA = re.compile(r"[0-9a-f]{64}")
+_GIT_SHA = re.compile(r"[0-9a-f]{40}")
 _FORBIDDEN = re.compile(
     r"\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|REPLACE|UPSERT|MERGE|"
     r"TRUNCATE|ATTACH|DETACH|PRAGMA|VACUUM|BEGIN|COMMIT|ROLLBACK)\b", re.I,
@@ -112,6 +113,7 @@ class SelectOnlyProposalAssembly:
     contract_id: str
     status: str
     canonical_git_head: str
+    runtime_git_commit: str
     frozen_dataset_version: str
     snapshot_id: str
     frozen_content_sha256: str
@@ -207,6 +209,7 @@ def _verify_artifacts(artifacts: CanonicalArtifactBytes) -> None:
 def _verify_s07_artifacts(
     artifacts: InstalledS07Artifacts, *, observed_at_utc: datetime,
     expected_preregistration_manifest_sha256: str,
+    expected_model_git_commit: str,
 ) -> tuple[
     dict[str, object], dict[str, object], dict[str, object], str, str, str, bool, float,
 ]:
@@ -262,6 +265,7 @@ def _verify_s07_artifacts(
             or source.get("status") != "VERIFIED_SELECT_ONLY"
             or source.get("database_writes") != 0
             or source.get("model_fit_authorized") is not False
+            or source.get("proposed_model_git_commit") != expected_model_git_commit
             or manifest.get("contract_id") != "codex-oracle-hierarchical-stock-preregistration-v2"
             or manifest.get("execution", {}).get("model_fit_started") is not False
             or manifest.get("preflight", {}).get("fixture_only") is not True
@@ -448,11 +452,14 @@ def assemble_v5_proposal(
     artifacts: CanonicalArtifactBytes,
     s07_artifacts: InstalledS07Artifacts,
     observed_at_utc: datetime,
+    runtime_git_commit: str,
     pins: AuditPins = AuditPins(),
     page_size: int = 4000,
 ) -> SelectOnlyProposalAssembly:
     """Assemble an unsigned v5 proposal from fresh SELECT-only readback."""
     _verify_artifacts(artifacts)
+    if type(runtime_git_commit) is not str or not _GIT_SHA.fullmatch(runtime_git_commit):
+        raise SelectOnlyAssemblyError("runtime Git commit format differs")
     if type(pins) is not AuditPins or not _SHA.fullmatch(pins.model_session_dates_sha256) \
             or not _SHA.fullmatch(pins.ticker_list_sha256) \
             or not _SHA.fullmatch(pins.preregistration_manifest_sha256):
@@ -464,6 +471,7 @@ def assemble_v5_proposal(
      s07_verification_sha, s07_fresh, s07_age) = _verify_s07_artifacts(
         s07_artifacts, observed_at_utc=observed_at_utc,
         expected_preregistration_manifest_sha256=pins.preregistration_manifest_sha256,
+        expected_model_git_commit=runtime_git_commit,
     )
     freeze = _json(artifacts.freeze_completion, "freeze completion")
     completion = _json(artifacts.content_completion, "content completion")
@@ -629,6 +637,7 @@ def assemble_v5_proposal(
         contract_id=CONTRACT_ID,
         status="AUDIT_ONLY_PROPOSAL_ASSEMBLED_AUTHORITY_PENDING",
         canonical_git_head=CANONICAL_GIT_HEAD,
+        runtime_git_commit=runtime_git_commit,
         frozen_dataset_version=dataset, snapshot_id=snapshot,
         frozen_content_sha256=frozen.content_sha256,
         fresh_readback_evidence_sha256=str(logical_claim),

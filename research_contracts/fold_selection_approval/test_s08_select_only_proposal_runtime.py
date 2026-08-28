@@ -26,6 +26,8 @@ from research_contracts.fold_selection_approval.s08_signal_panel_materializer im
     canonical_session_dates_sha256, canonical_ticker_list_sha256,
 )
 
+RUNTIME_GIT_COMMIT = "f" * 40
+
 
 class Result:
     def __init__(self, columns, rows):
@@ -167,6 +169,7 @@ def fixture():
         "contract_id": "codex-oracle-current-baseline-source-evidence-v1",
         "status": "VERIFIED_SELECT_ONLY", "database_writes": 0,
         "model_fit_authorized": False,
+        "proposed_model_git_commit": RUNTIME_GIT_COMMIT,
         "model_session_dates": list(dates[-416:]),
         "full_session_calendar_dates": list(dates),
         "immutable_lineage": {
@@ -267,6 +270,7 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
                 client or self.client, artifacts=bundle or self.bundle,
                 s07_artifacts=self.s07,
                 observed_at_utc=datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc),
+                runtime_git_commit=RUNTIME_GIT_COMMIT,
                 pins=pins or self.pins, page_size=5000,
             )
 
@@ -298,6 +302,7 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
                 runtime.assemble_v5_proposal(
                     client, artifacts=bad, s07_artifacts=self.s07,
                     observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
+                    runtime_git_commit=RUNTIME_GIT_COMMIT,
                     pins=self.pins,
                 )
         self.assertEqual(len(client.calls), before)
@@ -324,6 +329,7 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
                 runtime.assemble_v5_proposal(
                     client, artifacts=self.bundle, s07_artifacts=bad,
                     observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
+                    runtime_git_commit=RUNTIME_GIT_COMMIT,
                     pins=self.pins,
                 )
         self.assertEqual(client.calls, [])
@@ -333,11 +339,32 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
             result = runtime.assemble_v5_proposal(
                 self.client, artifacts=self.bundle, s07_artifacts=self.s07,
                 observed_at_utc=datetime(2026, 8, 28, 13, tzinfo=timezone.utc),
+                runtime_git_commit=RUNTIME_GIT_COMMIT,
                 pins=self.pins, page_size=5000,
             )
         self.assertFalse(result.s07_readback_fresh)
         self.assertFalse(result.execution_authorized)
         self.assertIn("FRESH_ROOT_OWNED", result.unresolved_authority_gate)
+
+    def test_runtime_git_commit_must_match_verified_s07_source(self):
+        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
+            with self.assertRaisesRegex(runtime.SelectOnlyAssemblyError, "contradict"):
+                runtime.assemble_v5_proposal(
+                    self.client, artifacts=self.bundle, s07_artifacts=self.s07,
+                    observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
+                    runtime_git_commit="e" * 40, pins=self.pins,
+                )
+
+    def test_runtime_git_commit_format_fails_before_database(self):
+        before = len(self.client.calls)
+        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
+            with self.assertRaisesRegex(runtime.SelectOnlyAssemblyError, "Git commit format"):
+                runtime.assemble_v5_proposal(
+                    self.client, artifacts=self.bundle, s07_artifacts=self.s07,
+                    observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
+                    runtime_git_commit="not-a-commit", pins=self.pins,
+                )
+        self.assertEqual(len(self.client.calls), before)
 
     def test_fresh_readback_hash_rotation_is_dynamically_bound(self):
         readback = json.loads(self.s07.current_readback)
@@ -354,6 +381,7 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
             result = runtime.assemble_v5_proposal(
                 self.client, artifacts=self.bundle, s07_artifacts=rotated,
                 observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
+                runtime_git_commit=RUNTIME_GIT_COMMIT,
                 pins=self.pins, page_size=5000,
             )
         self.assertTrue(result.s07_readback_fresh)
