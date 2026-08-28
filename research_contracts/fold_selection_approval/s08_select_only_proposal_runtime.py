@@ -58,12 +58,9 @@ EXPECTED_RAW_SHA256 = {
     "preregistration": "66e99535b5a57153b4035b37cbede4f5e141e7fae8910747d70ba6a31058a2e5",
     "preregistration_binding": "09decd7127eaca8f95cd277f84264ea32d5886be022796637ed31bd843e1d164",
 }
-EXPECTED_S07_RAW_SHA256 = {
-    "current_readback": "02f1ed6a7b654c6856d0c1b2c9d2c1288f9756ead6f3909bc9db64877fe632cc",
-    "current_readback_source": "f37a11474a10613b398289251cfb488494f428ba74c291f8548a33fcf8a3ab35",
-    "preregistration_manifest": "9049c351795a9c80830f9b4153d4bece3b0849ea54d14f58662de3dc912a91dc",
-    "independent_verification": "1ba1921b8b4c9f94da89ebae9b404d29475e2434f8844342526f280e5a8bb69d",
-}
+CANONICAL_PREREGISTRATION_MANIFEST_SHA256 = (
+    "9049c351795a9c80830f9b4153d4bece3b0849ea54d14f58662de3dc912a91dc"
+)
 MAX_S07_READBACK_AGE_SECONDS = 300
 _SHA = re.compile(r"[0-9a-f]{64}")
 _FORBIDDEN = re.compile(
@@ -95,6 +92,7 @@ class CanonicalArtifactBytes:
 class AuditPins:
     model_session_dates_sha256: str = CANONICAL_MODEL_SLICE_SHA256
     ticker_list_sha256: str = CANONICAL_TICKER_LIST_SHA256
+    preregistration_manifest_sha256: str = CANONICAL_PREREGISTRATION_MANIFEST_SHA256
 
 
 @dataclass(frozen=True)
@@ -119,6 +117,9 @@ class SelectOnlyProposalAssembly:
     frozen_content_sha256: str
     fresh_readback_evidence_sha256: str
     s07_reconstruction_sha256: str
+    s07_source_sha256: str
+    s07_independent_verification_sha256: str
+    preregistration_manifest_sha256: str
     panel_sha256: str
     panel_shape: tuple[int, int]
     proposal: ApprovalProposal
@@ -205,15 +206,28 @@ def _verify_artifacts(artifacts: CanonicalArtifactBytes) -> None:
 
 def _verify_s07_artifacts(
     artifacts: InstalledS07Artifacts, *, observed_at_utc: datetime,
-) -> tuple[dict[str, object], dict[str, object], dict[str, object], bool, float]:
+    expected_preregistration_manifest_sha256: str,
+) -> tuple[
+    dict[str, object], dict[str, object], dict[str, object], str, str, str, bool, float,
+]:
     if type(artifacts) is not InstalledS07Artifacts:
         raise SelectOnlyAssemblyError("installed S07 artifact bundle type differs")
     if (artifacts.owner_uid, artifacts.owner_gid, artifacts.mode, artifacts.link_count) != (0, 0, 0o600, 1):
         raise SelectOnlyAssemblyError("installed S07 artifact ownership/mode/link identity differs")
-    for name, expected in EXPECTED_S07_RAW_SHA256.items():
-        raw = getattr(artifacts, name)
-        if type(raw) is not bytes or hashlib.sha256(raw).hexdigest() != expected:
-            raise SelectOnlyAssemblyError(f"installed S07 artifact bytes differ: {name}")
+    raw_hashes = {
+        name: hashlib.sha256(raw).hexdigest()
+        for name, raw in (
+            ("current_readback", artifacts.current_readback),
+            ("current_readback_source", artifacts.current_readback_source),
+            ("preregistration_manifest", artifacts.preregistration_manifest),
+            ("independent_verification", artifacts.independent_verification),
+        )
+        if type(raw) is bytes
+    }
+    if len(raw_hashes) != 4:
+        raise SelectOnlyAssemblyError("installed S07 artifact bytes differ")
+    if raw_hashes["preregistration_manifest"] != expected_preregistration_manifest_sha256:
+        raise SelectOnlyAssemblyError("installed S07 preregistration manifest differs")
     readback = _json(artifacts.current_readback, "S07 current readback")
     source = _json(artifacts.current_readback_source, "S07 current readback source")
     manifest = _json(artifacts.preregistration_manifest, "S07 preregistration manifest")
@@ -253,7 +267,7 @@ def _verify_s07_artifacts(
             or manifest.get("preflight", {}).get("fixture_only") is not True
             or manifest.get("preflight", {}).get("model_fit_authorized") is not False
             or verification != {
-                "artifact_file_sha256": EXPECTED_S07_RAW_SHA256["current_readback"],
+                "artifact_file_sha256": raw_hashes["current_readback"],
                 "artifact_id": readback.get("artifact_id"),
                 "database_writes": 0,
                 "model_fit_authorized": False,
@@ -266,11 +280,11 @@ def _verify_s07_artifacts(
                 "source_embedded_evidence_sha256": evidence.get(
                     "source_readback_embedded_evidence_sha256"
                 ),
-                "source_file_sha256": EXPECTED_S07_RAW_SHA256["current_readback_source"],
+                "source_file_sha256": raw_hashes["current_readback_source"],
                 "status": "VERIFIED_SELECT_ONLY",
             }
             or evidence.get("source_readback_artifact_sha256")
-               != EXPECTED_S07_RAW_SHA256["current_readback_source"]
+               != raw_hashes["current_readback_source"]
             or source.get("model_session_dates") != dates
             or manifest.get("model_session_dates") != dates
             or source.get("full_session_calendar_dates") != full_dates
@@ -296,7 +310,12 @@ def _verify_s07_artifacts(
             or evidence.get("universe_sha256")
                != canonical_ticker_list_sha256(tuple(tickers))):
         raise SelectOnlyAssemblyError("installed S07 artifacts contradict each other")
-    return readback, source, manifest, age <= MAX_S07_READBACK_AGE_SECONDS, age
+    return (
+        readback, source, manifest, raw_hashes["current_readback"],
+        raw_hashes["current_readback_source"],
+        raw_hashes["independent_verification"],
+        age <= MAX_S07_READBACK_AGE_SECONDS, age,
+    )
 
 
 def _normalize(sql: str) -> str:
@@ -435,13 +454,16 @@ def assemble_v5_proposal(
     """Assemble an unsigned v5 proposal from fresh SELECT-only readback."""
     _verify_artifacts(artifacts)
     if type(pins) is not AuditPins or not _SHA.fullmatch(pins.model_session_dates_sha256) \
-            or not _SHA.fullmatch(pins.ticker_list_sha256):
+            or not _SHA.fullmatch(pins.ticker_list_sha256) \
+            or not _SHA.fullmatch(pins.preregistration_manifest_sha256):
         raise SelectOnlyAssemblyError("audit pin format differs")
     if type(page_size) is not int or not 1 <= page_size <= 10_000:
         raise SelectOnlyAssemblyError("page size differs")
     observed_text = _strict_utc(observed_at_utc)
-    s07_readback, s07_source, s07_manifest, s07_fresh, s07_age = _verify_s07_artifacts(
+    (s07_readback, s07_source, s07_manifest, s07_sha, s07_source_sha,
+     s07_verification_sha, s07_fresh, s07_age) = _verify_s07_artifacts(
         s07_artifacts, observed_at_utc=observed_at_utc,
+        expected_preregistration_manifest_sha256=pins.preregistration_manifest_sha256,
     )
     freeze = _json(artifacts.freeze_completion, "freeze completion")
     completion = _json(artifacts.content_completion, "content completion")
@@ -530,7 +552,6 @@ def assemble_v5_proposal(
     )
     market = replace(temporary_market,
                      binding_artifact_sha256=binding_artifact_sha256(temporary_market))
-    s07_sha = EXPECTED_S07_RAW_SHA256["current_readback"]
     s07 = S07SignalBinding(
         s07_raw_sha256=s07_sha, frozen_content_sha256=frozen.content_sha256,
         model_session_dates=model_dates,
@@ -593,7 +614,7 @@ def assemble_v5_proposal(
         frozen_readback_at_utc=observed_text,
         snapshot_id=snapshot,
         snapshot_sha256=str(snapshot_meta["source_checksum_sha256"]),
-        preregistration_sha256=EXPECTED_S07_RAW_SHA256["preregistration_manifest"],
+        preregistration_sha256=pins.preregistration_manifest_sha256,
         selector_source_bytes=artifacts.selector_v7,
         selector_git_commit=CANONICAL_GIT_HEAD,
         selector_release_bytes=selector_release,
@@ -612,6 +633,9 @@ def assemble_v5_proposal(
         frozen_content_sha256=frozen.content_sha256,
         fresh_readback_evidence_sha256=str(logical_claim),
         s07_reconstruction_sha256=s07_sha,
+        s07_source_sha256=s07_source_sha,
+        s07_independent_verification_sha256=s07_verification_sha,
+        preregistration_manifest_sha256=pins.preregistration_manifest_sha256,
         panel_sha256=panel.panel_sha256, panel_shape=panel.shape,
         proposal=proposal, proposal_core_sha256=proposal.proposal_core_sha256,
         query_count=guarded.query_count,

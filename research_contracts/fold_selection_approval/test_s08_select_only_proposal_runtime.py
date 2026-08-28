@@ -247,31 +247,28 @@ def fixture():
     )
     hashes = {name: hashlib.sha256(getattr(bundle, name)).hexdigest()
               for name in runtime.EXPECTED_RAW_SHA256}
-    s07_hashes = {name: hashlib.sha256(getattr(s07, name)).hexdigest()
-                  for name in runtime.EXPECTED_S07_RAW_SHA256}
     pins = runtime.AuditPins(
         model_session_dates_sha256=canonical_session_dates_sha256(dates[-416:]),
         ticker_list_sha256=canonical_ticker_list_sha256(tickers),
+        preregistration_manifest_sha256=hashlib.sha256(manifest_raw).hexdigest(),
     )
     return (FrozenFixtureClient(rows, dates, content, providers), bundle, hashes,
-            s07, s07_hashes, pins)
+            s07, pins)
 
 
 class SelectOnlyProposalRuntimeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        (cls.client, cls.bundle, cls.hashes, cls.s07, cls.s07_hashes,
-         cls.pins) = fixture()
+        (cls.client, cls.bundle, cls.hashes, cls.s07, cls.pins) = fixture()
 
     def assemble(self, client=None, bundle=None, pins=None):
         with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
-            with patch.dict(runtime.EXPECTED_S07_RAW_SHA256, self.s07_hashes, clear=True):
-                return runtime.assemble_v5_proposal(
-                    client or self.client, artifacts=bundle or self.bundle,
-                    s07_artifacts=self.s07,
-                    observed_at_utc=datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc),
-                    pins=pins or self.pins, page_size=5000,
-                )
+            return runtime.assemble_v5_proposal(
+                client or self.client, artifacts=bundle or self.bundle,
+                s07_artifacts=self.s07,
+                observed_at_utc=datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc),
+                pins=pins or self.pins, page_size=5000,
+            )
 
     def test_exact_audit_only_assembly_and_zero_output_boundary(self):
         result = self.assemble()
@@ -296,8 +293,7 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
         )
         bad = replace(self.bundle, selector_v7=self.bundle.selector_v7 + b"tamper")
         before = len(client.calls)
-        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True), \
-             patch.dict(runtime.EXPECTED_S07_RAW_SHA256, self.s07_hashes, clear=True):
+        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
             with self.assertRaisesRegex(runtime.SelectOnlyAssemblyError, "artifact bytes differ"):
                 runtime.assemble_v5_proposal(
                     client, artifacts=bad, s07_artifacts=self.s07,
@@ -322,10 +318,9 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
         client = FrozenFixtureClient(
             self.client.rows, self.client.dates, self.client.content, self.client.providers,
         )
-        bad = replace(self.s07, current_readback=self.s07.current_readback + b"tamper")
-        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True), \
-             patch.dict(runtime.EXPECTED_S07_RAW_SHA256, self.s07_hashes, clear=True):
-            with self.assertRaisesRegex(runtime.SelectOnlyAssemblyError, "S07 artifact bytes differ"):
+        bad = replace(self.s07, current_readback=self.s07.current_readback + b" ")
+        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
+            with self.assertRaisesRegex(runtime.SelectOnlyAssemblyError, "contradict"):
                 runtime.assemble_v5_proposal(
                     client, artifacts=self.bundle, s07_artifacts=bad,
                     observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
@@ -334,8 +329,7 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
         self.assertEqual(client.calls, [])
 
     def test_stale_s07_readback_remains_unsigned(self):
-        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True), \
-             patch.dict(runtime.EXPECTED_S07_RAW_SHA256, self.s07_hashes, clear=True):
+        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
             result = runtime.assemble_v5_proposal(
                 self.client, artifacts=self.bundle, s07_artifacts=self.s07,
                 observed_at_utc=datetime(2026, 8, 28, 13, tzinfo=timezone.utc),
@@ -344,6 +338,29 @@ class SelectOnlyProposalRuntimeTests(unittest.TestCase):
         self.assertFalse(result.s07_readback_fresh)
         self.assertFalse(result.execution_authorized)
         self.assertIn("FRESH_ROOT_OWNED", result.unresolved_authority_gate)
+
+    def test_fresh_readback_hash_rotation_is_dynamically_bound(self):
+        readback = json.loads(self.s07.current_readback)
+        readback["observed_at_utc"] = "2026-08-28T11:59:00+00:00"
+        readback_raw = json.dumps(readback, sort_keys=True).encode()
+        verification = json.loads(self.s07.independent_verification)
+        verification["artifact_file_sha256"] = hashlib.sha256(readback_raw).hexdigest()
+        verification_raw = json.dumps(verification, sort_keys=True).encode()
+        rotated = replace(
+            self.s07, current_readback=readback_raw,
+            independent_verification=verification_raw,
+        )
+        with patch.dict(runtime.EXPECTED_RAW_SHA256, self.hashes, clear=True):
+            result = runtime.assemble_v5_proposal(
+                self.client, artifacts=self.bundle, s07_artifacts=rotated,
+                observed_at_utc=datetime(2026, 8, 28, 12, tzinfo=timezone.utc),
+                pins=self.pins, page_size=5000,
+            )
+        self.assertTrue(result.s07_readback_fresh)
+        self.assertEqual(result.s07_reconstruction_sha256,
+                         hashlib.sha256(readback_raw).hexdigest())
+        self.assertEqual(result.s07_independent_verification_sha256,
+                         hashlib.sha256(verification_raw).hexdigest())
 
     def test_arbitrary_select_is_rejected(self):
         guarded = runtime._GuardedCaptureClient(
