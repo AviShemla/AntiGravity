@@ -27,7 +27,10 @@ class FakeInspector:
 
     def inspect(self, unit):
         self.calls.append(unit)
-        return self.overrides.get(unit, subject.UnitState("inactive", "disabled"))
+        default_file_state = "static" if unit in subject.RECURRING_SERVICES else "disabled"
+        return self.overrides.get(
+            unit, subject.UnitState("inactive", default_file_state)
+        )
 
 
 class DisabledOnlyInstallerTests(unittest.TestCase):
@@ -110,7 +113,12 @@ class DisabledOnlyInstallerTests(unittest.TestCase):
             "no_snapshot_lifecycle_changes": True,
             "artifacts": artifacts,
             "required_unit_states": {
-                unit: {"active_state": "inactive", "unit_file_state": "disabled"}
+                unit: {
+                    "active_state": "inactive",
+                    "unit_file_state": (
+                        "static" if unit in subject.RECURRING_SERVICES else "disabled"
+                    ),
+                }
                 for unit in sorted(subject.ALL_GUARDED_UNITS)
             },
         }
@@ -386,7 +394,21 @@ class DisabledOnlyInstallerTests(unittest.TestCase):
             with self.subTest(state=state), self.assertRaises(
                 subject.InstallerContractError
             ):
-                subject._require_disabled_units(FakeInspector({unit: state}))
+                    subject._require_disabled_units(FakeInspector({unit: state}))
+
+    def test_require_disabled_units_accepts_exact_static_services_only(self):
+        service = "codex-market-ingestion@.service"
+        evidence = subject._require_disabled_units(FakeInspector())
+        self.assertEqual(evidence[service]["disposition"], "INSTALLED_STATIC")
+        for state in (
+            subject.UnitState("inactive", "disabled", "loaded"),
+            subject.UnitState("inactive", "enabled", "loaded"),
+            subject.UnitState("active", "static", "loaded"),
+        ):
+            with self.subTest(state=state), self.assertRaises(
+                subject.InstallerContractError
+            ):
+                subject._require_disabled_units(FakeInspector({service: state}))
 
     def test_cli_requires_explicit_apply_flag(self):
         manifest_path = self.root / "manifest.json"

@@ -39,6 +39,13 @@ RECURRING_UNITS = frozenset(
         "codex-market-nightly-continuity-watchdog.timer",
     }
 )
+RECURRING_TIMERS = frozenset(
+    {
+        "codex-market-nightly-continuity.timer",
+        "codex-market-nightly-continuity-watchdog.timer",
+    }
+)
+RECURRING_SERVICES = RECURRING_UNITS - RECURRING_TIMERS
 LEGACY_SAFETY_UNITS = frozenset(
     {
         "ag-sniper.service",
@@ -256,8 +263,14 @@ def validate_deployment_manifest(raw: Mapping[str, object]) -> None:
     if not isinstance(unit_states, Mapping) or set(unit_states) != ALL_GUARDED_UNITS:
         raise InstallerContractError("required unit-state set is incomplete or excessive")
     for unit, state_value in unit_states.items():
-        if state_value != {"active_state": "inactive", "unit_file_state": "disabled"}:
-            raise InstallerContractError(f"{unit} is not pinned inactive/disabled")
+        expected_file_state = "static" if unit in RECURRING_SERVICES else "disabled"
+        if state_value != {
+            "active_state": "inactive",
+            "unit_file_state": expected_file_state,
+        }:
+            raise InstallerContractError(
+                f"{unit} is not pinned inactive/{expected_file_state}"
+            )
 
 
 def load_manifest(path: Path, expected_sha256: str) -> Mapping[str, object]:
@@ -283,8 +296,14 @@ def _require_disabled_units(inspector: UnitInspector) -> dict[str, dict[str, str
             if state != UnitState("inactive", "disabled", "loaded"):
                 raise InstallerContractError(f"{unit} legacy safety state is not loaded/inactive/disabled")
             disposition = "INSTALLED_DISABLED"
-        elif state == UnitState("inactive", "disabled", "loaded"):
+        elif unit in RECURRING_TIMERS and state == UnitState(
+            "inactive", "disabled", "loaded"
+        ):
             disposition = "INSTALLED_DISABLED"
+        elif unit in RECURRING_SERVICES and state == UnitState(
+            "inactive", "static", "loaded"
+        ):
+            disposition = "INSTALLED_STATIC"
         elif state == UnitState("inactive", "", "not-found"):
             disposition = "ALLOWLISTED_RECURRING_NOT_FOUND"
         else:

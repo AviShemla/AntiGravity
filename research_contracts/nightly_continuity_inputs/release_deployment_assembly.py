@@ -359,7 +359,12 @@ def assemble(
         "no_snapshot_lifecycle_changes": True,
         "artifacts": deployment_artifacts,
         "required_unit_states": {
-            unit: {"active_state": "inactive", "unit_file_state": "disabled"}
+            unit: {
+                "active_state": "inactive",
+                "unit_file_state": (
+                    "static" if unit in installer.RECURRING_SERVICES else "disabled"
+                ),
+            }
             for unit in sorted(installer.ALL_GUARDED_UNITS)
         },
     }

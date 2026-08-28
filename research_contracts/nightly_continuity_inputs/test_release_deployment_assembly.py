@@ -30,7 +30,8 @@ class FakeInspector:
     def inspect(self, unit):
         if unit not in installer.ALL_GUARDED_UNITS:
             raise AssertionError("unexpected unit")
-        return installer.UnitState("inactive", "disabled")
+        file_state = "static" if unit in installer.RECURRING_SERVICES else "disabled"
+        return installer.UnitState("inactive", file_state)
 
 
 class AssemblyTests(unittest.TestCase):
