@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from scripts.rebuild_market_features_to_turso import (
+    TURSO_TIMEOUT_SECONDS,
     build_controlled_universe,
     build_provider_lineage,
     provider_lineage_checksum,
@@ -24,6 +25,9 @@ from scripts.rebuild_market_features_to_turso import (
 
 
 class RebuildMarketFeaturesTests(unittest.TestCase):
+    def test_writer_turso_timeout_matches_guarded_preflight_contract(self):
+        self.assertEqual(TURSO_TIMEOUT_SECONDS, 120.0)
+
     def raw(self, ticker_shift=0.0):
         rows = 320
         dates = pd.bdate_range(end="2026-08-20", periods=rows)

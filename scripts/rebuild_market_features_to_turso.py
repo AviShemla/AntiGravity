@@ -36,6 +36,8 @@ GapFallback = Callable[
     [str], tuple[pd.DataFrame | None, str | None, str | None]
 ]
 
+TURSO_TIMEOUT_SECONDS = 120.0
+
 
 def recent_nyse_sessions(source_session: date, *, rows: int = 130) -> list[date]:
     """Return the exact recent NYSE sessions required for every current ticker."""
@@ -580,7 +582,11 @@ def main() -> int:
     token = os.environ["TURSO_AUTH_TOKEN"]
     tiingo_api_key = resolve_tiingo_api_key(args.tiingo_token_file)
     endpoint = raw_url.replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
-    db = TursoReadPipeline(endpoint, token, timeout_seconds=30.0)
+    # The guarded wrapper proves Turso reachability with a 120-second timeout.
+    # Keep the writer on the same contract: a cold replica/clone can require
+    # more than 30 seconds for its first pinned-universe read even though the
+    # database is reachable and the identical preflight succeeds.
+    db = TursoReadPipeline(endpoint, token, timeout_seconds=TURSO_TIMEOUT_SECONDS)
     stock_universe = db.execute(
         "SELECT ticker,MAX(sector) AS sector FROM market_daily_features "
         "WHERE snapshot_id=? GROUP BY ticker ORDER BY ticker",
