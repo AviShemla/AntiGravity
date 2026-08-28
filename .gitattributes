@@ -13,3 +13,4 @@
 /docs/evidence/provider_freeze_rebound/superseded_runtime_authorization.json text eol=lf
 /tests/test_provider_freeze_rebound_integration.py text eol=lf
 /oracle_production_authorization_envelope.py text eol=lf
+/research_contracts/full_universe_baseline_audit_v2/* text eol=lf
