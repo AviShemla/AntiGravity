@@ -3,6 +3,9 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import shutil
+import subprocess
 import uuid
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -126,6 +129,25 @@ class FakeResponse:
 
 class PreflightTests(unittest.TestCase):
     observed = datetime(2026, 8, 27, 1, 0, tzinfo=timezone.utc)
+
+    @unittest.skipUnless(os.name == "posix", "direct executable boundary is Linux-only")
+    def test_preflight_is_directly_executable_by_systemd(self):
+        source = Path(preflight_module.__file__).resolve()
+        candidate = IO_ROOT / f"preflight-executable-{uuid.uuid4().hex}"
+        try:
+            shutil.copyfile(source, candidate)
+            candidate.chmod(0o700)
+            result = subprocess.run(
+                [str(candidate), "--help"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("--source-session", result.stdout)
+        finally:
+            candidate.unlink(missing_ok=True)
 
     def test_absent_snapshot_exact_consumer_contract(self):
         reader = FakeReader()

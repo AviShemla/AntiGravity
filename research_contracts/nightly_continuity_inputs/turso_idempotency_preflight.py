@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """Root-safe SELECT-only Turso idempotency preflight for nightly continuity.
 
 The executable emits the exact ``codex-market-ingestion-idempotency-preflight-v1``
