@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from scripts.rebuild_market_features_to_turso import (
+    COLUMN_MAP,
     TURSO_TIMEOUT_SECONDS,
     build_controlled_universe,
     build_provider_lineage,
@@ -16,6 +17,7 @@ from scripts.rebuild_market_features_to_turso import (
     merge_cross_market_features,
     normalize_ohlc_envelope,
     content_checksum,
+    diagnose_persisted_frame,
     missing_sessions,
     recent_nyse_sessions,
     repair_recent_session_gaps,
@@ -27,6 +29,36 @@ from scripts.rebuild_market_features_to_turso import (
 class RebuildMarketFeaturesTests(unittest.TestCase):
     def test_writer_turso_timeout_matches_guarded_preflight_contract(self):
         self.assertEqual(TURSO_TIMEOUT_SECONDS, 120.0)
+
+    def test_persisted_field_diagnostic_identifies_exact_column(self):
+        text = {"ticker": "AAA", "sector": "Tech", "ras_signal": None,
+                "analyst_consensus": None, "sector_regime": None,
+                "market_fear_level": None}
+        values = {
+            source: (pd.Timestamp("2026-08-27") if target == "date"
+                     else text[target] if target in text else 1.0)
+            for source, target in COLUMN_MAP
+        }
+        frame = pd.DataFrame([values])
+        columns = [target for _, target in COLUMN_MAP]
+        row = [
+            ("2026-08-27" if target == "date" else text[target]
+             if target in text else 1.0)
+            for _, target in COLUMN_MAP
+        ]
+        row[columns.index("close_price")] = 2.0
+
+        class Result:
+            def __init__(self, rows): self.rows = rows
+
+        class DB:
+            def __init__(self): self.calls = 0
+            def execute(self, *_args):
+                self.calls += 1
+                return Result([row] if self.calls == 1 else [])
+
+        result = diagnose_persisted_frame(DB(), "snapshot", frame, page_size=1)
+        self.assertEqual(result["mismatch_counts"], {"close_price": 1})
 
     def raw(self, ticker_shift=0.0):
         rows = 320

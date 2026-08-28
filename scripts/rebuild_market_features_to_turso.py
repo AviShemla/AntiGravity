@@ -29,7 +29,12 @@ sys.path.insert(0, str(ROOT))
 from market_data_provider import fetch_validated_daily_bars, resolve_tiingo_api_key
 from scripts.stage_market_features_to_turso import COLUMN_MAP, clean, post_statements
 from turso_read_pipeline import TursoReadPipeline
-from market_staging_content import ENCODING, STAGING_COLUMNS, digest_rows
+from market_staging_content import (
+    ENCODING,
+    STAGING_COLUMNS,
+    canonical_row_bytes,
+    digest_rows,
+)
 
 
 GapFallback = Callable[
@@ -555,6 +560,74 @@ def stage_frame(
     return snapshot_id
 
 
+def diagnose_persisted_frame(db, snapshot_id: str, frame: pd.DataFrame, *, page_size: int = 2000) -> dict[str, object]:
+    """Compare the in-memory writer rows with SELECT-only persisted readback."""
+    if not 1 <= page_size <= 5000:
+        raise ValueError("Diagnostic page size differs from bounded contract.")
+    ordered = frame.sort_values(["Ticker", "Date"], kind="mergesort")
+    expected = (
+        tuple(clean(value) for value in row)
+        for row in ordered[[source for source, _ in COLUMN_MAP]].itertuples(index=False, name=None)
+    )
+    mismatch_counts = {column: 0 for column in STAGING_COLUMNS}
+    first_mismatch = None
+    actual_rows = 0
+    last_ticker = ""
+    last_date = ""
+    query = (
+        "SELECT " + ",".join(STAGING_COLUMNS) + " FROM market_daily_features "
+        "WHERE snapshot_id=? AND (ticker>? OR (ticker=? AND date>?)) "
+        "ORDER BY ticker,date LIMIT ?"
+    )
+    while True:
+        page = db.execute(
+            query, [snapshot_id, last_ticker, last_ticker, last_date, page_size]
+        ).rows
+        if not page:
+            break
+        for actual in page:
+            try:
+                wanted = next(expected)
+            except StopIteration as exc:
+                raise RuntimeError("Persisted diagnostic has unexpected extra rows.") from exc
+            actual_tuple = tuple(actual)
+            if canonical_row_bytes(wanted) != canonical_row_bytes(actual_tuple):
+                wanted_cells = json.loads(canonical_row_bytes(wanted))
+                actual_cells = json.loads(canonical_row_bytes(actual_tuple))
+                for index, column in enumerate(STAGING_COLUMNS):
+                    if wanted_cells[index] != actual_cells[index]:
+                        mismatch_counts[column] += 1
+                        if first_mismatch is None:
+                            first_mismatch = {
+                                "ticker": str(actual_tuple[0]),
+                                "date": str(actual_tuple[1]),
+                                "column": column,
+                                "expected_cell": wanted_cells[index],
+                                "actual_cell": actual_cells[index],
+                            }
+            actual_rows += 1
+        last_ticker = str(page[-1][0])
+        last_date = str(page[-1][1])
+        if actual_rows % 100000 < page_size:
+            print(f"field_diagnostic_rows={actual_rows}/{len(frame)}", flush=True)
+    try:
+        next(expected)
+    except StopIteration:
+        pass
+    else:
+        raise RuntimeError("Persisted diagnostic is missing expected rows.")
+    result = {
+        "actual_rows": actual_rows,
+        "expected_rows": len(frame),
+        "mismatch_counts": {
+            column: count for column, count in mismatch_counts.items() if count
+        },
+        "first_mismatch": first_mismatch,
+    }
+    print("PERSISTED_FIELD_DIAGNOSTIC " + json.dumps(result, sort_keys=True), flush=True)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-session", required=True)
@@ -571,6 +644,11 @@ def main() -> int:
         "--dry-run",
         action="store_true",
         help="Fetch, validate, and calculate the complete snapshot without Turso writes.",
+    )
+    parser.add_argument(
+        "--diagnose-persisted-content",
+        action="store_true",
+        help="After staging, compare the in-memory canonical rows with SELECT-only readback.",
     )
     args = parser.parse_args()
     source_session = date.fromisoformat(args.source_session)
@@ -781,7 +859,7 @@ def main() -> int:
             "lineage_comparison": lineage_comparison,
         }, indent=2, sort_keys=True), flush=True)
         return 0
-    stage_frame(
+    snapshot_id = stage_frame(
         db,
         endpoint,
         token,
@@ -796,6 +874,8 @@ def main() -> int:
             f"Tiingo fallback tickers={fallback_tickers}. Independent QA required before validation."
         ),
     )
+    if args.diagnose_persisted_content:
+        diagnose_persisted_frame(db, snapshot_id, final)
     return 0
 
 
