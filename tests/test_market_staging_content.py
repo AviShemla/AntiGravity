@@ -11,7 +11,7 @@ from market_staging_content import (
     StagingContentError,
     digest_rows,
 )
-from scripts.stage_market_features_to_turso import clean
+from scripts.stage_market_features_to_turso import clean, encode_staging_arg
 from turso_read_pipeline import TursoReadPipeline, _encode_arg
 
 
@@ -29,6 +29,12 @@ def row(ticker="AAA", session="2026-08-27"):
 
 
 class StagingContentTests(unittest.TestCase):
+    def test_staging_float_uses_lossless_decimal_text_transport(self):
+        value = float.fromhex("0x1.f7bcbfbb9d498p+0")
+        encoded = encode_staging_arg(value)
+        self.assertEqual(encoded, {"type": "text", "value": "1.9677238305132843"})
+        self.assertEqual(float(encoded["value"]).hex(), value.hex())
+
     def test_prewrite_timestamp_and_persisted_date_string_match(self):
         before = list(row())
         before[1] = datetime(2026, 8, 27)

@@ -65,11 +65,24 @@ def clean(value):
     return value
 
 
+def encode_staging_arg(value):
+    """Encode binary64 values losslessly across the Turso HTTP boundary.
+
+    Turso's JSON protocol float decoder has been observed to move some finite
+    binary64 values by one ULP. A canonical 17-significant-digit decimal text
+    is converted by SQLite REAL affinity to the original binary64 value.
+    """
+    value = clean(value)
+    if isinstance(value, float):
+        return {"type": "text", "value": format(value, ".17g")}
+    return _encode_arg(value)
+
+
 def post_statements(session, endpoint, token, statements):
     requests_payload = [
         {
             "type": "execute",
-            "stmt": {"sql": sql, "args": [_encode_arg(clean(value)) for value in args]},
+            "stmt": {"sql": sql, "args": [encode_staging_arg(value) for value in args]},
         }
         for sql, args in statements
     ]
