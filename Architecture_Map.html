@@ -199,11 +199,11 @@
             <h2>1 — Governed market evidence</h2>
             <div class="architecture-nodes">
                 <div class="node input" id="node-YF">Yahoo Finance<br>primary provider</div>
-                <div class="node input" id="node-TIINGO">Tiingo<br>audited fallback</div>
+                <div class="node input" id="node-TIINGO">Tiingo<br>audited fallback</div>\n                <div class="node input" id="node-ALPACA">Alpaca<br>third provider fallback</div>
                 <div class="node pipeline" id="node-INGEST">Guarded ingestion<br>staging only</div>
                 <div class="node database" id="node-MARKET">Turso market snapshots<br>validated SSOT</div>
             </div>
-            <div class="flow-label">Providers → staging snapshot with lineage → validation and approval → authoritative market snapshot.</div>
+            <div class="flow-label">Yahoo → Tiingo → Alpaca (bounded fallback) → canonical provider frame → isolated Turso STAGING snapshot → SELECT-only postflight → verified handoff. Latest proof: 586,766 rows, 474 feature tickers, 476 provider-lineage rows; checksum 9e4795a5f8786ad1…; no production or trading effects.</div>
         </section>
         <section class="architecture-layer">
             <h2>2 — Stock research and model governance</h2>
@@ -239,7 +239,7 @@
         <section class="architecture-layer">
             <h2>5 — Operations and visibility</h2>
             <div class="architecture-nodes">
-                <div class="node frozen" id="node-NIGHTLY">antigravity-nightly.timer<br>inactive + disabled</div>
+                <div class="node pipeline" id="node-NIGHTLY">codex-market-nightly-continuity-shadow-v8.timer<br>enabled · 03:30 Israel</div>
                 <div class="node frozen" id="node-WATCHDOG">antigravity-qa-watchdog.timer<br>inactive + disabled</div>
                 <div class="node pipeline" id="node-API">FastAPI + Uvicorn<br>active read-only dashboard</div>
                 <div class="node" id="node-UI">Five-tab dashboard<br>live visual QA</div>
@@ -251,8 +251,8 @@
         
         const nodeData = {
             "YF": {name: "Yahoo Finance", purpose: "Primary daily market-data provider when its response passes ingestion validation.", input: "Approved ticker manifest", output: "Provider evidence", schedule: "Guarded ingestion only"},
-            "TIINGO": {name: "Tiingo", purpose: "Audited fallback provider; credentials are held in server secret management, not project files.", input: "Approved ticker manifest", output: "Provider evidence", schedule: "Guarded ingestion only"},
-            "INGEST": {name: "Guarded market ingestion", purpose: "Writes staging snapshots with row and provider lineage. It does not run models, create orders, or trade.", input: "Yahoo/Tiingo responses", output: "Turso staging snapshot", schedule: "One approved timer; fail closed"},
+            "TIINGO": {name: "Tiingo", purpose: "Audited fallback provider; credentials are held in server secret management, not project files.", input: "Approved ticker manifest", output: "Provider evidence", schedule: "Guarded ingestion only"},\n            "ALPACA": {name: "Alpaca", purpose: "Third bounded market-data fallback in the isolated shadow chain, with explicit provider lineage.", input: "Approved ticker manifest", output: "Validated provider evidence", schedule: "Guarded ingestion only"},
+            "INGEST": {name: "Guarded market ingestion", purpose: "Writes staging snapshots with row and provider lineage. It does not run models, create orders, or trade.", input: "Yahoo/Tiingo/Alpaca responses", output: "Isolated Turso STAGING snapshot", schedule: "systemd timer at 03:30 Israel; fail closed"},
             "MARKET": {name: "Validated Turso market snapshots", purpose: "Authoritative model input after snapshot validation and approval.", input: "Staging evidence", output: "Validated OHLCV features", schedule: "Database SSOT"},
             "SPEC": {name: "Approved model specification", purpose: "Pre-registers lag domain, chain semantics, cutoff, universe, and validation before any model run.", input: "Owner-approved contract", output: "Immutable run controls", schedule: "Required; currently blocking new runs"},
             "SCREEN": {name: "Predictive screening", purpose: "Evaluates target-relative causal features with independently selected edge lags; eligible and ineligible results remain auditable.", input: "Validated market snapshot + approved spec", output: "Screening evidence", schedule: "Not running"},
@@ -267,7 +267,7 @@
             "PENDING": {name: "Turso pending_orders", purpose: "Legacy staged-order state retained for audit; no new writes are authorized.", input: "Approved execution plan only", output: "Sniper targets", schedule: "Frozen"},
             "SNIPER": {name: "ag-sniper.service", purpose: "Intraday execution service. It must remain inactive and disabled until explicitly approved after validation gates pass.", input: "Approved pending orders", output: "Execution events", schedule: "FROZEN"},
             "LEDGER": {name: "Turso capital_ledgers", purpose: "Canonical portfolio and accounting evidence displayed by the dashboard.", input: "Historical execution records", output: "Holdings, cash, PnL", schedule: "Read-only during freeze"},
-            "NIGHTLY": {name: "antigravity-nightly.timer", purpose: "Legacy automatic pipeline timer.", input: "Timer event", output: "Pipeline trigger", schedule: "Inactive and disabled"},
+            "NIGHTLY": {name: "Codex Oracle shadow nightly timer", purpose: "Runs the verified isolated-shadow continuity controller through ingestion, SELECT-only postflight, and handoff. It has no production, recommendation, order, or trading effect.", input: "systemd calendar event", output: "Verified STAGING evidence", schedule: "Enabled at 03:30 Asia/Jerusalem; next trigger 2026-09-02"},
             "WATCHDOG": {name: "antigravity-qa-watchdog.timer", purpose: "Legacy automatic QA/recovery timer.", input: "Timer event", output: "Recovery actions", schedule: "Inactive and disabled"},
             "API": {name: "FastAPI / Uvicorn", purpose: "Serves dashboard JSON from Turso-backed evidence.", input: "Turso ledgers and model evidence", output: "Read-only JSON endpoints", schedule: "Active on port 80"},
             "UI": {name: "Five-tab dashboard", purpose: "Displays portfolio, ETF, Arena, autopsy, and this verified architecture map.", input: "FastAPI JSON", output: "Browser UI", schedule: "Active; visually audited"}
