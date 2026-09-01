@@ -1,4 +1,20 @@
 # 🌌 THE ANTIGRAVITY MASTER BLUEPRINT
+
+> [!IMPORTANT]
+> **Current Codex Oracle architecture — authoritative operational addendum (2026-09-01).**
+> The older AntiGravity material below is retained as historical reconstruction context only. It does not authorize legacy CSV/SQLite sources, cron duplication, production promotion, recommendations, orders, sniper activation, email, or trading.
+
+## Current verified nightly continuity path
+
+- Scheduler: native systemd timer `codex-market-nightly-continuity-shadow-v8.timer`, enabled at `03:30 Asia/Jerusalem` with `Persistent=true`, one-second accuracy, and no randomized delay. No parallel cron entry is used.
+- Trigger target: root-owned, hardened oneshot `codex-market-nightly-continuity-shadow-v8.service`.
+- Provider path: Yahoo primary → Tiingo bounded fallback → Alpaca bounded fallback → one canonical provider-frame contract with explicit provider lineage.
+- Persistence path: isolated Turso shadow branch only → STAGING snapshot → SELECT-only postflight reconciliation → independent handoff evidence.
+- Latest terminal proof: snapshot `market_features_2026-08-31_9e4795a5f8786ad1`; 586,766 feature rows; 474 feature tickers; 476 provider-lineage rows; content SHA-256 `9e4795a5f8786ad1c4e812a746b05247031ff05c0eba019087e06c16867a4239`; handoff SHA-256 `8387aa91462caf77c40a94276a4daa88a1d8ca7f72eb3d70b4ef649ccec5a91d`.
+- Identity separation: release-manifest identity, executor identity, and stored implementation `code_version` are distinct typed fields. Postflight binds the authoritative stored implementation value `604904c5aa46b365d0afee877c84ae2c15de654f2f8be7b27cd3d403ae8bd9db`.
+- Safety boundary: no production mutation, snapshot validation/promotion, recommendation, order, email, sniper activation, or trading effect. Legacy `antigravity-nightly.timer`, `antigravity-qa-watchdog.timer`, and `ag-sniper.service` remain disabled and inactive.
+- Data-source boundary: Turso is the database source of truth. CSV and SQLite are forbidden as production sources or fallbacks.
+
 **System Reconstruction & Architecture Manual**
 *Last Updated: End of June 2026 Phase (MILESTONE ACHIEVED: 5-Day Continuous Clean Run)*
 
