@@ -1,0 +1,4 @@
+4c5f7b41ab3106fb5e97f7bfba8fbbec29cc2aaefe0d89d9dec10a3743543e0e  authorization-deletion-NOT-APPROVED.patch
+cc035a45a30e924e3f9871b150c0ad30ba710d37fdc84698e053d86368da907a  ohlc-relaxation-separated-NOT-APPROVED.patch
+3899b9d656a0e6013258c64365a0c5ab65819a0dc684def1c82275b312021565  original-provider-change.patch
+63c84c18351e5c8f6cee4b956a6eea290c4fe00d11c4c3f2e87181ab04d18a1a  vix-only-proposed.patch
