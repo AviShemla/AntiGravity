@@ -1,0 +1,21 @@
+{
+  "schema_version": 2,
+  "record_type": "ORACLE_W2_RESEARCH_INPUT_SELECTOR",
+  "status": "FROZEN",
+  "membership_manifest": "ORACLE_W1_GOVERNED_UNIVERSE_2026-09-25.json",
+  "membership_manifest_sha256": "e8a7051a8735f10d555f8fdff74d0807e60a0ce00cd13a475114f8391e5bbfa8",
+  "source_table": "oracle_w2_content_versions",
+  "as_of_session_date": "2026-09-25",
+  "expected_instruments": 474,
+  "expected_rows": 597139,
+  "selection_rule": "Reconstruct bound frozen August base plus immutable cell differences for approved W1 members through cutoff",
+  "forbidden": [
+    "full-history duplication",
+    "source-table write",
+    "nightly-task change",
+    "model execution"
+  ],
+  "version_manifest": "ORACLE_W2_CONTENT_VERSION_2026-09-25.json",
+  "version_manifest_sha256": "fbfc4cbf4426b7b27cf312fd4fc57eea505cae1366262a6ff952f56250882be1",
+  "version_id": "oracle-w2-20260925-delta-v1"
+}
