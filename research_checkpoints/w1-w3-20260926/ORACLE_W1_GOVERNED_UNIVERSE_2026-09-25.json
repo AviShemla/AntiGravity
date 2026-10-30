@@ -1,0 +1,3331 @@
+{
+  "schema_version": 1,
+  "record_type": "ORACLE_W1_GOVERNED_UNIVERSE",
+  "status": "USER_APPROVED_BASELINE",
+  "approved_at": "2026-09-26",
+  "source": "Turso market_feature_history grouped by ticker, observed 2026-09-26",
+  "as_of_session_date": "2026-09-25",
+  "instrument_count": 474,
+  "stock_count": 457,
+  "etf_count": 17,
+  "members": [
+    {
+      "ticker": "A",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AAPL",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ABBV",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ABNB",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ABT",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ACGL",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ACN",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ADBE",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ADI",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ADM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ADP",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ADSK",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AEE",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AEP",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AES",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AFL",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AIG",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AJG",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AKAM",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ALB",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ALGN",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ALL",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ALLE",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMAT",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMCR",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMD",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AME",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMGN",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMP",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMT",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AMZN",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ANET",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AON",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AOS",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "APA",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "APD",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "APH",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "APO",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "APP",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "APTV",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ARE",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ARES",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ATO",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AVGO",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AVY",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AWK",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AXON",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AXP",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "AZO",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BA",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BAC",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BALL",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BAX",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BBY",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BDX",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BF.B",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BG",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BIIB",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BKNG",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BKR",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BLDR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BLK",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BMY",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BNY",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BRK.B",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BSX",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BX",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "BXP",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "C",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CAH",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CARR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CASY",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CAT",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CB",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CBOE",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CBRE",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CCI",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CCL",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CDNS",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CDW",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CEG",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2022-02-25",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CF",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CFG",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CHD",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CHRW",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CHTR",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CI",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CL",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CLX",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CMCSA",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CME",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CMG",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CMI",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CMS",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CNC",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CNP",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COF",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COHR",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COIN",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COO",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COP",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COR",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "COST",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CPAY",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CPRT",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CPT",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CRH",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CRL",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CRM",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CRWD",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CSCO",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CSGP",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CSX",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CTAS",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CTSH",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CTVA",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CVNA",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CVS",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "CVX",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "D",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DAL",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DASH",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DDOG",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DE",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DECK",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DELL",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DG",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DGX",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DHI",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DHR",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DIS",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DLR",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DLTR",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DOC",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DOV",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DOW",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DPZ",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DRI",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DTE",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DUK",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DVN",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "DXCM",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EBAY",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ECHO",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ECL",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ED",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EIX",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EL",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ELV",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EMR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EOG",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EQIX",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EQT",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ES",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ESS",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ETN",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ETR",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EVRG",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EW",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EXC",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EXE",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EXPE",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "EXR",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "F",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FANG",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FAST",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FCX",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FDX",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FE",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FERG",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FFIV",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FICO",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FISV",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FITB",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FIX",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FLEX",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FOX",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FOXA",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FRT",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FTNT",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "FTV",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GD",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GE",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GEHC",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2023-01-25",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GEV",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2024-05-03",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GILD",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GIS",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GL",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GLW",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GOOG",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GOOGL",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GPC",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GPN",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GRMN",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GS",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "GWW",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HAL",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HAS",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HBAN",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HCA",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HD",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HIG",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HII",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HLT",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HON",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HOOD",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HPE",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HRL",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HSIC",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HST",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HSY",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HUBB",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HUM",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "HWM",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IBKR",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IBM",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ICE",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IDXX",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IFF",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IGV",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "INCY",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "INTC",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "INTU",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "INVH",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IP",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IQV",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IRM",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ISRG",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ITW",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IWD",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "IYH",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "JCI",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "JKHY",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "JNJ",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "JPM",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KDP",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KEY",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KEYS",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KHC",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KIM",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KKR",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KLAC",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KMB",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KMI",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KO",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KR",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "KVUE",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2023-06-12",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LEN",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LH",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LHX",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LII",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LIN",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LITE",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LLY",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LMT",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LNT",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LOW",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LRCX",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LULU",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LUV",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LVS",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LYB",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "LYV",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MA",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MAA",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MAR",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MCD",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MCHP",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MCK",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MCO",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MDLZ",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MDT",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MET",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "META",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MGM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MKC",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MLM",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MMM",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MNST",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MO",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MOS",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MPC",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MPWR",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MRK",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MRNA",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MRSH",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MRVL",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MS",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MSCI",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MSFT",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MSI",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MTB",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MTD",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "MU",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NCLH",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NDAQ",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NEE",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NEM",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NFLX",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NI",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NKE",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NOC",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NOW",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NRG",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NSC",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NTAP",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NTRS",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NUE",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NVDA",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NVR",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NWS",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NWSA",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "NXPI",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "O",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ODFL",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "OKE",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "OMC",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ON",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ORCL",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ORLY",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "OTIS",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "OXY",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PANW",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PAYX",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PCAR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PCG",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PEG",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PEP",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PFE",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PG",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PGR",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PH",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PHM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PKG",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PLD",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PLTR",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PNC",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PNR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PNW",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PODD",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PPG",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PPL",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PRU",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PSA",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PSKY",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PSX",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PTC",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PWR",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "PYPL",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "QCOM",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RCL",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RDDT",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2024-04-29",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "REG",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "REGN",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RF",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RL",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RMD",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ROK",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ROL",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ROP",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ROST",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RSG",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "RTX",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SBAC",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SBUX",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SCHW",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SHW",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SJM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SLB",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SMCI",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SMCX",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2024-09-27",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SNDK",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2025-03-24",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SNPS",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SO",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SPG",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SPGI",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SPY",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SRE",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "STE",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "STLD",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "STT",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "STX",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "STZ",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SW",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SYK",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "SYY",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "T",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TAP",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TDG",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TDY",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TECH",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TEL",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TER",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TFC",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TGT",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TJX",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TKO",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TMO",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TMUS",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TPL",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TPR",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TRGP",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TRMB",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TROW",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TRV",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TSCO",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TSLA",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TSN",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TT",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TTD",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TTWO",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "TXN",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UAL",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UBER",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UDOW",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UDR",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UHS",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ULTA",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UNH",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UNP",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "UPS",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "URI",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "USB",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "V",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VEEV",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VICI",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VLO",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VMC",
+      "asset_class": "STOCK",
+      "sector": "Materials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VMRK",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VRSK",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VRSN",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VRT",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VRTX",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VST",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VTR",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VTRS",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "VZ",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WAB",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WAT",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WBD",
+      "asset_class": "STOCK",
+      "sector": "Communication_Services",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WDAY",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WDC",
+      "asset_class": "STOCK",
+      "sector": "Information_Technology",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WEC",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WELL",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WFC",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WM",
+      "asset_class": "STOCK",
+      "sector": "Industrials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WMB",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WMT",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Staples",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WSM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WST",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WTW",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WY",
+      "asset_class": "STOCK",
+      "sector": "Real_Estate",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "WYNN",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XEL",
+      "asset_class": "STOCK",
+      "sector": "Utilities",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLB",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLC",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLE",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLF",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLI",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLK",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLP",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLRE",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLU",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLV",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XLY",
+      "asset_class": "ETF",
+      "sector": "ETF",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XOM",
+      "asset_class": "STOCK",
+      "sector": "Energy",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "XYZ",
+      "asset_class": "STOCK",
+      "sector": "Financials",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "YUM",
+      "asset_class": "STOCK",
+      "sector": "Consumer_Discretionary",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ZBH",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    },
+    {
+      "ticker": "ZTS",
+      "asset_class": "STOCK",
+      "sector": "Health_Care",
+      "first_observed_date": "2021-09-08",
+      "last_observed_date": "2026-09-25"
+    }
+  ]
+}

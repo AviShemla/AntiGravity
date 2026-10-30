@@ -6,6 +6,16 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import database_manager
 
+
+@pytest.fixture(scope="module", autouse=True)
+def close_turso_test_client_after_module():
+    """Release the read-only test client so pytest cannot hang at shutdown."""
+    yield
+    client = getattr(database_manager._local, "client", None)
+    if client is not None:
+        client.close()
+        database_manager._local.client = None
+
 def test_ledger_continuity():
     """
     Asserts that the capital ledgers have no missing chronological dates.

@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 import libsql_client
 import threading
 
+from model_lineage import LineageError
+from turso_read_pipeline import TursoReadPipeline
+
 load_dotenv()
 
 TURSO_URL = os.environ.get("TURSO_DATABASE_URL")
@@ -26,6 +29,32 @@ def get_connection(force_new=False):
     if force_new or not getattr(_local, 'client', None):
         _local.client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
     return _local.client
+
+def _https_pipeline_endpoint(raw_url):
+    """Normalize the configured Turso URL to the canonical HTTPS pipeline."""
+    value = str(raw_url or "").strip()
+    if value.startswith("libsql://"):
+        value = "https://" + value[len("libsql://"):]
+    if not value.startswith("https://"):
+        raise LineageError("Turso read URL must use libsql:// or https://.")
+    value = value.rstrip("/")
+    if not value.endswith("/v2/pipeline"):
+        value += "/v2/pipeline"
+    return value
+
+
+def get_read_connection():
+    """Return one bounded, read-only HTTPS Turso adapter per thread."""
+    if not TURSO_URL or not TURSO_TOKEN:
+        raise ValueError("Missing TURSO credentials in environment.")
+    endpoint = _https_pipeline_endpoint(TURSO_URL)
+    client = getattr(_local, "read_client", None)
+    if client is None or getattr(_local, "read_endpoint", None) != endpoint:
+        client = TursoReadPipeline(endpoint, TURSO_TOKEN)
+        _local.read_client = client
+        _local.read_endpoint = endpoint
+    return client
+
 
 def execute_query(query, args=None):
     """Generic helper to execute SELECT queries and return a DataFrame, with automatic reconnect on idle disconnect."""
@@ -48,6 +77,20 @@ def execute_write(query, args=None):
     except Exception:
         client = get_connection(force_new=True)
         client.batch([stmt])
+
+
+def close_connection_for_cli_exit():
+    """Close this thread's client when a short-lived CLI audit is finished.
+
+    Long-running services must not call this between requests; it exists only
+    so standalone evidence scripts do not leave a libsql worker thread alive.
+    """
+    client = getattr(_local, 'client', None)
+    if client is not None:
+        client.close()
+        _local.client = None
+    _local.read_client = None
+    _local.read_endpoint = None
 
 
 def init_db():
@@ -270,6 +313,66 @@ def get_pending_order(persona):
     if res.rows:
         return dict(zip(res.columns, res.rows[0]))
     return None
+
+
+def get_approved_pending_order(persona):
+    """Return legacy pending data only when an unconsumed approved plan proves it.
+
+    Missing execution-lineage tables are an expected fail-closed state during
+    migration.  Callers receive an evidence status and must not show the legacy
+    pending row as executable.
+    """
+    from dashboard_data_contract import approved_pending_row
+
+    pending = get_pending_order(persona)
+    if pending is None:
+        return None, "NO_PENDING_ROW"
+    try:
+        plans = execute_query(
+            """
+            SELECT ep.plan_id,ep.persona,ep.target_date,ep.pending_payload_sha256,
+                   ep.qa_status,epa.decision AS approval_decision,
+                   epc.plan_id AS consumed_plan_id
+            FROM execution_plans ep
+            LEFT JOIN execution_plan_approvals epa ON epa.plan_id=ep.plan_id
+            LEFT JOIN execution_plan_consumptions epc ON epc.plan_id=ep.plan_id
+            WHERE ep.persona=? AND ep.target_date=?
+            ORDER BY ep.created_at_utc DESC LIMIT 1
+            """,
+            [persona, str(pending["date"])[:10]],
+        )
+    except Exception:
+        return None, "EXECUTION_LINEAGE_UNAVAILABLE"
+    plan = None if plans.empty else plans.iloc[0].to_dict()
+    return approved_pending_row(pending, plan)
+
+
+def get_validated_benchmark_rows(ticker, start_date, end_date):
+    """Read benchmark closes from the latest validated DB snapshot only."""
+    snapshot = execute_query(
+        """
+        SELECT snapshot_id,source_session_date,available_at_utc
+        FROM model_input_snapshots
+        WHERE dataset_type='MARKET_FEATURES' AND status='VALIDATED'
+        ORDER BY source_session_date DESC,available_at_utc DESC LIMIT 1
+        """
+    )
+    if snapshot.empty:
+        return [], {"status": "NO_VALIDATED_MARKET_SNAPSHOT"}
+    row = snapshot.iloc[0]
+    prices = execute_query(
+        """
+        SELECT date,close_price FROM market_daily_features
+        WHERE snapshot_id=? AND ticker=? AND date>=? AND date<=?
+        ORDER BY date ASC
+        """,
+        [str(row["snapshot_id"]), ticker, start_date, end_date],
+    )
+    return prices.to_dict("records"), {
+        "status": "VALIDATED",
+        "snapshot_id": str(row["snapshot_id"]),
+        "source_session_date": str(row["source_session_date"]),
+    }
 
 
 def update_continuity(pipeline_name, date_str):

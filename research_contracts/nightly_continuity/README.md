@@ -1,0 +1,110 @@
+# Temporary nightly continuity controller
+
+Status: **IMPLEMENTED and fixture-tested only**. Nothing in this directory has
+been deployed, no production service has been changed, and Turso has not been
+contacted.
+
+## Contract
+
+At `03:30 Asia/Jerusalem` every day, the controller reads a root-owned,
+mode-0600, hash-pinned NYSE calendar artifact and selects the most recent
+session whose real UTC close plus the configured settlement delay has passed.
+This handles weekends, exchange holidays, early closes, and DST transitions
+without deriving the session from the Israel wall-clock date. The calendar also
+has an explicit UTC validity horizon; the default deployment contract requires
+at least seven future days of coverage and fails closed before exhaustion.
+
+It then runs a hash-pinned SELECT-only preflight executable and makes one pure,
+fail-closed decision:
+
+1. No snapshot exists: start exactly
+   `codex-market-ingestion@YYYY-MM-DD.service`.
+2. One unique STAGING snapshot exists with zero approvals/screenings: skip the
+   writer and resume exactly at postflight.
+3. A valid terminal handoff already exists: idempotent no-op.
+4. An exact pipeline stage is already live: idempotent no-op.
+5. Any duplicate, non-STAGING lifecycle, downstream output, failed unit,
+   multiple active stage, stale evidence, unsafe legacy unit, or hash mismatch:
+   fail closed without dispatch.
+
+The only automatic successor chain is:
+
+`ingestion -> SELECT-only postflight -> terminal handoff verification`
+
+There is deliberately no baseline, model, recommendation, order, validation,
+promotion, email, or trading successor. The inherited sniper/nightly/QA units
+must remain disabled and inactive; runtime checks enforce this before dispatch.
+
+## Liveness and guarded priority
+
+The ingestion unit receives CPU/IO weight 900, best-effort I/O priority 0, and
+nice -5. The controller independently reads the installed unit's runtime
+properties before dispatch and fails closed on any downgrade. A separate five-
+minute watchdog requires one live pipeline unit, a nonzero MainPID, and a fresh
+canonical, root-owned mode-0600 `progress.json` within the declared 900-second
+maximum interval. The marker binds source session, exact pipeline stage, live
+PID, systemd InvocationID, immutable code version, completed/total units, and a
+fresh UTC observation time. Every ingestion, postflight, and handoff entrypoint
+receives the exact marker path and must update it atomically. It
+records append-only local JSONL evidence. Missing/stale progress, a failed unit,
+or contradictory active stages exits nonzero and never restarts or duplicates
+the writer. Before any dispatch, the controller enumerates every active
+ingestion/postflight/handoff instance and rejects a different source session.
+It also records and enforces CPU-load, available-memory, and free-disk gates.
+
+## Immutable deployment procedure
+
+1. Review and hash the controller, ingestion, handoff, preflight, and NYSE
+   calendar artifacts. The SELECT-only preflight executable must be a
+   root-owned, single-link regular file with mode 0700; data/config/evidence
+   artifacts remain root-owned mode 0600.
+2. Place executable releases in root-owned, mode-0700, non-mutable
+   `/opt/codex-oracle/releases/<name>-<sha256>/` directories. Each directory
+   contains canonical `release-manifest.json`; the directory SHA is the
+   manifest SHA-256, every file hash/mode is enumerated, symlinks and hard links
+   are forbidden, and no unmanifested file is allowed. Concrete entrypoints are
+   `run-nightly-continuity`, `run-nightly-continuity-watchdog`,
+   `run-market-ingestion`, `run-market-ingestion-postflight`, and
+   `run-market-ingestion-handoff`. Each entrypoint independently verifies its
+   complete release manifest before doing work. Pipeline entrypoints supervise
+   a release-local, mode-0700 payload without a shell, preserve its exact exit
+   status, forward termination signals, and atomically persist ACTIVE plus
+   terminal SUCCEEDED/FAILED progress evidence. The generic builder
+   `build_release.py` constructs releases through a same-filesystem staging
+   directory, fsyncs their contents, publishes with one atomic rename, and
+   independently re-verifies the result.
+   `assemble_payload_release_source.py` first copies the reviewed ingestion,
+   provider fallback, SELECT-only postflight, and terminal handoff sources byte
+   for byte into an allowlisted release source tree.  The additive payload
+   adapters reject unknown arguments, re-bind the controller-owned source
+   session, and expose no validation or promotion option.  The ingestion
+   environment must explicitly pin `CODEX_MARKET_UNIVERSE_SNAPSHOT`,
+   `CODEX_MARKET_REQUIRED_TICKERS` (normally `SPY`), and optionally
+   `CODEX_MARKET_WORKERS` (1-12); the Tiingo token remains a read-only file.
+3. Render units with `render_units.py --release-root ...`; rendering first
+   independently resolves and verifies all three immutable releases, then
+   rejects non-SHA release IDs, an existing output directory, unresolved
+   placeholders, or any topology audit failure.
+4. Create `/etc/codex-oracle/nightly-continuity.json` as root:root mode 0600,
+   replacing every example placeholder with reviewed hashes. The separate
+   read-only Turso environment file must also be root:root mode 0600.
+5. Run the focused tests and topology audit in the immutable release.
+6. Only after separate deployment approval, install the rendered units and
+   enable the two temporary timers. Preserve the previous unit files as the
+   rollback artifact.
+7. Disable and remove both temporary timers when the migration completion gate
+   is independently verified.
+
+## Verification
+
+Run from this directory:
+
+```text
+python -m unittest discover -v
+```
+
+The suite covers session selection across weekend/DST examples, calendar and
+executable identity, SELECT-only evidence, duplicate/lifecycle contradictions,
+idempotent decisions, failed-state retry prevention, PID/checkpoint liveness,
+immutable rendering, exact topology, terminal handoff, safety hardening, and
+guarded ingestion priority.

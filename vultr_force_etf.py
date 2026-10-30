@@ -4,7 +4,7 @@ import json
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 print("Connecting to Vultr...")
-ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
 print("Triggering ETF Pipeline on Vultr... (this will take 1-2 minutes)")
 stdin, stdout, stderr = ssh.exec_command("cd /opt/antigravity && source venv/bin/activate && python -u etf_daily_pipeline.py")
 for line in iter(stdout.readline, ""):

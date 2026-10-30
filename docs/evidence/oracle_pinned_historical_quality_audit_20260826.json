@@ -1,0 +1,145 @@
+{
+  "calendar": {
+    "expected_sessions": 1246,
+    "expected_sha256": "030b17a6d94cfebdd24582b8206357b6905c58e5b3d10796b0c8ee3c87b53eeb",
+    "missing_sessions": 0,
+    "non_session_dates": 0,
+    "observed_sessions": 1246,
+    "observed_sha256": "030b17a6d94cfebdd24582b8206357b6905c58e5b3d10796b0c8ee3c87b53eeb"
+  },
+  "checks": {
+    "calendar_exact": true,
+    "coverage_exact": true,
+    "duplicates_zero": true,
+    "metadata_exact": true,
+    "missingness_zero": true,
+    "ohlc_valid": true,
+    "per_session_coverage_exact": true,
+    "primary_key_exact": true,
+    "provider_lineage_exact": true,
+    "ticker_session_grid_exact": true
+  },
+  "coverage": {
+    "first_date": "2021-09-08",
+    "last_date": "2026-08-25",
+    "row_count": 586710,
+    "session_count": 1246,
+    "ticker_count": 474
+  },
+  "denominators": {
+    "provider_lineage_rows": 476,
+    "rows": 586710,
+    "sessions": 1246,
+    "ticker_session_cells": 590604,
+    "tickers": 474
+  },
+  "duplicates": {
+    "duplicate_keys": 0,
+    "duplicate_rows": 0
+  },
+  "evidence_contract": "oracle-pinned-historical-quality-audit-v1",
+  "evidence_sha256": "f7ce89b7a9516d2e9f39cdf3d45d6d948c34470414e7e7012e1370969b97eeb2",
+  "observed_at_utc": "2026-08-26T21:32:31.303085+00:00",
+  "per_session_coverage": {
+    "full_ticker_sessions": 357,
+    "max_tickers": 474,
+    "min_tickers": 467,
+    "sessions": 1246
+  },
+  "provider_lineage": {
+    "duplicate_lineage": 0,
+    "extra_lineage_tickers": [
+      "^TNX",
+      "^VIX"
+    ],
+    "feature_tickers_without_lineage": 0,
+    "invalid_lineage": 0,
+    "invalid_provider": 0,
+    "lineage_rows": 476,
+    "lineage_tickers": 476,
+    "sha256": "7f92af47988d11251840b705c5dedf60cb88774aed73da8ba1a812d86195ab4a",
+    "summary": [
+      {
+        "checksum_count": 24,
+        "first_min": "2021-08-02",
+        "last_max": "2026-08-25",
+        "provider": "TIINGO_EOD",
+        "source_rows": 30528,
+        "ticker_count": 24
+      },
+      {
+        "checksum_count": 452,
+        "first_min": "2021-08-02",
+        "last_max": "2026-08-25",
+        "provider": "YAHOO_FINANCE",
+        "source_rows": 571051,
+        "ticker_count": 452
+      }
+    ]
+  },
+  "quality": {
+    "high_violations": 0,
+    "low_violations": 0,
+    "negative_volume": 0,
+    "nonpositive_prices": 0,
+    "null_critical_features": 0,
+    "null_date": 0,
+    "null_ohlcv": 0,
+    "null_sector": 0,
+    "null_ticker": 0
+  },
+  "read_only": true,
+  "sanitization": {
+    "credentials_included": false,
+    "source_rows_included": false
+  },
+  "snapshot_id": "market_features_2026-08-25_5b1044ee45605a3d",
+  "status": "PASS",
+  "ticker_session_grid": {
+    "full_coverage_tickers": 466,
+    "max_ticker_sessions": 1246,
+    "min_ticker_sessions": 358,
+    "missing_cells": 3894,
+    "observed_cells": 586710,
+    "possible_cells": 590604,
+    "session_distribution": [
+      [
+        358,
+        1
+      ],
+      [
+        478,
+        1
+      ],
+      [
+        579,
+        1
+      ],
+      [
+        583,
+        1
+      ],
+      [
+        804,
+        1
+      ],
+      [
+        899,
+        1
+      ],
+      [
+        1128,
+        1
+      ],
+      [
+        1245,
+        1
+      ],
+      [
+        1246,
+        466
+      ]
+    ],
+    "ticker_coverage_sha256": "fa0d8f75e48b7367bb8ba7b7fda2f0db5447f7f9473efa3657f002de8a52d042"
+  }
+}

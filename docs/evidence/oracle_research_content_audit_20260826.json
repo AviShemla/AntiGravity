@@ -1,0 +1,65 @@
+{
+  "evidence_record_id": "oracle-research-content-audit-20260826",
+  "status": "OBSERVED/VERIFIED_READBACK",
+  "runtime_evidence": {
+    "unit": "codex-oracle-content-audit-20260826.service",
+    "invocation_id": "9f1c2cd1ed274c66b498550fb89f9314",
+    "code_git_commit": "2cc365de3e1811c9b870e1e7738d5ec3bcd6d381",
+    "started_at_utc": "2026-08-26T15:03:12Z",
+    "terminal_at_utc": "2026-08-26T15:08:28Z",
+    "terminal_state": "deactivated successfully",
+    "wall_duration_seconds": 316.147,
+    "cpu_duration_seconds": 205.17,
+    "peak_memory": "84.2M",
+    "durable_log_path": "/var/cache/antigravity/oracle-content-audit-20260826.log",
+    "durable_log_sha256": "42e1dd787b0e53a167a19a3945a5a593a9657703a5441f5300dac7241e416886"
+  },
+  "logical_evidence": {
+    "canonical_content": {
+      "content_encoding": "oracle-market-daily-features-jsonl-v1",
+      "content_sha256": "07735e093c39546276082eba82f53a52d43a71cb1cff2d032b58f1315857a834",
+      "first_session_date": "2021-09-08",
+      "last_session_date": "2026-08-25",
+      "row_count": 586710,
+      "ticker_count": 474,
+      "ticker_universe_encoding": "oracle-market-ticker-universe-jsonl-v1",
+      "ticker_universe_sha256": "267cdd0dba60a55346ba6f8a6e843259eacae924c9ea8740a093ea2cce3d1e26"
+    },
+    "coverage": {
+      "first_session_date": "2021-09-08",
+      "last_session_date": "2026-08-25",
+      "row_count": 586710,
+      "ticker_count": 474
+    },
+    "evidence_contract": "oracle-research-content-audit-v1",
+    "evidence_sha256": "b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3",
+    "pagination": {
+      "maximum_page_rows": 4000,
+      "nonempty_page_count": 147,
+      "page_size": 4000,
+      "query_count": 148,
+      "retained_row_count": 0
+    },
+    "read_only": true,
+    "snapshot": {
+      "available_at_utc": "2026-08-26T06:44:37+00:00",
+      "code_version": "1e28786832b633c8b63163e7954e3297b0b9ec0e",
+      "dataset_type": "MARKET_FEATURES",
+      "provider": "TIINGO_EOD+YAHOO_FINANCE",
+      "snapshot_id": "market_features_2026-08-25_5b1044ee45605a3d",
+      "source_checksum_sha256": "5b1044ee45605a3d34eb459c2fdafb931da94f5dbe7b41adc8be8e303c5df011",
+      "source_session_date": "2026-08-25",
+      "status": "VALIDATED"
+    }
+  },
+  "independent_readback": {
+    "method": "canonical-json-sha256-with-evidence_sha256-omitted",
+    "recomputed_evidence_sha256": "b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3",
+    "matches": true
+  },
+  "sanitization": {
+    "credentials_included": false,
+    "endpoint_included": false,
+    "source_rows_included": false
+  }
+}

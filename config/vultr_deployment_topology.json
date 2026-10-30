@@ -1,0 +1,42 @@
+{
+  "canonical_worktree": "/home/codexops/codex_git/AntiGravity",
+  "canonical_origin": "git@github.com:AviShemla/AntiGravity.git",
+  "runtime_root": "/opt/antigravity",
+  "python_runtime": "/opt/antigravity/venv/bin/python",
+  "units": {
+    "ag-uvicorn.service": {
+      "working_directory": "/opt/antigravity",
+      "exec_contains": ["/opt/antigravity/venv/bin/uvicorn", "server:app"]
+    },
+    "ag-vix.service": {
+      "working_directory": "/opt/antigravity",
+      "exec_contains": ["/opt/antigravity/venv/bin/python", "vix_monitor.py"]
+    },
+    "ag-sniper.service": {
+      "working_directory": "/opt/antigravity",
+      "exec_contains": ["/opt/antigravity/venv/bin/python", "intraday_tracker.py"]
+    },
+    "antigravity-nightly.service": {
+      "working_directory": "/opt/antigravity",
+      "exec_contains": ["/opt/antigravity/laptop_catchup_controller.py", "master"]
+    },
+    "antigravity-qa-watchdog.service": {
+      "working_directory": "/opt/antigravity",
+      "exec_contains": ["/opt/antigravity/daily_dashboard_qa_watchdog.py"]
+    }
+  },
+  "frozen_units": {
+    "ag-sniper.service": {"active_state": "inactive", "unit_file_state": "disabled"},
+    "antigravity-nightly.timer": {"active_state": "inactive", "unit_file_state": "disabled"},
+    "antigravity-qa-watchdog.timer": {"active_state": "inactive", "unit_file_state": "disabled"}
+  },
+  "runtime_mirrors": [
+    "server.py",
+    "vix_monitor.py",
+    "intraday_tracker.py",
+    "laptop_catchup_controller.py",
+    "daily_dashboard_qa_watchdog.py",
+    "master_pipeline.py",
+    "scripts/rebuild_market_features_to_turso.py"
+  ]
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=Codex Oracle verified ingestion-to-baseline handoff for %i
+After=codex-market-ingestion-postflight@%i.service
+OnSuccess=codex-stock-baseline@%i.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/opt/codex-oracle/market-ingestion/current/python /opt/codex-oracle/market-ingestion/current/verify_postflight_handoff.py --source-session %i --artifact /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json --max-age-seconds 300
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json

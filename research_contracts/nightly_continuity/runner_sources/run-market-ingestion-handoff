@@ -1,0 +1,12 @@
+#!/opt/antigravity/venv/bin/python
+from __future__ import annotations
+
+import sys
+
+sys.dont_write_bytecode = True
+
+from stage_runner import run_stage_main
+
+
+if __name__ == "__main__":
+    raise SystemExit(run_stage_main("HANDOFF", "payload/run-market-ingestion-handoff-impl", sys.argv[1:]))

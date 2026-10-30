@@ -1,7 +1,7 @@
 import paramiko
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('66.42.118.26', port=22, username='root', password='M,w5_=k@eHA!ecEK')
+ssh.connect('66.42.118.26', port=22, username='root', password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
 i, o, e = ssh.exec_command('cd /opt/antigravity && /opt/antigravity/venv/bin/python -u -c "import database_manager; client = database_manager.get_connection(); res = client.execute(\'SELECT persona, date FROM pending_orders\'); print(res.rows); import os; os._exit(0)"')
 print("STDOUT:")
 print(o.read().decode('utf-8'))

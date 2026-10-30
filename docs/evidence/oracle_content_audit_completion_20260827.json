@@ -1,0 +1,44 @@
+{
+  "canonical_git_commit": "862a5f675f55f3c9401210e830199fe046e1e60c",
+  "contract_id": "codex-oracle-fresh-content-audit-completion-v1",
+  "execution": {
+    "finished_at_utc": "2026-08-27T14:06:33.332041Z",
+    "invocation_id": "7daf0eac94b64d05bdc6b55805c4da3d",
+    "log_document_count": 2,
+    "log_sha256": "fd974ec14683c8321844d24407067e922fc27c259038c2a377209c6d8cc74c9b",
+    "note": "The append-only log contained one older audit document and one fresh document. The fresh document is the final JSON object and differs only in pagination geometry while preserving the exact canonical content identity.",
+    "started_at_utc": "2026-08-27T14:00:39Z",
+    "unit": "codex-oracle-content-audit-20260827-v2.service"
+  },
+  "fresh_readback": {
+    "content_sha256": "07735e093c39546276082eba82f53a52d43a71cb1cff2d032b58f1315857a834",
+    "evidence_sha256": "b0b775d6aa4ff37faacb3987a65019724b358cdc86d5aa5967aea927c1401df3",
+    "first_session_date": "2021-09-08",
+    "last_session_date": "2026-08-25",
+    "nonempty_page_count": 147,
+    "page_size": 4000,
+    "query_count": 148,
+    "read_only": true,
+    "retained_row_count": 0,
+    "row_count": 586710,
+    "snapshot_id": "market_features_2026-08-25_5b1044ee45605a3d",
+    "ticker_count": 474,
+    "ticker_universe_sha256": "267cdd0dba60a55346ba6f8a6e843259eacae924c9ea8740a093ea2cce3d1e26"
+  },
+  "release": {
+    "manifest_sha256": "f2a14293e55610b14538ea97f9910c13e32be5c4608c30ea1c9dc999a6010185",
+    "root": "/var/lib/codex-oracle-research/releases/content-audit-862a5f6-1c9c12198cbd",
+    "root_owned": true,
+    "world_or_group_writable_files": 0
+  },
+  "safety": {
+    "database_writes": 0,
+    "etf_outputs": 0,
+    "orders": 0,
+    "recommendations": 0,
+    "snapshot_promotion": 0,
+    "snapshot_validation": 0,
+    "trading": 0
+  },
+  "status": "VERIFIED_SELECT_ONLY"
+}

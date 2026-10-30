@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Oracle Autonomy"
+  short_description: "Evidence-gated autonomous Oracle migration"
+  default_prompt: "Use $codex-oracle-autonomy to advance the Oracle migration autonomously and safely."

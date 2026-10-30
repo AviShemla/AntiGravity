@@ -1,0 +1,14 @@
+[Unit]
+Description=Codex Oracle governed stock baseline successor for source session %i
+After=codex-market-ingestion-handoff@%i.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/opt/codex-oracle/stock-baseline/current/run --source-session %i --handoff /var/lib/codex-oracle/market-ingestion/%i/postflight-handoff.json
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

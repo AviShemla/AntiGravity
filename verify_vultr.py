@@ -3,7 +3,7 @@ import paramiko
 def verify():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+    ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
     
     print("Checking app.js for dtick:")
     stdin, stdout, stderr = ssh.exec_command("cat /opt/antigravity/frontend/app.js | grep dtick")

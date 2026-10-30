@@ -1,0 +1,27 @@
+[Unit]
+Description=Codex Oracle guarded market ingestion for NYSE session %i
+After=network-online.target
+Wants=network-online.target
+OnSuccess=codex-market-ingestion-postflight@%i.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=/etc/codex-oracle/market-ingestion.env
+CPUWeight=900
+IOWeight=900
+Nice=-5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
+ExecStart=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@/run-market-ingestion --source-session %i --progress-marker /var/lib/codex-oracle/market-ingestion/%i/progress.json --code-version @INGESTION_RELEASE_SHA256@ --heartbeat-seconds 60 --total-units 1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/codex-oracle/releases/market-ingestion-@INGESTION_RELEASE_SHA256@
+ReadOnlyPaths=/etc/codex-oracle/market-ingestion.env
+ReadOnlyPaths=/etc/antigravity/tiingo.token
+ReadWritePaths=/var/lib/codex-oracle/market-ingestion/%i

@@ -66,10 +66,31 @@
             height: auto !important;
             margin: 0 auto;
         }
+        .mermaid { display: none; }
+        .architecture-grid { display: grid; gap: 22px; margin: 24px auto; max-width: 1450px; width: 95%; }
+        .architecture-layer { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px; }
+        .architecture-layer h2 { color: #58a6ff; font-size: 1rem; letter-spacing: .08em; margin: 0 0 16px; text-transform: uppercase; }
+        .architecture-nodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
         .node {
-            cursor: crosshair;
+            align-items: center;
+            background: #0d1117;
+            border: 2px solid #238636;
+            border-radius: 12px;
+            color: #c9d1d9;
+            cursor: help;
+            display: flex;
+            justify-content: center;
+            min-height: 76px;
+            padding: 12px;
+            text-align: center;
             transition: all 0.3s ease;
         }
+        .node.input { border-color: #1f6feb; }
+        .node.database { border-color: #e34c26; }
+        .node.blocked { border-color: #f85149; }
+        .node.frozen { border-color: #a371f7; }
+        .node.pipeline { border-color: #d29922; }
+        .flow-label { color: #8b949e; font-size: .85rem; margin-top: 14px; }
         .node:hover {
             filter: brightness(1.3) drop-shadow(0 0 10px rgba(255,255,255,0.3));
         }

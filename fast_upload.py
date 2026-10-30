@@ -5,7 +5,7 @@ import sys
 print("Uploading 17MB slim zip...")
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
 sftp = ssh.open_sftp()
 sftp.put(r"C:\Users\AviShemla\AntiGravity\vultr_slim.zip", "/opt/vultr_slim.zip")
 print("Upload complete!")

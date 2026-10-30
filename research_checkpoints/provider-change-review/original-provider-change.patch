@@ -1,0 +1,99 @@
+diff --git a/market_data_provider.py b/market_data_provider.py
+index f6e4314e..e73de41e 100644
+--- a/market_data_provider.py
++++ b/market_data_provider.py
+@@ -23,11 +23,6 @@ from market_data_guard import validate_daily_bars
+ 
+ HistoryFetcher = Callable[[str, date, str], pd.DataFrame]
+ 
+-# Provider selection must be stricter than any downstream repair. A raw series
+-# with even a one-cent OHLC envelope violation is semantically invalid and must
+-# fall through to the next provider rather than being silently normalized.
+-RAW_PROVIDER_OHLC_RELATIVE_TOLERANCE = 0.0
+-
+ 
+ def resolve_tiingo_api_key(token_file: str | Path | None = None) -> str | None:
+     """Load a Tiingo token from a secret file or, secondarily, the environment."""
+@@ -69,6 +64,47 @@ def normalize_yahoo_history(raw: pd.DataFrame) -> pd.DataFrame:
+     return frame.rename(columns={frame.columns[0]: "Date"})
+ 
+ 
++def remove_known_yahoo_vix_placeholder(
++    frame: pd.DataFrame,
++    ticker: str,
++    *,
++    nyse_trading_sessions: set[date] | None,
++) -> pd.DataFrame:
++    """Remove Yahoo's known VIX placeholder only outside the NYSE calendar.
++
++    Missing calendar evidence fails closed: all Yahoo rows remain subject to
++    the strict market-data guard.
++    """
++    required = ["Open", "High", "Low", "Close", "Volume"]
++    if ticker != "^VIX" or nyse_trading_sessions is None or "Date" not in frame.columns:
++        return frame
++    if not set(required).issubset(frame.columns):
++        return frame
++
++    dates = pd.to_datetime(frame["Date"], errors="coerce").dt.date
++    def missing_or_actual_numeric_zero(value: object) -> bool:
++        """Reject text/coerced values so malformed input reaches the strict guard."""
++        if pd.isna(value):
++            return True
++        if isinstance(value, (bool, np.bool_)):
++            return False
++        if isinstance(value, (int, float, np.integer, np.floating)):
++            return bool(np.isfinite(value) and value == 0.0)
++        return False
++
++    placeholder_values = frame[required].apply(
++        lambda column: column.map(missing_or_actual_numeric_zero)
++    )
++    placeholder = (
++        dates.eq(date(2025, 11, 27))
++        & ~dates.isin(nyse_trading_sessions)
++        & placeholder_values.all(axis=1)
++    )
++    if not placeholder.any():
++        return frame
++    return frame.loc[~placeholder].copy()
++
++
+ def fetch_tiingo_history(
+     ticker: str,
+     source_session: date,
+@@ -181,6 +217,7 @@ def fetch_validated_daily_bars(
+     tiingo_api_key: str | None,
+     yahoo_fetcher: HistoryFetcher | None = None,
+     tiingo_fetcher: HistoryFetcher | None = None,
++    nyse_trading_sessions: set[date] | None = None,
+     minimum_rows: int = 252,
+     yahoo_attempts: int = 3,
+     sleep_fn: Callable[[float], None] = time.sleep,
+@@ -192,12 +229,16 @@ def fetch_validated_daily_bars(
+     failures: list[str] = []
+     for attempt in range(yahoo_attempts):
+         try:
++            raw_yahoo = normalize_yahoo_history(yahoo(ticker, source_session, start_date))
+             validated = validate_daily_bars(
+-                normalize_yahoo_history(yahoo(ticker, source_session, start_date)),
++                remove_known_yahoo_vix_placeholder(
++                    raw_yahoo,
++                    ticker,
++                    nyse_trading_sessions=nyse_trading_sessions,
++                ),
+                 ticker=ticker,
+                 source_session_date=source_session,
+                 minimum_rows=minimum_rows,
+-                ohlc_relative_tolerance=RAW_PROVIDER_OHLC_RELATIVE_TOLERANCE,
+             )
+             return ticker, validated, "YAHOO_FINANCE", None
+         except Exception as exc:
+@@ -221,7 +262,6 @@ def fetch_validated_daily_bars(
+             ticker=ticker,
+             source_session_date=source_session,
+             minimum_rows=minimum_rows,
+-            ohlc_relative_tolerance=RAW_PROVIDER_OHLC_RELATIVE_TOLERANCE,
+         )
+         return ticker, validated, "TIINGO_EOD", None
+     except Exception as exc:

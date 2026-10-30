@@ -1,0 +1,11 @@
+[Unit]
+Description=Codex Oracle ingestion continuity liveness timer
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+AccuracySec=15s
+Unit=codex-market-nightly-continuity-watchdog.service
+
+[Install]
+WantedBy=timers.target

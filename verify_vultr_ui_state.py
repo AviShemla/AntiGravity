@@ -18,7 +18,7 @@ print("\n2. Checking Vultr CSV via SSH...")
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 try:
-    ssh.connect("66.42.118.26", port=22, username="root", password="M,w5_=k@eHA!ecEK")
+    ssh.connect("66.42.118.26", port=22, username="root", password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
     stdin, stdout, stderr = ssh.exec_command("tail -n 5 /opt/antigravity/financial_data/Prod_vs_Shadow_Results_MASTER.csv")
     print("Vultr CSV Tail:")
     print(stdout.read().decode())

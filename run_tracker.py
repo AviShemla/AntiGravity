@@ -3,7 +3,7 @@ import paramiko
 def run():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect('66.42.118.26', username='root', password='M,w5_=k@eHA!ecEK')
+    ssh.connect('66.42.118.26', username='root', password=__import__("os").environ["VULTR_ROOT_PASSWORD"])
     
     print("Running prod_vs_shadow_tracker.py on Vultr...")
     cmd = "cd /opt/antigravity && ./venv/bin/python3 prod_vs_shadow_tracker.py"
