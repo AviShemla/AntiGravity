@@ -37,10 +37,12 @@ try:
     schedule = nyse.schedule(start_date=(now - pd.Timedelta(days=7)).strftime('%Y-%m-%d'), end_date=(now + pd.Timedelta(days=7)).strftime('%Y-%m-%d'))
     past_sessions = schedule[schedule['market_close'] < now]
     
-    if now.hour < 16 and not past_sessions[past_sessions.index == now.strftime('%Y-%m-%d')].empty:
-        target_date = now.strftime('%Y-%m-%d')
+    today_str = now.strftime('%Y-%m-%d')
+    is_today_session = today_str in schedule.index.strftime('%Y-%m-%d')
+    if now.hour < 16 and is_today_session:
+        target_date = today_str
     else:
-        target_date = schedule[schedule.index > now.strftime('%Y-%m-%d')].iloc[0].name.strftime('%Y-%m-%d')
+        target_date = schedule[schedule.index > today_str].iloc[0].name.strftime('%Y-%m-%d')
         
     print(f"[INFO] Evaluating Market Open Readiness for Target Date: {target_date}")
     
@@ -64,7 +66,7 @@ try:
     missing = check_readiness()
     
     if missing:
-        is_market_open = now.hour >= 9 and now.hour < 16 and not past_sessions[past_sessions.index == now.strftime('%Y-%m-%d')].empty
+        is_market_open = now.hour >= 9 and now.hour < 16 and is_today_session
         
         if is_market_open:
             print(f"[FAIL] CRITICAL ERROR: Market Open Readiness Directive VIOLATED! Missing active predictions for: {missing}")

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The ORACLE Core Architecture</title>
+    <title>The ORACLE Core Architecture (v2.5 Deterministic Lineage)</title>
     <style>
         body {
             background-color: #0d1117;
@@ -11,33 +12,49 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 50px 20px;
+            padding: 36px 20px;
             margin: 0;
             width: 100%;
             box-sizing: border-box;
         }
         h1 {
             color: #58a6ff;
-            font-size: 3rem;
-            margin-bottom: 10px;
+            font-size: 2.6rem;
+            margin-bottom: 6px;
             font-weight: 700;
             letter-spacing: -0.5px;
             text-align: center;
             text-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
         }
-        p {
+        p.subtitle {
             color: #8b949e;
-            font-size: 1.1rem;
-            margin-bottom: 50px;
+            font-size: 1.05rem;
+            margin-bottom: 24px;
             text-align: center;
+        }
+        .badge-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+        .arch-badge {
+            background: rgba(22, 27, 34, 0.9);
+            border: 1px solid #30363d;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            color: #58a6ff;
+            font-weight: 600;
         }
         .mermaid {
             background-color: #161b22;
-            padding: 40px;
+            padding: 32px;
             border-radius: 20px;
             border: 1px solid #30363d;
             box-shadow: 0 24px 48px rgba(0,0,0,0.8), 0 0 40px rgba(88,166,255,0.05);
-            width: 95%;
+            width: 96%;
             max-width: 2400px;
             margin: 0 auto;
             overflow-x: auto;
@@ -45,7 +62,7 @@
         }
         .mermaid svg {
             width: 100% !important;
-            min-width: 1100px;
+            min-width: 1150px;
             height: auto !important;
             margin: 0 auto;
         }
@@ -56,33 +73,31 @@
         .node:hover {
             filter: brightness(1.3) drop-shadow(0 0 10px rgba(255,255,255,0.3));
         }
-        
-        /* Premium Custom Tooltip */
         #custom-tooltip {
             position: fixed;
             opacity: 0;
             pointer-events: none;
-            background: rgba(13, 17, 23, 0.85);
+            background: rgba(13, 17, 23, 0.92);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid #30363d;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05) inset;
+            border: 1px solid #58a6ff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,255,255,0.05) inset;
             border-radius: 12px;
-            padding: 20px;
-            width: 320px;
+            padding: 18px;
+            width: 350px;
             z-index: 1000;
             transition: opacity 0.15s ease;
             color: #e6edf3;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             line-height: 1.5;
         }
         .tooltip-title {
             color: #58a6ff;
             font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 12px;
+            font-size: 1.05rem;
+            margin-bottom: 10px;
             border-bottom: 1px solid #30363d;
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
         .tooltip-row {
             margin-bottom: 6px;
@@ -90,7 +105,7 @@
         .tooltip-label {
             color: #8b949e;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -103,180 +118,197 @@
 </head>
 <body>
 
-    <h1>The ORACLE Core Architecture</h1>
-    <p>Hover your mouse over any component to explore its deep system metrics.</p>
+    <h1>The ORACLE Core Architecture (v2.5)</h1>
+    <p class="subtitle">100% Turso Cloud SSOT • Seeded 2-Chain PyMC SV + Dual-Head Engine • 8-Persona Kelly Broker • 7-Stage Deterministic Lineage</p>
+
+    <div class="badge-bar">
+        <span class="arch-badge">☁️ Turso Cloud SSOT (Zero Local DB Fallback)</span>
+        <span class="arch-badge">⚡ Vultr VPS + Prefect 3 Orchestrator</span>
+        <span class="arch-badge">🧬 Seeded 2-Chain PyMC NUTS (SV + Dual-Head)</span>
+        <span class="arch-badge">🔍 7-Stage Traceability (trace_decision.py & /api/trace)</span>
+        <span class="arch-badge">🛡️ 9-Script Zero-Trust QA Suite (qa_manager.py)</span>
+    </div>
 
     <div id="custom-tooltip"></div>
 
-    <div class="mermaid">
+    <div class="mermaid" id="arch-mermaid">
     graph TD
-        %% Inputs
         classDef input fill:#0d1117,stroke:#1f6feb,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef pipeline fill:#0d1117,stroke:#d29922,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef model fill:#0d1117,stroke:#238636,stroke-width:3px,color:#c9d1d9,font-weight:bold;
-        classDef output fill:#0d1117,stroke:#f85149,stroke-width:3px,color:#c9d1d9,font-weight:bold;
+        classDef lineage fill:#0d1117,stroke:#00e5ff,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef broker fill:#0d1117,stroke:#a371f7,stroke-width:3px,color:#c9d1d9,font-weight:bold;
+        classDef qa fill:#0d1117,stroke:#f85149,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef ui fill:#0d1117,stroke:#8b949e,stroke-width:3px,color:#c9d1d9,font-weight:bold;
         classDef database fill:#0d1117,stroke:#e34c26,stroke-width:4px,color:#c9d1d9,font-weight:bold;
 
         %% Data Sources
-        YF[(Yahoo Finance<br>Price Data)]:::input
-        TIINGO[(Tiingo Institutional<br>API Fallback)]:::input
-        FAILOVER[failover_downloader.py<br>Self-Healing API]:::pipeline
-        FRED[(FRED<br>Macro Data)]:::input
-        VIX[(VIX Monitor<br>Fear Gauge)]:::input
+        YF[("Yahoo Finance<br>OHLCV & Intraday 1m")]:::input
+        TIINGO[("Tiingo Institutional<br>REST API Failover")]:::input
+        FRED[("FRED & ^TNX<br>Macro Yield Curve")]:::input
+        VIX[("vix_monitor.py<br>Live CBOE ^VIX Daemon")]:::input
+        FAILOVER["failover_downloader.py<br>Self-Healing Ingestion"]:::pipeline
 
-        %% Connections
         YF --> FAILOVER
         TIINGO --> FAILOVER
 
-        %% The Core
-        SSOT_DB[(Turso Cloud DB<br>Unified Cloud SSOT)]:::database
+        %% Orchestration & Core Config
+        PREFECT["prefect_pipeline.py<br>Vultr Prefect 3 Orchestrator"]:::pipeline
+        PREFLIGHT["preflight_check.py<br>Pre-Market Readiness Gate"]:::qa
+        ZOMBIE["clean_ghosts.py<br>Whitelisted Zombie Hunter"]:::qa
+        ENGINE_CONFIG["engine_config.py<br>Seeded 2-Chain PyMC Config"]:::pipeline
+        MASTER["master_pipeline.py<br>Nightly Sequential DAG"]:::pipeline
+        LINEAGE_CORE["oracle_lineage_core.py<br>Deterministic Seeds & Kelly Gate"]:::lineage
 
-        %% Orchestration
-        ENGINE_CONFIG[engine_config.py<br>PyTensor C-Graph Injector]:::pipeline
-        MASTER[master_pipeline.py<br>Orchestrator]:::pipeline
-        
+        PREFECT --> PREFLIGHT
+        PREFECT --> ZOMBIE
+        PREFLIGHT --> MASTER
+        ENGINE_CONFIG --> MASTER
+        LINEAGE_CORE --> MASTER
+
+        %% Turso Cloud SSOT
+        SSOT_DB[("Turso Cloud DB (SSOT)<br>capital_ledgers | pending_orders<br>etf_scorecards_master | yahoo_daily_prices<br>feature_lineage_audit | decision_lineage_audit<br>prod_vs_shadow_master | olympic_shootout_master")]:::database
+
         %% Stock Pipeline
-        subgraph Daily Stock Universe
-            STOCK_SCREEN[fast_screener.py<br>Top 15 Momentum]:::pipeline
-            DATA_LOADER[data_loader.py<br>Matrix Array Validation]:::pipeline
-            STOCK_PYMC[export_bayesian_scorecard.py<br>Apollo Causality Engine]:::model
-            YIELD_CURVE["^TNX Yield Curve<br>Risk Sensor"]:::model
-            QA_MODELS[qa_models.py<br>Bounds Validator]:::model
-            SECTOR_GRAVITY[sector_gravity.py<br>Macro Momentum Filter]:::pipeline
-            STOCK_BROKER[virtual_broker.py<br>3-Persona Staging]:::broker
-INTRADAY_SNIPER[intraday_tracker.py<br>Intraday Execution Engine]:::broker
-            STOCK_SCORE[Top5_Scorecard.xlsx]:::output
-QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
-            IDEMPOTENT_OVERRIDE[Idempotent Integrity<br>Ledger Overwrite]:::model
-        end
-
-        %% The Bridge
-        subgraph The Weekend Bridge
-            FUNDAMENTALS[extract_fundamentals.py<br>S&P 500 Fundamentals]:::model
-            STOCK_DB[(S&P 500<br>Fundamental Database)]:::input
-            SUNDAY_SCREENER["SUNDAY_SCREENER<br>Nasdaq FTP + 50M Liquidity Scan"]:::pipeline
-            MASTER_ETF_JSON[(Master_ETF_Universe.json<br>Top 35 Menu)]:::input
+        subgraph Stock_Pipeline ["Phase 1: Single Stock Causal & Bayesian Pipeline (4 Personas)"]
+            DATA_LOADER["data_loader.py<br>T-1 Shifted Predictors & NaN Bridge"]:::pipeline
+            STOCK_SCREEN["fast_screener.py<br>Active_Portfolio.csv Top 10 VIP"]:::pipeline
+            STOCK_PYMC["export_bayesian_scorecard_formatted.py<br>Seeded 2-Chain SV + Dual-Head NUTS"]:::model
+            SECTOR_GRAVITY["sector_gravity.py<br>Bottom-Up Sector Regime Bridge"]:::pipeline
+            STOCK_BROKER["virtual_broker.py<br>4-Persona Fractional Kelly Engine"]:::broker
         end
 
         %% ETF Pipeline
-        subgraph Dynamic Thematic ETF Universe
-            ETF_SCREEN[generate_dynamic_etfs.py<br>Dynamic Top 10 Funnel]:::pipeline
-            ETF_PYMC[export_etf_scorecard.py<br>Rust SV PyMC Engine]:::model
-            ETF_BROKER[etf_virtual_broker.py<br>VIX-Aware Broker]:::broker
-            ETF_SCORE[All_ETFs_Scorecard.xlsx]:::output
+        subgraph ETF_Pipeline ["Phase 2: Multi-Sector & Thematic ETF Pipeline (4 Personas)"]
+            ETF_SCREEN["generate_dynamic_etfs.py<br>Top 10 Dynamic ETFs + Whales"]:::pipeline
+            ETF_MATRIX["build_etf_hybrid_matrix.py<br>Macro + Sector Momentum Matrix"]:::pipeline
+            ETF_PYMC["export_etf_scorecard.py<br>Seeded 2-Chain SV + Dual-Head NUTS"]:::model
+            ETF_BROKER["etf_virtual_broker.py<br>4-Persona ETF Kelly Engine"]:::broker
         end
 
-        %% UI & Backend
-        BACKEND["FastAPI<br>Uvicorn Server"]:::pipeline
-        WEB_UI["Premium 3D<br>Web UI"]:::ui
-        GIT_VAULT["Git Vault<br>Auto-Backup"]:::ui
-        EXEC_BRIEF["executive_brief.py<br>Executive Assistant"]:::pipeline
+        %% Intraday Sniper & Arena
+        subgraph Execution_And_Arena ["Phase 3: Live Intraday Sniper & 8-Model Arena"]
+            INTRADAY_SNIPER["intraday_tracker.py<br>1m VWAP Breakout, Momentum Shield & TP/SL"]:::broker
+            SHADOW_ARENA["prod_vs_shadow_tracker.py & run_backtests.py<br>8-Model & Olympic Universe Shootout"]:::model
+            TRACE_ENGINE["trace_decision.py<br>7-Stage Deterministic Proof Engine"]:::lineage
+            QA_SUITE["qa_manager.py & qa_financial_audit.py<br>9-Script Zero-Trust Auditor"]:::qa
+        end
 
-        %% Routing
-        YF --> FAILOVER
-        FAILOVER --> STOCK_SCREEN
-        FAILOVER --> ETF_SCREEN
-        FAILOVER --> FUNDAMENTALS
-        FRED --> FUNDAMENTALS
-        
-        ENGINE_CONFIG --> MASTER
+        %% Web UI & Reporting
+        BACKEND["server.py (FastAPI Port 80)<br>/api/holdings | /api/race | /api/unified_arena<br>/api/bayesian | /api/autopsy | /api/trace"]:::pipeline
+        WEB_UI["frontend/index.html & app.js<br>5-Tab Interactive Dashboard"]:::ui
+        EXEC_BRIEF["executive_brief.py<br>4-Email Max Green-Light Dispatcher"]:::pipeline
+
+        %% Connections
+        FAILOVER --> DATA_LOADER
+        FRED --> DATA_LOADER
         MASTER --> STOCK_SCREEN
-        MASTER --> ETF_SCREEN
-        MASTER --> FUNDAMENTALS
-        MASTER --> GIT_VAULT
-        MASTER --> EXEC_BRIEF
-
         STOCK_SCREEN --> DATA_LOADER
         DATA_LOADER --> STOCK_PYMC
-        YIELD_CURVE --> STOCK_PYMC
-        STOCK_PYMC --> QA_MODELS
-        QA_MODELS --> STOCK_SCORE
+        LINEAGE_CORE --> STOCK_PYMC
+        STOCK_PYMC -->|"Writes Scorecards & Feature Lineage"| SSOT_DB
+        STOCK_PYMC --> SECTOR_GRAVITY
         SECTOR_GRAVITY --> STOCK_BROKER
-        STOCK_SCORE --> STOCK_BROKER
         VIX --> STOCK_BROKER
-        STOCK_BROKER -->|Writes Pending| SSOT_DB
-        SSOT_DB -.->|Reads Pending| INTRADAY_SNIPER
-        VIX --> INTRADAY_SNIPER
-        INTRADAY_SNIPER --> IDEMPOTENT_OVERRIDE
-        IDEMPOTENT_OVERRIDE -->|Writes Ledger| SSOT_DB
-        SSOT_DB -.-> QA_BLACKLIST
+        STOCK_BROKER -->|"Writes Decision Lineage & Pending Orders"| SSOT_DB
 
-        FUNDAMENTALS --> STOCK_DB
-        STOCK_DB -.->|Stock Fundamental Priors| ETF_PYMC
-
-        SUNDAY_SCREENER --> MASTER_ETF_JSON
-        MASTER_ETF_JSON --> ETF_SCREEN
-        ETF_SCREEN --> ETF_PYMC
-        ETF_PYMC --> ETF_SCORE
-        ETF_SCORE --> ETF_BROKER
+        SECTOR_GRAVITY -->|"Interlock: SEC_REG & SEC_MOM"| ETF_MATRIX
+        MASTER --> ETF_SCREEN
+        FAILOVER --> ETF_SCREEN
+        ETF_SCREEN --> ETF_MATRIX
+        ETF_MATRIX --> ETF_PYMC
+        LINEAGE_CORE --> ETF_PYMC
+        ETF_PYMC -->|"Writes ETF Scorecards & Feature Lineage"| SSOT_DB
+        ETF_PYMC --> ETF_BROKER
         VIX --> ETF_BROKER
+        ETF_BROKER -->|"Writes Decision Lineage & Pending Orders"| SSOT_DB
 
-        SSOT_DB -->|Provides Ledger Data| BACKEND
-        STOCK_SCORE --> BACKEND
-        ETF_SCORE --> BACKEND
-        QA_BLACKLIST --> BACKEND
-        BACKEND -.->|JSON API| WEB_UI
-        QA_UI_AGENT[qa_api_health.py<br>UI Health Poller]:::script
-        BACKEND -.->|Endpoint Polling| QA_UI_AGENT
+        SSOT_DB -.->|"Reads pending_orders"| INTRADAY_SNIPER
+        VIX --> INTRADAY_SNIPER
+        INTRADAY_SNIPER -->|"Commits Settled & Intraday Ledgers"| SSOT_DB
+        SSOT_DB --> SHADOW_ARENA
+        SHADOW_ARENA -->|"Updates Arena Tables"| SSOT_DB
 
-        SSOT_DB --> EXEC_BRIEF
-        ETF_SCORE --> EXEC_BRIEF
+        SSOT_DB --> TRACE_ENGINE
+        SSOT_DB --> QA_SUITE
+        QA_SUITE --> EXEC_BRIEF
+        SSOT_DB --> BACKEND
+        TRACE_ENGINE --> BACKEND
+        BACKEND -.->|"100% Turso JSON API"| WEB_UI
     </div>
 
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        
-        const nodeData = {
 
-            "STATE": {name: "SYSTEM_STATE.md", purpose: "The dynamic memory layer of the AI assistant, tracking all crashes, recoveries, and task progress.", input: "System Events", output: "Context Memory", schedule: "Always Updated"},
-            "BLUEPRINT": {name: "AntiGravity_Master_Blueprint.md", purpose: "The immutable core architectural directives for the AntiGravity system.", input: "Human Architect", output: "Core Rules", schedule: "Static"},
-            "PREFLIGHT": {name: "preflight_check.py", purpose: "Diagnostic tool that scans the local Python environment for dependencies and kills zombie background processes before major pipeline executions.", input: "OS Environment", output: "Clean Execution State", schedule: "Pre-Run Hook"},
-            "SSOT_DB": {name: "Turso Cloud DB", purpose: "The Single Source of Truth SQLite core. Eliminates race conditions and fully decouples the Math Models, Execution Engines, and UI from fragile CSV files.", input: "Orders & Ledgers", output: "Verified States", schedule: "Always On", dependencies: "CRITICAL: Entire system halts if locked", failsafe: "SQLite natively handles WAL journaling for concurrency"},
-            "MASTER": {name: "master_pipeline.py", purpose: "Central nervous system that commands the automated daily execution of all sub-systems.", input: "Linux Crontab Trigger", output: "Orchestrated Python Scripts", schedule: "Daily at 1:00 AM", dependencies: "Windows OS Scheduler", failsafe: "Triggers Executive Email on fatal abortion"},
-            "YF": {name: "Yahoo Finance API", purpose: "High-speed ingestion of daily price action and moving average technicals.", input: "S&P 500 & ETF Tickers", output: "Historical OHLCV DataFrames", schedule: "Real-time query", dependencies: "Active Internet Pipeline", failsafe: "Triggers FAILOVER Node automatically"},
-            "TIINGO": {name: "Tiingo Institutional API", purpose: "Bulletproof failover fallback providing clean EOD data if Yahoo throws 429 bans.", input: "API Token & Ticker", output: "Normalized Pandas DataFrame", schedule: "Emergency Pivot", dependencies: "api_keys.json vault", failsafe: "Drops missing dates securely without crashing"},
-            "FAILOVER": {name: "failover_downloader.py", purpose: "Self-healing data fetcher. Uses exponential backoff and alternate Tiingo API to bypass yfinance failures. Quarantines dead tickers.", input: "Tickers", output: "CSV Data or Quarantine Log", schedule: "On-Demand via Pipelines", dependencies: "yfinance / tiingo modules", failsafe: "Hard-quarantines broken tickers to prevent loops"},
-            "FRED": {name: "FRED API", purpose: "Grounds the models in macroeconomic reality using Federal Reserve data.", input: "Economic Series IDs", output: "Inflation, Interest Rates, GDP", schedule: "Real-time query"},
-            "VIX": {name: "VIX Safety Monitor", purpose: "Background watchdog monitoring the CBOE volatility index for market panic.", input: "Live ^VIX Price", output: "Risk damping multipliers (0.0x to 1.0x)", schedule: "Every 1 Hour"},
-            "STOCK_SCREEN": {name: "fast_screener.py", purpose: "Wide-net filtration engine to isolate statistically significant momentum patterns.", input: "500 Stock Price Histories", output: "Top 15 Tickers", schedule: "Daily via Master Pipeline"},
-            "DATA_LOADER": {name: "data_loader.py (Project Apollo)", purpose: "Ensures flawless matrix extraction. Pre-slices historical DataFrames and rigidly enforces that no duplicate forward-dates pollute the Bayesian MCMC chains.", input: "Raw Price Data", output: "Clean Multi-Lag Arrays", schedule: "Pre-inference Hook"},
-            "ENGINE_CONFIG": {name: "engine_config.py (Project Apollo)", purpose: "Deep OS-level injector that forcefully sets Windows environment variables to compel PyTensor to utilize the ultra-fast C++ optimizer (`cxx=`).", input: "Windows OS", output: "Accelerated Compile State", schedule: "Boot Time"},
-            "STOCK_PYMC": {name: "export_bayesian_scorecard_TNX.py", purpose: "Project Apollo causality engine. Dynamically correlates the top 3 global macro features (e.g. TNX 10-Year Yield) and feeds them into the Rust NUTS sampler to predict return direction.", input: "Top 15 Tickers + Macro Features", output: "P(UP) & Expected Return/Vol", schedule: "Daily via Master Pipeline"},
-            "QA_MODELS": {name: "qa_models.py", purpose: "Audits Bayesian model outputs for anomalies. Forces a HOLD override if P(UP)>100% or returns are unrealistic.", input: "Scorecards", output: "Cleaned/Overwritten Scorecards", schedule: "Daily via Master Pipeline"},
-            "QA_UI_AGENT": {name: "qa_api_health.py", purpose: "Continuously polls the local JSON API endpoints (Holdings, Olympics, etc) every 15 minutes to mathematically verify UI data structures are intact and the server is online. Logs alerts to master watchdog.", input: "JSON Endpoints", output: "Alert Logs", schedule: "Every 15 Minutes"},
-            "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Calculates mathematical capital allocations and stages them for tomorrow's market open.", input: "Predictive Scorecards", output: "Turso pending_orders", schedule: "Daily via Master Pipeline"},
-            "PENDING_ORDERS": {name: "Turso pending_orders", purpose: "Staging ground bridging the nightly analytics with the live Intraday Sniper execution engine.", input: "Virtual Broker JSON", output: "Target Executions", schedule: "Daily"},
-            "INTRADAY_SNIPER": {name: "intraday_tracker.py", purpose: "Constantly polls live market ask/bid prices during market hours. Executes intended target staging only when momentum is optimal.", input: "Turso pending_orders", output: "Turso capital_ledgers", schedule: "Intraday Market Hours"},
-            "STOCK_SCORE": {name: "Top5_Scorecard.xlsx", purpose: "Immutable record of the daily mathematical predictions.", input: "PyMC Traces", output: "Formatted Excel Report", schedule: "Daily"},
-            "STOCK_LEDGER": {name: "Turso capital_ledgers", purpose: "Persistent accounting database tracking capital, PnL, and holdings for all 3 Personas.", input: "Executed Trades", output: "Time-Series Ledger", schedule: "Daily"},
-            "QA_BLACKLIST": {name: "qa_blacklist.py", purpose: "Validates the Blacklist Engine by auditing the Capital Ledgers for serial offenders (3+ strikes).", input: "Capital Ledgers", output: "QA Historical Log & Email Warning", schedule: "Daily via Master Pipeline"},
-            "FUNDAMENTALS": {name: "extract_fundamentals.py", purpose: "The vital bridge linking underlying stock health to overarching ETF sectors.", input: "Macro & Earnings Data", output: "S&P 500 Master DB", schedule: "Saturdays via Master Pipeline"},
-            "STOCK_DB": {name: "SP500_Fundamentals.csv", purpose: "Aggregated valuation metrics (P/E, EPS, Debt) serving as Bayesian Priors.", input: "JSON Metrics", output: "Hierarchical Prior Weights", schedule: "Saturdays"},
-            "ETF_SCREEN": {name: "etf_fast_screener.py", purpose: "Identifies momentum and trend strength across the 11 major SPDR sectors.", input: "11 ETF Tickers", output: "Active Sectors", schedule: "Daily via Master Pipeline"},
-            "ETF_PYMC": {name: "process_etf.py", purpose: "Hierarchical sector modeling anchored by underlying fundamental stock health.", input: "Sector Prices & Stock Priors", output: "Sector P(UP) Predictions", schedule: "Daily via Master Pipeline"},
-            "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Sector-level capital allocation engine.", input: "Sector Predictions", output: "Virtual ETF Trades", schedule: "Daily via Master Pipeline"},
-            "ETF_SCORE": {name: "All_ETFs_Scorecard.xlsx", purpose: "Compiled master record of all 11 ETF sector predictions.", input: "Individual ETF Excel outputs", output: "Merged Excel Report", schedule: "Daily"},
-            "BACKEND": {name: "server.py", purpose: "FastAPI REST Server that bridges Python Turso cloud data to the frontend web application.", input: "Ledgers & Scorecards", output: "JSON Endpoints", schedule: "Always Online (Port 80)", dependencies: "Turso DB", failsafe: "Auto-restarts via Uvicorn worker manager"},
-            "WEB_UI": {name: "frontend/index.html", purpose: "Premium 3D Sci-Fi Web Dashboard featuring active 3D tabs, glassmorphism, and dynamic Plotly charts.", input: "FastAPI JSON", output: "Interactive User Interface", schedule: "Client Browser", dependencies: "Modern WebGL Browser", failsafe: "Graceful degradation on older clients"},
-            "GIT_VAULT": {name: "Git Vault Backup", purpose: "Invisible version control system protecting the codebase against fatal logic errors.", input: "Modified Code", output: "Immutable Snapshot Commits", schedule: "Every 1 Hour (Windows Scheduled Task)", dependencies: "Git CLI Installed", failsafe: "Ignores heavy media files to prevent repo bloat"},
-            "EXEC_BRIEF": {name: "executive_brief.py", purpose: "Compiles system health, overnight issues (429 rate limits), and daily PnL into a premium HTML email for executive review.", input: "Global Ledgers & Warning Logs", output: "Outlook HTML Email", schedule: "Daily via Master Pipeline (End)", dependencies: "Gmail SMTP Settings", failsafe: "Logs silently if network is entirely down"},
-            "IDEMPOTENT_OVERRIDE": {name: "Idempotent Integrity Engine", purpose: "Prevents double-entry ledger duplication during pipeline re-execution by dynamically truncating today's prediction rows before writing.", input: "Virtual Broker Execution", output: "Clean Overwritten Ledger", schedule: "Always-On Safety Check", dependencies: "Turso Cloud Transaction Locks", failsafe: "Aborts write if database checksum fails"}
+        const nodeData = {
+            "PREFECT": {name: "prefect_pipeline.py (Vultr Orchestrator)", purpose: "Cloud-native Prefect 3 daemon running on Vultr VPS (66.42.118.26). Schedules pre-flight checks, nightly Stock & ETF pipelines, weekend deep learning trainers, and hourly maintenance.", input: "Cron Schedules", output: "Orchestrated Flows", schedule: "Always-On Daemon (Vultr)"},
+            "PREFLIGHT": {name: "preflight_check.py", purpose: "Mandatory pre-execution gate verifying Turso connectivity, schema parity, and market-open readiness across all 8 personas before any pipeline or trading session.", input: "OS & Turso State", output: "Pass/Fail Gate", schedule: "Pre-Pipeline & Pre-Market"},
+            "ZOMBIE": {name: "clean_ghosts.py (Zombie Hunter)", purpose: "Runs every 60 minutes via Prefect to purge hung processes (>60m) and stale .lock files while strictly whitelisting uvicorn, prefect_pipeline.py, intraday_tracker.py, and vix_monitor.py.", input: "Process Table", output: "Clean OS State", schedule: "Hourly via Prefect"},
+            "ENGINE_CONFIG": {name: "engine_config.py", purpose: "Centralizes PyMC MCMC sampling parameters (2 chains, 1000 draws, 1000 tune, target_accept=0.90) and C-compiler flags.", input: "Environment", output: "MCMC Config", schedule: "Import Hook"},
+            "LINEAGE_CORE": {name: "oracle_lineage_core.py (v2.5)", purpose: "Single canonical mathematical core implementing SHA-256 deterministic MCMC seeding (deterministic_mcmc_seed), bounded Kelly sizing (effective_R = max(1.0, payoff_ratio)), calibrated persona gates, and audit table writers.", input: "Posterior P(UP), E[R], Risk, VIX", output: "Canonical Decisions & Seeds", schedule: "Every Prediction & Trade"},
+            "SSOT_DB": {name: "Turso Cloud DB (100% SSOT)", purpose: "Authoritative LibSQL/Turso cloud database backing 100% of production state across all 8 personas ($10,000.00 inception baseline), scorecards, feature/decision lineage, and Arena tables.", input: "Batch SQL Statements", output: "Verified Cloud Tables", schedule: "Always Online"},
+            "YF": {name: "Yahoo Finance API", purpose: "Primary feed for daily OHLCV bars (stored in Turso yahoo_daily_prices) and live 1-minute intraday candles for the VWAP Sniper.", input: "Ticker Universe", output: "OHLCV DataFrames", schedule: "Real-Time & Nightly"},
+            "TIINGO": {name: "Tiingo Institutional API", purpose: "Automatic institutional REST failover when Yahoo Finance rate-limits or times out.", input: "Ticker & API Token", output: "Normalized OHLCV", schedule: "Failover Hook"},
+            "FAILOVER": {name: "failover_downloader.py", purpose: "Self-healing data downloader with timeout protection and automatic Tiingo failover.", input: "Ticker Symbol", output: "Validated Price Series", schedule: "On-Demand"},
+            "FRED": {name: "FRED & ^TNX Macro Sensor", purpose: "Supplies 10-Year Treasury Yield (^TNX) and macro indicators to anchor causal stock and sector models.", input: "Macro Series", output: "Yield Curve Features", schedule: "Daily"},
+            "VIX": {name: "vix_monitor.py", purpose: "Indestructible background daemon on Vultr polling live CBOE ^VIX to scale Kelly allocations and dynamic stop-losses.", input: "Live ^VIX", output: "vix_score.json & Multipliers", schedule: "Continuous Daemon"},
+            "DATA_LOADER": {name: "data_loader.py", purpose: "Constructs leakage-free shifted predictor matrices (all_predictors_df.shift(1)) and volatility-adjusted returns with NaN-bridging.", input: "Turso & Historical Matrices", output: "Aligned Feature Tensors", schedule: "Daily Phase 1"},
+            "STOCK_SCREEN": {name: "fast_screener.py", purpose: "Filters S&P 500 universe down to the active VIP stock portfolio with causal lag depths.", input: "S&P 500 Universe", output: "Active_Portfolio.csv", schedule: "Daily Phase 1"},
+            "STOCK_PYMC": {name: "export_bayesian_scorecard_formatted.py", purpose: "Seeded 2-chain PyMC Stochastic Volatility + Dual-Head (Logistic Direction + Student-T Magnitude) engine for Single Stocks. Logs full Stage 2-4 feature lineage to Turso.", input: "Z-Scored Train/Test Split", output: "etf_scorecards_master & feature_lineage_audit", schedule: "Daily Phase 1"},
+            "SECTOR_GRAVITY": {name: "sector_gravity.py", purpose: "Computes bottom-up S&P 500 sector regime (SEC_REG) and momentum (SEC_MOM) priors passed from Single Stocks into the ETF pipeline.", input: "Stock Posteriors", output: "Sector Regime Signals", schedule: "Phase 1 -> Phase 2 Bridge"},
+            "STOCK_BROKER": {name: "virtual_broker.py", purpose: "Settles prior-day stock holdings using exact single-day market returns and stages fractional Kelly orders for Conservative, Neutral, Dynamic, and BallsForBrains.", input: "Stock Scorecards & Ledger", output: "capital_ledgers, pending_orders & decision_lineage_audit", schedule: "Daily Phase 1"},
+            "ETF_SCREEN": {name: "generate_dynamic_etfs.py", purpose: "Selects top thematic and sector SPDR ETFs and extracts underlying Whale fundamentals.", input: "Master ETF Universe", output: "Dynamic_Target_ETFs.json", schedule: "Daily Phase 2"},
+            "ETF_MATRIX": {name: "build_etf_hybrid_matrix.py", purpose: "Builds each ETF's hybrid macro + micro whale + sector momentum feature matrix.", input: "ETF & Whale Prices", output: "*_Hybrid_Matrix.csv", schedule: "Daily Phase 2"},
+            "ETF_PYMC": {name: "export_etf_scorecard.py", purpose: "Seeded 2-chain PyMC Stochastic Volatility + Dual-Head engine for ETFs. Logs full Stage 2-4 feature lineage and scorecards to Turso.", input: "ETF Hybrid Matrices", output: "etf_scorecards_master & feature_lineage_audit", schedule: "Daily Phase 2"},
+            "ETF_BROKER": {name: "etf_virtual_broker.py", purpose: "Settles prior-day ETF holdings and stages fractional Kelly orders for ETF_Conservative, ETF_Neutral, ETF_Dynamic, and ETF_BallsForBrains.", input: "ETF Scorecards & Ledger", output: "capital_ledgers, pending_orders & decision_lineage_audit", schedule: "Daily Phase 2"},
+            "INTRADAY_SNIPER": {name: "intraday_tracker.py (Live Sniper)", purpose: "Polls live 1m bars every 3 minutes during NYSE hours. Enforces VWAP breakout + volume gating on BUYS, Momentum Shield on SELLS, and VIX-scaled Take-Profit/Stop-Loss on HELD positions, with a 15:55 EST EOD settlement fallback.", input: "Turso pending_orders & Live 1m Bars", output: "Turso capital_ledgers", schedule: "NYSE Market Hours (09:30-16:00 EST)"},
+            "SHADOW_ARENA": {name: "prod_vs_shadow_tracker.py & run_backtests.py", purpose: "Maintains the 8-model & universe shootout (Prod Bayesian SV, EL_CAP, EL_VOLTI, Shadow Transformer, Sandbox V1, Shadow LSTM, Shadow ETF Whale, Shadow Neural Safety) normalized to $10,000.00 inception.", input: "Turso Ledgers & Benchmark Returns", output: "prod_vs_shadow_master & olympic_shootout_master", schedule: "Daily Post-Settlement"},
+            "TRACE_ENGINE": {name: "trace_decision.py (7-Stage Traceability)", purpose: "Deterministic CLI and API engine (/api/trace) that proves any historical or live trade across all 7 stages: Raw Bar -> Features -> Z-Scores -> Seeded MCMC Posterior -> Persona Kelly Gate -> Position PnL Math -> Double-Entry & Inter-Day Ledger Continuity.", input: "--date, --ticker, --persona", output: "7-Stage Cryptographic & Mathematical Receipt", schedule: "On-Demand CLI & REST API"},
+            "QA_SUITE": {name: "qa_manager.py & qa_financial_audit.py", purpose: "9-script Zero-Trust QA suite verifying API health, data continuity, double-entry accounting, inter-day continuity, >5% single-day spike/drop anomalies, anti-flatline variance, and $10,000.00 inception baselines across all 8 personas.", input: "All Turso Tables & Live Endpoints", output: "100% GREEN Certification", schedule: "Post-Pipeline & Pre-Commit Gate"},
+            "BACKEND": {name: "server.py (FastAPI Port 80)", purpose: "High-concurrency FastAPI server on Vultr serving 100% Turso-backed JSON payloads to the 5-tab Web UI.", input: "Turso Cloud DB", output: "REST JSON Endpoints", schedule: "Always Online (ag-uvicorn.service)"},
+            "WEB_UI": {name: "frontend/index.html & app.js", purpose: "5-tab interactive dashboard (Active Portfolio Stocks, Multi-Sector ETFs, Unified 8-Model Arena, Trade Autopsy, Architecture Blueprint) with live target sync badges.", input: "FastAPI JSON", output: "Plotly 3D/2D Visualizations", schedule: "Client Browser"},
+            "EXEC_BRIEF": {name: "executive_brief.py", purpose: "Dispatches up to 4 scheduled HTML executive summaries only after QA passes 100% Green.", input: "Turso Ledgers & QA Status", output: "Executive HTML Emails", schedule: "Daily Post-QA"}
         };
 
-        mermaid.initialize({ 
-            startOnLoad: false, 
-            theme: 'dark', 
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
             securityLevel: 'loose',
             flowchart: {
-                nodeSpacing: 150,
-                rankSpacing: 100
+                nodeSpacing: 110,
+                rankSpacing: 85
             }
         });
 
-        // Use Event Delegation to dynamically capture hovers.
-        // This ensures the tooltip works even if Mermaid takes longer than 1.5s to render.
+        let mermaidRendered = false;
+        async function safeRenderMermaid() {
+            if (mermaidRendered) return;
+            const el = document.getElementById('arch-mermaid');
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                mermaidRendered = true;
+                await mermaid.run({ nodes: [el] });
+            }
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    safeRenderMermaid();
+                }
+            });
+        }, { threshold: 0.05 });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('arch-mermaid');
+            if (el) observer.observe(el);
+            setTimeout(safeRenderMermaid, 150);
+        });
+        window.addEventListener('resize', () => {
+            safeRenderMermaid();
+        });
+
         const tooltip = document.getElementById('custom-tooltip');
 
         document.addEventListener('mouseover', (e) => {
@@ -284,8 +316,6 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
             if (node) {
                 const rawId = node.id || "";
                 let data = null;
-
-                // 1. Try splitting the raw id first
                 const parts = rawId.split('-');
                 for (let i = parts.length - 1; i >= 0; i--) {
                     if (nodeData[parts[i]]) {
@@ -293,8 +323,6 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
                         break;
                     }
                 }
-
-                // 2. Fallback to includes check
                 if (!data) {
                     for (let key in nodeData) {
                         if (rawId.includes(key)) {
@@ -303,7 +331,6 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
                         }
                     }
                 }
-
                 if (data) {
                     let html = `
                         <div class="tooltip-title">${data.name}</div>
@@ -312,12 +339,6 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
                         <div class="tooltip-row"><span class="tooltip-label">Output:</span> <span class="tooltip-value">${data.output}</span></div>
                         <div class="tooltip-row"><span class="tooltip-label">Schedule:</span> <span class="tooltip-value">${data.schedule}</span></div>
                     `;
-                    if (data.dependencies) {
-                        html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #d29922;">Dependencies:</span> <span class="tooltip-value">${data.dependencies}</span></div>`;
-                    }
-                    if (data.failsafe) {
-                        html += `<div class="tooltip-row"><span class="tooltip-label" style="color: #2ea043;">Failsafe:</span> <span class="tooltip-value">${data.failsafe}</span></div>`;
-                    }
                     tooltip.innerHTML = html;
                     tooltip.style.opacity = '1';
                 }
@@ -328,12 +349,11 @@ QA_BLACKLIST[qa_blacklist.py<br>Blacklist Auditor]:::pipeline
 
         document.addEventListener('mousemove', (e) => {
             if (tooltip.style.opacity === '1') {
-                tooltip.style.left = (e.clientX + 20) + 'px';
-                tooltip.style.top = (e.clientY + 20) + 'px';
+                tooltip.style.left = Math.min(window.innerWidth - 380, e.clientX + 20) + 'px';
+                tooltip.style.top = Math.min(window.innerHeight - 260, e.clientY + 20) + 'px';
             }
         });
 
-        // Hide tooltip if mouse leaves the page
         document.addEventListener('mouseout', (e) => {
             if (!e.relatedTarget) {
                 tooltip.style.opacity = '0';

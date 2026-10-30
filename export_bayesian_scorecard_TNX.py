@@ -5,7 +5,9 @@ import os
 import sys
 import subprocess
 import gc
+import json
 import engine_config
+import oracle_lineage_core
 
 sampler_config = engine_config.configure_bayesian_engine()
 sv_config = engine_config.configure_sv_engine()
@@ -18,19 +20,16 @@ def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="
     dates_t = returns_df.index
     n = len(dates_t)
     
-    # Try to load history to preserve the dashboard
     old_sc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
     if os.path.exists(old_sc_path):
         try:
             old_df = pd.read_excel(old_sc_path)
             old_df = old_df[old_df['Ticker'] == ticker].copy()
             if len(old_df) >= n - 1:
-                # We have history! Keep the last 29 days and just append today
                 old_df = old_df.tail(n - 1).copy()
                 if 'Ticker' in old_df.columns:
                     old_df = old_df.drop(columns=['Ticker'])
                 
-                # Create the dummy row for today
                 new_row = old_df.iloc[-1].copy()
                 new_row['date'] = dates_t[-1].date()
                 new_row['actual value daily return %'] = np.nan
@@ -46,8 +45,6 @@ def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="
         except Exception as e:
             pass
             
-    # Fallback if no history exists or loading failed: Generate 30 days of dummy data
-    # (This is still better than crashing, but we'll try to preserve history if possible)
     sc_dict = {}
     for d in range(depth, 0, -1):
         dates_lag = dates_t - pd.Timedelta(days=d)
@@ -67,10 +64,6 @@ def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="
     sc_dict['model hit IND integrated model'] = ["Pending"] * n
     sc_dict['Causality Link Used'] = ["None"] * n
     
-    # But wait, if we generate 30 days of dummy data, we wipe out the dashboard!
-    # Instead, we should just generate ONE row for the target date, and 29 rows of neutral historical data
-    # Let's just generate the dict with 30 days of dummy data for now to ensure schema safety,
-    # but the QA script will catch it if it happens.
     return pd.DataFrame(sc_dict)
 
 def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, next_biz_day, fundamental_score=0.0):
@@ -166,7 +159,6 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
             feat_cols.append(f'{mc}_t-1')
         
     data_with_future = pd.concat(components, axis=1).loc[start_date:next_biz_day]
-    # Forward fill any missing predictors (e.g. if Friday's data was NaN from yfinance)
     data_with_future[feat_cols] = data_with_future[feat_cols].ffill()
     data_with_future = data_with_future.dropna(subset=feat_cols)
     
@@ -176,6 +168,18 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     Xs[Xs < 1e-5] = 1.0  # Cap zero std to prevent normalization explosion
     X_train_s = (X_train - Xm) / Xs
     X_test_s = (X_test - Xm) / Xs
+
+    target_date_str = pd.to_datetime(next_biz_day).strftime('%Y-%m-%d')
+    ok_feat, feat_issues = oracle_lineage_core.verify_feature_completeness(
+        X_train_s, y_train, X_test_s[-1:], feat_cols, target_date_str
+    )
+    if not ok_feat:
+        raise ValueError(f"Feature completeness check failed for {ticker}@{target_date_str}: {feat_issues}")
+
+    sv_seed = oracle_lineage_core.deterministic_mcmc_seed(ticker, target_date_str, "SV")
+    main_seed = oracle_lineage_core.deterministic_mcmc_seed(ticker, target_date_str, "MAIN")
+    local_sv_config = engine_config.configure_sv_engine(seed=sv_seed, chains=2)
+    local_sampler_config = engine_config.configure_bayesian_engine(seed=main_seed, chains=2)
     
     # ==========================================
     # V2 STOCHASTIC VOLATILITY ENGINE (RUST)
@@ -185,8 +189,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     is_held = False
     
     try:
-        print("  => Running Rust-Compiled SV Engine...")
-        # Get full historical returns for SV
+        print(f"  => Running Rust-Compiled SV Engine (seed={sv_seed})...")
         returns_full = data_with_future['Raw_Return_%'].fillna(0.0).values / 100.0
         
         with pm.Model() as sv_model:
@@ -194,11 +197,10 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
             volatility = pm.GaussianRandomWalk('volatility', sigma=step_size, shape=len(returns_full))
             nu = pm.Exponential('nu', 0.1)
             returns_obs = pm.StudentT('returns_obs', nu=nu, lam=pm.math.exp(-2 * volatility), observed=returns_full)
-            trace_sv = pm.sample(**sv_config)
+            trace_sv = pm.sample(**local_sv_config)
             
         inferred_volatility = np.exp(trace_sv.posterior['volatility'].mean(dim=['chain', 'draw']).values)
         
-        # Shift forward to prevent lookahead bias (tomorrow's risk is based on today's volatility)
         sv_vol_shifted = np.roll(inferred_volatility, 1)
         sv_vol_shifted[0] = inferred_volatility[0]
         
@@ -206,28 +208,27 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         sv_engine_used = True
         print("  => SV Engine SUCCESS.")
         
-        # Aggressive garbage collection to prevent RAM leaks in the loop
         del sv_model, trace_sv
         gc.collect()
         
     except Exception as e:
         print(f"  => SV Engine FAILED: {e}. Falling back to standard posterior stddev.")
         sv_engine_used = False
-        sv_vol_test = np.zeros(len(test_data)) # Dummy array
+        sv_vol_test = np.zeros(len(test_data))
         
         try:
-            import sys
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             import database_manager
-            import json
             for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
                 df_l = database_manager.get_ledger(p)
                 if not df_l.empty and 'Holdings_JSON' in df_l.columns:
                     holdings_str = df_l.iloc[-1]['Holdings_JSON']
                     holdings = json.loads(holdings_str)
-                    if ticker in holdings and holdings[ticker] > 0:
-                        is_held = True
-                        break
+                    if ticker in holdings:
+                        val = holdings[ticker]
+                        dollars = float(val.get("dollars", 0.0)) if isinstance(val, dict) else float(val)
+                        if dollars > 0:
+                            is_held = True
+                            break
         except Exception as ex:
             print(f"  Error checking stock holdings: {ex}")
             
@@ -240,8 +241,6 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     with pm.Model() as blr_model:
         X_data = pm.Data("X", X_train_s)
         
-        # --- Inject Meta-Tracker Hyper-Priors ---
-        import json
         try:
             prior_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Meta_Alpha_Priors.json')
             with open(prior_path, 'r') as f:
@@ -252,7 +251,6 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
             
         mu_beta_list = []
         for feat in feat_cols:
-            # Map specific feature suffix (e.g. AAPL_RSI -> _RSI) to get its alpha score
             matched = False
             for suffix, alpha_score in meta_priors.items():
                 if feat.endswith(suffix):
@@ -260,14 +258,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
                     matched = True
                     break
             if not matched:
-                mu_beta_list.append(0.0) # Default if not found
+                mu_beta_list.append(0.0)
                 
         mu_beta_array = np.array(mu_beta_list, dtype=np.float64)
         y_data_dir = pm.Data("y_dir", y_train)
         y_data_mag = pm.Data("y_mag", y_mag_train)
         
         alpha_dir = pm.Normal("alpha_dir", mu=fundamental_score, sigma=1)
-        # Using the empirical Hyper-Priors as the mu constraint instead of 0
         beta_dir = pm.Normal("beta_dir", mu=mu_beta_array, sigma=0.5, shape=X_train_s.shape[1])
         mu_dir = alpha_dir + pm.math.dot(X_data, beta_dir)
         p = pm.Deterministic("p", pm.math.sigmoid(mu_dir))
@@ -279,13 +276,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         sigma_mag = pm.HalfNormal("sigma_mag", sigma=3)
         pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag, observed=y_data_mag, shape=X_data.shape[0])
         
-        trace = pm.sample(**sampler_config)
+        trace = pm.sample(**local_sampler_config)
         pm.set_data({
             "X": X_test_s, 
             "y_dir": np.zeros(len(X_test_s), dtype=int),
             "y_mag": np.zeros(len(X_test_s))
         })
-        pp = pm.sample_posterior_predictive(trace, var_names=["p", "y_obs_mag"], progressbar=False)
+        pp = pm.sample_posterior_predictive(trace, var_names=["p", "y_obs_mag"], random_seed=int(main_seed), progressbar=False)
         
     p_pred = pp.posterior_predictive["p"].mean(dim=["chain", "draw"]).values
     mag_pred_mean = pp.posterior_predictive["y_obs_mag"].mean(dim=["chain", "draw"]).values
@@ -316,28 +313,31 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
             hits.append("Miss")
             
     vix_triggered = False
+    latest_vix_val = 18.0
     try:
         import yfinance as yf
         vix_hist = yf.Ticker('^VIX').history(period='5d')
-        if not vix_hist.empty and vix_hist['Close'].iloc[-1] > 30.0:
-            vix_triggered = True
+        if not vix_hist.empty:
+            latest_vix_val = float(vix_hist['Close'].iloc[-1])
+            if latest_vix_val > 30.0:
+                vix_triggered = True
     except:
         pass
 
     kelly_allocs = []
     override_notes = []
     
-    # Kelly Criterion dynamically switching between SV Risk and Standard Risk
     for i, (p, mag, std, rec) in enumerate(zip(p_pred, mag_pred_mean, mag_pred_std, recs)):
-        # Calculate Risk: V2 True Volatility if available, else V1 Standard Deviation
         active_risk = sv_vol_test[i] if sv_engine_used else (std / 100.0)
-        
-        if p > 0.65 and mag > 0 and not force_hold:
-            kelly = p - ((1 - p) / ( (mag / 100.0) / active_risk ))
-            kelly = max(0.0, min(1.0, kelly))
-            kelly_allocs.append(kelly)
-        else:
-            kelly_allocs.append(0.0)
+        dec = oracle_lineage_core.evaluate_persona_decision(
+            persona="Conservative",
+            prob_up=float(p),
+            expected_return_pct=float(mag / 100.0),
+            expected_risk_pct=float(active_risk),
+            vix_val=latest_vix_val,
+            is_currently_held=False
+        )
+        kelly_allocs.append(dec["raw_kelly"] if not force_hold else 0.0)
             
         note = ""
         if force_hold:
@@ -397,7 +397,6 @@ if __name__ == '__main__':
         mega_macro_df['Date'] = pd.to_datetime(mega_macro_df['Date'])
         mega_macro_df = mega_macro_df.set_index('Date')
         
-        # Drop any overlapping columns from the macro DF before joining to prevent Pandas ValueError
         overlap_cols = [c for c in mega_macro_df.columns if c in all_predictors_df.columns]
         if overlap_cols:
             mega_macro_df = mega_macro_df.drop(columns=overlap_cols)
@@ -410,8 +409,6 @@ if __name__ == '__main__':
     excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
 
     top_5 = pd.read_csv(portfolio_path)
-    
-    # PHASE 1 TEST: Limit to ONLY 10 stocks!
     top_10 = top_5
     
     start_date = pd.to_datetime('2025-05-01')
@@ -430,7 +427,6 @@ if __name__ == '__main__':
             print(f"\n--- PAUSING 10 SECONDS TO COOL DOWN CPU & FLUSH RAM (Processed {i} tickers) ---")
             import time
             time.sleep(10)
-            import gc
             gc.collect()
             
         ticker = row['Ticker']
@@ -523,3 +519,5 @@ if __name__ == '__main__':
 
     writer.close()
     print(f"\nSaved Formatted Scorecard to: {excel_path}")
+    sys.stdout.flush()
+    os._exit(0)

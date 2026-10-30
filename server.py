@@ -295,10 +295,11 @@ def get_holdings(persona: str = "BallsForBrains", mode: str = "Single"):
     max_dd, sharpe, win_rate, total_return = calculate_metrics(df, persona)
     
     # Calculate Equity Curve
+    # Strictly bound equity curve to actual Turso ledger dates (no synthetic future .ffill() padding)
     df['Date'] = pd.to_datetime(df['Date'])
-    df = df.set_index('Date').reindex(pd.date_range(start=df['Date'].min(), end=max(df['Date'].max(), pd.Timestamp.now().normalize() - pd.offsets.BDay(1)), freq='B')).ffill().reset_index().rename(columns={'index': 'Date'})
+    df = df.sort_values('Date').drop_duplicates(subset=['Date'], keep='last').reset_index(drop=True)
     dates = df['Date'].dt.strftime('%Y-%m-%d').tolist()
-    equity_curve = df['Total_Equity'].tolist()
+    equity_curve = [round(float(v), 2) for v in df['Total_Equity'].tolist()]
     
     # Get Asset Breakdown Table
     breakdown = get_asset_breakdown(df, holdings)
@@ -533,7 +534,9 @@ def get_olympic_data():
     try:
         df_db = database_manager.execute_query("SELECT date as Date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
         if not df_db.empty:
-            df_merged = df_db.pivot(index='Date', columns='model_name', values='total_equity').reset_index()
+            df_merged = df_db.pivot_table(index='Date', columns='model_name', values='total_equity', aggfunc='last').reset_index()
+            m_cols_ol = [c for c in df_merged.columns if c != 'Date']
+            df_merged[m_cols_ol] = df_merged[m_cols_ol].ffill().fillna(10000.0)
         else:
             merged_path = os.path.join(BASE_DIR, 'financial_data', 'Olympic_Shootout_Results_MASTER.csv')
             if not os.path.exists(merged_path):
@@ -718,7 +721,7 @@ def get_prod_shadow():
         df_raw['model_name'] = df_raw['model_name'].map(lambda x: ps_map.get(x, x))
         df_raw['Date'] = pd.to_datetime(df_raw['date']).dt.strftime('%Y-%m-%d')
         
-        df = df_raw.pivot(index='Date', columns='model_name', values='total_equity').reset_index().sort_values('Date').reset_index(drop=True)
+        df = df_raw.pivot_table(index='Date', columns='model_name', values='total_equity', aggfunc='last').reset_index().sort_values('Date').reset_index(drop=True)
         
         # Ensure all columns exist
         for col in ['Prod', 'Shadow_Transformer', 'Sandbox_V1', 'Shadow_LSTM']:
@@ -752,7 +755,7 @@ def get_prod_shadow():
     try:
         df_trial = database_manager.get_ledger('BallsForBrains')
         pending = database_manager.get_pending_order('BallsForBrains')
-        if not pending.empty and not df_trial.empty:
+        if pending and not df_trial.empty:
             is_pending = True
     except:
         pass
@@ -761,7 +764,9 @@ def get_prod_shadow():
         if col not in df.columns: return [10000.0]*len(df)
         return [round(float(x), 2) if not np.isnan(float(x)) else 10000.0 for x in df[col]]
 
-    df_table = df.copy()
+    model_cols_ps = [c for c in df.columns if c != 'Date']
+    df[model_cols_ps] = df[model_cols_ps].ffill().fillna(10000.0)
+    df_table = df.copy().fillna("")
     df_table['Date'] = df_table['Date'].astype(str).str[:10]
 
     return {
@@ -855,6 +860,24 @@ def get_unified_arena():
             'spy': safe_tolist('SPY'),
             'table': table_records
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get('/api/trace')
+def get_decision_trace(ticker: str, date: str = None, persona: str = None):
+    """
+    Returns the deterministic 7-stage source-to-target trace receipt for any ticker and date.
+    """
+    try:
+        import trace_decision
+        if not date:
+            res_dt = database_manager.execute_query(
+                "SELECT MAX(date) as d FROM etf_scorecards_master WHERE ticker = ?",
+                [ticker.strip().upper()]
+            )
+            date = str(res_dt.iloc[0][0])[:10] if not res_dt.empty and res_dt.iloc[0][0] else datetime.datetime.now().strftime('%Y-%m-%d')
+        return trace_decision.build_trace_receipt(target_date=date, ticker=ticker, persona=persona)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

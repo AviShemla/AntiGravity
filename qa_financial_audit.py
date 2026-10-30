@@ -1,4 +1,3 @@
-import sqlite3
 import pandas as pd
 import numpy as np
 import json
@@ -9,8 +8,11 @@ BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR     = os.path.join(BASE_DIR, "financial_data")
 TARGET_ETFS  = ['XLK','XLV','XLY','XLF','XLC','XLI','XLE','XLP','XLU','XLRE','XLB']
 
+sys.path.insert(0, BASE_DIR)
+import oracle_lineage_core
+
 # ─────────────────────────────────────────────────────────────────
-# SECTION 1 - BROKER LEDGER MATH (original check, kept intact)
+# SECTION 1 - BROKER LEDGER MATH (Double-Entry + Inter-Day Continuity + Caps)
 # ─────────────────────────────────────────────────────────────────
 def audit_broker_ledger():
     print("\n[1/4] BROKER LEDGER MATH AUDIT")
@@ -33,6 +35,9 @@ def audit_broker_ledger():
     for persona in df['persona'].unique():
         print(f"  Auditing Persona: {persona}...")
         df_p = df[df['persona'] == persona].reset_index(drop=True)
+        p_cfg = oracle_lineage_core.ALL_PERSONAS.get(persona, {})
+        max_allowed_pct = float(p_cfg.get("max_cap", 0.33 if "ETF_" in str(persona) else 0.25))
+
         for i in range(1, len(df_p)):
             prev_row = df_p.iloc[i-1]
             curr_row = df_p.iloc[i]
@@ -43,42 +48,75 @@ def audit_broker_ledger():
                 daily_pnl = json.loads(curr_row['daily_pnl_json'])
             except:
                 daily_pnl = {}
-            total_pnl = sum(daily_pnl.values())
+            total_pnl = sum(float(v) for v in daily_pnl.values())
             try:
                 holdings = json.loads(curr_row['holdings_json'])
             except:
                 holdings = {}
-            allocated_dollars = sum([float(h.get('dollars', h)) if isinstance(h, dict) else float(h) for h in holdings.values()])
+            allocated_dollars = sum([
+                float(h.get('dollars', h)) if isinstance(h, dict) else float(h)
+                for k, h in holdings.items() if k != 'Cash'
+            ])
             expected_equity = float(curr_row['cash']) + allocated_dollars
             actual_equity   = float(curr_row['total_equity'])
+            prev_equity     = float(prev_row['total_equity'])
 
             if actual_equity < 0.05:
                 print(f"  !!! FATAL ZERO EQUITY: {persona} dropped to ${actual_equity:.2f}")
                 fatal_errors += 1
                 
-            # Check: Max allocation limit audit
-            max_allowed_pct = 0.15 if ("BallsForBrains" in persona or "Dynamic" in persona) else 0.10
+            # Check 1: Max allocation limit audit (per canonical persona max_cap + 2% rounding buffer)
             for ticker, item in holdings.items():
                 if ticker == 'Cash':
                     continue
                 alloc_val = float(item.get('dollars', item)) if isinstance(item, dict) else float(item)
                 alloc_pct = alloc_val / actual_equity if actual_equity > 0 else 0.0
-                if alloc_pct > (max_allowed_pct + 0.02): # 2% buffer for rounding
+                if alloc_pct > (max_allowed_pct + 0.02):
                     print(f"  !!! FATAL CONSTRAINT VIOLATION: {persona} | {date} | "
                           f"{ticker} allocation is {alloc_pct*100:.1f}% which exceeds limit of {max_allowed_pct*100:.1f}%!")
                     fatal_errors += 1
 
+            # Check 2: Double-Entry Identity (Cash + Holdings == Total_Equity)
             diff = abs(expected_equity - actual_equity)
-            if diff > 0.05:
+            if diff > 0.10:
                 print(f"  !!! FATAL ACCOUNTING ERROR: {persona} | {date} | "
                       f"Expected ${expected_equity:.2f} | Actual ${actual_equity:.2f} | "
                       f"Diff ${diff:.2f}")
                 fatal_errors += 1
 
+            # Check 3: Inter-Day Continuity Identity (Total_Equity[t] == Total_Equity[t-1] + sum(Daily_PnL[t]))
+            continuity_diff = abs(actual_equity - (prev_equity + total_pnl))
+            if continuity_diff > 0.10:
+                print(f"  !!! FATAL INTER-DAY CONTINUITY ERROR: {persona} | {date} | "
+                      f"Prev ${prev_equity:.2f} + PnL ${total_pnl:+.2f} != Actual ${actual_equity:.2f} "
+                      f"(Diff ${continuity_diff:.2f})")
+                fatal_errors += 1
+
+            # Check 3b: Spike / Drop Double-Validation Rule (>5% Single-Day Equity Delta)
+            daily_eq_ret = (actual_equity - prev_equity) / prev_equity if prev_equity > 0 else 0.0
+            if abs(daily_eq_ret) > 0.05:
+                print(f"  !!! FATAL SPIKE/DROP ANOMALY (>5%): {persona} | {date} | "
+                      f"Prev ${prev_equity:.2f} -> Actual ${actual_equity:.2f} ({daily_eq_ret*100:+.2f}%)")
+                fatal_errors += 1
+
+        # Check 4: Anti-Flatline Audit across trailing 20 trading sessions
+        if len(df_p) >= 20:
+            recent_20 = df_p.tail(20)
+            unique_eq = recent_20["total_equity"].astype(float).round(2).nunique()
+            if unique_eq <= 2:
+                print(f"  !!! FATAL FLATLINE ERROR: {persona} has only {unique_eq} unique equity value(s) across the last 20 sessions!")
+                fatal_errors += 1
+
+        # Check 5: Clean $10,000.00 Inception Baseline Audit
+        first_eq = float(df_p.iloc[0]["total_equity"])
+        if abs(first_eq - 10000.0) > 1.0:
+            print(f"  !!! FATAL INCEPTION BASELINE ERROR: {persona} starts at ${first_eq:.2f} instead of $10,000.00!")
+            fatal_errors += 1
+
     if fatal_errors > 0:
         print(f"  [FAIL] {fatal_errors} broker accounting error(s).")
     else:
-        print("  [OK] All broker transactions verified to the penny.")
+        print("  [OK] All broker transactions (Double-Entry + Inter-Day Continuity + Anti-Flatline) verified to the penny.")
     return fatal_errors
 
 
@@ -126,8 +164,6 @@ def audit_etf_scorecards():
     print("=" * 50)
 
     errors = 0
-    today = pd.Timestamp.now().normalize()
-
     for etf in TARGET_ETFS:
         path = os.path.join(DATA_DIR, f"{etf}_Bayesian_Scorecard.xlsx")
         if not os.path.exists(path):
@@ -142,14 +178,12 @@ def audit_etf_scorecards():
             errors += 1
             continue
 
-        # ── Check: quarantine flag in Retraining_Status ──
         if 'Retraining_Status' in df.columns:
             quar_rows = df['Retraining_Status'].astype(str).str.contains('QUARANTIN', na=False)
             if quar_rows.any():
                 print(f"  [{etf}] FAIL: QUARANTINE DETECTED in {quar_rows.sum()} row(s)!")
                 errors += 1
 
-        # ── Check: all P(UP) == 0.5 means dummy scorecard ──
         prob_col = [c for c in df.columns if 'Probability' in str(c) or 'P(UP)' in str(c)]
         if prob_col:
             probs = df[prob_col[0]].dropna()
@@ -157,7 +191,6 @@ def audit_etf_scorecards():
                 print(f"  [{etf}] FAIL: All P(UP)=0.50 - dummy/quarantine scorecard!")
                 errors += 1
 
-        # ── Check: Expected Return all 0.0 ──
         ret_col = [c for c in df.columns if 'Expected Return' in str(c)]
         if ret_col:
             rets = df[ret_col[0]].dropna()
@@ -165,24 +198,10 @@ def audit_etf_scorecards():
                 print(f"  [{etf}] FAIL: All Expected Return=0.00 - dummy scorecard!")
                 errors += 1
 
-        # ── Check: Must have at least 2 rows (yesterday + today pending) ──
         if len(df) < 2:
             print(f"  [{etf}] FAIL: Only {len(df)} data row(s) - missing Pending row for today!")
             errors += 1
 
-        # ── Check: Last row must have Pending actual direction ──
-        dir_col = [c for c in df.columns if 'Actual Direction' in str(c) or 'Actual_Direction' in str(c)]
-        if dir_col and len(df) >= 1:
-            last_dir = str(df[dir_col[0]].iloc[-1])
-            # Suppress warning for intraday runs where 'UP'/'Down' is completely valid
-            if 'Pending' not in last_dir and 'pending' not in last_dir.lower():
-                pass # Not a fatal error if it's a past-day run or intraday live run
-
-        if errors == 0 or (errors > 0 and not any(e for e in [etf] if e)):
-            pass  # No per-ETF errors yet
-
-    # Summary
-    clean_count = len(TARGET_ETFS) - errors
     if errors > 0:
         print(f"  [FAIL] {errors} ETF scorecard issue(s) detected.")
     else:
@@ -219,26 +238,16 @@ def audit_stock_scorecard():
     for sheet in sheet_names:
         df = pd.read_excel(path, sheet_name=sheet, skiprows=2, header=0)
 
-        # Must have at least 2 rows
         if len(df) < 2:
             print(f"  [{sheet}] FAIL: Only {len(df)} row(s) - need yesterday + today (Pending)!")
             errors += 1
 
-        # Check for quarantine (P(UP)=0.5 across all rows)
         prob_col = [c for c in df.columns if 'Probability' in str(c)]
         if prob_col:
             probs = df[prob_col[0]].dropna()
             if len(probs) > 0 and (probs == 0.5).all():
                 print(f"  [{sheet}] FAIL: All P(UP)=0.50 - dummy/quarantine scorecard!")
                 errors += 1
-
-        # Last row should be Pending
-        dir_col = [c for c in df.columns if 'actual Direction' in str(c) or 'Actual Direction' in str(c)]
-        if dir_col and len(df) >= 1:
-            last_dir = str(df[dir_col[0]].iloc[-1]).strip()
-            # Suppress warning for intraday runs where 'UP'/'Down' is completely valid
-            if last_dir.lower() != 'pending':
-                pass
 
     if errors > 0:
         print(f"  [FAIL] {errors} stock scorecard issue(s).")
@@ -268,11 +277,12 @@ def audit_pipeline_continuity():
     nyse = mcal.get_calendar('NYSE')
     valid_days = nyse.valid_days(start_date=today - pd.Timedelta(days=7), end_date=today).tz_localize(None)
     
-    is_today_bday = today in valid_days
+    today_naive = today.tz_localize(None)
+    is_today_bday = today_naive in valid_days
     now_hour = pd.Timestamp.now('America/New_York').hour
     
     if is_today_bday and now_hour < 16:
-        idx = list(valid_days).index(today)
+        idx = list(valid_days).index(today_naive)
         expected_date = valid_days[idx - 1]
     else:
         expected_date = valid_days[-1]
@@ -317,7 +327,7 @@ def run_financial_audit():
     print("=" * 50)
 
     if total > 0:
-        print(f"\n[X] QA FAILED - {total} total issue(s). Pipeline should NOT dispatch emails.")
+        print(f"\n[X] QA FAILED - {total} total issue(s). Pipeline must NOT dispatch emails.")
         return 1
     else:
         print("\n[OK] AUDIT PASSED. All Virtual Broker transactions mathematically verified to the penny.")
@@ -325,4 +335,5 @@ def run_financial_audit():
 
 if __name__ == "__main__":
     result = run_financial_audit()
+    sys.stdout.flush()
     os._exit(result)

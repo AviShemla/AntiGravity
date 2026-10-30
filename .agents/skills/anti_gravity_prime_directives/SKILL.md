@@ -103,3 +103,18 @@ To eliminate false "100% GREEN" clearances and guarantee empirical data accuracy
 - **Pre-Market & Holdings Execution Audit (All 8 Personas):** `py C:\Users\AviShemla\AntiGravity\print_intraday_execution_table.py` *(Supports optional `--date YYYY-MM-DD` parameter. If omitted, dynamically queries `MAX(date)` from Turso DB with ZERO hardcoded dates).*
 - **Full Dashboard Screenshot QA:** `py C:\Users\AviShemla\.gemini\antigravity\brain\01e9aa77-80c5-489b-8bac-9eba71ae877f\scratch\capture_all_5_tabs.py`
 
+
+
+## 5. 🧬 v2.5 DETERMINISTIC LINEAGE & $10,000.00 INCEPTION AUDIT RULES (ADDED 2026-10-30)
+
+1. **`$10,000.00` Inception Baseline & Single-Day Return Enforcement (`qa_financial_audit.py`):**
+   - Every persona in `capital_ledgers` (`Conservative`, `Neutral`, `Dynamic`, `BallsForBrains`, `ETF_Conservative`, `ETF_Neutral`, `ETF_Dynamic`, `ETF_BallsForBrains`) MUST start at an exact **`$10,000.00`** inception balance on its first ledger date.
+   - Multi-day cumulative returns or duplicated hold-day PnL values in `daily_pnl_json` are strictly forbidden. `qa_financial_audit.py` permanently enforces:
+     - **Check 3b (`>5%` Single-Day Equity Spike/Drop Anomaly Audit)**
+     - **Check 4 (20-Session Anti-Flatline Audit)**
+     - **Check 5 (`$10,000.00` Inception Baseline Audit)**
+2. **7-Stage Deterministic Source-to-Target Traceability (`oracle_lineage_core.py` & `trace_decision.py`):**
+   - Every prediction and trade decision across all 8 personas MUST be logged in `feature_lineage_audit` and `decision_lineage_audit` in **Turso**.
+   - Running `py c:\Users\AviShemla\AntiGravity\trace_decision.py --date YYYY-MM-DD --ticker TTTT --persona PPPP` (or querying `/api/trace`) must deterministically verify all 7 stages: Raw Market Bar $\to$ Lagged Features $\to$ Z-Score Scaling $\to$ SHA-256 Seeded 2-Chain PyMC Posterior $\to$ Bounded Fractional Kelly Gate $\to$ Single-Day Position PnL Math (`Prev_Dollars * Market_Return == Stored_Ticker_PnL`) $\to$ Double-Entry & Inter-Day Ledger Continuity (`diff = $0.00`).
+3. **Arena Duplicate Key Prevention (`prod_vs_shadow_master` & `olympic_shootout_master`):**
+   - Never write legacy alias keys (`'Prod'`, `'CHAMPION'`, `'EL_CAP'`, `'EL_VOLTI'`) alongside canonical keys (`'PROD_Bayesian_SV'`, `'CHAMPION (Live VIP)'`, `'EL_CAP (70% Liquidity)'`, `'EL_VOLTI (70% Stability)'`), as `server.py` maps both to the same UI column and `drop_duplicates(keep='last')` will interleave old and new equity curves.

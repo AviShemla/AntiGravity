@@ -2,7 +2,10 @@ import pandas as pd
 import numpy as np
 import os
 import json
+import sys
+import argparse
 import database_manager
+import oracle_lineage_core
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 try:
@@ -12,24 +15,41 @@ except:
     TARGET_ETFS = ["XLK"]
 
 PERSONAS = {
-    "Conservative": {"threshold": 0.57, "kelly_multiplier": 0.25, "max_alloc": 0.10},
-    "Neutral": {"threshold": 0.54, "kelly_multiplier": 0.50, "max_alloc": 0.10},
-    "BallsForBrains": {"threshold": 0.51, "kelly_multiplier": 1.0, "max_alloc": 0.10}
+    "Conservative": {
+        "threshold": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_Conservative"]["prob_threshold"],
+        "kelly_multiplier": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_Conservative"]["kelly_multiplier"],
+        "max_alloc": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_Conservative"]["max_cap"],
+    },
+    "Neutral": {
+        "threshold": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_Neutral"]["prob_threshold"],
+        "kelly_multiplier": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_Neutral"]["kelly_multiplier"],
+        "max_alloc": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_Neutral"]["max_cap"],
+    },
+    "BallsForBrains": {
+        "threshold": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_BallsForBrains"]["prob_threshold"],
+        "kelly_multiplier": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_BallsForBrains"]["kelly_multiplier"],
+        "max_alloc": oracle_lineage_core.ETF_PERSONA_CONFIG["ETF_BallsForBrains"]["max_cap"],
+    },
 }
 
 def calculate_kelly_fraction(prob, expected_return, expected_volatility):
-    # ETFs are highly symmetrical on daily timescales.
-    # If the Bayesian engine heavily shrinks the expected return, we default to an even-money bet (R=1.0)
-    # This prevents the Kelly formula from freezing capital when probability is solid but magnitude is shrunken.
-    R = 1.0
-    if expected_return > 0 and expected_volatility > 0:
-        calculated_R = expected_return / expected_volatility
-        if calculated_R > 0.1: # Only use if the ratio is statistically significant
-            R = calculated_R
-            
+    if expected_return <= 0 or expected_volatility <= 0:
+        return 0.0
+    R = expected_return / expected_volatility
     W = prob
     kelly_pct = W - ((1 - W) / R)
     return max(0.0, kelly_pct)
+
+def _resolve_target_date():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--target-date", type=str, default=None)
+    known, unknown = parser.parse_known_args()
+    if known.target_date:
+        return str(known.target_date)[:10]
+    for arg in unknown:
+        if "Capital" not in arg and not arg.startswith("-"):
+            return str(arg)[:10]
+    return None
 
 def run_etf_virtual_broker():
     print("=== MULTI-PERSONA MULTI-ETF VIRTUAL BROKER EXECUTION ===\n")
@@ -44,18 +64,16 @@ def run_etf_virtual_broker():
     
     # SOURCE OF TRUTH: Turso DB etf_scorecards_master
     try:
-        import sys
-        if len(sys.argv) > 2 and "Capital" not in sys.argv[2]:
-            target_date_for_ledger = sys.argv[2]
-            scorecard_date = target_date_for_ledger
+        cli_date = _resolve_target_date()
+        if cli_date:
+            target_date_for_ledger = cli_date
+            scorecard_date = cli_date
         else:
-            import pandas_market_calendars as mcal
-            nyse = mcal.get_calendar('NYSE')
             now = pd.Timestamp.now(tz='America/New_York')
             date_res = database_manager.execute_query(
                 "SELECT MAX(date) as d FROM etf_scorecards_master WHERE persona='ETF_BallsForBrains'"
             )
-            scorecard_date = date_res.iloc[0][0] if not date_res.empty else now.strftime('%Y-%m-%d')
+            scorecard_date = str(date_res.iloc[0][0])[:10] if not date_res.empty and date_res.iloc[0][0] else now.strftime('%Y-%m-%d')
             target_date_for_ledger = scorecard_date
     except Exception as e:
         print(f"Date calculation error: {e}")
@@ -110,10 +128,16 @@ def run_etf_virtual_broker():
         
     runtime_personas = PERSONAS.copy()
     runtime_personas["Dynamic"] = PERSONAS[dynamic_winner].copy()
+
+    try:
+        oracle_lineage_core.init_lineage_tables()
+    except Exception:
+        pass
     
     for persona_name, config in runtime_personas.items():
         full_persona = f"ETF_{persona_name}"
-        print(f"--- Persona: {full_persona.upper()} ---")
+        eval_persona_name = f"ETF_{dynamic_winner}" if persona_name == "Dynamic" else full_persona
+        print(f"--- Persona: {full_persona.upper()} (Rule Profile: {eval_persona_name}) ---")
 
         ledger = database_manager.get_ledger(full_persona)
 
@@ -145,15 +169,18 @@ def run_etf_virtual_broker():
             })
         else:
             last_state = ledger.iloc[-1]
+
         current_cash = float(last_state['Cash'])
         total_equity = float(last_state['Total_Equity'])
-        holdings = json.loads(last_state['Holdings_JSON'])
+        holdings = json.loads(last_state['Holdings_JSON']) if isinstance(last_state['Holdings_JSON'], str) else last_state['Holdings_JSON']
         
         settled_equity = current_cash
         daily_pnl = {}
         
-        # 1.5 Settle Orphaned Trades (ETFs dropped from the Dynamic Top list)
+        # 1.5 Settle Orphaned Trades (ETFs dropped from the Dynamic Top list) using single-day return
         for held_etf, item in list(holdings.items()):
+            if held_etf == "Cash":
+                continue
             if held_etf not in ticker_universe:
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                 purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
@@ -163,11 +190,13 @@ def run_etf_virtual_broker():
                 if purchase_price > 0:
                     try:
                         from failover_downloader import download_ticker_with_failover
-                        hist = download_ticker_with_failover(held_etf, period='5d')
-                        if not hist.empty:
-                            close_price = hist['Close'].dropna().iloc[-1]
-                            actual_return_pct = (close_price - purchase_price) / purchase_price if purchase_price > 0 else 0.0
-                    except:
+                        hist = download_ticker_with_failover(held_etf, start=(pd.to_datetime(target_date_for_ledger) - pd.Timedelta(days=5)).strftime('%Y-%m-%d'))
+                        hist = hist[hist.index <= pd.to_datetime(target_date_for_ledger)]
+                        if not hist.empty and len(hist['Close'].dropna()) >= 2:
+                            close_price = float(hist['Close'].dropna().iloc[-1])
+                            prev_price = float(hist['Close'].dropna().iloc[-2])
+                            actual_return_pct = (close_price - prev_price) / prev_price if prev_price > 0 else 0.0
+                    except Exception:
                         pass
 
                 pnl = allocated_dollars * actual_return_pct
@@ -178,18 +207,13 @@ def run_etf_virtual_broker():
 
         # 2. Settle yesterday's active trades from Turso DB
         for etf in ticker_universe:
-            sc_row = get_etf_scorecard_row(etf, target_date_for_ledger, full_persona)
-            if sc_row is None or len(df_scorecard_all[
-                (df_scorecard_all['ticker'] == etf) &
-                (df_scorecard_all['persona'] == full_persona) &
-                (df_scorecard_all['date'] <= target_date_for_ledger)
-            ]) < 2:
-                continue
             sub = df_scorecard_all[
                 (df_scorecard_all['ticker'] == etf) &
                 (df_scorecard_all['persona'] == full_persona) &
                 (df_scorecard_all['date'] <= target_date_for_ledger)
             ].sort_values('date')
+            if len(sub) < 2:
+                continue
             settlement_row = sub.iloc[-2]
 
             if etf in holdings:
@@ -198,49 +222,45 @@ def run_etf_virtual_broker():
                 actual_return_pct = settlement_row.get('actual_return', None)
                 
                 if pd.notna(actual_return_pct):
-                    # --- INTRA-DAY STOP-LOSS LOGIC & EXACT PNL RECALCULATION ---
+                    actual_return_pct = float(actual_return_pct)
+                    # --- INTRA-DAY STOP-LOSS ONLY (Bug #2 Fix: NEVER overwrite single-day scorecard return with cumulative return) ---
                     purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
                     if purchase_price > 0:
                         try:
                             from failover_downloader import download_ticker_with_failover
-                            settle_date_str = settlement_row['Date']
+                            settle_date_str = settlement_row['date']
                             if not isinstance(settle_date_str, str):
-                                settle_date_str = settle_date_str.strftime('%Y-%m-%d')
+                                settle_date_str = pd.to_datetime(settle_date_str).strftime('%Y-%m-%d')
                                 
                             hist = download_ticker_with_failover(etf, start=settle_date_str)
                             if not hist.empty:
-                                close_price = hist['Close'].iloc[0]
-                                low_price = hist['Low'].iloc[0]
+                                low_price = float(hist['Low'].iloc[0])
                                 
-                                # Overwrite the static scorecard return with the EXACT true return based on live purchase price
-                                actual_return_pct = (close_price - purchase_price) / purchase_price if purchase_price > 0 else 0.0
-                                
-                                # --- DYNAMIC VIX STOP-LOSS LOGIC ---
-                                dynamic_stop_loss = -0.03 # ETF default
+                                dynamic_stop_loss = -0.025
                                 vix_high = 0.0
                                 if not global_vix_hist.empty:
                                     try:
                                         if settle_date_str in global_vix_hist.index.strftime('%Y-%m-%d'):
-                                            vix_high = global_vix_hist[global_vix_hist.index.strftime('%Y-%m-%d') == settle_date_str]['High'].iloc[0]
+                                            vix_high = float(global_vix_hist[global_vix_hist.index.strftime('%Y-%m-%d') == settle_date_str]['High'].iloc[0])
                                         else:
-                                            vix_high = global_vix_hist['High'].iloc[-1]
+                                            vix_high = float(global_vix_hist['High'].iloc[-1])
                                             
                                         if persona_name == "Conservative":
                                             dynamic_stop_loss = -0.005 if vix_high > 35.0 else (-0.015 if vix_high > 25.0 else -0.025)
                                         elif persona_name == "Neutral":
                                             dynamic_stop_loss = -0.010 if vix_high > 35.0 else (-0.020 if vix_high > 25.0 else -0.030)
-                                        else: # BallsForBrains / Dynamic
+                                        else:
                                             dynamic_stop_loss = -0.020 if vix_high > 35.0 else (-0.030 if vix_high > 25.0 else -0.040)
-                                    except: pass
+                                    except Exception:
+                                        pass
                                 
                                 intraday_drop = (low_price - purchase_price) / purchase_price if purchase_price > 0 else 0.0
                                 if intraday_drop <= dynamic_stop_loss:
                                     panic_str = f"(VIX {vix_high:.1f})" if vix_high > 0 else ""
                                     print(f"  [STOP-LOSS TRIGGERED] {etf} dropped {intraday_drop*100:.1f}% intraday! Intercepting loss at {dynamic_stop_loss*100:.1f}% {panic_str}")
                                     actual_return_pct = dynamic_stop_loss
-                        except:
+                        except Exception:
                             pass
-                    # -------------------------------------------------------------
                     
                     pnl = allocated_dollars * actual_return_pct
                     daily_pnl[etf] = pnl
@@ -251,64 +271,68 @@ def run_etf_virtual_broker():
                     
         # --- ZOMBIE FAILSAFE LOGIC ---
         for held_ticker, item in holdings.items():
+            if held_ticker == "Cash":
+                continue
             if held_ticker not in ticker_universe and held_ticker not in daily_pnl:
                 allocated_dollars = float(item.get("dollars", 0.0)) if isinstance(item, dict) else float(item)
                 purchase_price = float(item.get("price", 0.0)) if isinstance(item, dict) else 0.0
                 
                 try:
-                    import yfinance as yf
                     from failover_downloader import download_ticker_with_failover
-                    
                     hist = download_ticker_with_failover(held_ticker, start=(pd.to_datetime(target_date_for_ledger) - pd.Timedelta(days=5)).strftime('%Y-%m-%d'))
                     hist = hist[hist.index <= pd.to_datetime(target_date_for_ledger)]
                     
-                    if not hist.empty and purchase_price > 0:
-                        latest_price = hist['Close'].dropna().iloc[-1]
-                        actual_return_pct = (latest_price - purchase_price) / purchase_price
+                    if not hist.empty and purchase_price > 0 and len(hist['Close'].dropna()) >= 2:
+                        latest_price = float(hist['Close'].dropna().iloc[-1])
+                        prev_price = float(hist['Close'].dropna().iloc[-2])
+                        actual_return_pct = (latest_price - prev_price) / prev_price if prev_price > 0 else 0.0
                         pnl = allocated_dollars * actual_return_pct
                         daily_pnl[held_ticker] = pnl
                         settled_equity += (allocated_dollars + pnl)
-                        print(f"  [ZOMBIE RECOVERED] {held_ticker} active (Network glitch). Settled via emergency fetch. PnL: ${pnl:.2f}")
+                        print(f"  [ZOMBIE RECOVERED] {held_ticker} active (Network glitch). Settled via single-day emergency fetch. PnL: ${pnl:.2f}")
                     else:
-                        print(f"  [ZOMBIE FAILSAFE TRIGGERED] {held_ticker} returned empty data (Likely delisted or Ticker Change)!")
-                        print(f"  Force liquidating {held_ticker} at purchase price. Returning ${allocated_dollars:.2f} to Cash.")
+                        print(f"  [ZOMBIE FAILSAFE TRIGGERED] {held_ticker} returned empty data! Returning ${allocated_dollars:.2f} to Cash.")
                         daily_pnl[held_ticker] = 0.0
                         settled_equity += allocated_dollars
                 except Exception as e:
                     print(f"  [ZOMBIE FAILSAFE ERROR] Could not verify {held_ticker}: {e}. Returning capital to Cash.")
                     daily_pnl[held_ticker] = 0.0
                     settled_equity += allocated_dollars
-        # -----------------------------
+
+        # Enforce strict inter-day continuity: settled_equity == total_equity + sum(daily_pnl)
+        is_cont, expected_settled_eq, _ = database_manager.verify_ledger_continuity(
+            full_persona, target_date_for_ledger, total_equity, settled_equity, daily_pnl
+        )
+        if not is_cont:
+            settled_equity = expected_settled_eq
                     
         # --- VIX MACRO-CAP LOGIC ---
-        vix_multiplier = 1.0
-        vix_triggered = False
+        latest_vix = 18.0
+        vix_path = os.path.join(BASE_DIR, "vix_score.json")
         try:
-            import yfinance as yf
-            vix_hist = yf.Ticker('^VIX').history(period='5d')
-            if not vix_hist.empty:
-                latest_vix = vix_hist['Close'].dropna().iloc[-1]
-                if latest_vix > 30.0:
-                    vix_multiplier = 0.0
-                    vix_triggered = True
-                    print(f"  [VIX MACRO-CAP TRIGGERED] Extreme Market Panic (^VIX = {latest_vix:.2f} > 30.0). Kelly -> 0.0x")
-                    print("  Halting all active trades. Retreating to 100% Cash.")
-                elif latest_vix > 25.0:
-                    vix_multiplier = 0.5
-                    print(f"  [VIX MACRO-CAP] High Risk (^VIX = {latest_vix:.2f}). Kelly -> 0.5x")
-                elif latest_vix > 20.0:
-                    vix_multiplier = 0.8
-                    print(f"  [VIX MACRO-CAP] Elevated Risk (^VIX = {latest_vix:.2f}). Kelly -> 0.8x")
-        except:
+            if os.path.exists(vix_path):
+                with open(vix_path, 'r') as f:
+                    latest_vix = float(json.load(f).get("vix_value", 18.0))
+            else:
+                import yfinance as yf
+                vix_hist = yf.Ticker('^VIX').history(period='5d')
+                if not vix_hist.empty:
+                    latest_vix = float(vix_hist['Close'].dropna().iloc[-1])
+        except Exception:
             pass
-        # ---------------------------
+
+        vix_multiplier = oracle_lineage_core.compute_vix_multiplier(eval_persona_name, latest_vix)
+        if vix_multiplier == 0.0:
+            print(f"  [VIX MACRO-CAP TRIGGERED] Extreme Market Panic (^VIX = {latest_vix:.2f}). Retreating to 100% Cash.")
+        elif vix_multiplier < 1.0:
+            print(f"  [VIX MACRO-CAP] (^VIX = {latest_vix:.2f}). Kelly VIX multiplier -> {vix_multiplier}x")
         
         # 3. Calculate new allocations
         new_holdings = {}
         new_cash = settled_equity
         available_capital = settled_equity
         
-        # --- ETF HOLDING PROTECTION: FREEZE QUARANTINED POSITIONS — from Turso DB ---
+        # --- ETF HOLDING PROTECTION: FREEZE QUARANTINED POSITIONS ---
         for held_etf, item in holdings.items():
             if held_etf in ticker_universe and held_etf not in new_holdings:
                 try:
@@ -328,7 +352,6 @@ def run_etf_virtual_broker():
                 except Exception as e:
                     print(f"  Error checking ETF holding protection for {held_etf}: {e}")
         
-        import yfinance as yf
         for etf in ticker_universe:
             if etf in new_holdings:
                 continue
@@ -339,53 +362,63 @@ def run_etf_virtual_broker():
             exp_ret = float(sc_row.get('expected_return', 0) or 0)
             exp_vol = float(sc_row.get('expected_risk', 0) or 0)
             status = str(sc_row.get('retraining_status', 'Stable') or 'Stable')
-            if 'SUSPENDED' in status:
+            if 'SUSPENDED' in status or 'QUARANTINED' in status:
                 continue
+
+            is_held_now = etf in holdings
+            dec = oracle_lineage_core.evaluate_persona_decision(
+                persona=eval_persona_name,
+                prob_up=prob,
+                expected_return_pct=exp_ret,
+                expected_risk_pct=exp_vol,
+                vix_val=latest_vix,
+                is_currently_held=is_held_now
+            )
+            dec["persona"] = full_persona
+            oracle_lineage_core.save_decision_lineage(
+                dec, ticker=etf, target_date=target_date_for_ledger, asset_class="ETF"
+            )
             
-            if prob > config['threshold']:
-                if vix_multiplier == 0.0:
-                    print(f"  [BLOCKED BY VIX] Skipped {etf} (P={prob*100:.1f}%).")
-                    continue
-                    
+            final_allocation_pct = dec["applied_kelly"]
+            if dec["recommendation"] in ("BUY", "HOLD_CARRYOVER") and final_allocation_pct > 0:
                 if available_capital <= 0:
                     print(f"  [SAFETY STOP] Cannot buy {etf} - Account depleted!")
                     continue
                     
-                raw_kelly = calculate_kelly_fraction(prob, exp_ret, exp_vol)
-                applied_kelly = raw_kelly * config['kelly_multiplier'] * vix_multiplier
-                final_allocation_pct = min(applied_kelly, config['max_alloc'])
-                
-                if final_allocation_pct > 0:
-                    raw_alloc_dollars = available_capital * final_allocation_pct
-                    if raw_alloc_dollars > new_cash:
-                        raw_alloc_dollars = new_cash
-                        
-                    try:
-                        import yfinance as yf
-                        from failover_downloader import download_ticker_with_failover
-                        
-                        # Use exact historical data up to the target simulation date to prevent future leakage
-                        hist = download_ticker_with_failover(etf, start=(pd.to_datetime(target_date_for_ledger) - pd.Timedelta(days=5)).strftime('%Y-%m-%d'))
-                        hist = hist[hist.index <= pd.to_datetime(target_date_for_ledger)]
-                        
-                        if not hist.empty:
-                            latest_price = hist['Close'].dropna().iloc[-1]
-                            units = int(raw_alloc_dollars // latest_price)
+                raw_alloc_dollars = available_capital * final_allocation_pct
+                if raw_alloc_dollars > new_cash:
+                    raw_alloc_dollars = new_cash
+                    
+                try:
+                    from failover_downloader import download_ticker_with_failover
+                    hist = download_ticker_with_failover(etf, start=(pd.to_datetime(target_date_for_ledger) - pd.Timedelta(days=5)).strftime('%Y-%m-%d'))
+                    hist = hist[hist.index <= pd.to_datetime(target_date_for_ledger)]
+                    
+                    if not hist.empty:
+                        latest_price = float(hist['Close'].dropna().iloc[-1])
+                        units = int(raw_alloc_dollars // latest_price)
+                        alloc_dollars = units * latest_price
+
+                        max_allowed_dollars = settled_equity * config['max_alloc']
+                        if alloc_dollars > max_allowed_dollars:
+                            alloc_dollars = max_allowed_dollars
+                            units = int(alloc_dollars // latest_price)
                             alloc_dollars = units * latest_price
-                        else:
-                            units = 0
-                            latest_price = 0
-                            alloc_dollars = 0.0
-                    except:
-                        units = 0; latest_price = 0; alloc_dollars = 0.0
-                        
-                    if alloc_dollars > 0:
-                        new_holdings[etf] = {"dollars": alloc_dollars, "units": units, "price": latest_price}
-                        new_cash -= alloc_dollars
-                        if units > 0:
-                            print(f"  [BUY] {etf} | {units} units @ ${latest_price:.2f} = ${alloc_dollars:.2f} (P={prob*100:.1f}%)")
-                        else:
-                            print(f"  [BUY] {etf} | Alloc: ${alloc_dollars:.2f} (P={prob*100:.1f}%)")
+                    else:
+                        units = 0
+                        latest_price = 0.0
+                        alloc_dollars = 0.0
+                except Exception:
+                    units = 0; latest_price = 0.0; alloc_dollars = 0.0
+                    
+                if alloc_dollars > 0:
+                    new_holdings[etf] = {
+                        "dollars": round(alloc_dollars, 2),
+                        "units": int(units),
+                        "price": round(latest_price, 4)
+                    }
+                    new_cash -= alloc_dollars
+                    print(f"  [{dec['recommendation']}] {etf} | {units} units @ ${latest_price:.2f} = ${alloc_dollars:.2f} (P={prob*100:.1f}%, {dec['reason_code']})")
         
         if not new_holdings:
             print("  [HOLD] Sitting safely in Cash.")
@@ -394,7 +427,7 @@ def run_etf_virtual_broker():
         
         # 4. Save intended state to Pending Orders for Intraday Execution
         intended_state = {
-            "Persona": f"ETF_{persona_name}",
+            "Persona": full_persona,
             "Date": target_date_for_ledger,
             "Target_Cash": round(new_cash, 2),
             "Target_Total_Equity": round(settled_equity, 2),
@@ -404,7 +437,7 @@ def run_etf_virtual_broker():
         }
         
         database_manager.save_pending_order(
-            persona=f"ETF_{persona_name}",
+            persona=full_persona,
             date=intended_state["Date"],
             target_cash=intended_state["Target_Cash"],
             target_equity=intended_state["Target_Total_Equity"],
@@ -412,8 +445,22 @@ def run_etf_virtual_broker():
             daily_pnl=intended_state["Daily_PnL_JSON"],
             executed_trades=intended_state["Executed_Intraday_Trades"]
         )
+
+        # Bug #3 Fix: For completed historical sessions, also persist settled state to capital_ledgers
+        today_ny = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
+        if target_date_for_ledger < today_ny:
+            database_manager.save_ledger_row(
+                persona=full_persona,
+                date=intended_state["Date"],
+                cash=intended_state["Target_Cash"],
+                total_equity=intended_state["Target_Total_Equity"],
+                holdings_json=intended_state["Target_Holdings"],
+                daily_pnl_json=intended_state["Daily_PnL_JSON"],
+                intraday_status="Historical ETF Broker Settlement",
+                engine_version=oracle_lineage_core.CODE_VERSION
+            )
             
-        print(f"  [STAGING MODE] Delegated execution for ETF_{persona_name} to Intraday Tracker. Saved to Pending_Orders.json")
+        print(f"  [STAGING MODE] Delegated execution for {full_persona} to Intraday Tracker. Saved to Pending_Orders.")
         
         final_equities[persona_name] = settled_equity
 
@@ -427,4 +474,5 @@ def run_etf_virtual_broker():
         
 if __name__ == '__main__':
     run_etf_virtual_broker()
-    import sys; sys.stdout.flush(); os._exit(0)
+    sys.stdout.flush()
+    os._exit(0)

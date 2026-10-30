@@ -47,5 +47,5 @@ def run_qa_manager():
 if __name__ == "__main__":
     success = run_qa_manager()
     if not success:
-        sys.exit(1)
-    sys.exit(0)
+        sys.stdout.flush(); os._exit(1)
+    sys.stdout.flush(); os._exit(0)

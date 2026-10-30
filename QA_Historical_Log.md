@@ -591,3 +591,38 @@ Whenever you resolve a bug or create a test case, log it here using the followin
 ### 2026-08-12 02:04:25 - QA Assistant - Automated Blacklist Audit
 * **Status:** SUCCESS - Blacklist engine evaluated ledgers. Currently blacklisted: None
 * **Resolution:** Blacklist pipeline logic is intact and generating correct output.
+
+### 2026-10-30 14:50:34 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-10-30 17:25:41 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-10-30 17:27:38 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-10-30 17:28:30 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-10-30 17:29:27 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+
+### 2026-10-30 17:45:00 - Full System (`v2.5-Deterministic-Lineage`) - $10,000.00 Inception Reconciliation, 7-Stage Traceability & 9/9 QA Green
+* **Symptom:** 1) Pre-`2026-08-20` rows in `capital_ledgers` contained legacy duplicated carryover PnL (`ETF_BallsForBrains` inflated to `$15,001.71` / `+50%`) and multi-day cumulative return bugs (`ETF_Conservative` deflated to `$6,788.38` / `-32%`). 2) Post-`2026-08-20` equity curves flatlined due to Bayesian shrinkage making `payoff_ratio < 0.25` in Kelly sizing. 3) `prod_vs_shadow_master` had 31 legacy duplicate `'Prod'` rows (`$9,100`) colliding with `'PROD_Bayesian_SV'` (`$10,176.36`) on the Unified Arena chart. 4) `clean_ghosts.py` was missing `"prefect"` in `WHITELIST_KEYWORDS`.
+* **Root Cause:** Legacy pre-Aug-20 virtual broker cumulative return calculations, unfloored single-day payoff ratio in Kelly formula, duplicate legacy model name keys in `prod_vs_shadow_master`, and incomplete process whitelist in `clean_ghosts.py`.
+* **Resolution:**
+  1. Patched `oracle_lineage_core.py` with bounded `effective_R = max(1.0, payoff_ratio)` when `expected_return > 0` and calibrated single-day Sharpe gates across all 8 personas.
+  2. Rebuilt all `695+` ledger rows across all 8 personas from exact `$10,000.00` inception through `2026-10-30` using verified single-day market returns from Turso `yahoo_daily_prices`.
+  3. Populated `feature_lineage_audit` (`1,017` rows) and `decision_lineage_audit` across `2026-08-21`..`2026-10-30` and enhanced `trace_decision.py` Stage 7 to prove `Prev_Dollars * Market_Return == Stored_Ticker_PnL`.
+  4. Purged duplicate `'Prod'` rows from `prod_vs_shadow_master`, synced `2026-10-30` intraday monitoring rows across all 8 personas, whitelisted `"prefect"` in `clean_ghosts.py`, and added Check 3b (`>5%` Spike/Drop Anomaly), Check 4 (Anti-Flatline), and Check 5 (`$10,000.00` Inception) to `qa_financial_audit.py`.
+* **Test Case:** Executed `py -u qa_manager.py` -> `FINAL QA STATUS: 100% GREEN (ALL PASSED)` across all 9 QA scripts; verified `trace_decision.py` and all 5 live dashboard tabs on `http://66.42.118.26:80`.
+
+### 2026-10-30 17:53:04 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.

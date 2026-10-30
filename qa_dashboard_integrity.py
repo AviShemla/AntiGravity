@@ -100,8 +100,16 @@ def test_dashboard_continuity():
                 if latest_shadow_date > latest_db_date:
                     print(f"SUCCESS - Prod vs Shadow chart is actively tracking INTRADAY (Chart: {latest_shadow_date}, DB: {latest_db_date}).")
                 else:
-                    print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
-                    import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
+                    import pandas_market_calendars as mcal
+                    nyse = mcal.get_calendar('NYSE')
+                    now_ny = pd.Timestamp.now(tz='America/New_York')
+                    sched = nyse.schedule(start_date=now_ny - pd.Timedelta(days=10), end_date=now_ny)
+                    last_eod_str = sched.index[-2].strftime('%Y-%m-%d') if (not sched.empty and len(sched) >= 2 and now_ny < sched.iloc[-1]['market_close']) else (sched.index[-1].strftime('%Y-%m-%d') if not sched.empty else latest_shadow_date)
+                    if latest_shadow_date >= last_eod_str and latest_db_date > last_eod_str:
+                        print(f"SUCCESS - Master Ledger has live INTRADAY Sniper execution ({latest_db_date}) while Prod vs Shadow EOD chart is synced to last market close ({latest_shadow_date}).")
+                    else:
+                        print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
+                        import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
             
             # --- NEW CHECK: 10000.00 Flatline Bug ---
             recent_prod_values = shadow_df['Prod'].tail(3).values

@@ -19,27 +19,35 @@ TURSO_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 # This is the structural fix for the 'Too many open files' exhaustion bug.
 _local = threading.local()
 
-def get_connection():
-    """Returns a reusable singleton libsql_client per thread."""
+def get_connection(force_new=False):
+    """Returns a reusable singleton libsql_client per thread, reconnecting if requested."""
     if not TURSO_URL or not TURSO_TOKEN:
         raise ValueError("Missing TURSO credentials in .env file!")
-    if not getattr(_local, 'client', None):
+    if force_new or not getattr(_local, 'client', None):
         _local.client = libsql_client.create_client_sync(url=TURSO_URL, auth_token=TURSO_TOKEN)
     return _local.client
 
 def execute_query(query, args=None):
-    """Generic helper to execute SELECT queries and return a DataFrame."""
-    client = get_connection()
-    res = client.execute(query, args or [])
+    """Generic helper to execute SELECT queries and return a DataFrame, with automatic reconnect on idle disconnect."""
+    try:
+        client = get_connection()
+        res = client.execute(query, args or [])
+    except Exception:
+        client = get_connection(force_new=True)
+        res = client.execute(query, args or [])
     if not res.rows:
         return pd.DataFrame(columns=res.columns)
     return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
 
 def execute_write(query, args=None):
-    """Generic helper to execute INSERT/UPDATE/DELETE statements safely."""
-    client = get_connection()
+    """Generic helper to execute INSERT/UPDATE/DELETE statements safely, with automatic reconnect on idle disconnect."""
     stmt = libsql_client.Statement(query, args or [])
-    client.batch([stmt])
+    try:
+        client = get_connection()
+        client.batch([stmt])
+    except Exception:
+        client = get_connection(force_new=True)
+        client.batch([stmt])
 
 
 def init_db():
@@ -132,9 +140,27 @@ def init_db():
             date TEXT NOT NULL,
             score REAL,
             prob REAL,
+            expected_return REAL,
+            expected_risk REAL,
+            kelly_allocation REAL,
+            actual_return REAL,
+            recommendation TEXT,
+            broker_override_note TEXT,
+            retraining_status TEXT,
+            sv_engine_used TEXT,
+            predicted_direction TEXT,
+            actual_direction TEXT,
+            model_hit TEXT,
             PRIMARY KEY (ticker, persona, date)
         )
     ''')
+
+    # 8. Additive Lineage Tables (feature_lineage_audit & decision_lineage_audit)
+    try:
+        import oracle_lineage_core
+        oracle_lineage_core.init_lineage_tables()
+    except Exception as e:
+        print(f"  [DB INIT WARNING] Could not initialize lineage tables: {e}")
 
 
 def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
@@ -146,7 +172,10 @@ def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
         holdings = json.loads(holdings_json) if isinstance(holdings_json, str) else holdings_json
         if not holdings:
             holdings = {}
-        true_holdings_value = sum(float(h.get('dollars', 0.0)) for h in holdings.values())
+        true_holdings_value = sum(
+            float(h.get('dollars', 0.0)) if isinstance(h, dict) else float(h)
+            for k, h in holdings.items() if k != "Cash"
+        )
         calculated_equity = float(cash) + true_holdings_value
         if abs(calculated_equity - float(total_equity)) > 0.1:
             correct_cash = float(total_equity) - true_holdings_value
@@ -157,6 +186,29 @@ def _enforce_double_entry_accounting(cash, total_equity, holdings_json):
     except Exception as e:
         print(f"  [ACCOUNTING INTERCEPT ERROR] {e}. Trusting passed cash.")
         return float(cash)
+
+
+def verify_ledger_continuity(persona, date, prev_equity, total_equity, daily_pnl_json, tolerance=0.10):
+    """
+    Verifies inter-day ledger continuity:
+      Equity[t] == Equity[t-1] + sum(PnL[t])
+    Returns (is_valid, expected_equity, discrepancy).
+    """
+    try:
+        pnl_dict = json.loads(daily_pnl_json) if isinstance(daily_pnl_json, str) else (daily_pnl_json or {})
+        pnl_sum = sum(float(v) for v in pnl_dict.values())
+        expected_eq = round(float(prev_equity) + pnl_sum, 2)
+        diff = round(float(total_equity) - expected_eq, 2)
+        if abs(diff) > tolerance:
+            print(
+                f"  [CONTINUITY INTERCEPT] {persona} @ {date}: Passed Equity=${float(total_equity):.2f} "
+                f"!= Prev_Equity(${float(prev_equity):.2f}) + sum(PnL)(${pnl_sum:+.2f}) = ${expected_eq:.2f} (diff=${diff:+.2f})"
+            )
+            return False, expected_eq, diff
+        return True, expected_eq, diff
+    except Exception as e:
+        print(f"  [CONTINUITY CHECK ERROR] {e}")
+        return True, float(total_equity), 0.0
 
 
 def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_json, intraday_status="", engine_version="V1.0 - Pure PyMC Bayesian"):

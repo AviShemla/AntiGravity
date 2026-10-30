@@ -8,6 +8,20 @@ import subprocess
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(BASE_DIR, "zombie_hunter.log")
 
+WHITELIST_KEYWORDS = [
+    "uvicorn",
+    "prefect",
+    "catchup_controller",
+    "run_backtests",
+    "intraday_tracker",
+    "vix_monitor",
+    "export_bayesian_scorecard",
+    "master_pipeline",
+    "daily_pipeline",
+    "weekend_dl_trainer",
+    "etf_weekend_dl_trainer",
+]
+
 def log(msg):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_line = f"[{timestamp}] {msg}"
@@ -28,11 +42,12 @@ def hunt_zombies():
     for p in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
         try:
             cmdline = p.info.get('cmdline')
-            if not cmdline: continue
+            if not cmdline:
+                continue
             cmd_str = " ".join(cmdline).lower()
             
-            # Protect Uvicorn, and long-running pipelines
-            if any(w in cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests", "intraday_tracker", "vix_monitor", "export_bayesian_scorecard", "master_pipeline"]):
+            # Protect Uvicorn, Prefect Orchestrator, and long-running pipelines
+            if any(w in cmd_str for w in WHITELIST_KEYWORDS):
                 continue
                 
             # Target Python processes
@@ -45,11 +60,12 @@ def hunt_zombies():
                         curr_cmdline = curr.cmdline()
                         if curr_cmdline:
                             curr_cmd_str = " ".join(curr_cmdline).lower()
-                            if any(w in curr_cmd_str for w in ["uvicorn", "catchup_controller", "run_backtests", "intraday_tracker", "vix_monitor", "export_bayesian_scorecard", "master_pipeline"]):
+                            if any(w in curr_cmd_str for w in WHITELIST_KEYWORDS):
                                 is_protected = True
                                 break
                         curr = curr.parent()
-                        if not curr: break
+                        if not curr:
+                            break
                     except Exception:
                         break
                 
@@ -70,7 +86,8 @@ def hunt_zombies():
     search_dirs = [BASE_DIR, os.path.join(BASE_DIR, "financial_data")]
     
     for d in search_dirs:
-        if not os.path.exists(d): continue
+        if not os.path.exists(d):
+            continue
         for fname in os.listdir(d):
             # Check if file matches any lock pattern
             if any(pat in fname.lower() for pat in lock_patterns):
@@ -107,6 +124,8 @@ def hunt_zombies():
             
     else:
         log("Scan Complete: System is clean. No zombies found.")
-        
+
 if __name__ == "__main__":
     hunt_zombies()
+    sys.stdout.flush()
+    os._exit(0)

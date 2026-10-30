@@ -135,6 +135,8 @@ def run_qa_ledger_balance():
     
     if failed > 0:
         os._exit(1)
+    sys.stdout.flush()
+    os._exit(0)
 
 if __name__ == "__main__":
     run_qa_ledger_balance()

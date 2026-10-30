@@ -259,9 +259,16 @@ Every tool call costs real money. Before making ANY tool call the AI MUST ask: I
 
 ## File Descriptor (ulimit) Verification Protocol
 The ulimit -n 65536 fix in /etc/security/limits.conf is a session-level change. It is NOT guaranteed to apply to Prefect daemon processes that started before the change, or processes Prefect spawns.
-Mandatory: Before declaring 'Too many open files cannot recur,' physically verify /proc/<PID>/limits for EVERY running Sniper PID. Never assume — always prove.
+Mandatory: Before declaring 'Too many open files cannot recur,' physically verify /proc/<PID>/limits for EVERY running Sniper PID. Never assume â€” always prove.
 Structural fix: database_manager.py singleton (no client.close() calls) eliminates FD leak from that module only. Any script creating libsql_client connections outside database_manager.get_connection() still leaks.
 
 ## Duplicate Sniper Prevention Protocol
-intraday_tracker.py must run as EXACTLY 1 process. NEVER manually nohup-start it while Prefect is running — both get adopted by PID=1 making them indistinguishable. Multiple instances cause double FD consumption and race conditions.
+intraday_tracker.py must run as EXACTLY 1 process. NEVER manually nohup-start it while Prefect is running â€” both get adopted by PID=1 making them indistinguishable. Multiple instances cause double FD consumption and race conditions.
 Rule: Only restart the Sniper through Prefect, or kill ALL, verify count=0, start 1, verify count=1 before Prefect's next tick.
+
+
+## v2.5 Deterministic Lineage, $10,000.00 Inception Baseline & Arena Key Hygiene (Added 2026-10-30)
+1. **100% `$10,000.00` Inception & Single-Day Return Verification (`qa_financial_audit.py`)**: Every persona in `capital_ledgers` must start at `$10,000.00` on its inception date, and every subsequent day's `daily_pnl_json` must reflect strictly single-day market returns (`Prev_Dollars * (Close_t - Close_{t-1}) / Close_{t-1}`). `qa_financial_audit.py` enforces Check 3b (`>5%` single-day spike/drop anomaly), Check 4 (20-day anti-flatline), and Check 5 (`$10,000.00` inception).
+2. **7-Stage Deterministic Traceability (`trace_decision.py`)**: Every historical and live trade must be verifiable end-to-end via `trace_decision.py` (`feature_lineage_audit` + `decision_lineage_audit` + `capital_ledgers`).
+3. **Zombie Hunter Whitelist Integrity (`clean_ghosts.py`)**: `clean_ghosts.py` MUST always include `"prefect"`, `"daily_pipeline"`, `"intraday_tracker"`, `"vix_monitor"`, and `"uvicorn"` in `WHITELIST_KEYWORDS` so hourly maintenance never kills the Prefect orchestrator on Vultr.
+4. **Arena Model Key Canonicalization**: In `prod_vs_shadow_master` and `olympic_shootout_master`, only canonical model names (`PROD_Bayesian_SV`, `CHAMPION (Live VIP)`, `EL_CAP (70% Liquidity)`, `EL_VOLTI (70% Stability)`) are permitted; legacy short aliases (`Prod`, `CHAMPION`, `EL_CAP`, `EL_VOLTI`) must never be inserted to prevent `drop_duplicates(keep='last')` from corrupting the Unified Arena chart.

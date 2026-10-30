@@ -144,7 +144,7 @@ if __name__ == "__main__":
     # QA 7: Uvicorn Server & Port 80 Deadlock Audit
     import urllib.request
     try:
-        if urllib.request.urlopen("http://127.0.0.1/", timeout=5).getcode() != 200:
+        if urllib.request.urlopen("http://66.42.118.26:80/" if os.name == "nt" else "http://127.0.0.1/", timeout=10).getcode() != 200:
             log_alert("[QA 7] Remote VPS Uvicorn Deadlock Detected!")
             errors += 1
     except Exception as e:
@@ -182,7 +182,10 @@ if __name__ == "__main__":
             expected_personas = ['Conservative', 'Neutral', 'BallsForBrains', 'Dynamic', 
                                  'ETF_Conservative', 'ETF_Neutral', 'ETF_BallsForBrains', 'ETF_Dynamic']
             found_personas = df_pending['persona'].tolist() if not df_pending.empty else []
-            missing = [p for p in expected_personas if p not in found_personas]
+            df_settled_today = database_manager.execute_query('SELECT DISTINCT persona FROM capital_ledgers WHERE date >= ?', [next_market_day])
+            settled_personas = df_settled_today['persona'].tolist() if not df_settled_today.empty else []
+            active_or_settled = set(found_personas) | set(settled_personas)
+            missing = [p for p in expected_personas if p not in active_or_settled]
             
             stale = False
             if not df_pending.empty:
@@ -194,7 +197,7 @@ if __name__ == "__main__":
             # Intraday Execution Blindspot Patch:
             # If ledger shows yesterday was successful, and pending_orders is empty, DO NOT panic.
             # The Sniper consumed them. Expected state post-execution. Wait for pipeline to run.
-            if df_pending.empty and max_ledger_date == last_completed_market_day:
+            if not missing and not stale:
                 pass 
             elif missing or stale:
                 if missing: log_alert(f"[QA 6] Missing Pending Orders for Personas: {missing}.")

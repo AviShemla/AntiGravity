@@ -11,13 +11,17 @@ import os
 import sys
 import subprocess
 import gc
+import json
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_loader import load_predictors
 from failover_downloader import is_quarantined, log_warning
 from timeout_runner import run_with_timeout
+import oracle_lineage_core
 
-def run_sv_engine(returns_full):
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
+
+def run_sv_engine(returns_full, sv_seed=42):
     import pymc as pm
     import numpy as np
     import os
@@ -30,7 +34,10 @@ def run_sv_engine(returns_full):
         volatility = pm.GaussianRandomWalk('volatility', sigma=step_size, shape=len(returns_full))
         nu = pm.Exponential('nu', 0.1)
         returns_obs = pm.StudentT('returns_obs', nu=nu, lam=pm.math.exp(-2 * volatility), observed=returns_full)
-        trace_sv = pm.sample(draws=500, tune=500, chains=1, cores=1, progressbar=False, nuts_sampler="nutpie")
+        try:
+            trace_sv = pm.sample(draws=500, tune=500, chains=2, cores=1, random_seed=int(sv_seed), progressbar=False, nuts_sampler="nutpie")
+        except Exception:
+            trace_sv = pm.sample(draws=500, tune=500, chains=2, cores=1, random_seed=int(sv_seed), progressbar=False, nuts_sampler="pymc")
         
     return np.exp(trace_sv.posterior['volatility'].mean(dim=['chain', 'draw']).values)
 
@@ -60,7 +67,7 @@ def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="
 
 os.environ["PYTENSOR_FLAGS"] = "cxx="
 
-def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, next_biz_day, fundamental_score=0.0):
+def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, next_biz_day, fundamental_score=0.0, oos_accuracy=0.0):
     target_t = returns_df[ticker].rename('Target_t')
     
     target_dir = (target_t > 0).astype(float)
@@ -87,7 +94,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     
     for d in range(depth, 0, -1):
         lag_name = lags_dict[d]
-        raw_lag = returns_df[lag_name].shift(d)
+        raw_lag = returns_df[lag_name].shift(d) if lag_name in returns_df.columns else pd.Series(0.0, index=returns_df.index)
         
         try:
             hist = yf.Ticker(lag_name).history(period='1y')
@@ -156,13 +163,25 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     y_train = train_data['Target_DIR'].values.astype(np.int32)
     y_mag_train = train_data['Raw_Return_%'].values
     X_test = test_data[feat_cols].values
-    y_test = test_data['Target_DIR'].values.astype(np.int32)
+    y_test = test_data['Target_DIR'].values
     raw_return_test = test_data['Raw_Return_%'].values
     
     Xm = X_train.mean(0); Xs = X_train.std(0)
     Xs[Xs < 1e-5] = 1.0  # Cap zero std to prevent normalization explosion
     X_train_s = (X_train - Xm) / Xs
     X_test_s = (X_test - Xm) / Xs
+
+    # --- PRE-SAMPLING FEATURE COMPLETENESS GATE (ORA-INC-019) ---
+    target_date_str = pd.to_datetime(next_biz_day).strftime('%Y-%m-%d')
+    source_session_str = pd.to_datetime(historical_data.index[-1]).strftime('%Y-%m-%d')
+    ok_feat, feat_issues = oracle_lineage_core.verify_feature_completeness(
+        X_train_s, y_train, X_test_s[-1:], feat_cols, target_date_str
+    )
+    if not ok_feat:
+        raise ValueError(f"Feature completeness check failed for {ticker}@{target_date_str}: {feat_issues}")
+
+    sv_seed = oracle_lineage_core.deterministic_mcmc_seed(ticker, target_date_str, "SV")
+    main_seed = oracle_lineage_core.deterministic_mcmc_seed(ticker, target_date_str, "MAIN")
     
     # ==========================================
     # V2 STOCHASTIC VOLATILITY ENGINE (RUST)
@@ -172,12 +191,12 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     is_held = False
     
     try:
-        print("  => Running Rust-Compiled SV Engine (with 10-minute freeze timeout)...")
+        print(f"  => Running Rust-Compiled SV Engine (seed={sv_seed})...")
         # Get full historical returns for SV
         returns_full = data_with_future['Raw_Return_%'].fillna(0.0).values / 100.0
         
         # Run the PyMC math in an isolated multiprocessing sandbox with a strict 600s timer
-        inferred_volatility = run_with_timeout(run_sv_engine, args=(returns_full,), timeout_seconds=600)
+        inferred_volatility = run_with_timeout(run_sv_engine, args=(returns_full, sv_seed), timeout_seconds=600)
         
         # Shift forward to prevent lookahead bias (tomorrow's risk is based on today's volatility)
         sv_vol_shifted = np.roll(inferred_volatility, 1)
@@ -197,10 +216,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         
         is_held = False
         try:
-            import sys
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             import database_manager
-            import json
             for p in ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]:
                 df_l = database_manager.get_ledger(p)
                 if not df_l.empty and 'Holdings_JSON' in df_l.columns:
@@ -209,8 +225,8 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
                     if ticker in holdings:
                         qty = holdings[ticker]
                         if isinstance(qty, dict):
-                            qty = qty.get('quantity', 0)
-                        if qty > 0:
+                            qty = qty.get('dollars', qty.get('quantity', 0))
+                        if float(qty) > 0:
                             is_held = True
                             break
         except Exception as ex:
@@ -228,7 +244,6 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         y_data_mag = pm.Data("y_mag", y_mag_train)
         
         # --- Inject Meta-Tracker Hyper-Priors ---
-        import json
         try:
             prior_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Meta_Alpha_Priors.json')
             with open(prior_path, 'r') as f:
@@ -264,7 +279,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         sigma_mag = pm.HalfNormal("sigma_mag", sigma=3)
         pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag, observed=y_data_mag, shape=X_data.shape[0])
         
-        trace = pm.sample(draws=1000, tune=1000, chains=2, target_accept=0.9, random_seed=42, progressbar=False)
+        trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False)
         
         # --- PANDERA/PYMC QA POST-CHECK (Phase 3) ---
         import arviz as az
@@ -298,7 +313,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         # --------------------------------------------
         
         pm.set_data({"X": X_test_s, "y_dir": np.zeros(len(X_test_s), dtype=int), "y_mag": np.zeros(len(X_test_s))})
-        pp = pm.sample_posterior_predictive(trace, var_names=["p", "y_obs_mag"], progressbar=False)
+        pp = pm.sample_posterior_predictive(trace, var_names=["p", "y_obs_mag"], random_seed=int(main_seed), progressbar=False)
         
     p_pred = pp.posterior_predictive["p"].mean(dim=["chain", "draw"]).values
     mag_pred_mean = pp.posterior_predictive["y_obs_mag"].mean(dim=["chain", "draw"]).values
@@ -329,10 +344,18 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
             hits.append("Miss")
             
     vix_triggered = False
+    latest_vix_val = 18.0
     try:
-        import yfinance as yf
-        vix_hist = yf.Ticker('^VIX').history(period='5d')
-        if not vix_hist.empty and vix_hist['Close'].iloc[-1] > 30.0:
+        vix_path = os.path.join(BASE_DIR, "vix_score.json")
+        if os.path.exists(vix_path):
+            with open(vix_path, 'r') as f:
+                latest_vix_val = float(json.load(f).get("vix_value", 18.0))
+        else:
+            import yfinance as yf
+            vix_hist = yf.Ticker('^VIX').history(period='5d')
+            if not vix_hist.empty:
+                latest_vix_val = float(vix_hist['Close'].iloc[-1])
+        if latest_vix_val > 30.0:
             vix_triggered = True
     except:
         pass
@@ -342,15 +365,16 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     
     # Kelly Criterion dynamically switching between SV Risk and Standard Risk
     for i, (p, mag, std, rec) in enumerate(zip(p_pred, mag_pred_mean, mag_pred_std, recs)):
-        # Calculate Risk: V2 True Volatility if available, else V1 Standard Deviation
         active_risk = sv_vol_test[i] if sv_engine_used else (std / 100.0)
-        
-        if p > 0.65 and mag > 0 and not force_hold:
-            kelly = p - ((1 - p) / ( (mag / 100.0) / active_risk ))
-            kelly = max(0.0, min(1.0, kelly))
-            kelly_allocs.append(kelly)
-        else:
-            kelly_allocs.append(0.0)
+        dec = oracle_lineage_core.evaluate_persona_decision(
+            persona="Conservative",
+            prob_up=float(p),
+            expected_return_pct=float(mag / 100.0),
+            expected_risk_pct=float(active_risk),
+            vix_val=latest_vix_val,
+            is_currently_held=False
+        )
+        kelly_allocs.append(dec["raw_kelly"] if not force_hold else 0.0)
             
         note = ""
         if force_hold:
@@ -391,13 +415,54 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     
     sc = pd.DataFrame(sc_dict)
     last_hit = hits[-2] if len(hits) >= 2 else "Pending"
+
+    # Build feature lineage record for target_date_str
+    raw_target_vec = [round(float(x), 8) for x in X_test[-1].tolist()]
+    z_target_vec = [round(float(x), 8) for x in X_test_s[-1].tolist()]
+    xm_vec = [round(float(x), 8) for x in Xm.tolist()]
+    xs_vec = [round(float(x), 8) for x in Xs.tolist()]
+    active_risk_last = float(sv_vol_test[-1]) if sv_engine_used else float(mag_pred_std[-1] / 100.0)
+
+    lineage_meta = {
+        "ticker": ticker,
+        "target_date": target_date_str,
+        "source_session_date": source_session_str,
+        "asset_class": "STOCK",
+        "selected_lag": int(depth),
+        "lag_accuracy": float(oos_accuracy),
+        "selected_features": list(feat_cols),
+        "raw_feature_values": dict(zip(feat_cols, raw_target_vec)),
+        "train_mean": dict(zip(feat_cols, xm_vec)),
+        "train_std": dict(zip(feat_cols, xs_vec)),
+        "z_scored_vector": dict(zip(feat_cols, z_target_vec)),
+        "sv_seed": int(sv_seed),
+        "main_seed": int(main_seed),
+        "chains": 2,
+        "draws": 1000,
+        "tune": 1000,
+        "prob_up": float(p_pred[-1]),
+        "expected_return": float(mag_pred_mean[-1] / 100.0),
+        "expected_risk": float(active_risk_last),
+        "vix_val": float(latest_vix_val),
+    }
+    lineage_meta["source_snapshot_sha256"] = oracle_lineage_core.canonical_json_sha256({
+        "ticker": ticker,
+        "target_date": target_date_str,
+        "source_session_date": source_session_str,
+        "raw_feature_values": lineage_meta["raw_feature_values"],
+        "train_mean": lineage_meta["train_mean"],
+        "train_std": lineage_meta["train_std"],
+        "sv_seed": int(sv_seed),
+        "main_seed": int(main_seed),
+    })
     
-    return sc, feat_cols, last_hit
+    return sc, feat_cols, last_hit, lineage_meta
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--target-date", type=str, help="Target date to simulate catch-up execution")
+    parser.add_argument("--ticker", type=str, help="Optional single ticker filter for fast vertical slice verification")
     args = parser.parse_args()
 
     print("Loading data for V2 Stochastic Volatility Test...")
@@ -426,24 +491,27 @@ if __name__ == '__main__':
     if 'OOS_Accuracy' not in top_5.columns:
         print("Warning: OOS_Accuracy column missing. Defaulting to first 10 rows.")
     top_10 = top_5.head(10) # Enforce strict 10-stock execution limit
+    if args.ticker:
+        top_10 = top_10[top_10['Ticker'] == args.ticker.strip().upper()]
+        if top_10.empty:
+            top_10 = top_5[top_5['Ticker'] == args.ticker.strip().upper()].head(1)
     
     start_date = pd.to_datetime('2025-05-01')
     returns_df = return_pivot.loc[(return_pivot.index >= start_date) & (return_pivot.index <= next_biz_day)]
 
     scorecards = {}
     feat_cols_dict = {}
+    lineage_meta_dict = {}
 
     fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
     if os.path.exists(fund_path):
         fund_df = pd.read_csv(fund_path)
 
-    from prefect import task, flow
-    from prefect.task_runners import ThreadPoolTaskRunner
-
     def process_row(idx, row):
         ticker = row['Ticker']
         depth = int(row.get('Depth', 3))
+        oos_acc = float(row.get('OOS_Accuracy', 0.0)) if pd.notna(row.get('OOS_Accuracy')) else 0.0
         
         fund_score = 0.0
         if not fund_df.empty and ticker in fund_df['Ticker'].values:
@@ -461,32 +529,37 @@ if __name__ == '__main__':
         if is_quarantined(ticker):
             print(f"[QUARANTINE TRIGGERED] {ticker} is quarantined due to data errors. Building dummy scorecard.")
             sc = make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, "API Data Failure")
-            return ticker, sc, []
+            return ticker, sc, [], None
             
         if is_invalid:
             print(f"!!! {ticker} has broken chain. Skipping in SV Sandbox.")
-            return ticker, None, None
+            return ticker, None, None, None
         
         try:
-            sc, feat_cols, last_hit = evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, next_biz_day, fundamental_score=fund_score)
-            return ticker, sc, feat_cols
+            sc, feat_cols, last_hit, lin_meta = evaluate_ticker(
+                ticker, lags_dict, returns_df, shifted_preds, start_date, next_biz_day,
+                fundamental_score=fund_score, oos_accuracy=oos_acc
+            )
+            return ticker, sc, feat_cols, lin_meta
         except Exception as e:
             print(f"!!! Error evaluating {ticker} for scorecard: {e}")
             import traceback
             traceback.print_exc()
             log_warning(f"🚨 Model crash for {ticker}: {e}. Forcing quarantine and HOLD.")
             sc = make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, f"Model Crash: {e}")
-            return ticker, sc, []
+            return ticker, sc, [], None
 
     print("\n--- Spawning PyMC Models via ThreadPoolExecutor ---")
     import concurrent.futures
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(process_row, idx, row) for idx, row in top_10.iterrows()]
         for future in concurrent.futures.as_completed(futures):
-            ticker, sc, feat_cols = future.result()
+            ticker, sc, feat_cols, lin_meta = future.result()
             if sc is not None:
                 scorecards[ticker] = sc
             feat_cols_dict[ticker] = feat_cols
+            if lin_meta is not None:
+                lineage_meta_dict[ticker] = lin_meta
 
     print("\nWriting formatted Test Excel Scorecard...")
     writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
@@ -501,9 +574,16 @@ if __name__ == '__main__':
     date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
     percent_format = workbook.add_format({'num_format': '0.00%'})
 
+    # Ensure lineage tables exist before writing
+    try:
+        oracle_lineage_core.init_lineage_tables()
+    except Exception as e_init:
+        print(f"  [DB INIT WARNING] {e_init}")
+
     for ticker in scorecards:
         sc = scorecards[ticker]
         feat_cols = feat_cols_dict[ticker]
+        lin_meta = lineage_meta_dict.get(ticker)
         sheet_name = ticker
         
         engine_str = 'PyMC Dual-Head + Rust SV Engine'
@@ -517,41 +597,64 @@ if __name__ == '__main__':
                 dl_prob = float(match['Transformer_P(UP)'].iloc[0])
                 if not sc.empty:
                     sc.iloc[-1, sc.columns.get_loc('Bayesian Probability P(UP)')] = dl_prob
+                    if lin_meta is not None:
+                        lin_meta['prob_up'] = dl_prob
         except Exception as e:
             pass
             
-        # [DAY 1 BASELINE ENFORCEMENT] Strip all 30-day historical context prior to Day 1
-        # Keep all rows from Day 1 epoch onwards (yesterday + today's Pending row)
+        # [DAY 1 BASELINE ENFORCEMENT] Keep all evaluated test-window rows from Day 1 epoch onwards
         day1_epoch = pd.to_datetime('2026-06-22').date()
         sc['date_ts'] = pd.to_datetime(sc['date']).dt.date
-        # Fixed by keeping last 2 rows always
-        sc = sc.tail(2).copy()
+        sc = sc[sc['date_ts'] >= day1_epoch].copy()
         sc = sc.drop(columns=['date_ts'])
             
         sc.to_excel(writer, sheet_name=sheet_name, startrow=2, index=False)
 
         try:
             import database_manager
+            if lin_meta is not None:
+                oracle_lineage_core.save_feature_lineage(lin_meta)
+
             STOCK_PERSONAS = ["Conservative", "Neutral", "BallsForBrains", "Dynamic"]
             rec_col = [c for c in sc.columns if 'recommendation' in c.lower()]
             rec_col = rec_col[0] if rec_col else None
+            vix_for_eval = float(lin_meta.get('vix_val', 18.0)) if lin_meta else 18.0
+
             for _, r_db in sc.iterrows():
                 d_val = str(r_db.get('date', ''))[:10]
                 if not d_val or d_val == 'nan':
                     continue
-                prob_val = float(r_db['Bayesian Probability P(UP)']) if pd.notna(r_db.get('Bayesian Probability P(UP)')) else None
-                ret_val = float(r_db['Expected Return %']) if pd.notna(r_db.get('Expected Return %')) else None
-                risk_val = float(r_db['Expected Risk (Volatility) %']) if pd.notna(r_db.get('Expected Risk (Volatility) %')) else None
-                kelly_val = float(r_db['Kelly Optimal Allocation %']) if pd.notna(r_db.get('Kelly Optimal Allocation %')) else None
+                prob_val = float(r_db['Bayesian Probability P(UP)']) if pd.notna(r_db.get('Bayesian Probability P(UP)')) else 0.5
+                ret_val = float(r_db['Expected Return %']) if pd.notna(r_db.get('Expected Return %')) else 0.0
+                risk_val = float(r_db['Expected Risk (Volatility) %']) if pd.notna(r_db.get('Expected Risk (Volatility) %')) else 0.01
                 actual_ret = float(r_db['actual value daily return %']) if pd.notna(r_db.get('actual value daily return %')) else None
-                rec_val = str(r_db[rec_col]) if rec_col and pd.notna(r_db.get(rec_col)) else ''
-                note_val = str(r_db.get('Broker Override Note', '') or '')
-                status_val = 'Stable'
+                base_note = str(r_db.get('Broker Override Note', '') or '')
+                status_val = 'QUARANTINED' if 'QUARANTINED' in base_note else 'Stable'
                 sv_val = str(r_db.get('SV Engine Used', '') or '')
                 pred_dir = str(r_db.get('model predicted direction daily return', '') or '')
                 act_dir = str(r_db.get('actual Direction daily return', '') or '')
                 hit_val = str(r_db.get('model hit IND integrated model', '') or '')
+
                 for persona in STOCK_PERSONAS:
+                    p_dec = oracle_lineage_core.evaluate_persona_decision(
+                        persona=persona,
+                        prob_up=prob_val,
+                        expected_return_pct=ret_val,
+                        expected_risk_pct=risk_val,
+                        vix_val=vix_for_eval,
+                        is_currently_held=False
+                    )
+                    if status_val == 'QUARANTINED' or 'Held Position Frozen' in base_note:
+                        p_kelly = 0.0
+                        p_rec = "Hold"
+                        p_note = base_note
+                    else:
+                        p_kelly = p_dec["applied_kelly"]
+                        p_rec = "Buy" if p_dec["recommendation"] == "BUY" else ("Sell" if p_dec["recommendation"] == "SELL" else "Hold")
+                        p_note = f"{p_dec['reason_code']}" if not base_note else f"{base_note} | {p_dec['reason_code']}"
+
+                    oracle_lineage_core.save_decision_lineage(p_dec, ticker=str(ticker), target_date=d_val, asset_class="STOCK")
+
                     database_manager.execute_write("""
                         INSERT INTO etf_scorecards_master
                             (ticker, persona, date, score, prob, expected_return, expected_risk,
@@ -568,12 +671,11 @@ if __name__ == '__main__':
                             predicted_direction=excluded.predicted_direction,
                             actual_direction=excluded.actual_direction, model_hit=excluded.model_hit
                     """, [str(ticker), persona, d_val, ret_val, prob_val,
-                          ret_val, risk_val, kelly_val, actual_ret, rec_val,
-                          note_val, status_val, sv_val, pred_dir, act_dir, hit_val])
-            print(f"  [DB] Wrote {len(sc)} rows for {ticker} (all personas) to Turso etf_scorecards_master")
+                          ret_val, risk_val, p_kelly, actual_ret, p_rec,
+                          p_note, status_val, sv_val, pred_dir, act_dir, hit_val])
+            print(f"  [DB] Wrote {len(sc)} rows for {ticker} (all 4 Stock personas + lineage) to Turso")
         except Exception as e_db:
             print(f"  [DB WARNING] Failed to write {ticker} to Turso DB: {e_db}")
-
 
         worksheet = writer.sheets[sheet_name]
         
@@ -608,4 +710,5 @@ if __name__ == '__main__':
 
     writer.close()
     print(f"\nSaved Formatted Scorecard to: {excel_path}")
-    import os; os._exit(0)
+    sys.stdout.flush()
+    os._exit(0)
