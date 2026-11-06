@@ -218,12 +218,42 @@ if __name__ == "__main__":
             log_alert(f"[QA 10] Interlock Violation: ETF Pipeline ({etf_last}) is ahead of Stock Pipeline ({stock_last}). Stale priors used!")
             errors += 1
 
+        # QA 11: Prefect Orchestrator Liveness & Deployment Registration (Linux / Vultr Production)
+        if os.name != 'nt':
+            try:
+                import urllib.request
+                with urllib.request.urlopen("http://127.0.0.1:4200/api/health", timeout=5) as resp:
+                    if resp.status != 200:
+                        log_alert(f"[QA 11] Prefect Server unhealthy (HTTP {resp.status})!")
+                        errors += 1
+                serve_alive = any('prefect_pipeline.py' in " ".join(p.info.get('cmdline', []) or []) for p in psutil.process_iter(['cmdline']))
+                if not serve_alive:
+                    log_alert("[QA 11] prefect_pipeline.py serve daemon is NOT running on Vultr!")
+                    errors += 1
+                req_dep = urllib.request.Request(
+                    "http://127.0.0.1:4200/api/deployments/filter",
+                    data=b"{}",
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req_dep, timeout=5) as resp_dep:
+                    deps = json.loads(resp_dep.read().decode())
+                    dep_names = {d.get("name") for d in deps if isinstance(d, dict)}
+                    required_deps = {"nightly-pipeline", "weekend-trainers", "pre-market-health", "market-daemons-health"}
+                    missing_deps = required_deps - dep_names
+                    if missing_deps:
+                        log_alert(f"[QA 11] Missing Prefect deployments in server registry: {missing_deps}")
+                        errors += 1
+            except Exception as e_pref:
+                log_alert(f"[QA 11] Prefect Orchestrator verification failed: {e_pref}")
+                errors += 1
+
     except Exception as e:
         log_alert(f"Failed to query database for QA Checks: {e}")
         errors += 1
         
     if errors == 0:
-        print("--- All Tasks Audited: PASSED (10/10 Checks Green) ---")
+        print("--- All Tasks Audited: PASSED (11/11 Checks Green) ---")
         sys.stdout.flush()
         os._exit(0)
     else:
