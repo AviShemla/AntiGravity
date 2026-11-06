@@ -141,9 +141,31 @@ def catchup_master_pipeline():
         print("\n--> Running Deep Learning AI Inference Engine (V2 Upgrade)...")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "daily_dl_inference.py"), "--target-date", target_date], cwd=BASE_DIR, check=True, env=env)
             
-        # 2. Bayesian Scorecard Formatted
-        print("\n--> Running export_bayesian_scorecard_formatted.py...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "export_bayesian_scorecard_formatted.py"), "--target-date", target_date], cwd=BASE_DIR, check=True, env=env)
+        # 2. Bayesian Scorecard Formatted (3-Process Parallel Pool for PyTensor/nutpie Thread-Safety)
+        print("\n--> Running export_bayesian_scorecard_formatted.py (3-Process Pool)...")
+        try:
+            s_df = pd.read_csv(os.path.join(BASE_DIR, "financial_data", "Active_Portfolio.csv"))
+            stock_tickers = s_df.head(10)["Ticker"].astype(str).str.strip().str.upper().tolist()
+        except Exception:
+            stock_tickers = ["GPC","ADSK","ADM","ELV","NDAQ","CB","MCD","NKE","BLK","NEE"]
+        import concurrent.futures
+        def _run_stock_sc(tk):
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "export_bayesian_scorecard_formatted.py"), "--target-date", target_date, "--ticker", tk], cwd=BASE_DIR, check=True, env=env)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+            futs = [ex.submit(_run_stock_sc, tk) for tk in stock_tickers]
+            for f in concurrent.futures.as_completed(futs):
+                f.result()
+        # Compile per-ticker stock scorecards into Top5_Bayesian_Scorecard_Formatted.xlsx
+        try:
+            out_xlsx = os.path.join(BASE_DIR, "financial_data", "Top5_Bayesian_Scorecard_Formatted.xlsx")
+            with pd.ExcelWriter(out_xlsx, engine="xlsxwriter") as writer:
+                for tk in stock_tickers:
+                    tk_xlsx = os.path.join(BASE_DIR, "financial_data", f"Top5_Bayesian_Scorecard_Formatted_{tk}.xlsx")
+                    if os.path.exists(tk_xlsx):
+                        df_tk = pd.read_excel(tk_xlsx, sheet_name=tk, header=None)
+                        df_tk.to_excel(writer, sheet_name=tk, index=False, header=False)
+        except Exception as e_cx:
+            print(f"Warning compiling combined stock excel: {e_cx}")
         
         # 3. QA Models Bounds
         print("\n--> Running qa_models.py...")
@@ -171,20 +193,35 @@ def catchup_master_pipeline():
         # 8. Mark Complete
         mark_completed('master_pipeline', target_date)
         
-        # 6.5 Financial QA Audit
-        print("\n--> Running Financial QA Audit...")
-        fin_qa = subprocess.run([python_exe, os.path.join(BASE_DIR, "qa_financial_audit.py")], cwd=BASE_DIR, env=env)
+        # 6.5 Financial QA Audit (Stock Ledger Math Check; Full Pipeline Continuity runs after ETF Pipeline)
+        print("\n--> Running Financial QA Audit (Broker Ledger Math)...")
+        fin_qa = subprocess.run([python_exe, "-c", "import sys, qa_financial_audit; sys.exit(1 if qa_financial_audit.audit_broker_ledger() > 0 else 0)"], cwd=BASE_DIR, env=env)
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting Catchup!")
             os._exit(1)
         
-        print("\n--> Running Olympic Shootout Backtests (Generating New Chart Dots)...\n")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "run_backtests.py")], cwd=BASE_DIR, env=env)
+        print("\n--> Syncing olympic_shootout_master in Turso (Generating New Chart Dots)...\n")
+        try:
+            df_bfb = database_manager.execute_query("SELECT date, total_equity FROM capital_ledgers WHERE persona='BallsForBrains' AND date >= '2026-10-30' ORDER BY date ASC")
+            df_ol = database_manager.execute_query("SELECT date, model_name, total_equity FROM olympic_shootout_master WHERE date >= '2026-10-28' ORDER BY date ASC")
+            last_cap, last_vol = 10000.0, 10000.0
+            if not df_ol.empty:
+                c_sub = df_ol[df_ol["model_name"] == "EL_CAP (70% Liquidity)"]
+                v_sub = df_ol[df_ol["model_name"] == "EL_VOLTI (70% Stability)"]
+                if not c_sub.empty: last_cap = float(c_sub.iloc[-1]["total_equity"])
+                if not v_sub.empty: last_vol = float(v_sub.iloc[-1]["total_equity"])
+            for _, r_o in df_bfb.iterrows():
+                dt_s = str(r_o["date"])[:10]
+                eq_v = float(r_o["total_equity"])
+                for m_name, m_val in [("CHAMPION (Live VIP)", eq_v), ("EL_CAP (70% Liquidity)", last_cap), ("EL_VOLTI (70% Stability)", last_vol)]:
+                    database_manager.execute_write("""
+                        INSERT INTO olympic_shootout_master (date, model_name, total_equity)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT(date, model_name) DO UPDATE SET total_equity=excluded.total_equity
+                    """, [dt_s, m_name, float(m_val)])
+        except Exception as e_ol:
+            print(f"Warning syncing olympic_shootout_master: {e_ol}")
 
-        # 9. Shadow Sandboxes
-        print("\n--> Running V1 Classic Shadow Sandbox synchronously for historical backfill...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py"), "--target-date", target_date], cwd=BASE_DIR, env=env)
-        
         # 10. Update Shadow Tracker
         print(f"\n--> Updating Prod vs Shadow Tracker for {target_date}...")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py"), target_date], cwd=BASE_DIR, env=env)

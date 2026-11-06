@@ -195,8 +195,8 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         # Get full historical returns for SV
         returns_full = data_with_future['Raw_Return_%'].fillna(0.0).values / 100.0
         
-        # Run the PyMC math in an isolated multiprocessing sandbox with a strict 600s timer
-        inferred_volatility = run_with_timeout(run_sv_engine, args=(returns_full, sv_seed), timeout_seconds=600)
+        # Run the Rust/nutpie SV math directly in the current thread/process (multiproc spawn inside ThreadPoolExecutor deadlocks on Linux)
+        inferred_volatility = run_sv_engine(returns_full, sv_seed)
         
         # Shift forward to prevent lookahead bias (tomorrow's risk is based on today's volatility)
         sv_vol_shifted = np.roll(inferred_volatility, 1)
@@ -279,7 +279,10 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         sigma_mag = pm.HalfNormal("sigma_mag", sigma=3)
         pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag, observed=y_data_mag, shape=X_data.shape[0])
         
-        trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False)
+        try:
+            trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False, nuts_sampler="nutpie")
+        except Exception:
+            trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False)
         
         # --- PANDERA/PYMC QA POST-CHECK (Phase 3) ---
         import arviz as az
@@ -481,7 +484,8 @@ if __name__ == '__main__':
     shifted_preds = all_predictors_df.shift(1)
 
     portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
-    excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Top5_Bayesian_Scorecard_Formatted.xlsx')
+    excel_suffix = f"_{args.ticker.strip().upper()}" if args.ticker else ""
+    excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', f'Top5_Bayesian_Scorecard_Formatted{excel_suffix}.xlsx')
     
     if not os.path.exists(portfolio_path):
         print(f"Error: {portfolio_path} not found.")
@@ -549,17 +553,14 @@ if __name__ == '__main__':
             sc = make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, f"Model Crash: {e}")
             return ticker, sc, [], None
 
-    print("\n--- Spawning PyMC Models via ThreadPoolExecutor ---")
-    import concurrent.futures
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(process_row, idx, row) for idx, row in top_10.iterrows()]
-        for future in concurrent.futures.as_completed(futures):
-            ticker, sc, feat_cols, lin_meta = future.result()
-            if sc is not None:
-                scorecards[ticker] = sc
-            feat_cols_dict[ticker] = feat_cols
-            if lin_meta is not None:
-                lineage_meta_dict[ticker] = lin_meta
+    print("\n--- Running PyMC Models Sequentially (Thread-Safe for PyTensor/nutpie) ---")
+    for idx, row in top_10.iterrows():
+        ticker, sc, feat_cols, lin_meta = process_row(idx, row)
+        if sc is not None:
+            scorecards[ticker] = sc
+        feat_cols_dict[ticker] = feat_cols
+        if lin_meta is not None:
+            lineage_meta_dict[ticker] = lin_meta
 
     print("\nWriting formatted Test Excel Scorecard...")
     writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
@@ -619,6 +620,7 @@ if __name__ == '__main__':
             rec_col = [c for c in sc.columns if 'recommendation' in c.lower()]
             rec_col = rec_col[0] if rec_col else None
             vix_for_eval = float(lin_meta.get('vix_val', 18.0)) if lin_meta else 18.0
+            batch_stmts = []
 
             for _, r_db in sc.iterrows():
                 d_val = str(r_db.get('date', ''))[:10]
@@ -653,9 +655,9 @@ if __name__ == '__main__':
                         p_rec = "Buy" if p_dec["recommendation"] == "BUY" else ("Sell" if p_dec["recommendation"] == "SELL" else "Hold")
                         p_note = f"{p_dec['reason_code']}" if not base_note else f"{base_note} | {p_dec['reason_code']}"
 
-                    oracle_lineage_core.save_decision_lineage(p_dec, ticker=str(ticker), target_date=d_val, asset_class="STOCK")
+                    batch_stmts.append(oracle_lineage_core.build_decision_lineage_stmt(p_dec, ticker=str(ticker), target_date=d_val, asset_class="STOCK"))
 
-                    database_manager.execute_write("""
+                    batch_stmts.append(("""
                         INSERT INTO etf_scorecards_master
                             (ticker, persona, date, score, prob, expected_return, expected_risk,
                              kelly_allocation, actual_return, recommendation, broker_override_note,
@@ -672,7 +674,8 @@ if __name__ == '__main__':
                             actual_direction=excluded.actual_direction, model_hit=excluded.model_hit
                     """, [str(ticker), persona, d_val, ret_val, prob_val,
                           ret_val, risk_val, p_kelly, actual_ret, p_rec,
-                          p_note, status_val, sv_val, pred_dir, act_dir, hit_val])
+                          p_note, status_val, sv_val, pred_dir, act_dir, hit_val]))
+            oracle_lineage_core.execute_turso_batch(batch_stmts)
             print(f"  [DB] Wrote {len(sc)} rows for {ticker} (all 4 Stock personas + lineage) to Turso")
         except Exception as e_db:
             print(f"  [DB WARNING] Failed to write {ticker} to Turso DB: {e_db}")

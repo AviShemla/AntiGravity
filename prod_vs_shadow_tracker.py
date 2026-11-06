@@ -28,13 +28,7 @@ def get_prod_equity(date_str):
     return 10000.0
 
 def load_state():
-    if os.path.exists(STATE_JSON):
-        with open(STATE_JSON, 'r') as f:
-            st = json.load(f)
-            if "LSTM_Shadow" not in st: st["LSTM_Shadow"] = 10000.0
-            if "holdings_lstm" not in st: st["holdings_lstm"] = None
-            return st
-    return {
+    st = {
         "Transformer": 10000.0,
         "V1_Classic": 10000.0,
         "LSTM_Shadow": 10000.0,
@@ -43,6 +37,34 @@ def load_state():
         "holdings_v1": None,
         "holdings_lstm": None
     }
+    if os.path.exists(STATE_JSON):
+        try:
+            with open(STATE_JSON, 'r') as f:
+                st.update(json.load(f))
+        except Exception:
+            pass
+    # STRICT TURSO SSOT SYNC: Always anchor starting equities to the latest settled date in Turso prod_vs_shadow_master
+    try:
+        import database_manager
+        df_latest_dt = database_manager.execute_query("SELECT MAX(date) as d FROM prod_vs_shadow_master")
+        if not df_latest_dt.empty and df_latest_dt.iloc[0]['d']:
+            latest_db_d = str(df_latest_dt.iloc[0]['d'])[:10]
+            if latest_db_d >= str(st.get("last_date", ""))[:10]:
+                df_rows = database_manager.execute_query(
+                    "SELECT model_name, total_equity FROM prod_vs_shadow_master WHERE date = ?",
+                    [latest_db_d]
+                )
+                db_map = dict(zip(df_rows['model_name'], df_rows['total_equity']))
+                if "Shadow_Transformer" in db_map:
+                    st["Transformer"] = float(db_map["Shadow_Transformer"])
+                if "Sandbox_V1" in db_map:
+                    st["V1_Classic"] = float(db_map["Sandbox_V1"])
+                if "Shadow_LSTM" in db_map:
+                    st["LSTM_Shadow"] = float(db_map["Shadow_LSTM"])
+                st["last_date"] = latest_db_d
+    except Exception:
+        pass
+    return st
 
 def save_state(state):
     with open(STATE_JSON, 'w') as f:
@@ -72,9 +94,9 @@ def get_return(ticker, date_str):
                     return 0.0
                     
                 ret = (curr_close - prev_close) / prev_close
-                if ret > 0.2:
-                    print(f"Zero-Trust Alert: Unnatural spike of {ret*100}% for {ticker}. Capping return to 0.")
-                    return 0.0
+                if abs(ret) > 0.15:
+                    print(f"Zero-Trust Alert: Unnatural single-day move of {ret*100:.2f}% for {ticker}. Clamping return to +/-8%.")
+                    ret = max(-0.08, min(0.08, ret))
                 return ret
     except Exception as e:
         print(f"Error fetching return for {ticker}: {e}")
@@ -147,8 +169,8 @@ def run_tracker(target_date):
     # 100% TURSO DB BACKED: Determine active holdings strictly from Turso DB tables
     try:
         import database_manager
-        # Query top ticker from Turso DB for Transformer/LSTM
-        df_db_sc = database_manager.execute_query(f"SELECT ticker FROM etf_scorecards_master WHERE date LIKE '{target_date}%' ORDER BY prob DESC LIMIT 5")
+        # Query top Stock ticker from Turso DB for Transformer/LSTM (strictly Single Stock BallsForBrains persona)
+        df_db_sc = database_manager.execute_query(f"SELECT ticker FROM etf_scorecards_master WHERE persona = 'BallsForBrains' AND date LIKE '{target_date}%' ORDER BY prob DESC LIMIT 5")
         if not df_db_sc.empty:
             state["holdings_transformer"] = df_db_sc.iloc[0]["ticker"]
             if len(df_db_sc) > 1:

@@ -87,56 +87,57 @@ def test_dashboard_continuity():
     except Exception as e:
         print(f"Warning: Could not run Stock Sync Check: {e}")
         
-    # 5. Check Prod vs Shadow Sync
+    # 5. Check Turso Prod vs Shadow, Unified Arena, and Persona Equity Curve Integrity (No Flatlines & No Volatility Spikes)
     try:
-        shadow_path = os.path.join(DATA_DIR, 'Prod_vs_Shadow_Results_MASTER.csv')
         stock_ledger = database_manager.get_ledger('BallsForBrains')
-        if not stock_ledger.empty and os.path.exists(shadow_path):
+        df_ps = database_manager.execute_query("SELECT date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
+        df_ol = database_manager.execute_query("SELECT date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
+
+        if not stock_ledger.empty and not df_ps.empty:
             latest_db_date = str(stock_ledger.iloc[-1]['Date']).split()[0]
-            shadow_df = pd.read_csv(shadow_path)
-            latest_shadow_date = str(shadow_df.iloc[-1]['Date']).split()[0]
-            
-            if latest_db_date != latest_shadow_date:
-                if latest_shadow_date > latest_db_date:
-                    print(f"SUCCESS - Prod vs Shadow chart is actively tracking INTRADAY (Chart: {latest_shadow_date}, DB: {latest_db_date}).")
-                else:
-                    import pandas_market_calendars as mcal
-                    nyse = mcal.get_calendar('NYSE')
-                    now_ny = pd.Timestamp.now(tz='America/New_York')
-                    sched = nyse.schedule(start_date=now_ny - pd.Timedelta(days=10), end_date=now_ny)
-                    last_eod_str = sched.index[-2].strftime('%Y-%m-%d') if (not sched.empty and len(sched) >= 2 and now_ny < sched.iloc[-1]['market_close']) else (sched.index[-1].strftime('%Y-%m-%d') if not sched.empty else latest_shadow_date)
-                    if latest_shadow_date >= last_eod_str and latest_db_date > last_eod_str:
-                        print(f"SUCCESS - Master Ledger has live INTRADAY Sniper execution ({latest_db_date}) while Prod vs Shadow EOD chart is synced to last market close ({latest_shadow_date}).")
-                    else:
-                        print(f"[CRITICAL FAIL] Prod vs Shadow Chart is MISSING dates! DB says {latest_db_date} but Chart ends at {latest_shadow_date}!")
-                        import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
-            
-            # --- NEW CHECK: 10000.00 Flatline Bug ---
-            recent_prod_values = shadow_df['Prod'].tail(3).values
-            if 10000.0 in recent_prod_values or "10000.0" in recent_prod_values or 10000 in recent_prod_values:
-                print(f"[CRITICAL FAIL] Prod vs Shadow Chart has Flatlined at 10000.0! Tracker Race Condition detected.")
+            latest_shadow_date = str(df_ps['date'].max()).split()[0]
+
+            if latest_db_date != latest_shadow_date and latest_shadow_date < latest_db_date:
+                print(f"[CRITICAL FAIL] Turso prod_vs_shadow_master ends at {latest_shadow_date} while capital_ledgers is at {latest_db_date}!")
                 import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
-                
-            # --- NEW CHECK: 3-Day Horizontal Stagnation Bug (Auto-Heal) ---
-            if len(shadow_df) >= 3:
-                last_3_shadow1 = shadow_df['Shadow_1'].tail(3).values
-                last_3_shadow2 = shadow_df['Shadow_2'].tail(3).values
-                last_3_shadow3 = shadow_df['Shadow_3'].tail(3).values
-                
-                # Check if all 3 values in the array are identical
-                if len(set(last_3_shadow1)) == 1 and len(set(last_3_shadow2)) == 1 and len(set(last_3_shadow3)) == 1:
-                    print(f"!!! [QA FAILURE DETECTED] The Shadow Chart has flatlined for 3 consecutive days! The Catch-up Controller failed to run the sandboxes!")
-                    print(f"!!! -> [AUTO-HEAL INITIATED] Forcing the Shadow Sandboxes to backfill historical missing dates now...")
-                    import subprocess
-                    python_exe = sys.executable
-                    subprocess.run([python_exe, os.path.join(BASE_DIR, "sandbox_v1_classic.py")], cwd=BASE_DIR)
-                    subprocess.run([python_exe, os.path.join(BASE_DIR, "shadow_transformer.py")], cwd=BASE_DIR)
-                    subprocess.run([python_exe, os.path.join(BASE_DIR, "shadow_lstm.py")], cwd=BASE_DIR)
-                    print(f"!!! -> [AUTO-HEAL] Re-running prod_vs_shadow_tracker.py to rewrite the CSV...")
-                    subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py")], cwd=BASE_DIR)
-                    print(f"SUCCESS - Auto-Heal complete. Dashboard is un-flatlined.")
-                    
-            print(f"SUCCESS - Prod vs Shadow chart perfectly synced to Master Ledger ({latest_shadow_date}) with NO flatline bugs.")
+
+            # Check 5A: 10000.00 Flatline Bug in recent Prod rows
+            df_prod_rows = df_ps[df_ps['model_name'].isin(['PROD_Bayesian_SV', 'Prod'])].sort_values('date')
+            if len(df_prod_rows) >= 3 and (df_prod_rows['total_equity'].tail(3) == 10000.0).any():
+                print("[CRITICAL FAIL] Turso prod_vs_shadow_master Prod series flatlined at 10000.0!")
+                import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
+
+            # Check 5B: Single-Day Volatility Spike / Crash Guard (> 12% 1-day jump/crash) across all Arena models
+            df_arena = pd.concat([df_ps, df_ol], ignore_index=True)
+            for m_name, grp in df_arena.groupby('model_name'):
+                grp = grp.sort_values('date').drop_duplicates(subset=['date'], keep='last')
+                rets = grp['total_equity'].pct_change().dropna()
+                bad_rets = rets[rets.abs() > 0.12]
+                if not bad_rets.empty:
+                    bad_idx = bad_rets.index[0]
+                    bad_dt = grp.loc[bad_idx, 'date']
+                    bad_val = bad_rets.iloc[0] * 100.0
+                    print(f"[CRITICAL FAIL] Unnatural single-day volatility spike/crash in Arena model '{m_name}' on {bad_dt}: {bad_val:+.2f}% (> +/-12% limit)!")
+                    import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
+
+                # Check 5C: Tail Horizontal Flatline Guard (last 4 trading days identical on active models)
+                if len(grp) >= 4 and m_name in ('Shadow_Transformer', 'Sandbox_V1', 'Shadow_LSTM', 'EL_CAP (70% Liquidity)', 'EL_VOLTI (70% Stability)'):
+                    tail4 = grp['total_equity'].tail(4).round(2).tolist()
+                    if len(set(tail4)) == 1:
+                        print(f"[CRITICAL FAIL] Arena model '{m_name}' has flatlined horizontally for 4 consecutive sessions at {tail4[0]}!")
+                        import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
+
+        # Check 5D: Pre-Inception $10,000.00 Flatline Guard across all 8 Personas in capital_ledgers
+        # (Except ETF_Conservative which is intentionally 100% Cash under high VIX regimes when no ETF passes conservative gates)
+        for p_check in ['Conservative', 'Neutral', 'Dynamic', 'BallsForBrains', 'ETF_Neutral', 'ETF_Dynamic', 'ETF_BallsForBrains']:
+            df_l = database_manager.get_ledger(p_check)
+            if len(df_l) >= 5:
+                head5_eq = [round(float(x), 2) for x in df_l['Total_Equity'].head(5).tolist()]
+                if all(x == 10000.0 for x in head5_eq):
+                    print(f"[CRITICAL FAIL] Persona '{p_check}' has a pre-inception $10,000.00 flatline at the beginning of its equity curve ({head5_eq})!")
+                    import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
+
+        print(f"SUCCESS - Turso Arena models and all 8 Persona equity curves verified with ZERO flatline bugs and ZERO unnatural volatility spikes ({latest_shadow_date}).")
     except Exception as e:
         print(f"Warning: Could not run Shadow Sync Check: {e}")
 

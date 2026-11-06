@@ -347,3 +347,5 @@ if __name__ == '__main__':
         json.dump(scorecards, f)
         
     print(f"\nSaved predictions to {args.out}")
+    sys.stdout.flush()
+    os._exit(0)

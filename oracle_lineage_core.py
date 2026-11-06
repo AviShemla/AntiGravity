@@ -414,10 +414,9 @@ def save_feature_lineage(record: dict):
     ])
 
 
-def save_decision_lineage(decision_dict: dict, ticker: str, target_date: str, asset_class: str = "STOCK"):
-    client = database_manager.get_connection()
+def build_decision_lineage_stmt(decision_dict: dict, ticker: str, target_date: str, asset_class: str = "STOCK"):
     now_utc = datetime.now(timezone.utc).isoformat()
-    client.execute('''
+    sql = '''
         INSERT INTO decision_lineage_audit (
             ticker, target_date, persona, asset_class,
             prob_up, expected_return_dec, expected_risk_dec, expected_sharpe,
@@ -442,7 +441,8 @@ def save_decision_lineage(decision_dict: dict, ticker: str, target_date: str, as
             reason_code=excluded.reason_code,
             code_version=excluded.code_version,
             created_at_utc=excluded.created_at_utc
-    ''', [
+    '''
+    args = [
         str(ticker),
         str(target_date)[:10],
         str(decision_dict["persona"]),
@@ -462,7 +462,29 @@ def save_decision_lineage(decision_dict: dict, ticker: str, target_date: str, as
         str(decision_dict["reason_code"]),
         str(decision_dict.get("code_version", CODE_VERSION)),
         now_utc,
-    ])
+    ]
+    return (sql, args)
+
+
+def execute_turso_batch(statements):
+    """Execute a list of (sql, args) tuples in batched HTTP pipeline requests (150 statements per request)."""
+    if not statements:
+        return
+    import libsql_client
+    CHUNK_SIZE = 150
+    for i in range(0, len(statements), CHUNK_SIZE):
+        chunk = [libsql_client.Statement(q, a or []) for q, a in statements[i:i + CHUNK_SIZE]]
+        try:
+            client = database_manager.get_connection()
+            client.batch(chunk)
+        except Exception:
+            client = database_manager.get_connection(force_new=True)
+            client.batch(chunk)
+
+
+def save_decision_lineage(decision_dict: dict, ticker: str, target_date: str, asset_class: str = "STOCK"):
+    sql, args = build_decision_lineage_stmt(decision_dict, ticker, target_date, asset_class)
+    database_manager.execute_write(sql, args)
 
 
 # =============================================================================

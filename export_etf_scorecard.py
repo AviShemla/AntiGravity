@@ -92,6 +92,7 @@ def write_etf_excel(target_etf, sc, features, lineage_meta=None):
 
         ETF_PERSONAS = ["ETF_Conservative", "ETF_Neutral", "ETF_BallsForBrains", "ETF_Dynamic"]
         vix_for_eval = float(lineage_meta.get('vix_val', 18.0)) if lineage_meta else 18.0
+        batch_stmts = []
 
         for _, r_db in sc.iterrows():
             d_val = str(r_db.get('Date', ''))[:10]
@@ -126,9 +127,9 @@ def write_etf_excel(target_etf, sc, features, lineage_meta=None):
                     p_rec = "Buy" if p_dec["recommendation"] == "BUY" else ("Sell" if p_dec["recommendation"] == "SELL" else "Hold")
                     p_note = f"{p_dec['reason_code']}" if not base_note else f"{base_note} | {p_dec['reason_code']}"
 
-                oracle_lineage_core.save_decision_lineage(p_dec, ticker=str(target_etf), target_date=d_val, asset_class="ETF")
+                batch_stmts.append(oracle_lineage_core.build_decision_lineage_stmt(p_dec, ticker=str(target_etf), target_date=d_val, asset_class="ETF"))
 
-                database_manager.execute_write("""
+                batch_stmts.append(("""
                     INSERT INTO etf_scorecards_master
                         (ticker, persona, date, score, prob, expected_return, expected_risk,
                          kelly_allocation, actual_return, recommendation, broker_override_note,
@@ -145,7 +146,8 @@ def write_etf_excel(target_etf, sc, features, lineage_meta=None):
                         actual_direction=excluded.actual_direction, model_hit=excluded.model_hit
                 """, [str(target_etf), persona, d_val, ret_val, prob_val,
                       ret_val, risk_val, p_kelly, actual_ret, p_rec,
-                      p_note, status_val, sv_val, pred_dir, act_dir, hit_val])
+                      p_note, status_val, sv_val, pred_dir, act_dir, hit_val]))
+        oracle_lineage_core.execute_turso_batch(batch_stmts)
         print(f"  [DB] Wrote {len(sc)} rows for {target_etf} (all 4 ETF personas + lineage) to Turso")
     except Exception as e_db:
         print(f"  [DB WARNING] Failed to write {target_etf} to Turso DB: {e_db}")
@@ -328,10 +330,10 @@ def export_etf_scorecard(target_etf, target_date=None):
         print(f"  Error checking ETF holdings: {ex}")
 
     try:
-        print(f"  => Running Rust-Compiled SV Engine (seed={sv_seed}, 10-minute freeze timeout)...")
+        print(f"  => Running Rust-Compiled SV Engine (seed={sv_seed})...")
         returns_full = data['Target_RET'].fillna(0.0).values / 100.0
         
-        inferred_volatility = run_with_timeout(run_sv_engine, args=(returns_full, sv_seed), timeout_seconds=600)
+        inferred_volatility = run_sv_engine(returns_full, sv_seed)
         
         sv_vol_shifted = np.roll(inferred_volatility, 1)
         sv_vol_shifted[0] = inferred_volatility[0]
@@ -405,7 +407,10 @@ def export_etf_scorecard(target_etf, target_date=None):
             sigma_mag = pm.HalfNormal("sigma_mag", sigma=3)
             pm.Normal("y_obs_mag", mu=mu_mag, sigma=sigma_mag, observed=y_data_mag)
             
-            trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False)
+            try:
+                trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False, nuts_sampler="nutpie")
+            except Exception:
+                trace = pm.sample(draws=1000, tune=1000, chains=2, cores=1, target_accept=0.9, random_seed=int(main_seed), progressbar=False)
             
             pm.set_data({
                 "X": X_test_s, 

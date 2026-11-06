@@ -56,7 +56,6 @@ def run_weekend_etf():
 def antigravity_nightly_flow():
     print("Starting AntiGravity Nightly Protocol via Prefect...")
     run_preflight()
-    run_master_pipeline()
     run_daily_pipeline()
     run_unified_qa()
     print("Nightly Protocol Complete!")

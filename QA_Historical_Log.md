@@ -626,3 +626,29 @@ Whenever you resolve a bug or create a test case, log it here using the followin
 ### 2026-10-30 17:53:04 - QA Assistant - Pre-Flight Data Alignment Check
 * **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
 * **Resolution:** Safe to proceed with automated pipeline execution.
+
+
+### 2026-11-06 09:10:00 - Intraday Execution & Catch-Up Engine (`ORA-INC-072` & `ORA-INC-073`) - ETF Carryover Exclusion, Historical `intraday_tracker` Self-Comparison Bug, and Batched Turso Lineage Writes
+* **Symptom:**
+  1. (`ORA-INC-072`): After Prefect's local state store (`/root/.prefect/prefect.db`) locked on `2026-10-31`, `intraday_tracker.py` generated `CARRYOVER (100% HOLD)` rows for the 4 Stock personas on `2026-11-03`..`2026-11-05` while skipping all 4 ETF personas (`ETF_Conservative`, `ETF_Neutral`, `ETF_Dynamic`, `ETF_BallsForBrains`), leaving a 3-day gap in ETF ledgers and copying yesterday's `Daily_PnL_JSON` into Stock carryover rows.
+  2. (`ORA-INC-073`): During historical catch-up (`intraday_tracker.py --target-date YYYY-MM-DD`), because `virtual_broker.py` and `etf_virtual_broker.py` already persist the settled row for `target_date` into `capital_ledgers` (`if target_date_for_ledger < today_ny: save_ledger_row(...)`), `intraday_tracker.py` line 253 (`last_ledger_row = ledger.iloc[-1]`) loaded the newly written `target_date` row instead of the `T-1` prior day row, treating newly entered positions as already-held (`held_tickers`) instead of `new_buys`.
+  3. Post-sampling Turso scorecard/lineage writes in `export_bayesian_scorecard_formatted.py` and `export_etf_scorecard.py` executed 248 individual synchronous HTTP round-trips per ticker (`~35s` per ticker).
+* **Root Cause:**
+  1. Line 203 of `intraday_tracker.py` filtered `WHERE persona NOT LIKE 'ETF_%'` and passed `last_row['Daily_PnL_JSON']` instead of `{}`.
+  2. Line 253 of `intraday_tracker.py` used `ledger.iloc[-1]` without filtering `ledger['Date'] < state['Date']`.
+  3. Row-by-row `execute_write` loops instead of `libsql_client` pipeline batching.
+* **Resolution:**
+  1. Backed up and removed the 12 placeholder `CARRYOVER (100% HOLD)` rows (`2026-11-03`..`2026-11-05`) from Turso `capital_ledgers` so all 8 personas cleanly replay chronologically from `2026-11-02` with zero skipped days.
+  2. Patched `intraday_tracker.py` line 203 to include all 8 personas (`SELECT DISTINCT persona FROM capital_ledgers`) with `daily_pnl_json={}`, and patched line 253 to select `ledger[ledger['Date'].astype(str) < str(state['Date'])].iloc[-1]`.
+  3. Added `build_decision_lineage_stmt()` and `execute_turso_batch()` (150 statements per HTTP batch) in `oracle_lineage_core.py` and wired both `export_bayesian_scorecard_formatted.py` and `export_etf_scorecard.py` to use batched Turso writes, plus 3-worker parallel ETF scorecard execution in `continuity_driver.py`.
+* **Test Case:** Verified via `trace_decision.py --date 2026-11-03 --ticker ADM` and live Vultr/Turso readback (`verify_driver_alive.py`).
+
+
+### 2026-11-06 11:35:00 - Bayesian Scorecard Engine (`ORA-INC-074`) - Multi-Threaded PyMC/PyTensor `futex_wait` Deadlock & Rust `nutpie` Dual-Head Sampler Acceleration
+* **Symptom:** During `export_bayesian_scorecard_formatted.py --target-date 2026-11-03`, `PID 3866026` dropped to `6.1% CPU` with a `<defunct>` child (`PID 3866114`), and all 3 `ThreadPoolExecutor` worker threads (`SPID 3866103`, `3866104`, `3866105`) froze in `futex_wait` (`do_futex`) for `18+ minutes`.
+* **Root Cause:** `export_bayesian_scorecard_formatted.py` spawned a `ThreadPoolExecutor(max_workers=3)` where 3 threads simultaneously called `run_with_timeout(run_sv_engine)` (spawning child processes via `multiprocessing.Process` inside threads) and then simultaneously constructed `pm.Model()` graphs inside the same Python process. PyMC/PyTensor's global model context and `multiprocessing.Queue` locks are not thread-safe on Linux. Additionally, the Dual-Head Bayesian model in both `export_bayesian_scorecard_formatted.py` and `export_etf_scorecard.py` defaulted to Python NUTS instead of `nuts_sampler="nutpie"`.
+* **Resolution:**
+  1. Replaced the `ThreadPoolExecutor` loop in `export_bayesian_scorecard_formatted.py` with a thread-safe sequential ticker loop and direct in-process `run_sv_engine()` execution.
+  2. Replaced `run_with_timeout(run_sv_engine)` in `export_etf_scorecard.py` with direct `run_sv_engine()` execution (since `continuity_driver.py` runs ETF scorecards in separate OS processes).
+  3. Added `nuts_sampler="nutpie"` (Rust NUTS with fallback) to the Dual-Head `pm.sample()` calls in both `export_bayesian_scorecard_formatted.py` and `export_etf_scorecard.py`.
+* **Test Case:** Verified on Vultr (`PID 3866791`) at `11:36:27 UTC` (`98.7% CPU`, zero `<defunct>` processes, zero `futex_wait` deadlocks).

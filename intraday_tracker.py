@@ -200,7 +200,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         if is_eod_fallback:
             print("EOD Fallback triggered with no pending orders. Forcing EOD ledger carryover for all personas to prevent data gaps.")
             # Get all distinct personas from capital_ledgers
-            all_personas_df = database_manager.execute_query("SELECT DISTINCT persona FROM capital_ledgers WHERE persona NOT LIKE 'ETF_%'")
+            all_personas_df = database_manager.execute_query("SELECT DISTINCT persona FROM capital_ledgers")
             for p_row in all_personas_df.values:
                 p = p_row[0]
                 ledger = database_manager.get_ledger(p)
@@ -215,7 +215,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                             cash=float(last_row['Cash']),
                             total_equity=float(last_row['Total_Equity']),
                             holdings_json=json.loads(last_row['Holdings_JSON']) if isinstance(last_row['Holdings_JSON'], str) else last_row['Holdings_JSON'],
-                            daily_pnl_json=json.loads(last_row['Daily_PnL_JSON']) if isinstance(last_row['Daily_PnL_JSON'], str) else last_row['Daily_PnL_JSON'],
+                            daily_pnl_json={},
                             intraday_status="CARRYOVER (100% HOLD)",
                             engine_version=config.CURRENT_MODEL_VERSION
                         )
@@ -250,7 +250,18 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                 'Daily_PnL_JSON': '{}'
             }])
         
-        last_ledger_row = ledger.iloc[-1]
+        # Always select the prior day's settled row (Date < state['Date']) as the baseline
+        prior_ledger = ledger[ledger['Date'].astype(str) < str(state['Date'])] if not ledger.empty else pd.DataFrame()
+        if not prior_ledger.empty:
+            last_ledger_row = prior_ledger.iloc[-1]
+        else:
+            last_ledger_row = pd.Series({
+                'Date': '2026-04-22',
+                'Cash': 10000.0,
+                'Total_Equity': 10000.0,
+                'Holdings_JSON': '{}',
+                'Daily_PnL_JSON': '{}'
+            })
         current_holdings_raw = last_ledger_row['Holdings_JSON']
         current_holdings = json.loads(current_holdings_raw) if isinstance(current_holdings_raw, str) else current_holdings_raw
         

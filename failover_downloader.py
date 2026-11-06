@@ -279,6 +279,8 @@ def download_ticker_with_failover(ticker, period=None, start=None):
         df = _fetch_yf_global(ticker_api, start, period)
         
         if not df.empty and 'Close' in df.columns:
+            if 'Adj Close' not in df.columns:
+                df['Adj Close'] = df['Close']
             # Validate that YFinance didn't silently omit the most recent trading day
             import pandas_market_calendars as mcal
             import datetime

@@ -8,16 +8,16 @@ import os
 
 API_BASE = "http://66.42.118.26:80/api"
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'master_watchdog.log')
-PERSONAS = ["Conservative", "Neutral", "BallsForBrains"]
+PERSONAS = ["Conservative", "Neutral", "Dynamic", "BallsForBrains"]
 
 INCEPTION_DATES = {
     "BallsForBrains": "2026-06-26",
     "Conservative": "2026-07-08",
     "Dynamic": "2026-07-08",
-    "ETF_BallsForBrains": "2026-06-29",
-    "ETF_Conservative": "2026-06-22",
-    "ETF_Dynamic": "2026-06-25",
-    "ETF_Neutral": "2026-06-22",
+    "ETF_BallsForBrains": "2026-08-07",
+    "ETF_Conservative": "2026-08-07",
+    "ETF_Dynamic": "2026-08-07",
+    "ETF_Neutral": "2026-08-07",
     "Neutral": "2026-07-08"
 }
 

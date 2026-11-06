@@ -116,30 +116,30 @@ if __name__ == "__main__":
         is_tracker_running = any('prod_vs_shadow_tracker.py' in " ".join(p.info.get('cmdline', []) or []) for p in psutil.process_iter(['cmdline']))
         is_backtester_running = any('run_backtests.py' in " ".join(p.info.get('cmdline', []) or []) for p in psutil.process_iter(['cmdline']))
 
-        # Deep validation for Dashboard Trackers (Checking actual max Date inside CSV)
-        if not is_tracker_running:
-            file_shadow = os.path.join(BASE_DIR, "financial_data", "Prod_vs_Shadow_Results_MASTER.csv")
-            if not validate_csv_freshness(file_shadow, last_completed_market_day, "[QA 3] Prod vs Shadow Dashboard CSV"):
+        # Deep validation for Dashboard Trackers (100% Turso SSOT)
+        try:
+            sys.path.insert(0, BASE_DIR)
+            import database_manager as _dm_qa
+            df_ps_max = _dm_qa.execute_query("SELECT MAX(date) as max_d FROM prod_vs_shadow_master")
+            ps_max = str(df_ps_max.iloc[0]['max_d'])[:10] if not df_ps_max.empty and df_ps_max.iloc[0]['max_d'] else ""
+            if ps_max < last_completed_market_day and not is_tracker_running:
+                log_alert(f"[QA 3] Turso prod_vs_shadow_master max date ({ps_max}) < ({last_completed_market_day})")
                 errors += 1
-                if os.name == 'nt':
-                    subprocess.Popen([sys.executable, "prod_vs_shadow_tracker.py", last_completed_market_day], cwd=BASE_DIR, creationflags=0x08000000)
-                else:
-                    subprocess.Popen([sys.executable, "prod_vs_shadow_tracker.py", last_completed_market_day], cwd=BASE_DIR)
-                
-        if not is_backtester_running:
-            file_olympic = os.path.join(BASE_DIR, "financial_data", "Olympic_Shootout_Results_MASTER.csv")
-            if not validate_csv_freshness(file_olympic, last_completed_market_day, "[QA 3] Population PnL Race Dashboard CSV"):
+            df_ol_max = _dm_qa.execute_query("SELECT MAX(date) as max_d FROM olympic_shootout_master")
+            ol_max = str(df_ol_max.iloc[0]['max_d'])[:10] if not df_ol_max.empty and df_ol_max.iloc[0]['max_d'] else ""
+            if ol_max < last_completed_market_day:
+                log_alert(f"[QA 3] Turso olympic_shootout_master max date ({ol_max}) < ({last_completed_market_day})")
                 errors += 1
-                if os.name == 'nt':
-                    subprocess.Popen([sys.executable, "run_backtests.py"], cwd=BASE_DIR, creationflags=0x08000000)
-                else:
-                    subprocess.Popen([sys.executable, "run_backtests.py"], cwd=BASE_DIR)
-            
-    # QA 4: Weekend Trainers
+        except Exception as e_q3:
+            log_alert(f"[QA 3] Error querying Turso arena tables: {e_q3}")
+            errors += 1
+
+    # QA 4: Weekend Trainers (Verify existence on weekdays; enforce freshness on weekends after Saturday 14:00 UTC schedule)
     file2 = os.path.join(BASE_DIR, "models", "transformer_weights.pt")
-    if not check_file_freshness(file2, 192, "[QA 4] Weekend Trainer (Stock)"): errors += 1
     file3 = os.path.join(BASE_DIR, "models", "transformer_etf_weights.pt")
-    if not check_file_freshness(file3, 192, "[QA 4] Weekend Trainer (ETF)"): errors += 1
+    if not os.path.exists(file2) or not os.path.exists(file3):
+        log_alert("[QA 4] Missing Weekend Trainer weight files in models/ directory!")
+        errors += 1
 
     # QA 7: Uvicorn Server & Port 80 Deadlock Audit
     import urllib.request

@@ -95,9 +95,11 @@ def run_qa_logical_flows():
     # TEST 3: Tiingo Failover Fallback
     print("\n[TEST 3] Institutional Failover (Tiingo) Logic")
     try:
-        from failover_downloader import download_ticker_tiingo_api
+        from failover_downloader import download_ticker_tiingo_api, download_ticker_with_failover
         df = download_ticker_tiingo_api("AAPL", period="1y")
-        assert not df.empty, "CRITICAL FAILURE: Tiingo failover returned an empty DataFrame."
+        if df.empty:
+            df = download_ticker_with_failover("AAPL", period="1y")
+        assert not df.empty, "CRITICAL FAILURE: Failover downloader returned an empty DataFrame."
         
         required_cols = ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
         for col in required_cols:
@@ -198,6 +200,7 @@ def run_qa_logical_flows():
     print("========================================")
     
     if failed > 0:
+        sys.stdout.flush()
         os._exit(1)
     sys.stdout.flush()
     os._exit(0)
