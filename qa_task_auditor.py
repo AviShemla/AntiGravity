@@ -221,7 +221,7 @@ if __name__ == "__main__":
         # QA 11: Prefect Orchestrator Liveness & Deployment Registration (Linux / Vultr Production)
         if os.name != 'nt':
             try:
-                import urllib.request
+                import urllib.request, json
                 with urllib.request.urlopen("http://127.0.0.1:4200/api/health", timeout=5) as resp:
                     if resp.status != 200:
                         log_alert(f"[QA 11] Prefect Server unhealthy (HTTP {resp.status})!")
