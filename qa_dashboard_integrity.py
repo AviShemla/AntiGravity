@@ -107,17 +107,18 @@ def test_dashboard_continuity():
                 print("[CRITICAL FAIL] Turso prod_vs_shadow_master Prod series flatlined at 10000.0!")
                 import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
 
-            # Check 5B: Single-Day Volatility Spike / Crash Guard (> 12% 1-day jump/crash) across all Arena models
+            # Check 5B: Single-Day Volatility Spike / Crash Guard (> 2.5% 1-day jump/crash on Shadow/Benchmark models, > 4.0% on Live Prod) across all Arena models
             df_arena = pd.concat([df_ps, df_ol], ignore_index=True)
             for m_name, grp in df_arena.groupby('model_name'):
                 grp = grp.sort_values('date').drop_duplicates(subset=['date'], keep='last')
                 rets = grp['total_equity'].pct_change().dropna()
-                bad_rets = rets[rets.abs() > 0.12]
+                limit_pct = 0.040 if m_name in ('PROD_Bayesian_SV', 'Prod', 'CHAMPION (Live VIP)') else 0.025
+                bad_rets = rets[rets.abs() > limit_pct]
                 if not bad_rets.empty:
                     bad_idx = bad_rets.index[0]
                     bad_dt = grp.loc[bad_idx, 'date']
                     bad_val = bad_rets.iloc[0] * 100.0
-                    print(f"[CRITICAL FAIL] Unnatural single-day volatility spike/crash in Arena model '{m_name}' on {bad_dt}: {bad_val:+.2f}% (> +/-12% limit)!")
+                    print(f"[CRITICAL FAIL] Unnatural single-day volatility spike/crash in Arena model '{m_name}' on {bad_dt}: {bad_val:+.2f}% (> +/-{limit_pct*100:.1f}% limit)!")
                     import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
 
                 # Check 5C: Tail Horizontal Flatline Guard (last 4 trading days identical on active models)
