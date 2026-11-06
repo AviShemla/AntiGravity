@@ -195,7 +195,7 @@ def catchup_master_pipeline():
         
         # 6.5 Financial QA Audit (Stock Ledger Math Check; Full Pipeline Continuity runs after ETF Pipeline)
         print("\n--> Running Financial QA Audit (Broker Ledger Math)...")
-        fin_qa = subprocess.run([python_exe, "-c", "import sys, qa_financial_audit; sys.exit(1 if qa_financial_audit.audit_broker_ledger() > 0 else 0)"], cwd=BASE_DIR, env=env)
+        fin_qa = subprocess.run([python_exe, "-c", "import os, sys, qa_financial_audit; sys.stdout.flush(); os._exit(1 if qa_financial_audit.audit_broker_ledger() > 0 else 0)"], cwd=BASE_DIR, env=env)
         if fin_qa.returncode != 0:
             print("FATAL: Financial Audit Failed! Aborting Catchup!")
             os._exit(1)
