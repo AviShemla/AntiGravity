@@ -95,7 +95,8 @@ def run_qa_logical_flows():
     # TEST 3: Tiingo Failover Fallback
     print("\n[TEST 3] Institutional Failover (Tiingo) Logic")
     try:
-        from failover_downloader import download_ticker_tiingo_api, download_ticker_with_failover
+        from failover_downloader import download_ticker_tiingo_api, download_ticker_with_failover, clear_quarantined_tickers
+        clear_quarantined_tickers()
         df = download_ticker_tiingo_api("AAPL", period="1y")
         if df.empty:
             df = download_ticker_with_failover("AAPL", period="1y")
