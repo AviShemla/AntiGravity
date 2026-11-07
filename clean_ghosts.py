@@ -12,6 +12,8 @@ WHITELIST_KEYWORDS = [
     "uvicorn",
     "prefect",
     "catchup_controller",
+    "continuity_driver",
+    "overnight_autonomy",
     "run_backtests",
     "intraday_tracker",
     "vix_monitor",
