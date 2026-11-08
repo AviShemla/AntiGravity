@@ -652,3 +652,255 @@ Whenever you resolve a bug or create a test case, log it here using the followin
   2. Replaced `run_with_timeout(run_sv_engine)` in `export_etf_scorecard.py` with direct `run_sv_engine()` execution (since `continuity_driver.py` runs ETF scorecards in separate OS processes).
   3. Added `nuts_sampler="nutpie"` (Rust NUTS with fallback) to the Dual-Head `pm.sample()` calls in both `export_bayesian_scorecard_formatted.py` and `export_etf_scorecard.py`.
 * **Test Case:** Verified on Vultr (`PID 3866791`) at `11:36:27 UTC` (`98.7% CPU`, zero `<defunct>` processes, zero `futex_wait` deadlocks).
+
+### 2026-11-06 15:12:18 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 15:17:31 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 15:44:42 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 18:00:42 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 19:00:50 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 20:00:46 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 21:00:53 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 21:02:27 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 22:00:48 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 22:02:18 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 23:00:39 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-06 23:02:08 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 00:01:13 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 00:03:23 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 01:00:55 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 01:01:06 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 01:02:31 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 01:02:39 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 02:00:51 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 02:02:21 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 03:00:42 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 03:02:12 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 04:00:47 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 04:02:14 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 05:00:47 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 05:02:16 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 06:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 06:02:20 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 07:00:40 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 07:02:07 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 08:01:19 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 08:03:20 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 08:25:03 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 08:28:42 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 09:00:49 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 09:02:23 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 10:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 10:02:23 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 11:00:47 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 11:02:19 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 11:04:00 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 12:00:42 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 13:00:41 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 14:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 15:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 16:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 17:00:41 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 18:00:49 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 19:00:40 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 20:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 21:00:37 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 22:00:45 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-07 23:00:49 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 00:00:54 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 01:00:53 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 01:01:05 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 02:00:40 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 03:00:50 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 04:00:38 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 05:00:46 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 05:24:38 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 06:00:43 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
+
+### 2026-11-08 07:00:44 - QA Assistant - Pre-Flight Data Alignment Check
+* **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
+* **Resolution:** Safe to proceed with automated pipeline execution.
