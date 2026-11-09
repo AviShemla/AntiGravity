@@ -589,8 +589,7 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
             live_total_equity = final_cash + sum(item['dollars'] for item in final_holdings.values())
             
             if executed_memory:
-                client = database_manager.get_connection()
-                client.execute("UPDATE pending_orders SET executed_intraday_trades_json = ? WHERE persona = ?", [json.dumps(executed_memory), persona])
+                database_manager.execute_write("UPDATE pending_orders SET executed_intraday_trades_json = ? WHERE persona = ?", [json.dumps(executed_memory), persona])
                 
             # Create the final committed row in SQLite
             final_date = target_date if target_date else datetime.now(pytz.timezone('America/New_York')).strftime('%Y-%m-%d')
@@ -612,9 +611,8 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
                 
     # Cleanup completed personas from pending orders
     if completed_personas:
-        client = database_manager.get_connection()
         for cp in completed_personas:
-            client.execute("DELETE FROM pending_orders WHERE persona = ?", [cp])
+            database_manager.execute_write("DELETE FROM pending_orders WHERE persona = ?", [cp])
 
     return yfinance_failure
 
@@ -659,7 +657,11 @@ def run_intraday_tracker(target_date=None):
             # Check if we hit the 15:55 EOD fallback window (within a 10 min tolerance)
             is_eod = now_ny >= eod_fallback_time
             
-            yfinance_failure = execute_pending_orders(is_eod_fallback=is_eod)
+            try:
+                yfinance_failure = execute_pending_orders(is_eod_fallback=is_eod)
+            except Exception as e_loop:
+                print(f"[SNIPER LOOP RECOVERY] Caught transient exception in execute_pending_orders: {e_loop}. Reconnecting on next tick...")
+                yfinance_failure = False
             
             if yfinance_failure:
                 print("--- YFinance Rate Limit Detected! Automatically falling back to 5-minute penalty cooldown ---")

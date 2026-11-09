@@ -104,7 +104,8 @@ def ensure_intraday_sniper():
     print("Checking Intraday Sniper status...")
     for p in psutil.process_iter(['cmdline']):
         try:
-            if p.info['cmdline'] and 'intraday_tracker.py' in " ".join(p.info['cmdline']).lower():
+            cmd_str = " ".join(p.info['cmdline'] or []).lower()
+            if 'intraday_tracker.py' in cmd_str and 'multiprocessing.forkserver' not in cmd_str and 'multiprocessing.resource_tracker' not in cmd_str:
                 print("Intraday Sniper is already running. OK.")
                 return
         except Exception:
@@ -117,7 +118,8 @@ def ensure_vix_watchdog():
     print("Checking VIX Watchdog status...")
     for p in psutil.process_iter(['cmdline']):
         try:
-            if p.info['cmdline'] and 'vix_monitor.py' in " ".join(p.info['cmdline']).lower():
+            cmd_str = " ".join(p.info['cmdline'] or []).lower()
+            if 'vix_monitor.py' in cmd_str and 'multiprocessing.forkserver' not in cmd_str and 'multiprocessing.resource_tracker' not in cmd_str:
                 print("VIX Watchdog is already running. OK.")
                 return
         except Exception:

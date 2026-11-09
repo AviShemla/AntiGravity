@@ -95,10 +95,8 @@ def close_connection_for_cli_exit():
 
 def init_db():
     """Initializes the database schema if it doesn't exist."""
-    client = get_connection()
-
     # 1. Capital Ledgers Table
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS capital_ledgers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             persona TEXT NOT NULL,
@@ -115,12 +113,12 @@ def init_db():
 
     # Retroactive DB Upgrade (Will fail silently if column already exists)
     try:
-        client.execute("ALTER TABLE capital_ledgers ADD COLUMN engine_version TEXT DEFAULT 'V1.0 - Pure PyMC Bayesian'")
+        execute_write("ALTER TABLE capital_ledgers ADD COLUMN engine_version TEXT DEFAULT 'V1.0 - Pure PyMC Bayesian'")
     except Exception:
         pass
 
     # 2. Pending Orders / Target Allocations Table
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS pending_orders (
             persona TEXT PRIMARY KEY,
             date TEXT NOT NULL,
@@ -133,7 +131,7 @@ def init_db():
     ''')
 
     # 3. Executed Trades Table
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS executed_trades (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             persona TEXT NOT NULL,
@@ -148,7 +146,7 @@ def init_db():
     ''')
 
     # 4. Continuity / Catch-Up Ledger
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS process_continuity (
             pipeline_name TEXT PRIMARY KEY,
             last_completed_date TEXT NOT NULL
@@ -156,7 +154,7 @@ def init_db():
     ''')
 
     # 5. Olympic Shootout Master Table (Normalized Long Schema)
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS olympic_shootout_master (
             date TEXT NOT NULL,
             model_name TEXT NOT NULL,
@@ -166,7 +164,7 @@ def init_db():
     ''')
 
     # 6. Prod vs Shadow Master Table (Normalized Long Schema)
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS prod_vs_shadow_master (
             date TEXT NOT NULL,
             model_name TEXT NOT NULL,
@@ -176,7 +174,7 @@ def init_db():
     ''')
 
     # 7. ETF & Stock Scorecards Master Table
-    client.execute('''
+    execute_write('''
         CREATE TABLE IF NOT EXISTS etf_scorecards_master (
             ticker TEXT NOT NULL,
             persona TEXT NOT NULL,
@@ -256,8 +254,7 @@ def verify_ledger_continuity(persona, date, prev_equity, total_equity, daily_pnl
 
 def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_json, intraday_status="", engine_version="V1.0 - Pure PyMC Bayesian"):
     cash = _enforce_double_entry_accounting(cash, total_equity, holdings_json)
-    client = get_connection()
-    client.execute('''
+    execute_write('''
         INSERT INTO capital_ledgers (persona, date, cash, total_equity, holdings_json, daily_pnl_json, intraday_status, engine_version)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(persona, date) DO UPDATE SET
@@ -274,7 +271,6 @@ def save_ledger_row(persona, date, cash, total_equity, holdings_json, daily_pnl_
 
 
 def get_ledger(persona):
-    client = get_connection()
     query = f"""
         SELECT date as Date, cash as Cash, total_equity as Total_Equity,
                holdings_json as Holdings_JSON, daily_pnl_json as Daily_PnL_JSON,
@@ -282,16 +278,12 @@ def get_ledger(persona):
         FROM capital_ledgers
         WHERE persona = '{persona}' ORDER BY date ASC
     """
-    res = client.execute(query)
-    if not res.rows:
-        return pd.DataFrame(columns=res.columns)
-    return pd.DataFrame([list(row) for row in res.rows], columns=res.columns)
+    return execute_query(query)
 
 
 def save_pending_order(persona, date, target_cash, target_equity, target_holdings, daily_pnl, executed_trades):
     target_cash = _enforce_double_entry_accounting(target_cash, target_equity, target_holdings)
-    client = get_connection()
-    client.execute('''
+    execute_write('''
         INSERT INTO pending_orders (persona, date, target_cash, target_total_equity, target_holdings_json, daily_pnl_json, executed_intraday_trades_json)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(persona) DO UPDATE SET
@@ -308,8 +300,12 @@ def save_pending_order(persona, date, target_cash, target_equity, target_holding
 
 
 def get_pending_order(persona):
-    client = get_connection()
-    res = client.execute("SELECT * FROM pending_orders WHERE persona = ?", [persona])
+    try:
+        client = get_connection()
+        res = client.execute("SELECT * FROM pending_orders WHERE persona = ?", [persona])
+    except Exception:
+        client = get_connection(force_new=True)
+        res = client.execute("SELECT * FROM pending_orders WHERE persona = ?", [persona])
     if res.rows:
         return dict(zip(res.columns, res.rows[0]))
     return None
@@ -376,8 +372,7 @@ def get_validated_benchmark_rows(ticker, start_date, end_date):
 
 
 def update_continuity(pipeline_name, date_str):
-    client = get_connection()
-    client.execute('''
+    execute_write('''
         INSERT INTO process_continuity (pipeline_name, last_completed_date)
         VALUES (?, ?)
         ON CONFLICT(pipeline_name) DO UPDATE SET
@@ -387,15 +382,13 @@ def update_continuity(pipeline_name, date_str):
 
 def get_last_continuity_date(pipeline_name):
     try:
-        client = get_connection()
-        res = client.execute("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = ?", [pipeline_name])
-        if res.rows and res.rows[0][0]:
-            return res.rows[0][0]
+        df_c = execute_query("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = ?", [pipeline_name])
+        if not df_c.empty and df_c.iloc[0, 0]:
+            return str(df_c.iloc[0, 0])
     except Exception:
         pass
     # Fallback to actual latest date in capital_ledgers so we never falsely trigger multi-day catchups
     try:
-        client = get_connection()
         res_df = execute_query("SELECT MAX(date) FROM capital_ledgers")
         if not res_df.empty and res_df.iloc[0][0]:
             return str(res_df.iloc[0][0])

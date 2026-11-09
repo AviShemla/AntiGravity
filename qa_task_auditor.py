@@ -247,13 +247,18 @@ if __name__ == "__main__":
             except Exception as e_pref:
                 log_alert(f"[QA 11] Prefect Orchestrator verification failed: {e_pref}")
                 errors += 1
+            sniper_pids = [p.info['pid'] for p in psutil.process_iter(['pid', 'cmdline']) if 'intraday_tracker.py' in " ".join(p.info.get('cmdline', []) or []) and 'forkserver' not in " ".join(p.info.get('cmdline', []) or []) and 'resource_tracker' not in " ".join(p.info.get('cmdline', []) or [])]
+            if len(sniper_pids) != 1:
+                log_alert(f"[QA 12] Intraday Sniper process count is {len(sniper_pids)} (expected 1)! PIDs: {sniper_pids}")
+                errors += 1
+                errors += 1
 
     except Exception as e:
         log_alert(f"Failed to query database for QA Checks: {e}")
         errors += 1
         
     if errors == 0:
-        print("--- All Tasks Audited: PASSED (11/11 Checks Green) ---")
+        print("--- All Tasks Audited: PASSED (12/12 Checks Green) ---")
         sys.stdout.flush()
         os._exit(0)
     else:

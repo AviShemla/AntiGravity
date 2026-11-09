@@ -18,15 +18,16 @@
 
 ---
 
-## 🗓️ PART 1B: Current Week Autonomous Burn-In Gate (`2026-11-09` $\to$ `2026-11-14`)
+## 🗓️ PART 1B: 7-Day Consecutive Autonomous Burn-In Gate (Counter Reset to `0/7` on `2026-11-09` after `[QA 12]` Idle-Socket & Forkserver Fix)
 
-- [x] **Pre-Week Baseline (`2026-11-06` Nightly + `2026-11-07` Saturday Weekend DL Protocol)**: Completed & verified `100% GREEN`.
-- [ ] **Day 1 — Monday `2026-11-09`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Tue) + `9/9 QA Green`.
-- [ ] **Day 2 — Tuesday `2026-11-10`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Wed) + `9/9 QA Green`.
-- [ ] **Day 3 — Wednesday `2026-11-11`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Thu) + `9/9 QA Green`.
-- [ ] **Day 4 — Thursday `2026-11-12`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Fri) + `9/9 QA Green`.
-- [ ] **Day 5 — Friday `2026-11-13`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Sat, staging Monday `2026-11-16`) + `9/9 QA Green`.
-- [ ] **Weekend Gate — Saturday `2026-11-14`**: Autonomous Weekend Protocol (`weekend-trainers` at `14:00 UTC`: `weekend_dl_trainer.py` + `etf_weekend_dl_trainer.py`) + `9/9 QA Green`.
+- **Current Consecutive Clean Days Counter**: **`0 / 7`** *(Reset on Monday `2026-11-09` due to `get_pending_order` idle disconnect & forkserver masking; permanent fix + `[QA 12]` deployed at `16:08 UTC`)*
+- [ ] **Day 1 — Tuesday `2026-11-10`**: Post-Close Nightly Pipeline (`01:00 UTC` Tue) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`).
+- [ ] **Day 2 — Wednesday `2026-11-11`**: Post-Close Nightly Pipeline (`01:00 UTC` Wed) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`).
+- [ ] **Day 3 — Thursday `2026-11-12`**: Post-Close Nightly Pipeline (`01:00 UTC` Thu) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`).
+- [ ] **Day 4 — Friday `2026-11-13`**: Post-Close Nightly Pipeline (`01:00 UTC` Fri) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`).
+- [ ] **Day 5 — Saturday `2026-11-14`**: Post-Close Nightly Pipeline (`01:00 UTC` Sat, staging Monday `2026-11-16`) + Autonomous Weekend Protocol (`weekend-trainers` at `14:00 UTC`) + `9/9 QA Green`.
+- [ ] **Day 6 — Sunday `2026-11-15`**: Full Sunday Autonomous Maintenance & API Health QA + `9/9 QA Green`.
+- [ ] **Day 7 — Monday `2026-11-16`**: Zero-Touch Market Open Sniper Execution (`09:30–16:00 EST`) + Post-Close Nightly Pipeline + `9/9 QA Green` (`7/7 COMPLETE`).
 
 ---
 
