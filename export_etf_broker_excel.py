@@ -321,7 +321,9 @@ if __name__ == "__main__":
     try:
         import database_manager
         import datetime
-        database_manager.update_continuity("etf_pipeline", datetime.datetime.now().strftime("%Y-%m-%d"))
+        df_m = database_manager.execute_query("SELECT last_completed_date FROM process_continuity WHERE pipeline_name = 'master_pipeline'")
+        if not df_m.empty and df_m.iloc[0, 0]:
+            database_manager.update_continuity("etf_pipeline", str(df_m.iloc[0, 0])[:10])
         print("[TURSO] Synced etf_pipeline continuity to today.")
     except Exception as e:
         print(f"Warning: Could not sync etf_pipeline continuity: {e}")

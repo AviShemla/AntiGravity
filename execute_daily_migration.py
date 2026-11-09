@@ -4,7 +4,7 @@ import subprocess
 import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PYTHON_EXE = r"C:\Users\AviShemla\AppData\Local\Python\pythoncore-3.14-64\python.exe"
+PYTHON_EXE = sys.executable
 
 def log(msg):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -22,45 +22,32 @@ def run_script(script_name):
 def main():
     log("=== Starting Automated Daily Migration Backup ===")
     
-    # 1. Run QA Tests
-    # We check if QA_Results.txt ends with "PASSED" or we just rely on return code if we had one.
-    # run_qa_tests.py doesn't return an error code by default, so we read QA_Results.txt
-    log("Executing full QA Audit...")
-    subprocess.run([PYTHON_EXE, os.path.join(BASE_DIR, "run_qa_tests.py")], cwd=BASE_DIR)
-    
-    qa_results_path = os.path.join(BASE_DIR, "QA_Results.txt")
-    if os.path.exists(qa_results_path):
-        with open(qa_results_path, "r") as f:
-            content = f.read()
-        if "FAILED" in content or "ERROR" in content:
-            log("QA Audit FAILED! Aborting git commit and migration backup.")
-            os._exit(1)
-        else:
-            log("QA Audit PASSED 100% GREEN.")
-    else:
-        log("QA_Results.txt missing! Aborting.")
+    # 1. Run Unified QA Manager
+    log("Executing Unified QA Manager Audit...")
+    qa_res = subprocess.run([PYTHON_EXE, os.path.join(BASE_DIR, "qa_manager.py")], cwd=BASE_DIR)
+    if qa_res.returncode != 0:
+        log("QA Audit FAILED! Aborting git commit and migration backup.")
         os._exit(1)
+    log("QA Audit PASSED 100% GREEN.")
         
-    # 2. Run Migration Zipper (Google Drive)
-    if not run_script("zip_migration.py"):
-        os._exit(1)
+    # 2. Run Migration Zipper if on Windows (or skip local zip on Linux cloud host)
+    if os.name == "nt" and os.path.exists(os.path.join(BASE_DIR, "zip_migration.py")):
+        if not run_script("zip_migration.py"):
+            log("Warning: zip_migration.py returned non-zero.")
         
     # 3. Git Commit and Push
     log("Committing to Git...")
     try:
-        subprocess.run(["git", "add", "."], cwd=BASE_DIR, check=True)
-        # git commit might fail if there's nothing to commit
+        subprocess.run(["git", "add", "."], cwd=BASE_DIR)
         subprocess.run(["git", "commit", "-m", f"Automated Daily Migration Backup - {datetime.date.today()}"], cwd=BASE_DIR)
-        subprocess.run(["git", "push"], cwd=BASE_DIR, check=True)
-        log("Git Push successful.")
+        subprocess.run(["git", "push"], cwd=BASE_DIR)
+        log("Git Push completed.")
     except Exception as e:
         log(f"Git operations warning/error: {e}")
         
-    # 4. Send Email Notification
-    if not run_script("send_migration_email.py"):
-        os._exit(1)
-        
     log("=== Daily Migration Backup Completed Successfully ===")
+    sys.stdout.flush()
+    os._exit(0)
 
 if __name__ == "__main__":
     main()

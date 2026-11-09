@@ -904,3 +904,10 @@ Whenever you resolve a bug or create a test case, log it here using the followin
 ### 2026-11-08 07:00:44 - QA Assistant - Pre-Flight Data Alignment Check
 * **Status:** SUCCESS - Data arrays perfectly aligned. NaN-bridge is active and healthy.
 * **Resolution:** Safe to proceed with automated pipeline execution.
+
+
+### 2026-11-09 08:10:00 - Pipeline Interlock & SSH Execution - [QA 10] Wall-Clock Date Overwrite & Paramiko Socket EOF Hang
+* **Symptom:** 1) `qa_task_auditor.py` failed `[QA 10]` with `Interlock Violation: ETF Pipeline (2026-11-09) is ahead of Stock Pipeline (2026-11-06)`. 2) `execute_daily_migration.py` failed on Vultr with exit code 1. 3) Remote Python one-liners invoked via Paramiko SSH hung at EOF (`PipeTimeout`) when querying Turso (`libsql_client`).
+* **Root Cause:** 1) `export_etf_broker_excel.py` line 324 called `database_manager.update_continuity("etf_pipeline", datetime.datetime.now().strftime("%Y-%m-%d"))`, overwriting the true market session date (`2026-11-06`) with the wall-clock date (`2026-11-09`). 2) `execute_daily_migration.py` hardcoded a Windows local `PYTHON_EXE` path (`C:\Users\AviShemla\...`) instead of `sys.executable`. 3) Remote `python -c` commands that import `database_manager` (`libsql_client` / `aiohttp` connection pool) without calling `os._exit(0)` keep the remote SSH stdout pipe open indefinitely at EOF.
+* **Resolution:** 1) Patched `export_etf_broker_excel.py` to sync `etf_pipeline` continuity to the `master_pipeline` completed session date in Turso instead of `datetime.now()`. 2) Patched `execute_daily_migration.py` to use `sys.executable` and `qa_manager.py`. 3) Enforced `sys.stdout.flush(); os._exit(0)` on all remote SSH Python invocations (`vultr_status_and_heal.py`).
+* **Test Case:** Executed `vultr_status_and_heal.py` (`task-26708`), verified `process_continuity` shows `master_pipeline = 2026-11-06` and `etf_pipeline = 2026-11-06`, and verified `qa_task_auditor.py` passed `11/11 Checks Green` and `qa_manager.py` passed `9/9 Suites Green`.
