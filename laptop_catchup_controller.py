@@ -200,31 +200,11 @@ def catchup_master_pipeline():
             print("FATAL: Financial Audit Failed! Aborting Catchup!")
             os._exit(1)
         
-        print("\n--> Syncing olympic_shootout_master in Turso (Generating New Chart Dots)...\n")
+        print("\n--> Syncing olympic_shootout_master & Arena Benchmarks in Turso...\n")
         try:
-            df_bfb = database_manager.execute_query("SELECT date, total_equity FROM capital_ledgers WHERE persona='BallsForBrains' AND date >= '2026-10-30' ORDER BY date ASC")
-            df_ol = database_manager.execute_query("SELECT date, model_name, total_equity FROM olympic_shootout_master WHERE date >= '2026-10-28' ORDER BY date ASC")
-            last_cap, last_vol = 10000.0, 10000.0
-            if not df_ol.empty:
-                c_sub = df_ol[df_ol["model_name"] == "EL_CAP (70% Liquidity)"]
-                v_sub = df_ol[df_ol["model_name"] == "EL_VOLTI (70% Stability)"]
-                if not c_sub.empty: last_cap = float(c_sub.iloc[-1]["total_equity"])
-                if not v_sub.empty: last_vol = float(v_sub.iloc[-1]["total_equity"])
-            for _, r_o in df_bfb.iterrows():
-                dt_s = str(r_o["date"])[:10]
-                eq_v = float(r_o["total_equity"])
-                for m_name, m_val in [("CHAMPION (Live VIP)", eq_v), ("EL_CAP (70% Liquidity)", last_cap), ("EL_VOLTI (70% Stability)", last_vol)]:
-                    database_manager.execute_write("""
-                        INSERT INTO olympic_shootout_master (date, model_name, total_equity)
-                        VALUES (?, ?, ?)
-                        ON CONFLICT(date, model_name) DO UPDATE SET total_equity=excluded.total_equity
-                    """, [dt_s, m_name, float(m_val)])
+            subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py"), target_date], cwd=BASE_DIR, env=env)
         except Exception as e_ol:
-            print(f"Warning syncing olympic_shootout_master: {e_ol}")
-
-        # 10. Update Shadow Tracker
-        print(f"\n--> Updating Prod vs Shadow Tracker for {target_date}...")
-        subprocess.run([python_exe, os.path.join(BASE_DIR, "prod_vs_shadow_tracker.py"), target_date], cwd=BASE_DIR, env=env)
+            print(f"Warning syncing Arena benchmarks: {e_ol}")
 
 
     print("\nMaster Pipeline Catch-Up Complete!")
