@@ -113,22 +113,6 @@ def run_tracker(target_date):
             [d, m_name, float(curr[m_name])]
         )
 
-    row = {
-        "Date": d,
-        "Prod": prod_eq,
-        "Shadow_Transformer": curr["Shadow_Transformer"],
-        "Sandbox_V1": curr["Sandbox_V1"],
-        "Shadow_LSTM": curr["Shadow_LSTM"]
-    }
-    df = pd.DataFrame([row])
-    if os.path.exists(MASTER_CSV) and os.path.getsize(MASTER_CSV) > 0:
-        existing_df = pd.read_csv(MASTER_CSV)
-        merged = pd.concat([existing_df, df], ignore_index=True)
-        merged = merged.drop_duplicates(subset=['Date'], keep='last')
-        merged.to_csv(MASTER_CSV, index=False)
-    else:
-        df.to_csv(MASTER_CSV, index=False)
-
     st = {
         "Transformer": curr["Shadow_Transformer"],
         "V1_Classic": curr["Sandbox_V1"],

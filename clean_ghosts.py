@@ -54,24 +54,27 @@ def hunt_zombies():
                 
             # Target Python processes
             if "python" in p.info.get('name', '').lower() or "py.exe" in p.info.get('name', '').lower():
-                # Ancestor-based protection: check if process or any of its parents are whitelisted
-                is_protected = False
-                curr = p
-                for _ in range(5):  # limit parent tree traversal
-                    try:
-                        curr_cmdline = curr.cmdline()
-                        if curr_cmdline:
-                            curr_cmd_str = " ".join(curr_cmdline).lower()
-                            if any(w in curr_cmd_str for w in WHITELIST_KEYWORDS):
-                                is_protected = True
+                # Short-lived subprocess scripts that must never run longer than 20 minutes even under a whitelisted parent
+                NEVER_PROTECT_KEYWORDS = ["daily_dl_inference.py", "fast_screener.py", "qa_"]
+                is_Protected = False
+                if not any(np_kw in cmd_str for np_kw in NEVER_PROTECT_KEYWORDS):
+                    # Ancestor-based protection: check if process or any of its parents are whitelisted
+                    curr = p
+                    for _ in range(5):  # limit parent tree traversal
+                        try:
+                            curr_cmdline = curr.cmdline()
+                            if curr_cmdline:
+                                curr_cmd_str = " ".join(curr_cmdline).lower()
+                                if any(w in curr_cmd_str for w in WHITELIST_KEYWORDS):
+                                    is_Protected = True
+                                    break
+                            curr = curr.parent()
+                            if not curr:
                                 break
-                        curr = curr.parent()
-                        if not curr:
+                        except Exception:
                             break
-                    except Exception:
-                        break
                 
-                if is_protected:
+                if is_Protected:
                     continue
 
                 # If running for more than 1200 seconds (20 mins)

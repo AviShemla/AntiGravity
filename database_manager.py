@@ -196,7 +196,21 @@ def init_db():
         )
     ''')
 
-    # 8. Additive Lineage Tables (feature_lineage_audit & decision_lineage_audit)
+    # 8. Active Portfolio Causal Chains Table (100% Turso SSOT)
+    execute_write('''
+        CREATE TABLE IF NOT EXISTS active_portfolio_chains (
+            ticker TEXT PRIMARY KEY,
+            oos_accuracy REAL NOT NULL,
+            depth INTEGER NOT NULL,
+            max_lag INTEGER NOT NULL,
+            lag_tuple TEXT NOT NULL,
+            lag14 TEXT, lag13 TEXT, lag12 TEXT, lag11 TEXT, lag10 TEXT, lag9 TEXT, lag8 TEXT,
+            lag7 TEXT, lag6 TEXT, lag5 TEXT, lag4 TEXT, lag3 TEXT, lag2 TEXT, lag1 TEXT,
+            updated_at_utc TEXT NOT NULL
+        )
+    ''')
+
+    # 9. Additive Lineage Tables (feature_lineage_audit & decision_lineage_audit)
     try:
         import oracle_lineage_core
         oracle_lineage_core.init_lineage_tables()

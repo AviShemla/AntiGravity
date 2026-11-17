@@ -614,6 +614,14 @@ def execute_pending_orders(is_eod_fallback=False, target_date=None):
         for cp in completed_personas:
             database_manager.execute_write("DELETE FROM pending_orders WHERE persona = ?", [cp])
 
+    # Sync prod_vs_shadow_master and olympic_shootout_master so Arena charts match live intraday ledger settlements
+    try:
+        sync_date = target_date if target_date else datetime.now(pytz.timezone('America/New_York')).strftime('%Y-%m-%d')
+        import prod_vs_shadow_tracker
+        prod_vs_shadow_tracker.run_tracker(sync_date)
+    except Exception as e_sync:
+        print(f"  [ARENA INTRADAY SYNC WARNING] {e_sync}")
+
     return yfinance_failure
 
 def get_next_market_open():

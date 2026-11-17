@@ -109,12 +109,26 @@ def catchup_master_pipeline():
         print(f"Warning: Could not clear warnings: {e}")
         
     print("\nStep 1: Running SPY.py to fetch latest master data...")
-    res = subprocess.run([python_exe, os.path.join(BASE_DIR, "SPY.py")], cwd=BASE_DIR, env=env)
-    if res.returncode != 0:
-        error_msg = f"Pipeline Aborted. SPY.py failed with Exit Code: {res.returncode}"
-        print(error_msg)
-        send_error_email("AntiGravity Error: SPY.py Failed", error_msg)
-        os._exit(1)
+    spy_skip = False
+    try:
+        csv_p = os.path.join(BASE_DIR, "financial_data", "SP500_Clean_Advanced_Analysis.csv")
+        if os.path.exists(csv_p) and missed_dates:
+            import qa_data_continuity_per_ticker as q_cont
+            if q_cont.test_data_gaps_per_ticker(csv_p) and q_cont.test_orphaned_tickers_in_db(os.path.join(BASE_DIR, "antigravity.db"), csv_p):
+                df_tail = pd.read_csv(csv_p, usecols=["Date"], low_memory=False)
+                if str(df_tail["Date"].max())[:10] >= str(missed_dates[-1])[:10]:
+                    print(f"[IDEMPOTENT FAST-PATH] SP500_Clean_Advanced_Analysis.csv already verified at 100% continuity for {missed_dates[-1]}. Skipping redundant SPY.py download.")
+                    spy_skip = True
+    except Exception as e_sk:
+        print(f"Warning checking SPY fast-path: {e_sk}")
+
+    if not spy_skip:
+        res = subprocess.run([python_exe, os.path.join(BASE_DIR, "SPY.py")], cwd=BASE_DIR, env=env)
+        if res.returncode != 0:
+            error_msg = f"Pipeline Aborted. SPY.py failed with Exit Code: {res.returncode}"
+            print(error_msg)
+            send_error_email("AntiGravity Error: SPY.py Failed", error_msg)
+            os._exit(1)
         
     # Prevent multi-date PyMC sampling timeouts by pruning to the latest missed date
     if len(missed_dates) > 1:
@@ -137,17 +151,29 @@ def catchup_master_pipeline():
             print("\n--> Running Meta-Predictor Tracker (Sunday Alpha Recalibration)...")
             subprocess.run([python_exe, os.path.join(BASE_DIR, "meta_predictor_tracker.py")], cwd=BASE_DIR, env=env)
             
+        # 1.25 Adaptive 7-Lag / 5-Depth Cross-Stock Causal Chain Screener
+        print("\n--> Running Adaptive 7-Lag / 5-Depth Causal Chain Screener (fast_screener.py)...")
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "fast_screener.py")], cwd=BASE_DIR, check=True, env=env)
+
         # 1.5 Deep Learning Inference Engine
         print("\n--> Running Deep Learning AI Inference Engine (V2 Upgrade)...")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "daily_dl_inference.py"), "--target-date", target_date], cwd=BASE_DIR, check=True, env=env)
             
         # 2. Bayesian Scorecard Formatted (3-Process Parallel Pool for PyTensor/nutpie Thread-Safety)
         print("\n--> Running export_bayesian_scorecard_formatted.py (3-Process Pool)...")
+        stock_tickers = []
         try:
-            s_df = pd.read_csv(os.path.join(BASE_DIR, "financial_data", "Active_Portfolio.csv"))
-            stock_tickers = s_df.head(10)["Ticker"].astype(str).str.strip().str.upper().tolist()
+            df_tp = database_manager.execute_query("SELECT ticker FROM active_portfolio_chains LIMIT 10")
+            if not df_tp.empty:
+                stock_tickers = df_tp["ticker"].astype(str).str.strip().str.upper().tolist()
         except Exception:
-            stock_tickers = ["GPC","ADSK","ADM","ELV","NDAQ","CB","MCD","NKE","BLK","NEE"]
+            pass
+        if not stock_tickers:
+            try:
+                s_df = pd.read_csv(os.path.join(BASE_DIR, "financial_data", "Active_Portfolio.csv"))
+                stock_tickers = s_df.head(10)["Ticker"].astype(str).str.strip().str.upper().tolist()
+            except Exception:
+                stock_tickers = ["GPC","ADSK","ADM","ELV","NDAQ","CB","MCD","NKE","BLK","NEE"]
         import concurrent.futures
         def _run_stock_sc(tk):
             subprocess.run([python_exe, os.path.join(BASE_DIR, "export_bayesian_scorecard_formatted.py"), "--target-date", target_date, "--ticker", tk], cwd=BASE_DIR, check=True, env=env)

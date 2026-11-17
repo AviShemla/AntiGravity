@@ -26,10 +26,19 @@ def get_dynamic_assets():
     portfolio_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Active_Portfolio.csv')
     stocks = ['NVDA', 'AAPL']
     etfs = ['SPY', 'QQQ']
-    
-    if os.path.exists(portfolio_path):
+    df = pd.DataFrame()
+    try:
+        import database_manager
+        df = database_manager.execute_query("SELECT ticker as Ticker FROM active_portfolio_chains LIMIT 10")
+    except Exception:
+        pass
+    if df.empty and os.path.exists(portfolio_path):
         try:
             df = pd.read_csv(portfolio_path)
+        except Exception:
+            pass
+    if not df.empty:
+        try:
             # Limit to exactly Top 10 Stocks mathematically extracted from the live portfolio
             stocks = df['Ticker'].head(10).tolist()
             
@@ -224,3 +233,5 @@ if __name__ == "__main__":
     args, unknown = parser.parse_known_args()
     
     run_daily_inference(target_date=args.target_date)
+    sys.stdout.flush()
+    os._exit(0)

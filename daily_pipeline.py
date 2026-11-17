@@ -51,12 +51,9 @@ try:
         df_led = database_manager.get_ledger("Dynamic")
         if not df_led.empty and str(df_led['Date'].iloc[-1]) == prediction_date_str:
             print(f"[IDEMPOTENT RUN] Pipeline already executed for {prediction_date_str}. Proceeding to recalculate and overwrite if Integrity Check passes.")
-    except Exception:
-        # Fallback to CSV if DB unavailable
-        if os.path.exists(ledger_path):
-            ledger = pd.read_csv(ledger_path)
-            if not ledger.empty and str(ledger['Date'].iloc[-1]) == prediction_date_str:
-                print(f"[IDEMPOTENT RUN] Pipeline already executed for {prediction_date_str}. Proceeding to recalculate and overwrite if Integrity Check passes.")
+    except Exception as e_db:
+        print(f"[TURSO CHECK WARNING] Could not query Dynamic ledger: {e_db}")
+
             
 except ImportError:
     pass
@@ -90,11 +87,15 @@ def send_outlook_email(subject, html_body, attachment_path=None, logo_path=None)
         print(f"Failed to send email via Outlook. Error: {e}")
 
 if __name__ == '__main__':
-    import laptop_catchup_controller
-    laptop_catchup_controller.catchup_master_pipeline()
-    laptop_catchup_controller.catchup_etf_pipeline()
-    
-    print("\nAll AntiGravity Nightly Single-Stock Protocols Completed Successfully.")
-    import sys; sys.stdout.flush(); os._exit(0)
+    try:
+        import laptop_catchup_controller
+        laptop_catchup_controller.catchup_master_pipeline()
+        laptop_catchup_controller.catchup_etf_pipeline()
+        print("\nAll AntiGravity Nightly Single-Stock Protocols Completed Successfully.")
+        import sys; sys.stdout.flush(); os._exit(0)
+    except Exception as e_fatal:
+        import traceback
+        traceback.print_exc()
+        import sys; sys.stdout.flush(); os._exit(1)
 
 

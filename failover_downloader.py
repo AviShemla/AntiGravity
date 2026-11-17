@@ -306,7 +306,15 @@ def download_ticker_with_failover(ticker, period=None, start=None):
                     import math
                     if fast_close and not math.isnan(fast_close):
                         safe_print(f"  [FAST_INFO SURGERY] Yfinance dropped historical close for {last_closed_market_day}. Injecting fast_info price: {fast_close}")
-                        df.loc[pd.to_datetime(last_closed_market_day)] = fast_close
+                        for col in ['Open', 'High', 'Low', 'Close', 'Adj Close']:
+                            if col in df.columns:
+                                df[col] = df[col].astype(float)
+                        if 'Volume' in df.columns:
+                            df['Volume'] = df['Volume'].astype(float)
+                        new_row = {col: float(fast_close) for col in df.columns}
+                        if 'Volume' in df.columns:
+                            new_row['Volume'] = float(df['Volume'].iloc[-1]) if len(df) > 0 else 0.0
+                        df.loc[pd.to_datetime(last_closed_market_day)] = new_row
                         time.sleep(0.5)
                         return df
                 except Exception as ex:

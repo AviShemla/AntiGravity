@@ -1,6 +1,12 @@
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import pandas as pd
 import numpy as np
-import os
 import itertools
 from sklearn.linear_model import LogisticRegression
 import time
@@ -66,35 +72,38 @@ def screen_hybrid_matrix(target_etf):
     y_train = train_df[target_col].values
     y_test = test_df[target_col].values
     
+    # Pre-standardize all candidate columns ONCE as a 2D numpy array instead of calling DataFrame indexing 11,025 times
+    candidate_cols = list(dict.fromkeys(top_macro + top_micro))
+    col_to_idx = {c: idx for idx, c in enumerate(candidate_cols)}
+    X_train_all = train_df[candidate_cols].values.astype(np.float64)
+    X_test_all = test_df[candidate_cols].values.astype(np.float64)
+    Xm_all = X_train_all.mean(axis=0)
+    Xs_all = X_train_all.std(axis=0) + 1e-8
+    X_train_std = (X_train_all - Xm_all) / Xs_all
+    X_test_std = (X_test_all - Xm_all) / Xs_all
+
     start_time = time.time()
     count = 0
+    clf = LogisticRegression(C=1.0, random_state=42, max_iter=200, solver='lbfgs')
     
     for combo in combinations:
         count += 1
         if count % 2000 == 0:
             print(f"  ...processed {count}/{len(combinations)}")
             
-        X_train = train_df[list(combo)].values
-        X_test = test_df[list(combo)].values
+        idxs = [col_to_idx[c] for c in combo]
+        X_train_s = X_train_std[:, idxs]
+        X_test_s = X_test_std[:, idxs]
         
-        # Scale
-        Xm = X_train.mean(axis=0)
-        Xs = X_train.std(axis=0) + 1e-8
-        X_train_s = (X_train - Xm) / Xs
-        X_test_s = (X_test - Xm) / Xs
-        
-        clf = LogisticRegression(C=1.0, random_state=42, max_iter=1000)
         clf.fit(X_train_s, y_train)
         
         preds = clf.predict(X_test_s)
         acc = np.mean(preds == y_test)
         
         if acc > 0.55: # Only save interesting chains
-            probs = clf.predict_proba(X_test_s)
-            
             res = {
                 'Target': target_etf,
-                'OOS_Accuracy': round(acc * 100, 1),
+                'OOS_Accuracy': round(float(acc) * 100, 1),
                 'Macro_1': combo[0],
                 'Macro_2': combo[1],
                 'Micro_1': combo[2],

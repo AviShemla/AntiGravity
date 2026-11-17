@@ -41,10 +41,11 @@ def run_sv_engine(returns_full, sv_seed=42):
         
     return np.exp(trace_sv.posterior['volatility'].mean(dim=['chain', 'draw']).values)
 
-def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="API Data Failure"):
+def make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, reason="API Data Failure", lags_list=None):
     dates_t = returns_df.index
     sc_dict = {}
-    for d in range(depth, 0, -1):
+    iter_lags = sorted(lags_list, reverse=True) if lags_list else list(range(depth, 0, -1))
+    for d in iter_lags:
         dates_lag = dates_t - pd.offsets.BDay(d)
         sc_dict[f'date (lag{d})'] = dates_lag.date
         
@@ -87,12 +88,13 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         shifted_preds[top_3_tech]
     ]
     
-    depth = len(lags_dict)
+    active_lags = sorted(lags_dict.keys(), reverse=True)
+    depth = len(active_lags)
     chain_elements = []
     
     import yfinance as yf
     
-    for d in range(depth, 0, -1):
+    for d in active_lags:
         lag_name = lags_dict[d]
         raw_lag = returns_df[lag_name].shift(d) if lag_name in returns_df.columns else pd.Series(0.0, index=returns_df.index)
         
@@ -397,7 +399,7 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
         else: actual_dir.append("Down")
     
     sc_dict = {}
-    for d in range(depth, 0, -1):
+    for d in active_lags:
         dates_lag = dates_t - pd.offsets.BDay(d)
         sc_dict[f'date (lag{d})'] = dates_lag.date
         
@@ -487,11 +489,25 @@ if __name__ == '__main__':
     excel_suffix = f"_{args.ticker.strip().upper()}" if args.ticker else ""
     excel_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', f'Top5_Bayesian_Scorecard_Formatted{excel_suffix}.xlsx')
     
-    if not os.path.exists(portfolio_path):
-        print(f"Error: {portfolio_path} not found.")
-        os._exit(1)
-        
-    top_5 = pd.read_csv(portfolio_path)
+    top_5 = pd.DataFrame()
+    try:
+        import database_manager
+        df_turso_p = database_manager.execute_query(
+            "SELECT ticker as Ticker, oos_accuracy as OOS_Accuracy, depth as Depth, max_lag as Max_Lag, "
+            "lag_tuple as Lag_Tuple, lag14 as Lag14, lag13 as Lag13, lag12 as Lag12, lag11 as Lag11, "
+            "lag10 as Lag10, lag9 as Lag9, lag8 as Lag8, lag7 as Lag7, lag6 as Lag6, lag5 as Lag5, "
+            "lag4 as Lag4, lag3 as Lag3, lag2 as Lag2, lag1 as Lag1 FROM active_portfolio_chains"
+        )
+        if not df_turso_p.empty:
+            top_5 = df_turso_p
+            print(f"[TURSO SSOT] Loaded {len(top_5)} causal portfolio chains from Turso `active_portfolio_chains`.")
+    except Exception:
+        pass
+    if top_5.empty:
+        if not os.path.exists(portfolio_path):
+            print(f"Error: {portfolio_path} not found and Turso `active_portfolio_chains` is empty.")
+            os._exit(1)
+        top_5 = pd.read_csv(portfolio_path)
     if 'OOS_Accuracy' not in top_5.columns:
         print("Warning: OOS_Accuracy column missing. Defaulting to first 10 rows.")
     top_10 = top_5.head(10) # Enforce strict 10-stock execution limit
@@ -522,14 +538,16 @@ if __name__ == '__main__':
             fund_score = float(fund_df[fund_df['Ticker'] == ticker]['Fundamental_Score'].iloc[0])
             
         lags_dict = {}
-        is_invalid = False
-        for d in range(depth, 0, -1):
-            val = row[f'Lag{d}']
-            if pd.isna(val) or val == "":
-                is_invalid = True
-            lags_dict[d] = val
+        for d in range(7, 0, -1):
+            col_name = f'Lag{d}'
+            if col_name in row.index:
+                val = row[col_name]
+                if pd.notna(val) and str(val).strip() != "":
+                    lags_dict[d] = str(val).strip()
+        is_invalid = (len(lags_dict) == 0)
+        depth = len(lags_dict)
             
-        print(f"\nProcessing {ticker} (Adaptive Depth: {depth})...")
+        print(f"\nProcessing {ticker} (Adaptive Depth: {depth}, Lags: {sorted(lags_dict.keys(), reverse=True)})...")
         if is_quarantined(ticker):
             print(f"[QUARANTINE TRIGGERED] {ticker} is quarantined due to data errors. Building dummy scorecard.")
             sc = make_quarantined_scorecard(ticker, depth, returns_df, next_biz_day, "API Data Failure")

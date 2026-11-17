@@ -339,7 +339,6 @@ def get_active_tickers(folder_path):
     # --- GRANDFATHERING LOGIC ---
     try:
         import pandas as pd
-        import json
         from database_manager import execute_query
         
         all_vip_tickers = set(t for sublist in active_sectors_dict.values() for t in sublist)

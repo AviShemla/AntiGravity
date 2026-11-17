@@ -1,38 +1,45 @@
 import pandas as pd
 import json
 import os
+import sys
 
-BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import database_manager
 
 def get_blacklisted_tickers(persona="BallsForBrains", lookback_days=15, strike_threshold=3):
     """
-    Scans the capital ledgers for a persona over the last `lookback_days` days.
-    Returns a set of tickers that have `strike_threshold` or more negative PnL days.
+    Scans the Turso capital_ledgers for a persona over the last `lookback_days` days.
+    Returns a dict of tickers that have `strike_threshold` or more negative PnL days.
     """
-    ledger_path = os.path.join(BASE_DIR, f'Capital_Ledger_{persona}.csv')
-    etf_ledger_path = os.path.join(BASE_DIR, f'ETF_Capital_Ledger_{persona}.csv')
-    
     dfs = []
-    if os.path.exists(ledger_path):
-        dfs.append(pd.read_csv(ledger_path))
-    if os.path.exists(etf_ledger_path):
-        dfs.append(pd.read_csv(etf_ledger_path))
-        
+    try:
+        df_stock = database_manager.get_ledger(persona)
+        if not df_stock.empty:
+            dfs.append(df_stock)
+    except Exception:
+        pass
+    try:
+        etf_p = persona if str(persona).startswith("ETF_") else f"ETF_{persona}"
+        df_etf = database_manager.get_ledger(etf_p)
+        if not df_etf.empty:
+            dfs.append(df_etf)
+    except Exception:
+        pass
+
     if not dfs:
-        return set()
-        
+        return {}
+
     try:
         df = pd.concat(dfs, ignore_index=True)
         if 'Daily_PnL_JSON' not in df.columns or 'Date' not in df.columns:
-            return set()
-            
+            return {}
+
         df['Date'] = pd.to_datetime(df['Date'])
         df = df.sort_values('Date', ascending=False)
-        
-        # We only care about the last N unique dates
+
         recent_dates = df['Date'].drop_duplicates().head(lookback_days)
         df_recent = df[df['Date'].isin(recent_dates)]
-        
+
         strikes = {}
         for idx, row in df_recent.iterrows():
             try:
@@ -40,11 +47,12 @@ def get_blacklisted_tickers(persona="BallsForBrains", lookback_days=15, strike_t
                 for ticker, profit in pnl.items():
                     if float(profit) < 0:
                         strikes[ticker] = strikes.get(ticker, 0) + 1
-            except:
+            except Exception:
                 pass
-                
+
         blacklisted = {ticker: f"Blacklisted: {count} Strikes in {lookback_days}d" for ticker, count in strikes.items() if count >= strike_threshold}
         return blacklisted
     except Exception as e:
-        print(f"Error reading ledgers for blacklist: {e}")
+        print(f"Error reading Turso ledgers for blacklist: {e}")
         return {}
+
