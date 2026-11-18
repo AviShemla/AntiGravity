@@ -98,6 +98,17 @@ def test_dashboard_continuity():
             latest_shadow_date = str(df_ps['date'].max()).split()[0]
 
             if latest_db_date != latest_shadow_date and latest_shadow_date < latest_db_date:
+                try:
+                    import prod_vs_shadow_tracker
+                    print(f"[INTRADAY ARENA SYNC] capital_ledgers advanced to {latest_db_date} during active market session. Auto-syncing prod_vs_shadow_master...")
+                    prod_vs_shadow_tracker.run_tracker(latest_db_date)
+                    df_ps = database_manager.execute_query("SELECT date, model_name, total_equity FROM prod_vs_shadow_master ORDER BY date ASC")
+                    df_ol = database_manager.execute_query("SELECT date, model_name, total_equity FROM olympic_shootout_master ORDER BY date ASC")
+                    latest_shadow_date = str(df_ps['date'].max()).split()[0]
+                except Exception as e_s:
+                    print(f"Warning auto-syncing Arena tracker: {e_s}")
+
+            if latest_db_date != latest_shadow_date and latest_shadow_date < latest_db_date:
                 print(f"[CRITICAL FAIL] Turso prod_vs_shadow_master ends at {latest_shadow_date} while capital_ledgers is at {latest_db_date}!")
                 import sys; sys.stdout.flush(); sys.stderr.flush(); os._exit(1)
 
