@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 pass 
             elif missing or stale:
                 if missing: log_alert(f"[QA 6] Missing Pending Orders for Personas: {missing}.")
-                is_running = any('laptop_catchup_controller.py' in " ".join(p.info.get('cmdline', []) or []) for p in psutil.process_iter(['cmdline']))
+                is_running = any(any(k in " ".join(p.info.get('cmdline', []) or []) for k in ('laptop_catchup_controller.py', 'daily_pipeline.py', 'master_pipeline.py')) for p in psutil.process_iter(['cmdline']))
                 if is_running:
                     log_alert("-> Pipeline is actively running. Skipping auto-spawn.")
                 else:

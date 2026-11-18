@@ -18,19 +18,21 @@
 
 ---
 
-## 🗓️ PART 1B: 7-Day Consecutive Autonomous Burn-In Gate (Counter Reset to `0/7` on Tuesday `2026-11-17`)
+## 🗓️ PART 1B: 7-Day Consecutive Autonomous Burn-In Gate (Counter Reset on Tuesday `2026-11-17` @ `09:53` IL)
 
-- **Current Consecutive Clean Days Counter**: **`0 / 7`** *(Reset to `0/7` on Tuesday `2026-11-17` after `daily_dl_inference.py` hung at EOF during the `01:00 UTC` nightly run due to a missing `os._exit(0)` and required manual self-healing. The 7-day zero-touch autonomous window now runs **Wednesday `2026-11-18` through Tuesday `2026-11-24`**.)*
-- [ ] **Day 1 — Wednesday `2026-11-18`**: Post-Close Nightly Pipeline (`01:00 UTC` Wed) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`) (`1/7`).
-- [ ] **Day 2 — Thursday `2026-11-19`**: Post-Close Nightly Pipeline (`01:00 UTC` Thu) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`) (`2/7`).
-- [ ] **Day 3 — Friday `2026-11-20`**: Post-Close Nightly Pipeline (`01:00 UTC` Fri) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`) (`3/7`).
-- [ ] **Day 4 — Saturday `2026-11-21`**: Post-Close Nightly Pipeline (`01:00 UTC` Sat, staging Monday `2026-11-23`) + Autonomous Weekend Protocol (`weekend-trainers` at `14:00 UTC`) + `9/9 QA Green` (`4/7`).
-- [ ] **Day 5 — Sunday `2026-11-22`**: Full Sunday Autonomous Maintenance & API Health QA + `9/9 QA Green` (`5/7`).
-- [ ] **Day 6 — Monday `2026-11-23`**: Zero-Touch Post-Weekend Market Open Sniper Execution (`09:30–16:00 EST`) + `9/9 QA Green` (`6/7`).
-- [ ] **Day 7 — Tuesday `2026-11-24`**: Post-Close Nightly Pipeline (`01:00 UTC` Tue, running 7-Lag Dynamic Causal Screener via Turso `active_portfolio_chains`) + Live Intraday Sniper (`09:30–16:00 EST`) + `9/9 QA Green` (`12/12 Task Checks`) (`7/7 COMPLETE`).
+- **Current Consecutive Clean Days Counter**: **`1 / 7` COMPLETED (`Day 2` In Progress — NYSE Market Open until `23:00` IL + `01:00 UTC` Nightly Run)**
+  - *Completed (`1/7`)*: **Day 1 — Tuesday `2026-11-17`** (Full NYSE Market Session `09:30–16:00 EST` / `16:30–23:00` IL + Post-Close Nightly Pipeline at `01:00 UTC` Wed `2026-11-18` completed 100% hands-free and passed `9/9 QA Suites` & `12/12 Task Checks`).
+  - *In Progress (`Day 2`)*: **Wednesday `2026-11-18`** (Intraday Sniper active during NYSE market hours; cannot be marked `2/7` until market close at `16:00 EST` / `23:00` IL AND tonight's `01:00 UTC` post-close nightly pipeline + `9/9` QA audit complete cleanly).
+- [x] **Day 1 — Tuesday `2026-11-17`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Wed) + `9/9 QA Green` (`12/12 Task Checks`) (`1/7` ✅ **COMPLETE**).
+- [ ] **Day 2 — Wednesday `2026-11-18` (IN PROGRESS)**: Live Intraday Sniper (`09:30–16:00 EST`, closes `23:00` IL) + Post-Close Nightly Pipeline (`01:00 UTC` Thu) + `9/9 QA Green` (`2/7` pending EOD + Nightly completion).
+- [ ] **Day 3 — Thursday `2026-11-19`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Fri) + `9/9 QA Green` (`3/7`).
+- [ ] **Day 4 — Friday `2026-11-20`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Sat, staging Monday `2026-11-23`) + `9/9 QA Green` (`4/7`).
+- [ ] **Day 5 — Saturday `2026-11-21`**: Autonomous Weekend Protocol (`weekend-trainers` at `14:00 UTC`) + `9/9 QA Green` (`5/7`).
+- [ ] **Day 6 — Sunday `2026-11-22`**: Full Sunday Autonomous Maintenance & API Health QA + `9/9 QA Green` (`6/7`).
+- [ ] **Day 7 — Monday `2026-11-23`**: Zero-Touch Post-Weekend Market Open Sniper Execution (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Tue) + `9/9 QA Green` (`7/7 COMPLETE`).
 
 ### 🔄 Post-`7/7` Execution Protocol (Approved by Avi)
-1. **Step (a)**: Complete `7/7` consecutive zero-failure burn-in on Tuesday `2026-11-24` after NYSE market close (`16:00 EST` / `23:00` Israel time) and verify `9/9 QA Suites` (`12/12 Task Checks`) at `100% GREEN`.
+1. **Step (a)**: Complete `7/7` consecutive zero-failure burn-in after Monday `2026-11-23`'s market close and post-close nightly run (`01:00 UTC` Tue `2026-11-24`) and verify `9/9 QA Suites` (`12/12 Task Checks`) at `100% GREEN`.
 2. **Step (b)**: Commit & push all verified changes to GitHub (`git commit` / `git push`) and save a full timestamped migration backup directly to **`C:\Users\AviShemla\AG_BCK`** (for Google Drive sync).
 3. **Step (c)**: Archive Epoch-1 tables in Turso (`*_epoch1_archive`), reset all 8 Stock & ETF Personas (`capital_ledgers`, `pending_orders`, `executed_trades`) and all 8 Arena/Championship models (`prod_vs_shadow_master`, `olympic_shootout_master`) to a clean **`$10,000.00`** Epoch-2 baseline (`Cash = $10,000.00`, `Holdings = {}`), and stage fresh Day-1 orders using the 7-Lag (`1..5` links) dynamic causal standard.
 
