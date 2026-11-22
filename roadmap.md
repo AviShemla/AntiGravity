@@ -20,19 +20,20 @@
 
 ## 🗓️ PART 1B: 7-Day Consecutive Autonomous Burn-In Gate (Counter Reset on Tuesday `2026-11-17` @ `09:53` IL)
 
-- **Current Consecutive Clean Days Counter**: **`5 / 7` COMPLETED (`Day 6 — Sunday 2026-11-22` Next; Monday `2026-11-23` Orders Already Staged in Turso)**
+- **Current Consecutive Clean Days Counter**: **`6 / 7` COMPLETED (`Day 7 — Monday 2026-11-23` Staged & Armed for `09:30 EST` / `16:30` IL Market Open)**
   - *Completed (`1/7`)*: **Day 1 — Tuesday `2026-11-17`** (Full NYSE Market Session `09:30–16:00 EST` / `16:30–23:00` IL + Post-Close Nightly Pipeline at `01:00 UTC` Wed `2026-11-18` completed 100% hands-free and passed `9/9 QA Suites` & `12/12 Task Checks`).
   - *Completed (`2/7`)*: **Day 2 — Wednesday `2026-11-18`** (Full NYSE Market Session `09:30–16:00 EST` / `16:30–23:00` IL + Post-Close Nightly Pipeline `axiomatic-leech` at `01:00 UTC` Thu `2026-11-19` completed 100% hands-free with zero intervention and passed `9/9 QA Suites` & `12/12 Task Checks` at `100% GREEN`).
   - *Completed (`3/7`)*: **Day 3 — Thursday `2026-11-19`** (Full NYSE Market Session `09:30–16:00 EST` / `16:30–23:00` IL + Post-Close Nightly Pipeline at `01:00 UTC` Fri `2026-11-20` completed 100% hands-free with zero intervention and passed `9/9 QA Suites` & `12/12 Task Checks` at `100% GREEN`).
   - *Completed (`4/7`)*: **Day 4 — Friday `2026-11-20`** (Full NYSE Market Session `09:30–16:00 EST` / `16:30–23:00` IL + Post-Close Nightly Pipeline `clever-tiger` at `01:00 UTC` Sat `2026-11-21` staging Monday `2026-11-23` completed 100% hands-free and passed `9/9 QA Suites` & `12/12 Task Checks` at `100% GREEN`).
   - *Completed (`5/7`)*: **Day 5 — Saturday `2026-11-21`** (Autonomous Weekend Protocol `burgundy-goose` at `14:00–14:17 UTC` retrained both Stock and ETF Transformer models `transformer_weights.pt` & `transformer_etf_weights.pt` + passed `9/9 QA Suites` & `12/12 Task Checks` at `100% GREEN`).
+  - *Completed (`6/7`)*: **Day 6 — Sunday `2026-11-22`** (Full Sunday Autonomous Maintenance `efficient-kittiwake` & 15-minute API Health QA `purring-raptor` verified `100% GREEN` across all `9/9 QA Suites` & `12/12 Task Checks` with Monday `2026-11-23` orders intact in Turso).
 - [x] **Day 1 — Tuesday `2026-11-17`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Wed) + `9/9 QA Green` (`12/12 Task Checks`) (`1/7` ✅ **COMPLETE**).
 - [x] **Day 2 — Wednesday `2026-11-18`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Thu, flow `axiomatic-leech`) + `9/9 QA Green` (`12/12 Task Checks`) (`2/7` ✅ **COMPLETE**).
 - [x] **Day 3 — Thursday `2026-11-19`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Fri) + `9/9 QA Green` (`12/12 Task Checks`) (`3/7` ✅ **COMPLETE**).
 - [x] **Day 4 — Friday `2026-11-20`**: Live Intraday Sniper (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Sat, flow `clever-tiger`, staging Monday `2026-11-23`) + `9/9 QA Green` (`12/12 Task Checks`) (`4/7` ✅ **COMPLETE**).
 - [x] **Day 5 — Saturday `2026-11-21`**: Autonomous Weekend Protocol (`weekend-trainers` at `14:00 UTC`, flow `burgundy-goose`) + `9/9 QA Green` (`12/12 Task Checks`) (`5/7` ✅ **COMPLETE**).
-- [ ] **Day 6 — Sunday `2026-11-22`**: Full Sunday Autonomous Maintenance & API Health QA + `9/9 QA Green` (`6/7`).
-- [ ] **Day 7 — Monday `2026-11-23`**: Zero-Touch Post-Weekend Market Open Sniper Execution (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Tue) + `9/9 QA Green` (`7/7 COMPLETE`).
+- [x] **Day 6 — Sunday `2026-11-22`**: Full Sunday Autonomous Maintenance & API Health QA (`efficient-kittiwake` / `purring-raptor`) + `9/9 QA Green` (`12/12 Task Checks`) (`6/7` ✅ **COMPLETE**).
+- [ ] **Day 7 — Monday `2026-11-23` (STAGED & ARMED — FINAL DAY)**: Zero-Touch Post-Weekend Market Open Sniper Execution (`09:30–16:00 EST`) + Post-Close Nightly Pipeline (`01:00 UTC` Tue) + `9/9 QA Green` (`7/7 COMPLETE`).
 
 ### 🔄 Post-`7/7` Execution Protocol (Approved by Avi)
 1. **Step (a)**: Complete `7/7` consecutive zero-failure burn-in after Monday `2026-11-23`'s market close and post-close nightly run (`01:00 UTC` Tue `2026-11-24`) and verify `9/9 QA Suites` (`12/12 Task Checks`) at `100% GREEN`.
