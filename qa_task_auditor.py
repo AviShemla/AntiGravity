@@ -134,11 +134,29 @@ if __name__ == "__main__":
             log_alert(f"[QA 3] Error querying Turso arena tables: {e_q3}")
             errors += 1
 
-    # QA 4: Weekend Trainers (Verify existence on weekdays; enforce freshness on weekends after Saturday 14:00 UTC schedule)
+    # QA 4: Weekend Trainers & Turso Fundamentals SSOT (Verify existence on weekdays; enforce freshness on weekends)
     file2 = os.path.join(BASE_DIR, "models", "transformer_weights.pt")
     file3 = os.path.join(BASE_DIR, "models", "transformer_etf_weights.pt")
     if not os.path.exists(file2) or not os.path.exists(file3):
         log_alert("[QA 4] Missing Weekend Trainer weight files in models/ directory!")
+        errors += 1
+    try:
+        sys.path.insert(0, BASE_DIR)
+        import database_manager as _dm_q4
+        df_fund_cnt = _dm_q4.execute_query("SELECT COUNT(*) as cnt FROM sp500_fundamentals_score")
+        if df_fund_cnt.empty or int(df_fund_cnt.iloc[0]['cnt']) < 20:
+            log_alert("[QA 4] Turso sp500_fundamentals_score table is empty or incomplete!")
+            errors += 1
+        df_mp_cnt = _dm_q4.execute_query("SELECT COUNT(*) as cnt FROM meta_alpha_priors")
+        if df_mp_cnt.empty or int(df_mp_cnt.iloc[0]['cnt']) < 6:
+            log_alert("[QA 4] Turso meta_alpha_priors table is empty or incomplete!")
+            errors += 1
+        df_eu_cnt = _dm_q4.execute_query("SELECT COUNT(*) as cnt FROM etf_universe_registry WHERE list_type = 'MASTER_35'")
+        if df_eu_cnt.empty or int(df_eu_cnt.iloc[0]['cnt']) < 11:
+            log_alert("[QA 4] Turso etf_universe_registry (MASTER_35) table is empty or incomplete!")
+            errors += 1
+    except Exception as e_q4:
+        log_alert(f"[QA 4] Error verifying Turso Weekend SSOT tables: {e_q4}")
         errors += 1
 
     # QA 7: Uvicorn Server & Port 80 Deadlock Audit

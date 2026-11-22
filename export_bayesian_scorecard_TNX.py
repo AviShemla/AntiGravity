@@ -241,13 +241,22 @@ def evaluate_ticker(ticker, lags_dict, returns_df, shifted_preds, start_date, ne
     with pm.Model() as blr_model:
         X_data = pm.Data("X", X_train_s)
         
+        meta_priors = {}
         try:
-            prior_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Meta_Alpha_Priors.json')
-            with open(prior_path, 'r') as f:
-                meta_priors = json.load(f)
-        except Exception as e:
-            print(f"  => Meta-Priors not found or error ({e}). Defaulting to 0.")
-            meta_priors = {}
+            import database_manager as _dm_mp
+            df_mp = _dm_mp.execute_query("SELECT feature_suffix, alpha_coef FROM meta_alpha_priors")
+            if not df_mp.empty:
+                meta_priors = dict(zip(df_mp['feature_suffix'].astype(str), df_mp['alpha_coef'].astype(float)))
+        except Exception:
+            pass
+        if not meta_priors:
+            try:
+                prior_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'Meta_Alpha_Priors.json')
+                with open(prior_path, 'r') as f:
+                    meta_priors = json.load(f)
+            except Exception as e:
+                print(f"  => Meta-Priors not found or error ({e}). Defaulting to 0.")
+                meta_priors = {}
             
         mu_beta_list = []
         for feat in feat_cols:
@@ -417,10 +426,12 @@ if __name__ == '__main__':
     scorecards = {}
     feat_cols_dict = {}
 
-    fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
-    if os.path.exists(fund_path):
-        fund_df = pd.read_csv(fund_path)
+    try:
+        import database_manager
+        fund_df = database_manager.execute_query("SELECT ticker as Ticker, fundamental_score as Fundamental_Score FROM sp500_fundamentals_score")
+    except Exception:
+        pass
 
     for i, (idx, row) in enumerate(top_10.iterrows()):
         if i > 0 and i % 10 == 0:

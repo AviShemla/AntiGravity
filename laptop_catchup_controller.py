@@ -141,19 +141,22 @@ def catchup_master_pipeline():
         print(f"=== MASTER PIPELINE FOR DATE: {target_date} ===")
         print(f"==============================================\n")
         
-        # 0.5 Weekly Fundamentals Extraction
-        if pd.to_datetime(target_date).weekday() == 5: # Saturday
-            print("\n--> Running Weekend Fundamentals Extraction (Saturday)...")
+        # 0.5 Weekly Fundamentals Extraction (Friday Post-Close -> Weekend Refresh into Turso sp500_fundamentals_score)
+        if pd.to_datetime(target_date).weekday() in (4, 5): # Friday or Saturday
+            print("\n--> Running Weekend Fundamentals Extraction (Turso sp500_fundamentals_score)...")
             subprocess.run([python_exe, os.path.join(BASE_DIR, "extract_fundamentals.py")], cwd=BASE_DIR, env=env)
 
         # 1. Meta Predictor Tracker (Alpha Recalibration)
-        if pd.to_datetime(target_date).weekday() == 6: # Sunday
+        if pd.to_datetime(target_date).weekday() in (4, 6): # Friday Post-Close or Sunday
             print("\n--> Running Meta-Predictor Tracker (Sunday Alpha Recalibration)...")
             subprocess.run([python_exe, os.path.join(BASE_DIR, "meta_predictor_tracker.py")], cwd=BASE_DIR, env=env)
             
         # 1.25 Adaptive 7-Lag / 5-Depth Cross-Stock Causal Chain Screener
         print("\n--> Running Adaptive 7-Lag / 5-Depth Causal Chain Screener (fast_screener.py)...")
         subprocess.run([python_exe, os.path.join(BASE_DIR, "fast_screener.py")], cwd=BASE_DIR, check=True, env=env)
+
+        # 1.35 Ensure any newly rotated 7-Lag stocks have fundamental scores in Turso sp500_fundamentals_score
+        subprocess.run([python_exe, os.path.join(BASE_DIR, "extract_fundamentals.py"), "--only-missing"], cwd=BASE_DIR, env=env)
 
         # 1.5 Deep Learning Inference Engine
         print("\n--> Running Deep Learning AI Inference Engine (V2 Upgrade)...")
@@ -252,18 +255,33 @@ def catchup_etf_pipeline():
         print(f"==============================================\n")
         
         # 0. Generate Dynamic ETFs (Run Screener)
+        if pd.to_datetime(target_date).weekday() in (4, 6): # Friday Post-Close or Sunday
+            print("\n--> [WEEKEND REFRESH] Running NASDAQ $50M Liquidity ETF Universe Screener (Turso etf_universe_registry)...")
+            try:
+                subprocess.run([python_exe, os.path.join(BASE_DIR, "ETF_Universe_Screener.py")], cwd=BASE_DIR, timeout=600, env=env)
+            except Exception as e_eu:
+                print(f"ETF Universe Screener warning: {e_eu}")
+
         print("\n--> [PRE-FLIGHT] Running Dynamic ETF Screener...")
         try:
             subprocess.run([python_exe, os.path.join(BASE_DIR, "generate_dynamic_etfs.py")], cwd=BASE_DIR, timeout=300, env=env)
         except Exception as e:
             print(f"ETF Screener failed: {e}")
 
-        # 1. Export ETF Scorecards
+        # 1. Export ETF Scorecards (Read from Turso SSOT first)
+        TARGET_ETFS = []
         try:
-            with open(os.path.join(BASE_DIR, 'financial_data', 'Dynamic_Target_ETFs.json'), 'r') as f:
-                TARGET_ETFS = json.load(f)
+            df_dt = database_manager.execute_query("SELECT ticker FROM etf_universe_registry WHERE list_type = 'DYNAMIC_TOP_10' ORDER BY rank_idx ASC")
+            if not df_dt.empty:
+                TARGET_ETFS = df_dt['ticker'].astype(str).str.strip().str.upper().tolist()
         except Exception:
-            TARGET_ETFS = ['XLK', 'XLV', 'XLY', 'XLF', 'XLC', 'XLI', 'XLE', 'XLP', 'XLU', 'XLRE', 'XLB']
+            pass
+        if not TARGET_ETFS:
+            try:
+                with open(os.path.join(BASE_DIR, 'financial_data', 'Dynamic_Target_ETFs.json'), 'r') as f:
+                    TARGET_ETFS = json.load(f)
+            except Exception:
+                TARGET_ETFS = ['XLK', 'XLV', 'XLY', 'XLF', 'XLC', 'XLI', 'XLE', 'XLP', 'XLU', 'XLRE', 'XLB']
             
         if not TARGET_ETFS: TARGET_ETFS = ['XLK'] # Fallback failsafe
         

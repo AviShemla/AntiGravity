@@ -7,16 +7,27 @@ import json
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
 os.makedirs(BASE_DIR, exist_ok=True)
 
-# Load the dynamically generated Master Universe from the Sunday Screener
+# Load the dynamically generated Master Universe from Turso SSOT first (fallback to JSON)
 MASTER_UNIVERSE_PATH = os.path.join(BASE_DIR, 'Master_ETF_Universe.json')
+ETF_UNIVERSE = []
+try:
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import database_manager
+    df_mu = database_manager.execute_query("SELECT ticker FROM etf_universe_registry WHERE list_type = 'MASTER_35' ORDER BY rank_idx ASC")
+    if not df_mu.empty:
+        ETF_UNIVERSE = df_mu['ticker'].astype(str).str.strip().str.upper().tolist()
+except Exception:
+    pass
 
-if os.path.exists(MASTER_UNIVERSE_PATH):
-    with open(MASTER_UNIVERSE_PATH, 'r') as f:
-        ETF_UNIVERSE = json.load(f)
-else:
-    print(f"CRITICAL WARNING: {MASTER_UNIVERSE_PATH} not found!")
-    print("Falling back to absolute baseline 11 GICS sectors.")
-    ETF_UNIVERSE = ["XLK", "XLV", "XLY", "XLF", "XLC", "XLI", "XLE", "XLP", "XLU", "XLRE", "XLB"]
+if not ETF_UNIVERSE:
+    if os.path.exists(MASTER_UNIVERSE_PATH):
+        with open(MASTER_UNIVERSE_PATH, 'r') as f:
+            ETF_UNIVERSE = json.load(f)
+    else:
+        print(f"CRITICAL WARNING: {MASTER_UNIVERSE_PATH} not found!")
+        print("Falling back to absolute baseline 11 GICS sectors.")
+        ETF_UNIVERSE = ["XLK", "XLV", "XLY", "XLF", "XLC", "XLI", "XLE", "XLP", "XLU", "XLRE", "XLB"]
 
 TOP_N = 10
 
@@ -115,9 +126,32 @@ def generate_dynamic_target_list():
 
     with open(out_path, 'w') as f:
         json.dump(final_targets, f, indent=4)
+
+    # 100% Turso Cloud DB Single Source of Truth (SSOT)
+    try:
+        from datetime import datetime, timezone
+        import database_manager
+        database_manager.init_db()
+        now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        stmts = [("DELETE FROM etf_universe_registry WHERE list_type = 'DYNAMIC_TOP_10'", [])]
+        for idx, row in top_10.iterrows():
+            stmts.append((
+                """
+                INSERT INTO etf_universe_registry (list_type, ticker, rank_idx, opportunity_score, updated_at_utc)
+                VALUES ('DYNAMIC_TOP_10', ?, ?, ?, ?)
+                """,
+                [str(row['ETF']), int(idx + 1), float(row['Opportunity_Score']), now_utc]
+            ))
+        database_manager.execute_batch(stmts)
+        print(f"Synced {len(final_targets)} Top Dynamic ETFs into Turso etf_universe_registry (DYNAMIC_TOP_10 @ {now_utc})")
+    except Exception as e_db:
+        print(f"[ERROR] Failed to sync DYNAMIC_TOP_10 to Turso: {e_db}")
         
     print(f"\nSUCCESS: Dynamically injected {TOP_N} high-octane ETFs into the pipeline engine!")
-    print(f"Saved to: {out_path}\n")
+    print(f"Saved to Turso SSOT & {out_path}\n")
 
 if __name__ == "__main__":
     generate_dynamic_target_list()
+    import sys
+    sys.stdout.flush()
+    os._exit(0)

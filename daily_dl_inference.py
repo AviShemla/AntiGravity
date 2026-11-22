@@ -42,12 +42,12 @@ def get_dynamic_assets():
             # Limit to exactly Top 10 Stocks mathematically extracted from the live portfolio
             stocks = df['Ticker'].head(10).tolist()
             
-            # Dynamic ETF Extraction based on Whale Priors
+            # Dynamic ETF Extraction based on Whale Priors (100% Turso SSOT)
             sys.path.append(os.path.dirname(os.path.abspath(__file__)))
             from etf_whale_extractor import get_60_percent_whales_with_weights
-            
-            fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
-            fund_df = pd.read_csv(fund_path).set_index('Ticker') if os.path.exists(fund_path) else pd.DataFrame()
+            import database_manager
+            fund_res = database_manager.execute_query("SELECT ticker as Ticker, fundamental_score as Fundamental_Score FROM sp500_fundamentals_score")
+            fund_df = fund_res.set_index('Ticker') if not fund_res.empty else pd.DataFrame()
             
             all_etfs = ['XLK', 'XLF', 'XLV', 'XLE', 'XLY', 'XLP', 'XLU', 'XLI', 'XLB', 'XLC', 'XLRE']
             scores = {}

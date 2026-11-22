@@ -294,10 +294,12 @@ if __name__ == '__main__':
 
     scorecards = {}
     
-    fund_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data', 'SP500_Fundamentals_Score.csv')
     fund_df = pd.DataFrame()
-    if os.path.exists(fund_path):
-        fund_df = pd.read_csv(fund_path)
+    try:
+        import database_manager
+        fund_df = database_manager.execute_query("SELECT ticker as Ticker, fundamental_score as Fundamental_Score FROM sp500_fundamentals_score")
+    except Exception:
+        pass
 
     for i, ticker in enumerate(tickers_list):
         state_file = args.out.replace('.json', '_state.json')

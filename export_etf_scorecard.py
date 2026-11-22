@@ -363,10 +363,11 @@ def export_etf_scorecard(target_etf, target_date=None):
     
     try:
         from etf_whale_extractor import get_60_percent_whales_with_weights
+        import database_manager
         whales_dict = get_60_percent_whales_with_weights(target_etf)
-        fund_path = os.path.join(BASE_DIR, 'SP500_Fundamentals_Score.csv')
-        if os.path.exists(fund_path) and whales_dict:
-            fund_df = pd.read_csv(fund_path).set_index('Ticker')
+        fund_df = database_manager.execute_query("SELECT ticker as Ticker, fundamental_score as Fundamental_Score FROM sp500_fundamentals_score")
+        if not fund_df.empty and whales_dict:
+            fund_df = fund_df.set_index('Ticker')
             for whale, weight in whales_dict.items():
                 if whale in fund_df.index:
                     score = fund_df.loc[whale, 'Fundamental_Score']

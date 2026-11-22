@@ -8,11 +8,19 @@ import database_manager
 import oracle_lineage_core
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'financial_data')
+TARGET_ETFS = []
 try:
-    with open(os.path.join(BASE_DIR, 'Dynamic_Target_ETFs.json'), 'r') as f:
-        TARGET_ETFS = json.load(f)
-except:
-    TARGET_ETFS = ["XLK"]
+    df_dt = database_manager.execute_query("SELECT ticker FROM etf_universe_registry WHERE list_type = 'DYNAMIC_TOP_10' ORDER BY rank_idx ASC")
+    if not df_dt.empty:
+        TARGET_ETFS = df_dt['ticker'].astype(str).str.strip().str.upper().tolist()
+except Exception:
+    pass
+if not TARGET_ETFS:
+    try:
+        with open(os.path.join(BASE_DIR, 'Dynamic_Target_ETFs.json'), 'r') as f:
+            TARGET_ETFS = json.load(f)
+    except Exception:
+        TARGET_ETFS = ["XLK"]
 
 PERSONAS = {
     "Conservative": {

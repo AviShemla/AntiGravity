@@ -60,9 +60,33 @@ def antigravity_nightly_flow():
     run_unified_qa()
     print("Nightly Protocol Complete!")
 
+@task(name="Run Weekend Fundamentals Extraction", retries=1)
+def run_weekend_fundamentals():
+    print("Running Weekend Institutional Fundamentals Extraction (Turso SSOT)...")
+    result = subprocess.run([python_exe, "extract_fundamentals.py"], cwd=BASE_DIR)
+    if result.returncode != 0:
+        raise Exception(f"Weekend Fundamentals Extraction failed with code {result.returncode}")
+
+@task(name="Run Weekend Meta-Alpha Priors Tracker", retries=1)
+def run_weekend_meta_priors():
+    print("Running Weekend Meta-Predictor Alpha Hyper-Priors Tracker (Turso SSOT)...")
+    result = subprocess.run([python_exe, "meta_predictor_tracker.py"], cwd=BASE_DIR)
+    if result.returncode != 0:
+        raise Exception(f"Weekend Meta-Predictor Tracker failed with code {result.returncode}")
+
+@task(name="Run Weekend ETF Universe Screener", retries=1)
+def run_weekend_etf_universe():
+    print("Running Weekend NASDAQ $50M Liquidity ETF Universe Screener (Turso SSOT)...")
+    result = subprocess.run([python_exe, "ETF_Universe_Screener.py"], cwd=BASE_DIR)
+    if result.returncode != 0:
+        raise Exception(f"Weekend ETF Universe Screener failed with code {result.returncode}")
+
 @flow(name="AntiGravity Weekend Protocol", log_prints=True)
 def antigravity_weekend_flow():
     print("Starting AntiGravity Weekend Protocol via Prefect...")
+    run_weekend_fundamentals()
+    run_weekend_meta_priors()
+    run_weekend_etf_universe()
     run_weekend_stock()
     run_weekend_etf()
     print("Weekend Protocol Complete!")

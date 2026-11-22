@@ -111,10 +111,36 @@ def run_universe_screener():
     
     with open(OUT_PATH, 'w') as f:
         json.dump(master_universe, f, indent=4)
+
+    # 100% Turso Cloud DB Single Source of Truth (SSOT)
+    try:
+        import sys
+        from datetime import datetime, timezone
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import database_manager
+        database_manager.init_db()
+        now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        score_map = dict(zip(df_results['ETF'].astype(str), df_results['Opportunity'].astype(float)))
+        stmts = [("DELETE FROM etf_universe_registry WHERE list_type = 'MASTER_35'", [])]
+        for idx, tk in enumerate(master_universe, 1):
+            stmts.append((
+                """
+                INSERT INTO etf_universe_registry (list_type, ticker, rank_idx, opportunity_score, updated_at_utc)
+                VALUES ('MASTER_35', ?, ?, ?, ?)
+                """,
+                [str(tk), int(idx), float(score_map.get(tk, 0.0)), now_utc]
+            ))
+        database_manager.execute_batch(stmts)
+        print(f"   -> Synced {len(master_universe)} ETFs into Turso etf_universe_registry (MASTER_35 @ {now_utc})")
+    except Exception as e_db:
+        print(f"   [ERROR] Failed to sync MASTER_35 to Turso: {e_db}")
         
     print(f"\nSUCCESSFULLY REBUILT MASTER UNIVERSE (35 ETFs)!")
-    print(f"   -> Saved to: {OUT_PATH}")
+    print(f"   -> Saved to Turso SSOT & {OUT_PATH}")
     print("   -> The Daily Pipeline will automatically inherit this updated hunting ground on Monday.\n")
 
 if __name__ == "__main__":
     run_universe_screener()
+    import sys
+    sys.stdout.flush()
+    os._exit(0)

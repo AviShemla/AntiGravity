@@ -105,8 +105,36 @@ def build_meta_tracker():
         
     with open(PRIORS_OUT_PATH, 'w') as f:
         json.dump(meta_priors, f, indent=4)
-        
-    print(f"\nSUCCESS: Global Meta-Priors saved to {PRIORS_OUT_PATH}")
+
+    # 100% Turso Cloud DB Single Source of Truth (SSOT)
+    try:
+        import sys
+        from datetime import datetime, timezone
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import database_manager
+        database_manager.init_db()
+        now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        stmts = []
+        for suffix, coef in meta_priors.items():
+            stmts.append((
+                """
+                INSERT INTO meta_alpha_priors (feature_suffix, alpha_coef, updated_at_utc)
+                VALUES (?, ?, ?)
+                ON CONFLICT(feature_suffix) DO UPDATE SET
+                    alpha_coef=excluded.alpha_coef,
+                    updated_at_utc=excluded.updated_at_utc
+                """,
+                [str(suffix), float(coef), now_utc]
+            ))
+        database_manager.execute_batch(stmts)
+        print(f"SUCCESS: Upserted {len(stmts)} empirical hyper-priors into Turso meta_alpha_priors ({now_utc})")
+    except Exception as e_db:
+        print(f"[ERROR] Failed to sync meta_alpha_priors to Turso: {e_db}")
+
+    print(f"\nSUCCESS: Global Meta-Priors saved to Turso SSOT and {PRIORS_OUT_PATH}")
 
 if __name__ == '__main__':
     build_meta_tracker()
+    import sys
+    sys.stdout.flush()
+    os._exit(0)

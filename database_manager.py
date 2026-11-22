@@ -79,6 +79,19 @@ def execute_write(query, args=None):
         client.batch([stmt])
 
 
+def execute_batch(statements):
+    """Executes a batch of (query, args) tuples in a single atomic Turso roundtrip."""
+    if not statements:
+        return
+    stmts = [libsql_client.Statement(q, a or []) for q, a in statements]
+    try:
+        client = get_connection()
+        client.batch(stmts)
+    except Exception:
+        client = get_connection(force_new=True)
+        client.batch(stmts)
+
+
 def close_connection_for_cli_exit():
     """Close this thread's client when a short-lived CLI audit is finished.
 
@@ -207,6 +220,41 @@ def init_db():
             lag14 TEXT, lag13 TEXT, lag12 TEXT, lag11 TEXT, lag10 TEXT, lag9 TEXT, lag8 TEXT,
             lag7 TEXT, lag6 TEXT, lag5 TEXT, lag4 TEXT, lag3 TEXT, lag2 TEXT, lag1 TEXT,
             updated_at_utc TEXT NOT NULL
+        )
+    ''')
+
+    # 8.5 S&P 500 Institutional Fundamentals Score Table (100% Turso SSOT)
+    execute_write('''
+        CREATE TABLE IF NOT EXISTS sp500_fundamentals_score (
+            ticker TEXT PRIMARY KEY,
+            profit_margin REAL,
+            debt_to_equity REAL,
+            trailing_eps REAL,
+            analyst_rec TEXT,
+            analyst_target TEXT,
+            fundamental_score REAL NOT NULL,
+            updated_at_utc TEXT NOT NULL
+        )
+    ''')
+
+    # 8.6 Meta-Predictor Empirical Alpha Hyper-Priors Table (100% Turso SSOT)
+    execute_write('''
+        CREATE TABLE IF NOT EXISTS meta_alpha_priors (
+            feature_suffix TEXT PRIMARY KEY,
+            alpha_coef REAL NOT NULL,
+            updated_at_utc TEXT NOT NULL
+        )
+    ''')
+
+    # 8.7 ETF Universe Registry Table (100% Turso SSOT: MASTER_35 & DYNAMIC_TOP_10)
+    execute_write('''
+        CREATE TABLE IF NOT EXISTS etf_universe_registry (
+            list_type TEXT NOT NULL,
+            ticker TEXT NOT NULL,
+            rank_idx INTEGER NOT NULL,
+            opportunity_score REAL,
+            updated_at_utc TEXT NOT NULL,
+            PRIMARY KEY (list_type, ticker)
         )
     ''')
 
